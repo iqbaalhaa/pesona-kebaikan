@@ -1,16 +1,19 @@
-import HeroCarousel from "@/components/HeroCarousel";
+import HeroCarousel from "@/components/home/HeroCarousel";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
+import QuickMenu from "@/components/home/QuickMenu";
+import UrgentSection from "@/components/home/UrgentSection";
+import CategoryChips from "@/components/home/CategoryChips";
+import PopularSection from "@/components/home/PopularSection";
 
 export default function Home() {
-  return (
-    <Box sx={{ pb: 8 }}>
-      <HeroCarousel />
-      <Box sx={{ px: 2.5, mt: 6 }}>
-        <Typography sx={{ fontSize: 16, fontWeight: 800, color: "#0f172a" }}>
-          Mau berbuat baik apa hari ini?
-        </Typography>
-      </Box>
-    </Box>
-  );
+	return (
+		<Box sx={{ pb: 8 }}>
+			<HeroCarousel />
+			<QuickMenu />
+			<UrgentSection />
+			<CategoryChips />
+			<PopularSection />
+		</Box>
+	);
 }

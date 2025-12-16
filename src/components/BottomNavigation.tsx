@@ -11,6 +11,8 @@ import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
 import CampaignIcon from "@mui/icons-material/Campaign";
 import PersonIcon from "@mui/icons-material/Person";
 
+const PRIMARY = "#61ce70";
+
 const menus = [
 	{ label: "Donasi", path: "/", icon: <VolunteerActivismIcon /> },
 	{ label: "Blog", path: "/blog", icon: <ArticleIcon /> },
@@ -19,10 +21,27 @@ const menus = [
 	{ label: "Profil", path: "/profil", icon: <PersonIcon /> },
 ];
 
-// matcher active yang aman (biar "/" gak nyolong semua route)
 function isActive(pathname: string, path: string) {
 	if (path === "/") return pathname === "/";
 	return pathname === path || pathname.startsWith(path + "/");
+}
+
+// helper buat warna rgba tanpa lib
+function hexToRgba(hex: string, alpha: number) {
+	const h = hex.replace("#", "");
+	const bigint = parseInt(
+		h.length === 3
+			? h
+					.split("")
+					.map((c) => c + c)
+					.join("")
+			: h,
+		16
+	);
+	const r = (bigint >> 16) & 255;
+	const g = (bigint >> 8) & 255;
+	const b = bigint & 255;
+	return `rgba(${r},${g},${b},${alpha})`;
 }
 
 export default function SimpleBottomNavigation() {
@@ -43,13 +62,13 @@ export default function SimpleBottomNavigation() {
 				transform: "translateX(-50%)",
 				bottom: 0,
 				width: "100%",
-				maxWidth: 420, // sesuaikan sama frame mobile kalian
+				maxWidth: 420,
 				zIndex: 1300,
 				borderTop: "1px solid rgba(0,0,0,0.08)",
-				borderTopLeftRadius: 16,
-				borderTopRightRadius: 16,
+				borderTopLeftRadius: 18,
+				borderTopRightRadius: 18,
 				overflow: "hidden",
-				pb: "env(safe-area-inset-bottom)", // aman buat iOS notch
+				pb: "env(safe-area-inset-bottom)",
 				bgcolor: "rgba(255,255,255,0.92)",
 				backdropFilter: "blur(10px)",
 			}}
@@ -59,18 +78,55 @@ export default function SimpleBottomNavigation() {
 				value={currentIndex}
 				onChange={(_, newValue) => router.push(menus[newValue].path)}
 				sx={{
-					height: 68,
+					height: 72,
+					px: 1,
+
+					// Base state (inactive)
 					"& .MuiBottomNavigationAction-root": {
 						minWidth: 0,
 						px: 1,
+						color: "rgba(15,23,42,0.55)",
+						transition: "all 180ms ease",
 					},
+
 					"& .MuiBottomNavigationAction-label": {
 						fontSize: 11,
 						marginTop: "2px",
+						transition: "all 180ms ease",
 					},
+
+					// Ikon default
+					"& .MuiSvgIcon-root": {
+						fontSize: 24,
+						transition: "transform 180ms ease, filter 180ms ease",
+					},
+
+					// Wrapper biar kita bisa bikin “bubble”
+					"& .MuiBottomNavigationAction-wrapper": {
+						gap: "4px",
+					},
+
+					// Active state (premium)
 					"& .Mui-selected": {
-						color: "#61ce70",
+						color: PRIMARY,
 					},
+					"& .Mui-selected .MuiBottomNavigationAction-label": {
+						fontWeight: 700,
+					},
+
+					// Bubble di belakang ikon saat active
+					"& .MuiBottomNavigationAction-root.Mui-selected .MuiSvgIcon-root": {
+						transform: "scale(1.06)",
+						filter: `drop-shadow(0 10px 18px ${hexToRgba(PRIMARY, 0.22)})`,
+					},
+					"& .MuiBottomNavigationAction-root.Mui-selected .MuiBottomNavigationAction-wrapper":
+						{
+							// kasih “pill” di sekitar ikon+label
+							paddingTop: "6px",
+							paddingBottom: "6px",
+							borderRadius: 14,
+							backgroundColor: hexToRgba(PRIMARY, 0.12),
+						},
 				}}
 			>
 				{menus.map((menu) => (
