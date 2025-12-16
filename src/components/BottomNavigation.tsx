@@ -14,8 +14,8 @@ import PersonIcon from "@mui/icons-material/Person";
 const menus = [
   { label: "Donasi", path: "/", icon: <VolunteerActivismIcon /> },
   { label: "Blog", path: "/blog", icon: <ArticleIcon /> },
-  { label: "DonasiSaya", path: "/donasi-saya", icon: <ReceiptLongIcon /> },
-  { label: "GalangDana", path: "/galang-dana", icon: <CampaignIcon /> },
+  { label: "Donasi Saya", path: "/donasi-saya", icon: <ReceiptLongIcon /> },
+  { label: "Galang Dana", path: "/galang-dana", icon: <CampaignIcon /> },
   { label: "Profil", path: "/profil", icon: <PersonIcon /> },
 ];
 

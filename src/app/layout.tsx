@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { AppRouterCacheProvider } from "@mui/material-nextjs/v15-appRouter";
 import "./globals.css";
+import SimpleAppBar from "@/components/AppBar";
 import SimpleBottomNavigation from "@/components/BottomNavigation";
 
 const geistSans = Geist({
@@ -30,6 +31,7 @@ export default function RootLayout({
         <AppRouterCacheProvider options={{ enableCssLayer: true }}>
           <div className="flex min-h-screen items-center justify-center bg-gray-100 dark:bg-gray-900">
             <div className="relative w-full max-w-md h-screen max-h-screen bg-white dark:bg-black rounded-2xl shadow-2xl overflow-hidden flex flex-col">
+              <SimpleAppBar />
               <div className="flex-1 overflow-y-auto">{children}</div>
               <SimpleBottomNavigation />
             </div>
