@@ -4,10 +4,12 @@ import * as React from "react";
 import { usePathname } from "next/navigation";
 import SimpleAppBar from "@/components/AppBar";
 import SimpleBottomNavigation from "@/components/BottomNavigation";
+import MiniFooter from "@/components/home/MiniFooter";
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
 	const pathname = usePathname();
 	const isHome = pathname === "/";
+	const isProfile = pathname === "/profil" || pathname.startsWith("/profil/");
 
 	const scrollRef = React.useRef<HTMLDivElement | null>(null);
 	const [scrolled, setScrolled] = React.useState(false);
@@ -17,7 +19,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 		if (!el) return;
 
 		const onScroll = () => {
-			setScrolled(el.scrollTop > 28);
+			setScrolled(el.scrollTop > 280);
 		};
 
 		onScroll();
@@ -42,6 +44,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 			>
 				{children}
 			</div>
+
+			{isProfile && <MiniFooter />}
 
 			<SimpleBottomNavigation />
 		</div>
