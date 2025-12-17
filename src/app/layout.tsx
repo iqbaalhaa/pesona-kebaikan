@@ -1,18 +1,14 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Plus_Jakarta_Sans } from "next/font/google";
 import { AppRouterCacheProvider } from "@mui/material-nextjs/v15-appRouter";
 import "./globals.css";
-import SimpleAppBar from "@/components/AppBar";
-import SimpleBottomNavigation from "@/components/BottomNavigation";
+import AppShell from "@/components/AppShell";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+const pjs = Plus_Jakarta_Sans({
+	variable: "--font-pjs",
+	subsets: ["latin"],
+	display: "swap",
+	weight: ["400", "500", "600", "700", "800"],
 });
 
 export const metadata: Metadata = {
@@ -21,23 +17,21 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
-  return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <AppRouterCacheProvider options={{ enableCssLayer: true }}>
-          <div className="flex min-h-screen items-center justify-center bg-gray-100 dark:bg-gray-900">
-            <div className="relative w-full max-w-md h-screen max-h-screen bg-white dark:bg-black rounded-2xl shadow-2xl overflow-hidden flex flex-col">
-              <SimpleAppBar />
-              <div className="flex-1 overflow-y-auto">{children}</div>
-              <SimpleBottomNavigation />
-            </div>
-          </div>
-        </AppRouterCacheProvider>
-      </body>
-    </html>
-  );
+	children,
+}: {
+	children: React.ReactNode;
+}) {
+	return (
+		<html lang="id" suppressHydrationWarning>
+			<body className={`${pjs.variable} antialiased`}>
+				<AppRouterCacheProvider options={{ enableCssLayer: true }}>
+					{/* Background luar */}
+					<div className="flex min-h-dvh items-center justify-center bg-gray-100 px-3 py-4">
+						{/* Semua logika header overlay + scroll + bottomnav ada di AppShell */}
+						<AppShell>{children}</AppShell>
+					</div>
+				</AppRouterCacheProvider>
+			</body>
+		</html>
+	);
 }
