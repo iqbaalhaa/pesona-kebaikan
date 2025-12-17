@@ -12,7 +12,7 @@ const baseTheme = {
     },
   },
   shape: {
-    borderRadius: 12,
+    borderRadius: 8,
   },
   components: {
     MuiButton: {
@@ -20,7 +20,7 @@ const baseTheme = {
         root: {
           textTransform: "none",
           fontWeight: 700,
-          borderRadius: 999,
+          borderRadius: 8,
         },
       },
     },

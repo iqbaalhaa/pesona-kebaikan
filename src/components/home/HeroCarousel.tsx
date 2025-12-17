@@ -10,6 +10,22 @@ const slides = [
 	{ src: "/brand/carousel2.webp" },
 ];
 
+function SlideImage({ src, active }: { src: string; active: boolean }) {
+	const [imgSrc, setImgSrc] = React.useState(src);
+
+	return (
+		<Image
+			src={imgSrc}
+			alt="slide"
+			fill
+			priority
+			sizes="420px"
+			style={{ objectFit: "cover" }}
+			onError={() => setImgSrc("/defaultimg.webp")}
+		/>
+	);
+}
+
 export default function HeroCarousel() {
 	const [active, setActive] = React.useState(0);
 
@@ -22,7 +38,13 @@ export default function HeroCarousel() {
 	}, []);
 
 	return (
-		<Box className="relative w-full h-[360px] overflow-hidden rounded-b-[24px] bg-[#0b1220]">
+		<Box
+			className="relative w-full h-[360px] overflow-hidden bg-[#0b1220]"
+			sx={{
+				borderBottomLeftRadius: { md: 1 },
+				borderBottomRightRadius: { md: 1 },
+			}}
+		>
 			{slides.map((s, i) => (
 				<Box
 					key={s.src}
@@ -30,14 +52,7 @@ export default function HeroCarousel() {
 						i === active ? "opacity-100" : "opacity-0"
 					}`}
 				>
-					<Image
-						src={s.src}
-						alt={`slide-${i + 1}`}
-						fill
-						priority={i === 0}
-						sizes="420px"
-						style={{ objectFit: "cover" }}
-					/>
+					<SlideImage src={s.src} active={i === active} />
 					<div className="absolute inset-0 bg-gradient-to-b from-black/92 via-black/75 to-transparent to-58% from-0% via-24%" />
 				</Box>
 			))}

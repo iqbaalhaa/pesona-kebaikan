@@ -59,6 +59,50 @@ function rupiah(n: number) {
 	return new Intl.NumberFormat("id-ID").format(n);
 }
 
+function ArrowButton({
+	dir,
+	onClick,
+}: {
+	dir: "left" | "right";
+	onClick: () => void;
+}) {
+	return (
+		<Box
+			role="button"
+			tabIndex={0}
+			aria-label={dir === "left" ? "Geser ke kiri" : "Geser ke kanan"}
+			onClick={onClick}
+			onKeyDown={(e) => e.key === "Enter" && onClick()}
+			sx={{
+				width: 38,
+				height: 38,
+				borderRadius: "12px",
+				display: "grid",
+				placeItems: "center",
+				cursor: "pointer",
+				userSelect: "none",
+				bgcolor: "rgba(255,255,255,0.92)",
+				backdropFilter: "blur(10px)",
+				border: "1px solid rgba(15,23,42,0.10)",
+				boxShadow: "0 14px 26px rgba(15,23,42,.14)",
+				"&:active": { transform: "scale(0.98)" },
+				transition: "all 0.2s ease",
+				"&:hover": { bgcolor: "#fff", transform: "scale(1.05)" },
+			}}
+		>
+			<Box
+				sx={{
+					fontSize: 20,
+					fontWeight: 900,
+					color: "rgba(15,23,42,.75)",
+					mt: "-1px",
+				}}
+			>
+				{dir === "left" ? "‹" : "›"}
+			</Box>
+		</Box>
+	);
+}
 function ProgressBarDual({
 	collected,
 	target,
@@ -72,7 +116,7 @@ function ProgressBarDual({
 	);
 
 	return (
-		<Box className="h-1.5 rounded-full overflow-hidden flex bg-slate-100 dark:bg-slate-700">
+		<Box className="h-1.5 rounded-full overflow-hidden flex bg-white">
 			<Box
 				className="transition-all duration-300 ease-out"
 				sx={{
@@ -87,6 +131,103 @@ function ProgressBarDual({
 					bgcolor: "#e11d48", // rose-600 for urgency gap
 				}}
 			/>
+		</Box>
+	);
+}
+
+function UrgentCard({ item }: { item: Campaign }) {
+	const [imgSrc, setImgSrc] = React.useState(item.cover || "/defaultimg.webp");
+
+	return (
+		<Box
+			className="flex-shrink-0 w-[260px] snap-center bg-white border border-slate-200 shadow-sm hover:shadow-md transition-shadow duration-300 cursor-pointer"
+			sx={{ bgcolor: "#fff", borderRadius: { md: 1 } }}
+		>
+			{/* Cover */}
+			<Box
+				className="relative h-[140px] overflow-hidden bg-gray-100"
+				sx={{ borderTopLeftRadius: { md: 1 }, borderTopRightRadius: { md: 1 } }}
+			>
+				<Image
+					src={imgSrc}
+					alt={item.title}
+					fill
+					sizes="260px"
+					style={{ objectFit: "cover" }}
+					className="group-hover:scale-105 transition-transform duration-500"
+					onError={() => setImgSrc("/defaultimg.webp")}
+				/>
+				{/* Tag */}
+				<Box className="absolute top-2 left-2">
+					<Chip
+						label={item.tag === "ORG" ? "ORGANISASI" : "TERVERIFIKASI"}
+						size="small"
+						className="h-5 text-[9px] font-bold bg-white/95 backdrop-blur-sm shadow-sm"
+						sx={{
+							color: item.tag === "ORG" ? "primary.main" : "info.main",
+							border: "1px solid",
+							borderColor: "rgba(255,255,255,0.2)",
+						}}
+					/>
+				</Box>
+				{/* Days Left Badge */}
+				<Box className="absolute bottom-2 left-2 bg-black/60 backdrop-blur-md text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+					{item.daysLeft} hari lagi
+				</Box>
+			</Box>
+
+			{/* Content */}
+			<Box className="p-3">
+				<Typography
+					className="text-[13px] font-bold leading-snug line-clamp-2 min-h-[40px]"
+					sx={{ color: "text.primary" }}
+				>
+					{item.title}
+				</Typography>
+
+				<Box className="flex items-center gap-1.5 mt-2 mb-3">
+					<Box className="w-4 h-4 rounded-full bg-gray-200 overflow-hidden relative flex-shrink-0">
+						<Image
+							src="/brand/logo.png"
+							alt={item.organizer}
+							fill
+							style={{ objectFit: "cover" }}
+						/>
+					</Box>
+					<Typography className="text-[10px] font-medium text-gray-500 dark:text-gray-400 truncate">
+						{item.organizer}
+					</Typography>
+					{item.tag === "ORG" && (
+						<Box className="w-3 h-3 text-blue-500">
+							<svg
+								viewBox="0 0 24 24"
+								fill="currentColor"
+								className="w-full h-full"
+							>
+								<path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" />
+							</svg>
+						</Box>
+					)}
+				</Box>
+
+				{/* Progress Bar Dual */}
+				<ProgressBarDual collected={item.collected} target={item.target || 0} />
+
+				<Box className="flex items-center justify-between mt-2 text-[10px] text-gray-500">
+					<Box>
+						<span className="block text-[10px] text-gray-400">Terkumpul</span>
+						<span className="font-bold text-gray-900 dark:text-gray-100">
+							Rp {rupiah(item.collected)}
+						</span>
+					</Box>
+					<Box className="text-right">
+						<span className="block text-[10px] text-gray-400">Donatur</span>
+						<span className="font-bold text-gray-900 dark:text-gray-100">
+							{item.donors}
+						</span>
+					</Box>
+				</Box>
+			</Box>
 		</Box>
 	);
 }
@@ -144,49 +285,6 @@ export default function UrgentSection() {
 		el.scrollBy({ left: CARD_STEP, top: 0, behavior: "smooth" });
 	}, []);
 
-	const ArrowButton = ({
-		dir,
-		onClick,
-	}: {
-		dir: "left" | "right";
-		onClick: () => void;
-	}) => (
-		<Box
-			role="button"
-			tabIndex={0}
-			aria-label={dir === "left" ? "Geser ke kiri" : "Geser ke kanan"}
-			onClick={onClick}
-			onKeyDown={(e) => e.key === "Enter" && onClick()}
-			sx={{
-				width: 38,
-				height: 38,
-				borderRadius: 999,
-				display: "grid",
-				placeItems: "center",
-				cursor: "pointer",
-				userSelect: "none",
-				bgcolor: "rgba(255,255,255,0.92)",
-				backdropFilter: "blur(10px)",
-				border: "1px solid rgba(15,23,42,0.10)",
-				boxShadow: "0 14px 26px rgba(15,23,42,.14)",
-				"&:active": { transform: "scale(0.98)" },
-				transition: "all 0.2s ease",
-				"&:hover": { bgcolor: "#fff", transform: "scale(1.05)" },
-			}}
-		>
-			<Box
-				sx={{
-					fontSize: 20,
-					fontWeight: 900,
-					color: "rgba(15,23,42,.75)",
-					mt: "-1px",
-				}}
-			>
-				{dir === "left" ? "‹" : "›"}
-			</Box>
-		</Box>
-	);
-
 	return (
 		<Box className="mt-6 px-5 relative group">
 			<Box className="flex items-center justify-between mb-4">
@@ -220,17 +318,13 @@ export default function UrgentSection() {
 
 			{/* Floating arrows */}
 			{canLeft && (
-				<Box
-					className="hidden md:block absolute left-2 top-[140px] z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-				>
+				<Box className="hidden md:block absolute left-2 top-[140px] z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
 					<ArrowButton dir="left" onClick={scrollPrev} />
 				</Box>
 			)}
 
 			{canRight && (
-				<Box
-					className="hidden md:block absolute right-2 top-[140px] z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-				>
+				<Box className="hidden md:block absolute right-2 top-[140px] z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
 					<ArrowButton dir="right" onClick={scrollNext} />
 				</Box>
 			)}
@@ -244,97 +338,7 @@ export default function UrgentSection() {
 				}}
 			>
 				{items.map((item) => (
-					<Box
-						key={item.id}
-						className="flex-shrink-0 w-[260px] snap-center rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md transition-shadow duration-300 cursor-pointer"
-						sx={{ bgcolor: "background.paper" }}
-					>
-						{/* Cover */}
-						<Box className="relative h-[140px] rounded-t-2xl overflow-hidden bg-gray-100">
-							<Image
-								src={item.cover}
-								alt={item.title}
-								fill
-								sizes="260px"
-								style={{ objectFit: "cover" }}
-								className="group-hover:scale-105 transition-transform duration-500"
-							/>
-							{/* Tag */}
-							<Box className="absolute top-2 left-2">
-								<Chip
-									label={item.tag === "ORG" ? "ORGANISASI" : "TERVERIFIKASI"}
-									size="small"
-									className="h-5 text-[9px] font-bold bg-white/95 dark:bg-black/80 backdrop-blur-sm shadow-sm"
-									sx={{
-										color:
-											item.tag === "ORG"
-												? "primary.main"
-												: "info.main",
-										border: "1px solid",
-										borderColor: "rgba(255,255,255,0.2)",
-									}}
-								/>
-							</Box>
-							{/* Days Left Badge */}
-							<Box className="absolute bottom-2 left-2 bg-black/60 backdrop-blur-md text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
-								{item.daysLeft} hari lagi
-							</Box>
-						</Box>
-
-						{/* Content */}
-						<Box className="p-3">
-							<Typography
-								className="text-[13px] font-bold leading-snug line-clamp-2 min-h-[40px]"
-								sx={{ color: "text.primary" }}
-							>
-								{item.title}
-							</Typography>
-							
-							<Box className="flex items-center gap-1.5 mt-2 mb-3">
-								<Box className="w-4 h-4 rounded-full bg-gray-200 overflow-hidden relative flex-shrink-0">
-									<Image
-										src="/brand/logo.png" 
-										alt={item.organizer}
-										fill
-										style={{ objectFit: "cover" }}
-									/>
-								</Box>
-								<Typography
-									className="text-[10px] font-medium text-gray-500 dark:text-gray-400 truncate"
-								>
-									{item.organizer}
-								</Typography>
-								{item.tag === "ORG" && (
-									<Box className="w-3 h-3 text-blue-500">
-										<svg viewBox="0 0 24 24" fill="currentColor" className="w-full h-full">
-											<path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" />
-										</svg>
-									</Box>
-								)}
-							</Box>
-
-							{/* Progress Bar Dual */}
-							<ProgressBarDual
-								collected={item.collected}
-								target={item.target || 0}
-							/>
-
-							<Box className="flex items-center justify-between mt-2 text-[10px] text-gray-500">
-								<Box>
-									<span className="block text-[10px] text-gray-400">Terkumpul</span>
-									<span className="font-bold text-gray-900 dark:text-gray-100">
-										Rp {rupiah(item.collected)}
-									</span>
-								</Box>
-								<Box className="text-right">
-									<span className="block text-[10px] text-gray-400">Donatur</span>
-									<span className="font-bold text-gray-900 dark:text-gray-100">
-										{item.donors}
-									</span>
-								</Box>
-							</Box>
-						</Box>
-					</Box>
+					<UrgentCard key={item.id} item={item} />
 				))}
 			</Box>
 		</Box>

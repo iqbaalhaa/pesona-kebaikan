@@ -4,7 +4,6 @@ import * as React from "react";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 
-const PRIMARY = "#61ce70";
 const MIDTRANS_BLUE = "#2C7BE5"; // nuansa midtrans-ish
 
 function Svg({ children }: { children: React.ReactNode }) {
@@ -156,7 +155,7 @@ export default function DonationBanner() {
 		<Box sx={{ px: 2.5, mt: 2.5 }}>
 			<Box
 				sx={{
-					borderRadius: 4,
+					borderRadius: { md: 1 },
 					p: 1.6,
 					border: "1px solid rgba(97,206,112,0.22)",
 					background:

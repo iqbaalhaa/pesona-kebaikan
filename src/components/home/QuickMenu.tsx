@@ -18,9 +18,15 @@ import HealthAndSafetyIcon from "@mui/icons-material/HealthAndSafety";
 import SavingsIcon from "@mui/icons-material/Savings";
 
 const menus: MenuItem[] = [
-	{ label: "Donasi", icon: <VolunteerActivismIcon fontSize="large" color="primary" /> },
+	{
+		label: "Donasi",
+		icon: <VolunteerActivismIcon fontSize="large" color="primary" />,
+	},
 	{ label: "Zakat", icon: <MosqueIcon fontSize="large" color="primary" /> },
-	{ label: "Galang Dana", icon: <CampaignIcon fontSize="large" color="primary" /> },
+	{
+		label: "Galang Dana",
+		icon: <CampaignIcon fontSize="large" color="primary" />,
+	},
 	{
 		label: "Donasi Otomatis",
 		icon: <EventRepeatIcon fontSize="large" color="primary" />,
@@ -40,7 +46,10 @@ const menus: MenuItem[] = [
 		isNew: true,
 		icon: <HealthAndSafetyIcon fontSize="large" color="primary" />,
 	},
-	{ label: "Dana Abadi", icon: <SavingsIcon fontSize="large" color="primary" /> },
+	{
+		label: "Dana Abadi",
+		icon: <SavingsIcon fontSize="large" color="primary" />,
+	},
 ];
 
 export default function QuickMenu() {
@@ -65,7 +74,7 @@ export default function QuickMenu() {
 					display: "grid",
 					gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
 					gap: 1.25,
-					borderRadius: 3,
+					borderRadius: "12px",
 					bgcolor: "background.paper",
 				}}
 			>
@@ -80,7 +89,7 @@ export default function QuickMenu() {
 							textAlign: "center",
 							py: 1,
 							position: "relative",
-							borderRadius: 3,
+							borderRadius: "12px",
 							cursor: "pointer",
 							userSelect: "none",
 							transition: "transform 120ms ease, background-color 120ms ease",

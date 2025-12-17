@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Image from "next/image";
 import AppBar from "@mui/material/AppBar";
 import Box from "@mui/material/Box";
 import Toolbar from "@mui/material/Toolbar";
@@ -17,6 +18,7 @@ interface SimpleAppBarProps {
 export default function SimpleAppBar({ variant = "solid" }: SimpleAppBarProps) {
 	const theme = useTheme();
 	const [searchValue, setSearchValue] = React.useState("");
+	const [logoSrc, setLogoSrc] = React.useState("/brand/logo.png");
 	const isOverlay = variant === "overlay";
 
 	// Colors depend on variant
@@ -38,16 +40,20 @@ export default function SimpleAppBar({ variant = "solid" }: SimpleAppBarProps) {
 				left: 0,
 				right: 0,
 				zIndex: 50,
-				bgcolor: isOverlay ? "transparent" : "background.paper",
+				bgcolor: isOverlay ? "rgba(255,255,255,0.06)" : "background.paper",
+				backdropFilter: isOverlay ? "blur(12px)" : "none",
 				borderBottom: isOverlay ? "none" : `1px solid ${theme.palette.divider}`,
 				transition: "all 300ms ease",
 			}}
 		>
 			<Toolbar sx={{ px: 2, minHeight: 64, gap: 1.25 }}>
 				<Box sx={{ flexShrink: 0, display: "flex", alignItems: "center" }}>
-					<img
-						src="/brand/logo.png"
+					<Image
+						src={logoSrc}
 						alt="Pesona Kebaikan"
+						width={140}
+						height={32}
+						priority
 						style={{
 							height: 32,
 							width: "auto",
@@ -57,6 +63,7 @@ export default function SimpleAppBar({ variant = "solid" }: SimpleAppBarProps) {
 								? "drop-shadow(0 10px 18px rgba(0,0,0,.45))"
 								: "none",
 						}}
+						onError={() => setLogoSrc("/defaultimg.webp")}
 					/>
 				</Box>
 

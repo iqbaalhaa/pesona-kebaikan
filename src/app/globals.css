@@ -28,12 +28,14 @@
 	--font-sans: var(--font-pjs);
 }
 
+/* Dark mode disabled as per user request
 @media (prefers-color-scheme: dark) {
 	:root {
-		--background: #0b1220; /* Matches MUI Dark background.default */
-		--foreground: #f8fafc; /* Matches MUI Dark text.primary */
+		--background: #0b1220; 
+		--foreground: #f8fafc; 
 	}
 }
+*/
 
 html,
 body {
@@ -73,8 +75,8 @@ body {
 	min-width: 0 !important;
 	padding-left: 8px !important;
 	padding-right: 8px !important;
-	color: var(--foreground);
-	opacity: 0.55;
+	color: #0f172a !important; /* Force dark slate color */
+	opacity: 0.6 !important;
 	transition: all 180ms ease !important;
 }
 
@@ -95,12 +97,13 @@ body {
 
 /* Active State */
 .bottom-nav .Mui-selected {
-	color: var(--brand) !important;
+	color: #61ce70 !important; /* Force primary brand color */
 	opacity: 1 !important;
 }
 
-.bottom-nav .Mui-selected .MuiBottomNavigationAction-label {
-	display: none !important;
+.bottom-nav .MuiBottomNavigationAction-label.Mui-selected {
+	color: #61ce70 !important;
+	font-weight: 700 !important;
 }
 
 .bottom-nav .MuiBottomNavigationAction-root.Mui-selected .MuiSvgIcon-root {
@@ -108,7 +111,9 @@ body {
 	filter: drop-shadow(0 10px 18px var(--color-primary-shadow));
 }
 
-.bottom-nav .MuiBottomNavigationAction-root.Mui-selected .MuiBottomNavigationAction-wrapper {
+.bottom-nav
+	.MuiBottomNavigationAction-root.Mui-selected
+	.MuiBottomNavigationAction-wrapper {
 	padding-top: 6px;
 	padding-bottom: 6px;
 	border-radius: 12px;

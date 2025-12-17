@@ -1,6 +1,5 @@
 import HeroCarousel from "@/components/home/HeroCarousel";
 import Box from "@mui/material/Box";
-import Typography from "@mui/material/Typography";
 import QuickMenu from "@/components/home/QuickMenu";
 import UrgentSection from "@/components/home/UrgentSection";
 import CategoryChips from "@/components/home/CategoryChips";

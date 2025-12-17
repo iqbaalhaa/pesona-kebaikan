@@ -8,11 +8,8 @@ import Chip from "@mui/material/Chip";
 import Image from "next/image";
 
 import { Campaign } from "@/types";
-import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
-import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 
 const PRIMARY = "#61ce70";
-
 
 const popular: Campaign[] = [
 	{
@@ -69,6 +66,48 @@ function rupiah(n: number) {
 	return new Intl.NumberFormat("id-ID").format(n);
 }
 
+function ArrowButton({
+	dir,
+	onClick,
+}: {
+	dir: "left" | "right";
+	onClick: () => void;
+}) {
+	return (
+		<Box
+			role="button"
+			tabIndex={0}
+			aria-label={dir === "left" ? "Geser ke kiri" : "Geser ke kanan"}
+			onClick={onClick}
+			onKeyDown={(e) => e.key === "Enter" && onClick()}
+			sx={{
+				width: 38,
+				height: 38,
+				borderRadius: "12px",
+				display: "grid",
+				placeItems: "center",
+				cursor: "pointer",
+				userSelect: "none",
+				bgcolor: "rgba(255,255,255,0.92)",
+				backdropFilter: "blur(10px)",
+				border: "1px solid rgba(15,23,42,0.10)",
+				boxShadow: "0 14px 26px rgba(15,23,42,.14)",
+				"&:active": { transform: "scale(0.98)" },
+			}}
+		>
+			<Box
+				sx={{
+					fontSize: 20,
+					fontWeight: 900,
+					color: "rgba(15,23,42,.75)",
+					mt: "-1px",
+				}}
+			>
+				{dir === "left" ? "‹" : "›"}
+			</Box>
+		</Box>
+	);
+}
 function ProgressMini({ pct }: { pct: number }) {
 	return (
 		<Box
@@ -88,6 +127,176 @@ function ProgressMini({ pct }: { pct: number }) {
 					transition: "width 250ms ease",
 				}}
 			/>
+		</Box>
+	);
+}
+
+function PopularCard({ c }: { c: Campaign }) {
+	const [imgSrc, setImgSrc] = React.useState(c.cover || "/defaultimg.webp");
+	const pct = c.target ? Math.round((c.collected / c.target) * 100) : 0;
+
+	return (
+		<Box
+			role="button"
+			tabIndex={0}
+			onClick={() => alert("Ke detail campaign (route menyusul)")}
+			onKeyDown={(e) =>
+				e.key === "Enter" && alert("Ke detail campaign (route menyusul)")
+			}
+			sx={{
+				minWidth: 240,
+				maxWidth: 240,
+				borderRadius: { md: 1 },
+				border: "1px solid rgba(15,23,42,0.08)",
+				bgcolor: "#fff",
+				boxShadow: "0 14px 30px rgba(15,23,42,.08)",
+				overflow: "hidden",
+				scrollSnapAlign: "start",
+				cursor: "pointer",
+				userSelect: "none",
+				transition: "transform 140ms ease",
+				"&:active": { transform: "scale(0.99)" },
+			}}
+		>
+			{/* Cover */}
+			<Box sx={{ position: "relative", height: 120 }}>
+				<Image
+					src={imgSrc}
+					alt={c.title}
+					fill
+					sizes="240px"
+					style={{ objectFit: "cover" }}
+					onError={() => setImgSrc("/defaultimg.webp")}
+				/>
+				<Box
+					sx={{
+						position: "absolute",
+						inset: 0,
+						background:
+							"linear-gradient(to top, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.0) 70%)",
+						pointerEvents: "none",
+					}}
+				/>
+
+				<Box sx={{ position: "absolute", top: 10, left: 10 }}>
+					<Chip
+						label={c.category}
+						size="small"
+						sx={{
+							height: 22,
+							bgcolor: "rgba(255,255,255,0.92)",
+							backdropFilter: "blur(10px)",
+							fontWeight: 900,
+							"& .MuiChip-label": { px: 1, fontSize: 11 },
+						}}
+					/>
+				</Box>
+
+				<Box
+					sx={{
+						position: "absolute",
+						bottom: 10,
+						left: 10,
+						px: 1,
+						py: "2px",
+						borderRadius: 999,
+						fontSize: 10,
+						fontWeight: 900,
+						color: "#fff",
+						bgcolor: "rgba(15,23,42,0.72)",
+						backdropFilter: "blur(10px)",
+					}}
+				>
+					{c.daysLeft} hari
+				</Box>
+			</Box>
+
+			{/* Body */}
+			<Box sx={{ p: 1.25 }}>
+				<Typography
+					sx={{
+						fontSize: 13,
+						fontWeight: 900,
+						color: "text.primary",
+						lineHeight: 1.25,
+						display: "-webkit-box",
+						WebkitLineClamp: 2,
+						WebkitBoxOrient: "vertical",
+						overflow: "hidden",
+						minHeight: 34,
+					}}
+				>
+					{c.title}
+				</Typography>
+
+				<Box
+					sx={{
+						display: "flex",
+						alignItems: "center",
+						gap: 0.75,
+						mt: 0.8,
+					}}
+				>
+					<Typography sx={{ fontSize: 11, color: "rgba(15,23,42,.60)" }}>
+						{c.organizer}
+					</Typography>
+					<Chip
+						label="ORG"
+						size="small"
+						sx={{
+							height: 18,
+							bgcolor: "rgba(97,206,112,0.14)",
+							color: PRIMARY,
+							fontWeight: 900,
+							"& .MuiChip-label": { px: 0.8, fontSize: 9 },
+						}}
+					/>
+				</Box>
+
+				<Box sx={{ mt: 1.5 }}>
+					<Box
+						sx={{
+							display: "flex",
+							alignItems: "center",
+							justifyContent: "space-between",
+							mb: 0.5,
+						}}
+					>
+						<Typography
+							sx={{
+								fontSize: 10,
+								fontWeight: 700,
+								color: "rgba(15,23,42,.50)",
+							}}
+						>
+							Terkumpul
+						</Typography>
+						<Typography
+							sx={{
+								fontSize: 10,
+								fontWeight: 900,
+								color: PRIMARY,
+							}}
+						>
+							{pct}%
+						</Typography>
+					</Box>
+					<ProgressMini pct={pct} />
+					<Box
+						sx={{
+							display: "flex",
+							justifyContent: "space-between",
+							mt: 0.5,
+						}}
+					>
+						<Typography
+							sx={{ fontSize: 11, fontWeight: 900, color: "text.primary" }}
+						>
+							Rp {rupiah(c.collected)}
+						</Typography>
+					</Box>
+				</Box>
+			</Box>
 		</Box>
 	);
 }
@@ -146,47 +355,6 @@ export default function PopularSection() {
 		if (!el) return;
 		el.scrollBy({ left: CARD_STEP, top: 0, behavior: "smooth" });
 	}, []);
-
-	const ArrowButton = ({
-		dir,
-		onClick,
-	}: {
-		dir: "left" | "right";
-		onClick: () => void;
-	}) => (
-		<Box
-			role="button"
-			tabIndex={0}
-			aria-label={dir === "left" ? "Geser ke kiri" : "Geser ke kanan"}
-			onClick={onClick}
-			onKeyDown={(e) => e.key === "Enter" && onClick()}
-			sx={{
-				width: 38,
-				height: 38,
-				borderRadius: 999,
-				display: "grid",
-				placeItems: "center",
-				cursor: "pointer",
-				userSelect: "none",
-				bgcolor: "rgba(255,255,255,0.92)",
-				backdropFilter: "blur(10px)",
-				border: "1px solid rgba(15,23,42,0.10)",
-				boxShadow: "0 14px 26px rgba(15,23,42,.14)",
-				"&:active": { transform: "scale(0.98)" },
-			}}
-		>
-			<Box
-				sx={{
-					fontSize: 20,
-					fontWeight: 900,
-					color: "rgba(15,23,42,.75)",
-					mt: "-1px",
-				}}
-			>
-				{dir === "left" ? "‹" : "›"}
-			</Box>
-		</Box>
-	);
 
 	return (
 		<Box sx={{ px: 2.5, mt: 2.5 }}>
@@ -282,202 +450,9 @@ export default function PopularSection() {
 						},
 					}}
 				>
-					{popular.map((c) => {
-						const pct = Math.round((c.collected / c.target) * 100);
-
-						return (
-							<Box
-								key={c.id}
-								role="button"
-								tabIndex={0}
-								onClick={() => alert("Ke detail campaign (route menyusul)")}
-								onKeyDown={(e) =>
-									e.key === "Enter" &&
-									alert("Ke detail campaign (route menyusul)")
-								}
-								sx={{
-									minWidth: 240,
-									maxWidth: 240,
-									borderRadius: 3,
-									border: "1px solid rgba(15,23,42,0.08)",
-									bgcolor: "#fff",
-									boxShadow: "0 14px 30px rgba(15,23,42,.08)",
-									overflow: "hidden",
-									scrollSnapAlign: "start",
-									cursor: "pointer",
-									userSelect: "none",
-									transition: "transform 140ms ease",
-									"&:active": { transform: "scale(0.99)" },
-								}}
-							>
-								{/* Cover */}
-								<Box sx={{ position: "relative", height: 120 }}>
-									<Image
-										src={c.cover}
-										alt={c.title}
-										fill
-										sizes="240px"
-										style={{ objectFit: "cover" }}
-									/>
-									<Box
-										sx={{
-											position: "absolute",
-											inset: 0,
-											background:
-												"linear-gradient(to top, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.0) 70%)",
-											pointerEvents: "none",
-										}}
-									/>
-
-									<Box sx={{ position: "absolute", top: 10, left: 10 }}>
-										<Chip
-											label={c.category}
-											size="small"
-											sx={{
-												height: 22,
-												bgcolor: "rgba(255,255,255,0.92)",
-												backdropFilter: "blur(10px)",
-												fontWeight: 900,
-												"& .MuiChip-label": { px: 1, fontSize: 11 },
-											}}
-										/>
-									</Box>
-
-									<Box
-										sx={{
-											position: "absolute",
-											bottom: 10,
-											left: 10,
-											px: 1,
-											py: "2px",
-											borderRadius: 999,
-											fontSize: 10,
-											fontWeight: 900,
-											color: "#fff",
-											bgcolor: "rgba(15,23,42,0.72)",
-											backdropFilter: "blur(10px)",
-										}}
-									>
-										{c.daysLeft} hari
-									</Box>
-								</Box>
-
-								{/* Body */}
-								<Box sx={{ p: 1.25 }}>
-									<Typography
-										sx={{
-											fontSize: 13,
-											fontWeight: 900,
-											color: "text.primary",
-											lineHeight: 1.25,
-											display: "-webkit-box",
-											WebkitLineClamp: 2,
-											WebkitBoxOrient: "vertical",
-											overflow: "hidden",
-											minHeight: 34,
-										}}
-									>
-										{c.title}
-									</Typography>
-
-									<Box
-										sx={{
-											display: "flex",
-											alignItems: "center",
-											gap: 0.75,
-											mt: 0.8,
-										}}
-									>
-										<Typography
-											sx={{ fontSize: 11, color: "rgba(15,23,42,.60)" }}
-										>
-											{c.organizer}
-										</Typography>
-										<Chip
-											label="ORG"
-											size="small"
-											sx={{
-												height: 18,
-												bgcolor: "rgba(97,206,112,0.14)",
-												color: PRIMARY,
-												border: "1px solid rgba(97,206,112,0.28)",
-												fontWeight: 900,
-												"& .MuiChip-label": { px: 0.75, fontSize: 10 },
-											}}
-										/>
-									</Box>
-
-									<Typography
-										sx={{
-											mt: 0.8,
-											fontSize: 11,
-											color: "rgba(15,23,42,.60)",
-											display: "-webkit-box",
-											WebkitLineClamp: 1,
-											WebkitBoxOrient: "vertical",
-											overflow: "hidden",
-										}}
-									>
-										{c.latestUpdate}
-									</Typography>
-
-									<Box sx={{ mt: 1 }}>
-										<ProgressMini pct={pct} />
-										<Box
-											sx={{
-												display: "flex",
-												justifyContent: "space-between",
-												mt: 0.7,
-											}}
-										>
-											<Typography
-												sx={{ fontSize: 11, color: "rgba(15,23,42,.55)" }}
-											>
-												{Math.min(100, pct)}%
-											</Typography>
-											<Typography
-												sx={{ fontSize: 11, color: "rgba(15,23,42,.55)" }}
-											>
-												{c.daysLeft} hari
-											</Typography>
-										</Box>
-									</Box>
-
-									<Box sx={{ mt: 1 }}>
-										<Typography
-											sx={{ fontSize: 11.5, color: "rgba(15,23,42,.55)" }}
-										>
-											Terkumpul{" "}
-											<Box
-												component="span"
-												sx={{ fontWeight: 900, color: "#0f172a" }}
-											>
-												Rp{rupiah(c.collected)}
-											</Box>
-										</Typography>
-										<Box
-											sx={{
-												display: "flex",
-												justifyContent: "space-between",
-												mt: 0.35,
-											}}
-										>
-											<Typography
-												sx={{ fontSize: 11, color: "rgba(15,23,42,.45)" }}
-											>
-												Target Rp{rupiah(c.target)}
-											</Typography>
-											<Typography
-												sx={{ fontSize: 11, color: "rgba(15,23,42,.45)" }}
-											>
-												{rupiah(c.donors)} donatur
-											</Typography>
-										</Box>
-									</Box>
-								</Box>
-							</Box>
-						);
-					})}
+					{popular.map((c) => (
+						<PopularCard key={c.id} c={c} />
+					))}
 				</Box>
 			</Box>
 

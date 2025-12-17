@@ -21,7 +21,7 @@ function TrustItem({
 				sx={{
 					width: 36,
 					height: 36,
-					borderRadius: 3,
+					borderRadius: "12px",
 					display: "grid",
 					placeItems: "center",
 					bgcolor: "rgba(97,206,112,0.14)",
@@ -72,7 +72,7 @@ export default function TrustStrip() {
 		<Box sx={{ px: 2.5, mt: 2.5 }}>
 			<Box
 				sx={{
-					borderRadius: 4, // radius 16px (MUI spacing)
+					borderRadius: "16px", // radius 16px (MUI spacing)
 					p: 1.6,
 					border: "1px solid rgba(15,23,42,0.08)",
 					background:

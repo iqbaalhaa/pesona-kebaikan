@@ -13,8 +13,6 @@ import ThunderstormIcon from "@mui/icons-material/Thunderstorm";
 import ChildCareIcon from "@mui/icons-material/ChildCare";
 import MedicalServicesIcon from "@mui/icons-material/MedicalServices";
 import GridViewIcon from "@mui/icons-material/GridView";
-import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
-import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 
 const categories: Category[] = [
 	{
@@ -132,14 +130,13 @@ function CategoryButton({
 			tabIndex={0}
 			onClick={onClick}
 			onKeyDown={(e) => e.key === "Enter" && onClick()}
-			className="w-full rounded-xl p-3 cursor-pointer select-none transition-all duration-150 ease-out active:scale-95"
+			className="w-full p-3 cursor-pointer select-none transition-all duration-150 ease-out active:scale-95"
 			sx={{
+				borderRadius: { md: 1 },
 				border: selected
 					? `1px solid ${alpha(primaryMain, 0.45)}`
 					: `1px solid ${alpha(theme.palette.text.primary, 0.1)}`,
-				bgcolor: selected
-					? alpha(primaryMain, 0.14)
-					: "background.paper",
+				bgcolor: selected ? alpha(primaryMain, 0.14) : "background.paper",
 				boxShadow: selected
 					? `0 16px 26px ${alpha(primaryMain, 0.14)}`
 					: `0 14px 24px ${alpha(theme.palette.text.primary, 0.06)}`,
@@ -172,23 +169,29 @@ function CategoryButton({
 
 function CampaignRowCard({ item }: { item: Campaign }) {
 	const theme = useTheme();
+	const [imgSrc, setImgSrc] = React.useState(item.cover || "/defaultimg.webp");
 
 	return (
 		<Box
-			className="flex gap-3 p-3 rounded-xl bg-white dark:bg-slate-900 shadow-sm border border-slate-200 dark:border-slate-800"
+			className="flex gap-3 p-3 bg-white shadow-sm border border-slate-200"
 			sx={{
 				// Use theme values for precise border/shadow matching if needed, but tailwind is fine here
-				bgcolor: "background.paper",
+				bgcolor: "#fff",
+				borderRadius: { md: 1 },
 			}}
 		>
 			{/* Cover */}
-			<Box className="relative w-24 h-24 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100">
+			<Box
+				className="relative w-24 h-24 flex-shrink-0 overflow-hidden bg-gray-100"
+				sx={{ borderRadius: { md: 1 } }}
+			>
 				<Image
-					src={item.cover}
+					src={imgSrc}
 					alt={item.title}
 					fill
 					sizes="96px"
 					style={{ objectFit: "cover" }}
+					onError={() => setImgSrc("/defaultimg.webp")}
 				/>
 			</Box>
 
@@ -218,17 +221,14 @@ function CampaignRowCard({ item }: { item: Campaign }) {
 						</span>
 					</Box>
 					{/* Progress Bar */}
-					<Box className="h-1.5 w-full bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+					<Box className="h-1.5 w-full bg-white rounded-full overflow-hidden">
 						<Box
 							className="h-full rounded-full bg-primary"
 							sx={{ width: "65%", bgcolor: "primary.main" }}
 						/>
 					</Box>
 					<Box className="flex items-center gap-1 mt-1.5">
-						<Typography
-							variant="caption"
-							className="text-[10px] text-gray-500"
-						>
+						<Typography variant="caption" className="text-[10px] text-gray-500">
 							Sisa hari
 						</Typography>
 						<Chip

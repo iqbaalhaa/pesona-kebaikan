@@ -10,7 +10,7 @@ import ArticleIcon from "@mui/icons-material/Article";
 import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
 import CampaignIcon from "@mui/icons-material/Campaign";
 import PersonIcon from "@mui/icons-material/Person";
-import { alpha, useTheme } from "@mui/material/styles";
+// import { useTheme } from "@mui/material/styles";
 
 const menus = [
 	{ label: "Donasi", path: "/", icon: <VolunteerActivismIcon /> },
@@ -28,7 +28,7 @@ function isActive(pathname: string, path: string) {
 export default function SimpleBottomNavigation() {
 	const router = useRouter();
 	const pathname = usePathname();
-	const theme = useTheme();
+	// const theme = useTheme(); // Unused but kept for potential future use
 
 	const currentIndex = React.useMemo(() => {
 		const idx = menus.findIndex((m) => isActive(pathname, m.path));
@@ -38,12 +38,13 @@ export default function SimpleBottomNavigation() {
 	return (
 		<Paper
 			elevation={0}
-			className="fixed left-1/2 -translate-x-1/2 bottom-0 w-full max-w-[480px] z-[1300] overflow-hidden pb-[env(safe-area-inset-bottom)] backdrop-blur-md"
+			className="fixed left-1/2 -translate-x-1/2 bottom-0 w-full max-w-[480px] z-[1300] overflow-hidden pb-[env(safe-area-inset-bottom)]"
 			sx={{
-				borderTop: `1px solid ${alpha(theme.palette.divider, 0.08)}`,
-				borderTopLeftRadius: 18,
-				borderTopRightRadius: 18,
-				bgcolor: alpha(theme.palette.background.paper, 0.92),
+				borderTop: "1px solid rgba(0,0,0,0.12)",
+				borderTopLeftRadius: 16,
+				borderTopRightRadius: 16,
+				bgcolor: "#ffffff",
+				boxShadow: "0 -5px 20px rgba(0,0,0,0.1)",
 			}}
 		>
 			<BottomNavigation

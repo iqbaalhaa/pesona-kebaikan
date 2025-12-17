@@ -128,7 +128,11 @@ export default function PrayersSection() {
 	const [particles, setParticles] = React.useState<Particle[]>([]);
 	const [pulsing, setPulsing] = React.useState<Record<string, boolean>>({});
 
-	const makeId = () => `${Date.now()}_${Math.random().toString(16).slice(2)}`;
+	const idRef = React.useRef(0);
+	const nextId = React.useCallback(() => {
+		idRef.current += 1;
+		return `p_${idRef.current.toString(36)}`;
+	}, []);
 
 	const pulseCount = (prayerId: string) => {
 		setPulsing((prev) => ({ ...prev, [prayerId]: true }));
@@ -138,26 +142,31 @@ export default function PrayersSection() {
 	};
 
 	const spawnFX = (prayerId: string) => {
-		const hearts: Particle[] = Array.from({ length: 6 }).map((_, i) => ({
-			id: `${makeId()}_h${i}`,
-			prayerId,
-			kind: "heart",
-			dx: [-22, -12, -4, 4, 12, 22][i] + (Math.random() * 6 - 3),
-			delayMs: i * 45,
-		}));
+		const base = [-22, -12, -4, 4, 12, 22];
+		const hearts: Particle[] = Array.from({ length: 6 }).map((_, i) => {
+			const jitter = ((i % 3) - 1) * 2; // -2, 0, 2 pattern
+			return {
+				id: `${nextId()}_h${i}`,
+				prayerId,
+				kind: "heart",
+				dx: base[i] + jitter,
+				delayMs: i * 45,
+			};
+		});
 
 		const confetti: Particle[] = Array.from({ length: 8 }).map((_, i) => {
-			const size = 4 + ((Math.random() * 4) | 0);
+			const size = 4 + (i % 4);
 			const color =
-				Math.random() > 0.5 ? "rgba(97,206,112,0.95)" : "rgba(15,23,42,0.18)";
-
+				i % 2 === 0 ? "rgba(97,206,112,0.95)" : "rgba(15,23,42,0.18)";
+			const dx = ((i * 9) % 56) - 28;
+			const rot = ((i * 37) % 260) - 130;
 			return {
-				id: `${makeId()}_c${i}`,
+				id: `${nextId()}_c${i}`,
 				prayerId,
 				kind: "confetti",
-				dx: (Math.random() * 56 - 28) | 0,
+				dx,
 				delayMs: 60 + i * 30,
-				rotDeg: (Math.random() * 260 - 130) | 0,
+				rotDeg: rot,
 				size,
 				color,
 			};
@@ -233,7 +242,7 @@ export default function PrayersSection() {
 							sx={{
 								minWidth: 260,
 								maxWidth: 260,
-								borderRadius: 3,
+								borderRadius: { md: 1 },
 								bgcolor: "#fff",
 								border: "1px solid rgba(15,23,42,0.08)",
 								boxShadow: "0 14px 26px rgba(15,23,42,.06)",

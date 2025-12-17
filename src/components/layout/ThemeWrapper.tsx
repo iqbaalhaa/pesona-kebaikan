@@ -3,21 +3,19 @@
 import * as React from "react";
 import { ThemeProvider } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
-import { lightTheme, darkTheme } from "@/theme";
-import useMediaQuery from "@mui/material/useMediaQuery";
+import { lightTheme } from "@/theme";
 
 export default function ThemeWrapper({
 	children,
 }: {
 	children: React.ReactNode;
 }) {
-	// Simple dark mode detection
-	// Note: For production, consider next-themes or cookies to avoid hydration mismatch
-	const prefersDarkMode = useMediaQuery("(prefers-color-scheme: dark)");
+	// Force light mode as per user request
+	// const prefersDarkMode = useMediaQuery("(prefers-color-scheme: dark)");
 
 	const theme = React.useMemo(
-		() => (prefersDarkMode ? darkTheme : lightTheme),
-		[prefersDarkMode]
+		() => lightTheme, // Always use light theme
+		[]
 	);
 
 	// Prevent hydration mismatch by rendering only after mount

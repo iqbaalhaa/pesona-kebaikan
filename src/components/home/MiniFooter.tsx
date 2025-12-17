@@ -4,14 +4,14 @@ import * as React from "react";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 
-export default function MiniFooter() {
-	const LinkBtn = ({
-		label,
-		onClick,
-	}: {
-		label: string;
-		onClick: () => void;
-	}) => (
+function LinkBtn({
+	label,
+	onClick,
+}: {
+	label: string;
+	onClick: () => void;
+}) {
+	return (
 		<Box
 			component="button"
 			type="button"
@@ -31,7 +31,9 @@ export default function MiniFooter() {
 			{label}
 		</Box>
 	);
+}
 
+export default function MiniFooter() {
 	return (
 		<Box
 			sx={{
