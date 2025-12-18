@@ -38,7 +38,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 				maxWidth: { xs: "100%", sm: 480 }, // Full width on mobile, capped on desktop
 				height: "100vh",
 				maxHeight: { xs: "100vh", sm: "calc(100vh - 6px)" }, // Full screen on mobile, windowed on desktop (minus padding top/bottom)
-				borderRadius: { xs: 0, sm: 4 },
+				borderRadius: { xs: 0, sm: 1 },
 				overflow: "hidden",
 				display: "flex",
 				flexDirection: "column",

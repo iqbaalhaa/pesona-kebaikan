@@ -10,7 +10,6 @@ import ArticleIcon from "@mui/icons-material/Article";
 import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
 import CampaignIcon from "@mui/icons-material/Campaign";
 import PersonIcon from "@mui/icons-material/Person";
-// import { useTheme } from "@mui/material/styles";
 
 const menus = [
 	{ label: "Donasi", path: "/", icon: <VolunteerActivismIcon /> },
@@ -28,18 +27,47 @@ function isActive(pathname: string, path: string) {
 export default function SimpleBottomNavigation() {
 	const router = useRouter();
 	const pathname = usePathname();
-	// const theme = useTheme(); // Unused but kept for potential future use
+
+	const ref = React.useRef<HTMLDivElement | null>(null);
 
 	const currentIndex = React.useMemo(() => {
 		const idx = menus.findIndex((m) => isActive(pathname, m.path));
 		return idx === -1 ? 0 : idx;
 	}, [pathname]);
 
+	// ✅ ukur tinggi navbar & simpan ke CSS var global: --bottom-nav-h
+	React.useLayoutEffect(() => {
+		const el = ref.current;
+		if (!el) return;
+
+		const setVar = () => {
+			const h = el.getBoundingClientRect().height || 64;
+			document.documentElement.style.setProperty(
+				"--bottom-nav-h",
+				`${Math.ceil(h)}px`
+			);
+		};
+
+		setVar();
+
+		const ro = new ResizeObserver(() => setVar());
+		ro.observe(el);
+
+		window.addEventListener("resize", setVar);
+		return () => {
+			ro.disconnect();
+			window.removeEventListener("resize", setVar);
+		};
+	}, []);
+
 	return (
 		<Paper
+			ref={ref}
 			elevation={0}
-			className="fixed left-1/2 -translate-x-1/2 bottom-0 w-full max-w-[480px] z-[1300] overflow-hidden pb-[env(safe-area-inset-bottom)]"
+			className="fixed left-1/2 -translate-x-1/2 bottom-0 w-full max-w-[480px] overflow-hidden pb-[env(safe-area-inset-bottom)]"
 			sx={{
+				// ✅ jangan 1300 biar gak tabrakan sama modal MUI (modal default 1300)
+				zIndex: 1100,
 				borderTop: "1px solid rgba(0,0,0,0.12)",
 				borderTopLeftRadius: 16,
 				borderTopRightRadius: 16,

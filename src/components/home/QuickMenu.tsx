@@ -1,13 +1,14 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import Snackbar from "@mui/material/Snackbar";
 import Alert from "@mui/material/Alert";
-import { MenuItem } from "@/types";
 
-// Icons
 import VolunteerActivismIcon from "@mui/icons-material/VolunteerActivism";
 import MosqueIcon from "@mui/icons-material/Mosque";
 import CampaignIcon from "@mui/icons-material/Campaign";
@@ -17,14 +18,23 @@ import HandshakeIcon from "@mui/icons-material/Handshake";
 import HealthAndSafetyIcon from "@mui/icons-material/HealthAndSafety";
 import SavingsIcon from "@mui/icons-material/Savings";
 
+type MenuItem = {
+	label: string;
+	icon: React.ReactNode;
+	isNew?: boolean;
+	href?: string; // <— tambah ini
+};
+
 const menus: MenuItem[] = [
 	{
 		label: "Donasi",
+		href: "/donasi", // <— ini yang kita arahkan
 		icon: <VolunteerActivismIcon fontSize="large" color="primary" />,
 	},
 	{ label: "Zakat", icon: <MosqueIcon fontSize="large" color="primary" /> },
 	{
 		label: "Galang Dana",
+		href: "/galang-dana", // <— ini yang kita arahkan
 		icon: <CampaignIcon fontSize="large" color="primary" />,
 	},
 	{
@@ -53,12 +63,21 @@ const menus: MenuItem[] = [
 ];
 
 export default function QuickMenu() {
+	const router = useRouter();
 	const [open, setOpen] = React.useState(false);
 	const [msg, setMsg] = React.useState("");
 
-	const handleClick = (label: string) => {
+	const toastSoon = (label: string) => {
 		setMsg(`${label} — fitur segera hadir`);
 		setOpen(true);
+	};
+
+	const handleActivate = (m: MenuItem) => {
+		if (m.href) {
+			router.push(m.href);
+			return;
+		}
+		toastSoon(m.label);
 	};
 
 	return (
@@ -78,85 +97,104 @@ export default function QuickMenu() {
 					bgcolor: "background.paper",
 				}}
 			>
-				{menus.map((m) => (
-					<Box
-						key={m.label}
-						role="button"
-						tabIndex={0}
-						onClick={() => handleClick(m.label)}
-						onKeyDown={(e) => e.key === "Enter" && handleClick(m.label)}
-						sx={{
-							textAlign: "center",
-							py: 1,
-							position: "relative",
-							borderRadius: "12px",
-							cursor: "pointer",
-							userSelect: "none",
-							transition: "transform 120ms ease, background-color 120ms ease",
-							"&:active": { transform: "scale(0.98)" },
-							"&:hover": { backgroundColor: "action.hover" },
-						}}
-					>
-						{/* Badge BARU */}
-						{m.isNew && (
+				{menus.map((m) => {
+					const isLink = !!m.href;
+
+					const cell = (
+						<Box
+							role={isLink ? "link" : "button"}
+							tabIndex={0}
+							onClick={() => handleActivate(m)}
+							onKeyDown={(e) => e.key === "Enter" && handleActivate(m)}
+							sx={{
+								textAlign: "center",
+								py: 1,
+								position: "relative",
+								borderRadius: "12px",
+								cursor: "pointer",
+								userSelect: "none",
+								transition: "transform 120ms ease, background-color 120ms ease",
+								"&:active": { transform: "scale(0.98)" },
+								"&:hover": { backgroundColor: "action.hover" },
+							}}
+						>
+							{/* Badge BARU */}
+							{m.isNew && (
+								<Box
+									sx={{
+										position: "absolute",
+										top: 2,
+										left: "50%",
+										transform: "translateX(-50%)",
+										px: 1,
+										py: "2px",
+										borderRadius: 999,
+										fontSize: 9,
+										fontWeight: 800,
+										color: "#fff",
+										bgcolor: "#e11d48",
+										boxShadow: "0 10px 20px rgba(225,29,72,.22)",
+										zIndex: 1,
+									}}
+								>
+									BARU
+								</Box>
+							)}
+
+							{/* Icon bubble */}
 							<Box
 								sx={{
-									position: "absolute",
-									top: 2,
-									left: "50%",
-									transform: "translateX(-50%)",
-									px: 1,
-									py: "2px",
+									mx: "auto",
+									width: 52,
+									height: 52,
 									borderRadius: 999,
-									fontSize: 9,
-									fontWeight: 800,
-									color: "#fff",
-									bgcolor: "#e11d48",
-									boxShadow: "0 10px 20px rgba(225,29,72,.22)",
-									zIndex: 1,
+									display: "grid",
+									placeItems: "center",
+									bgcolor: "rgba(97,206,112,0.14)",
+									border: "1px solid rgba(97,206,112,0.28)",
+									boxShadow: "0 10px 24px rgba(15,23,42,.06)",
+									overflow: "hidden",
 								}}
 							>
-								BARU
+								{m.icon}
 							</Box>
-						)}
 
-						{/* Icon bubble */}
-						<Box
-							sx={{
-								mx: "auto",
-								width: 52,
-								height: 52,
-								borderRadius: 999,
-								display: "grid",
-								placeItems: "center",
-								bgcolor: "rgba(97,206,112,0.14)",
-								border: "1px solid rgba(97,206,112,0.28)",
-								boxShadow: "0 10px 24px rgba(15,23,42,.06)",
-								overflow: "hidden",
-							}}
-						>
-							{m.icon}
+							{/* Label */}
+							<Typography
+								sx={{
+									mt: 0.9,
+									fontSize: 12,
+									fontWeight: 600,
+									color: "text.primary",
+									lineHeight: 1.2,
+									px: 0.5,
+									display: "-webkit-box",
+									WebkitLineClamp: 2,
+									WebkitBoxOrient: "vertical",
+									overflow: "hidden",
+								}}
+							>
+								{m.label}
+							</Typography>
 						</Box>
+					);
 
-						{/* Label */}
-						<Typography
-							sx={{
-								mt: 0.9,
-								fontSize: 12,
-								fontWeight: 600,
-								color: "text.primary",
-								lineHeight: 1.2,
-								px: 0.5,
-								display: "-webkit-box",
-								WebkitLineClamp: 2,
-								WebkitBoxOrient: "vertical",
-								overflow: "hidden",
-							}}
-						>
-							{m.label}
-						</Typography>
-					</Box>
-				))}
+					// Supaya aksesibilitas & SEO oke, kalau ada href bungkus Link
+					return (
+						<Box key={m.label}>
+							{isLink ? (
+								<Link
+									href={m.href!}
+									style={{ textDecoration: "none", color: "inherit" }}
+								>
+									{cell}
+								</Link>
+							) : (
+								cell
+							)}
+						</Box>
+					);
+				})}
 			</Box>
 
 			<Box sx={{ mt: 2, height: 1, bgcolor: "divider" }} />
