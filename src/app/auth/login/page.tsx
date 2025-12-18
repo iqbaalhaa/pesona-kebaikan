@@ -1,16 +1,12 @@
-import { Box, Button, TextField, Typography } from "@mui/material";
-import { signIn } from "@/lib/auth";
+'use client';
+
+import { Box, Button, TextField, Typography, Link } from "@mui/material";
+import { loginAction } from "@/actions/auth";
+import NextLink from "next/link";
 
 export default function LoginPage() {
-  const signInAction = async (formData: FormData) => {
-    "use server";
-    const email = formData.get("email") as string;
-    const password = formData.get("password") as string;
-    await signIn("credentials", { email, password, redirectTo: "/profil" });
-  };
-
   return (
-    <Box component="form" className="space-y-6" action={signInAction}>
+    <Box component="form" className="space-y-6" action={loginAction}>
       <div className="text-center">
         <Typography variant="h4" className="font-bold">
           Login
@@ -28,6 +24,15 @@ export default function LoginPage() {
       <Button type="submit" fullWidth variant="contained" size="large">
         Login
       </Button>
+
+      <div className="text-center mt-4">
+        <Typography variant="body2">
+          Belum punya akun?{" "}
+          <Link component={NextLink} href="/auth/register" className="font-semibold text-primary hover:underline">
+            Daftar disini
+          </Link>
+        </Typography>
+      </div>
     </Box>
   );
 }

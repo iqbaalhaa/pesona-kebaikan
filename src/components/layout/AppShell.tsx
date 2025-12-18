@@ -10,6 +10,11 @@ import Paper from "@mui/material/Paper";
 export default function AppShell({ children }: { children: React.ReactNode }) {
 	const pathname = usePathname();
 	const isHome = pathname === "/";
+	const isAdmin = pathname.startsWith("/admin");
+
+	if (isAdmin) {
+		return <>{children}</>;
+	}
 
 	const scrollRef = React.useRef<HTMLDivElement | null>(null);
 	const [scrolled, setScrolled] = React.useState(false);
