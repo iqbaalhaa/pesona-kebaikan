@@ -160,7 +160,7 @@ export default function GalangDanaSayaPage() {
 		});
 	};
 
-	const counts = React.useMemo(() => {
+	const counts: Record<StatusKey, number> = React.useMemo(() => {
 		const base = {
 			all: items.length,
 			action: 0,
@@ -297,7 +297,7 @@ export default function GalangDanaSayaPage() {
 					}}
 				>
 					{TABS.map((t) => {
-						const n = (counts as any)[t.key] as number;
+						const n = counts[t.key];
 						const selected = tab === t.key;
 
 						return (

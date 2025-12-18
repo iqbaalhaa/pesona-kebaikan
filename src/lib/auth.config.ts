@@ -4,34 +4,22 @@ export const authConfig = {
 		signOut: "/auth/login",
 	},
 	callbacks: {
-		authorized({
-			auth,
-			request: { nextUrl },
-		}: {
-			auth: any;
-			request: { nextUrl: any };
-		}) {
-			const isLoggedIn = !!auth?.user;
-			// const isOnAdmin = nextUrl.pathname.startsWith("/admin");
-
-			// if (isOnAdmin) {
-			//   if (isLoggedIn) return true;
-			//   return false; // Redirect unauthenticated users to login page
-			// }
-
+		authorized() {
 			return true;
 		},
-		jwt({ token, user }: any) {
-			if (user) {
-				token.id = user.id;
+		jwt({ token, user }: { token: unknown; user?: unknown }) {
+			if (user && typeof (user as { id?: unknown }).id === "string") {
+				(token as Record<string, unknown>).id = (user as { id: string }).id;
 			}
-			return token;
+			return token as unknown as import("next-auth/jwt").JWT;
 		},
-		session({ session, token }: any) {
-			if (session.user) {
-				session.user.id = token.id as string;
+		session({ session, token }: { session: unknown; token: unknown }) {
+			const s = session as { user?: { id?: string } };
+			if (s.user) {
+				const id = (token as Record<string, unknown>).id;
+				if (typeof id === "string") s.user.id = id;
 			}
-			return session;
+			return session as unknown as import("next-auth").Session;
 		},
 	},
 	providers: [], // Configured in auth.ts

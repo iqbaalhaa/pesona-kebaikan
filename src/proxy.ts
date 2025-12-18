@@ -1,7 +1,6 @@
-import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
-export default function authProxy(_req: NextRequest) {
+export default function authProxy() {
 	return NextResponse.next();
 }
 

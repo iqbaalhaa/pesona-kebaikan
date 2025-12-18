@@ -10,7 +10,7 @@ const slides = [
 	{ src: "/brand/carousel2.webp" },
 ];
 
-function SlideImage({ src, active }: { src: string; active: boolean }) {
+function SlideImage({ src }: { src: string }) {
 	const [imgSrc, setImgSrc] = React.useState(src);
 
 	return (
@@ -52,7 +52,7 @@ export default function HeroCarousel() {
 						i === active ? "opacity-100" : "opacity-0"
 					}`}
 				>
-					<SlideImage src={s.src} active={i === active} />
+					<SlideImage src={s.src} />
 					<div className="absolute inset-0 bg-gradient-to-b from-black/92 via-black/75 to-transparent to-58% from-0% via-24%" />
 				</Box>
 			))}

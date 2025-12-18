@@ -155,7 +155,7 @@ function ExampleCard({ e }: { e: Example }) {
 					display: "block",
 					bgcolor: "background.default",
 				}}
-				onError={(ev: any) => {
+				onError={(ev: React.SyntheticEvent<HTMLImageElement, Event>) => {
 					// fallback kalau gambar belum ada
 					ev.currentTarget.style.display = "none";
 				}}

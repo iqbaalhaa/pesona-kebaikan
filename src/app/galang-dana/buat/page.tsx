@@ -104,7 +104,7 @@ export default function BuatGalangDanaPage() {
 		if (isLainnya && !category) router.replace("/galang-dana/kategori");
 		// kalau type aneh, balikin ke kategori
 		if (!isSakit && !isLainnya) router.replace("/galang-dana/kategori");
-	}, [isLainnya, isSakit, isLainnya, category, router]);
+	}, [isLainnya, isSakit, category, router]);
 
 	// step state (1 aja, sesuai type)
 	const [step, setStep] = React.useState(0);
@@ -632,7 +632,9 @@ export default function BuatGalangDanaPage() {
 										<RadioGroup
 											row
 											value={patientGender}
-											onChange={(e) => setPatientGender(e.target.value as any)}
+											onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+												setPatientGender(e.target.value as "L" | "P" | "")
+											}
 										>
 											<FormControlLabel
 												value="L"
@@ -658,7 +660,9 @@ export default function BuatGalangDanaPage() {
 
 								<RadioGroup
 									value={inpatient}
-									onChange={(e) => setInpatient(e.target.value as any)}
+									onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+										setInpatient(e.target.value as "ya" | "tidak" | "")
+									}
 								>
 									<Paper variant="outlined" sx={{ borderRadius: 2, mb: 1 }}>
 										<FormControlLabel
@@ -712,7 +716,9 @@ export default function BuatGalangDanaPage() {
 
 									<RadioGroup
 										value={prevCost}
-										onChange={(e) => setPrevCost(e.target.value as any)}
+										onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+											setPrevCost(e.target.value as "mandiri" | "asuransi" | "")
+										}
 									>
 										<Paper variant="outlined" sx={{ borderRadius: 2, mb: 1 }}>
 											<FormControlLabel
@@ -774,7 +780,11 @@ export default function BuatGalangDanaPage() {
 
 									<RadioGroup
 										value={duration}
-										onChange={(e) => setDuration(e.target.value as any)}
+										onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+											setDuration(
+												e.target.value as "30" | "60" | "120" | "custom" | ""
+											)
+										}
 									>
 										<Stack spacing={1}>
 											{[
@@ -1252,17 +1262,26 @@ export default function BuatGalangDanaPage() {
 												gap: 1,
 											}}
 										>
-											{[
-												{ key: "facebook", label: "Facebook" },
-												{ key: "instagram", label: "Instagram" },
-												{ key: "twitter", label: "Twitter" },
-												{ key: "linkedin", label: "LinkedIn" },
-											].map((x) => {
-												const active = soc === (x.key as any);
+											{(
+												[
+													{ key: "facebook", label: "Facebook" },
+													{ key: "instagram", label: "Instagram" },
+													{ key: "twitter", label: "Twitter" },
+													{ key: "linkedin", label: "LinkedIn" },
+												] as Array<{
+													key:
+														| "facebook"
+														| "instagram"
+														| "twitter"
+														| "linkedin";
+													label: string;
+												}>
+											).map((x) => {
+												const active = soc === x.key;
 												return (
 													<ButtonBase
 														key={x.key}
-														onClick={() => setSoc(x.key as any)}
+														onClick={() => setSoc(x.key)}
 														sx={{
 															borderRadius: 2,
 															border: "1px solid",
@@ -1388,7 +1407,11 @@ export default function BuatGalangDanaPage() {
 
 									<RadioGroup
 										value={durationOther}
-										onChange={(e) => setDurationOther(e.target.value as any)}
+										onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+											setDurationOther(
+												e.target.value as "30" | "60" | "120" | "custom" | ""
+											)
+										}
 									>
 										<Stack spacing={1}>
 											{[
