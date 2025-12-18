@@ -4,6 +4,7 @@ import { Box, Button, TextField, Typography, Link } from "@mui/material";
 import NextLink from "next/link";
 import { FormEvent } from "react";
 import { signIn } from "next-auth/react";
+import { loginAction } from "@/actions/auth";
 
 export default function LoginPage() {
   return (
