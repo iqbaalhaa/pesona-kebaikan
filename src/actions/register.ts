@@ -4,13 +4,13 @@ import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
 import { redirect } from 'next/navigation'
 
-export async function registerUser(formData: FormData) {
+export async function registerUser(formData: FormData): Promise<void> {
   const name = formData.get('name') as string
   const email = formData.get('email') as string
   const password = formData.get('password') as string
 
   if (!name || !email || !password) {
-    return { error: 'Semua field harus diisi' }
+    return
   }
 
   const existingUser = await prisma.user.findUnique({
@@ -18,7 +18,7 @@ export async function registerUser(formData: FormData) {
   })
 
   if (existingUser) {
-    return { error: 'Email sudah terdaftar' }
+    return
   }
 
   const hashedPassword = await bcrypt.hash(password, 10)

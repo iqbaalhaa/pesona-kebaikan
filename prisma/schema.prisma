@@ -4,149 +4,30 @@
 // Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
+generator client {
+  provider = "prisma-client"
+  output   = "./generated"
+}
+
 datasource db {
   provider = "postgresql"
 }
 
-generator client {
-  provider = "prisma-client"
-  output   = "../src/generated/prisma"
-}
-
-
-model Account {
-  id                String  @id @default(cuid())
-  userId            String
-  type              String
-  provider          String
-  providerAccountId String
-  refresh_token     String? @db.Text
-  access_token      String? @db.Text
-  expires_at        Int?
-  token_type        String?
-  scope             String?
-  id_token          String? @db.Text
-  session_state     String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([provider, providerAccountId])
-  @@index([userId])
-}
-
-model Session {
-  id           String   @id @default(cuid())
-  sessionToken String   @unique
-  userId       String
-  expires      DateTime
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-}
-
 model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String?   @unique
-  emailVerified DateTime?
-  image         String?
-  password      String?
-  phone         String?
-  birthdate     DateTime?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-
-  accounts Account[]
-  sessions Session[]
-
-  // Relations
-  createdCampaigns  Campaign[] @relation("CampaignCreator")
-  verifiedCampaigns Campaign[] @relation("CampaignVerifier")
-  donations         Donation[]
-  blogs             Blog[]
+  id       String  @id @default(cuid())
+  name     String?
+  email    String  @unique
+  password String
+  posts    Post[]
 }
 
-model VerificationToken {
-  identifier String
-  token      String   @unique
-  expires    DateTime
-
-  @@unique([identifier, token])
-}
-
-// Campaign Models
-model CampaignCategory {
-  id        String     @id @default(cuid())
-  name      String
-  campaigns Campaign[]
-}
-
-model Campaign {
-  id          String   @id @default(cuid())
-  title       String
-  description String?  @db.Text
-  images      String[]
-  target      Decimal  @default(0) @db.Decimal(19, 2)
-
-  categoryId String
-  category   CampaignCategory @relation(fields: [categoryId], references: [id])
-
-  isEmergency Boolean @default(false)
-
-  verifiedAt   DateTime?
-  verifiedById String?
-  verifiedBy   User?     @relation("CampaignVerifier", fields: [verifiedById], references: [id])
-
-  creatorId String
-  creator   User   @relation("CampaignCreator", fields: [creatorId], references: [id])
-
-  contactPhone String?
-
+model Post {
+  id        Int      @id @default(autoincrement())
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  donations Donation[]
-}
-
-// Donation Model
-model Donation {
-  id          String  @id @default(cuid())
-  amount      Decimal @db.Decimal(19, 2)
-  donorName   String?
-  donorPhone  String?
-  message     String? @db.Text
-  isAnonymous Boolean @default(false)
-  status      String  @default("PENDING") // PENDING, SUCCESS, FAILED
-
-  campaignId String
-  campaign   Campaign @relation(fields: [campaignId], references: [id])
-
-  userId String?
-  user   User?   @relation(fields: [userId], references: [id])
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-// Blog Models
-model BlogCategory {
-  id    String @id @default(cuid())
-  name  String
-  blogs Blog[]
-}
-
-model Blog {
-  id      String  @id @default(cuid())
-  title   String
-  content String  @db.Text
-  image   String?
-
-  categoryId String
-  category   BlogCategory @relation(fields: [categoryId], references: [id])
-
-  authorId String?
-  author   User?   @relation(fields: [authorId], references: [id])
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  title     String
+  content   String?
+  published Boolean  @default(false)
+  authorId  String?
+  author    User?    @relation(fields: [authorId], references: [id])
 }

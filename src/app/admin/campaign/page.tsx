@@ -1,128 +1,200 @@
+'use client';
+
 import React from "react";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
-import Table from "@mui/material/Table";
-import TableBody from "@mui/material/TableBody";
-import TableCell from "@mui/material/TableCell";
-import TableContainer from "@mui/material/TableContainer";
-import TableHead from "@mui/material/TableHead";
-import TableRow from "@mui/material/TableRow";
-import Paper from "@mui/material/Paper";
-import Chip from "@mui/material/Chip";
+import Grid from "@mui/material/Grid";
 import Button from "@mui/material/Button";
-import AddIcon from "@mui/icons-material/Add";
-import EditIcon from "@mui/icons-material/Edit";
-import DeleteIcon from "@mui/icons-material/Delete";
-import IconButton from "@mui/material/IconButton";
+import Snackbar from "@mui/material/Snackbar";
+import Alert from "@mui/material/Alert";
+import CampaignCard from "@/components/admin/CampaignCard";
+import CampaignFormDialog, { Campaign as CampaignType } from "@/components/admin/CampaignFormDialog";
+import ConfirmDialog from "@/components/admin/ConfirmDialog";
+import SearchFilterBar from "@/components/admin/SearchFilterBar";
+import VerifyCampaignDialog from "@/components/admin/VerifyCampaignDialog";
 
-const campaigns = [
-  {
-    id: 1,
-    title: "Bantu Pembangunan Masjid Al-Ikhlas",
-    creator: "Ustadz Ahmad",
-    target: "Rp 100.000.000",
-    collected: "Rp 50.000.000",
-    status: "Verified",
-    date: "2024-01-15",
-  },
-  {
-    id: 2,
-    title: "Operasi Jantung Adik Budi",
-    creator: "Ibu Siti",
-    target: "Rp 50.000.000",
-    collected: "Rp 10.000.000",
-    status: "Pending",
-    date: "2024-02-01",
-  },
-  {
-    id: 3,
-    title: "Sedekah Jumat Berkah",
-    creator: "Komunitas Berbagi",
-    target: "Rp 10.000.000",
-    collected: "Rp 12.000.000",
-    status: "Verified",
-    date: "2024-02-10",
-  },
-  {
-    id: 4,
-    title: "Bantuan Banjir Demak",
-    creator: "Relawan Demak",
-    target: "Rp 200.000.000",
-    collected: "Rp 150.000.000",
-    status: "Ended",
-    date: "2024-01-05",
-  },
-];
+type Status = "Verified" | "Pending" | "Ended";
+type Campaign = CampaignType;
 
 export default function CampaignPage() {
+  const statuses: Status[] = ["Verified", "Pending", "Ended"];
+  const [campaigns, setCampaigns] = React.useState<Campaign[]>(
+    Array.from({ length: 20 }, (_, i) => {
+      const status = statuses[i % statuses.length];
+      const target = 10000000 * ((i % 5) + 1);
+      const collected = Math.floor(target * (0.2 + (i % 4) * 0.2));
+      return {
+        id: i + 1,
+        title: `Campaign ${i + 1}`,
+        creator: `Penggalang ${i + 1}`,
+        target: `Rp ${target.toLocaleString("id-ID")}`,
+        collected: `Rp ${collected.toLocaleString("id-ID")}`,
+        status,
+        date: `2024-0${(i % 9) + 1}-1${i % 9}`,
+      };
+    })
+  );
+
+  const [query, setQuery] = React.useState("");
+  const [status, setStatus] = React.useState<Status | "ALL">("ALL");
+  const [formOpen, setFormOpen] = React.useState(false);
+  const [formMode, setFormMode] = React.useState<"create" | "edit">("create");
+  const [formData, setFormData] = React.useState<Campaign>({
+    id: 0,
+    title: "",
+    creator: "",
+    target: "",
+    collected: "",
+    status: "Pending",
+    date: new Date().toISOString().slice(0, 10),
+    description: "",
+    contactPhone: "",
+    images: ["/defaultimg.webp"],
+  });
+  const [confirmOpen, setConfirmOpen] = React.useState(false);
+  const [toDelete, setToDelete] = React.useState<Campaign | null>(null);
+  const [verifyOpen, setVerifyOpen] = React.useState(false);
+  const [toVerify, setToVerify] = React.useState<Campaign | null>(null);
+  const [toastOpen, setToastOpen] = React.useState(false);
+  const [toastMsg, setToastMsg] = React.useState("");
+  const [toastSeverity, setToastSeverity] = React.useState<"success" | "info" | "error">("success");
+
+  const filtered = React.useMemo(
+    () =>
+      campaigns.filter(
+        (c) =>
+          c.title.toLowerCase().includes(query.toLowerCase()) &&
+          (status === "ALL" || c.status === status)
+      ),
+    [campaigns, query, status]
+  );
+
+  const openCreate = () => {
+    setFormMode("create");
+    setFormData({
+      id: 0,
+      title: "",
+      creator: "",
+      target: "",
+      collected: "",
+      status: "Pending",
+      date: new Date().toISOString().slice(0, 10),
+    });
+    setFormOpen(true);
+  };
+
+  const openEdit = (c: Campaign) => {
+    setFormMode("edit");
+    setFormData(c);
+    setFormOpen(true);
+  };
+
+  const handleFormChange = (field: keyof Campaign, value: string | Status) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const submitForm = () => {
+    if (formMode === "create") {
+      const nextId = campaigns.length ? Math.max(...campaigns.map((c) => c.id)) + 1 : 1;
+      const newItem = { ...formData, id: nextId };
+      setCampaigns((prev) => [newItem, ...prev]);
+      setToastSeverity("success");
+      setToastMsg("Campaign berhasil dibuat");
+    } else {
+      setCampaigns((prev) => prev.map((c) => (c.id === formData.id ? formData : c)));
+      setToastSeverity("success");
+      setToastMsg("Campaign berhasil diperbarui");
+    }
+    setFormOpen(false);
+    setToastOpen(true);
+  };
+
+  const openDelete = (c: Campaign) => {
+    setToDelete(c);
+    setConfirmOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (toDelete) {
+      setCampaigns((prev) => prev.filter((c) => c.id !== toDelete.id));
+      setToastSeverity("success");
+      setToastMsg("Campaign berhasil dihapus");
+      setToastOpen(true);
+    }
+    setConfirmOpen(false);
+    setToDelete(null);
+  };
+
+  const openVerify = (c: Campaign) => {
+    setToVerify(c);
+    setVerifyOpen(true);
+  };
+
+  const confirmVerify = () => {
+    if (toVerify) {
+      setCampaigns((prev) =>
+        prev.map((c) => (c.id === toVerify.id ? { ...c, status: "Verified" } : c))
+      );
+      setToastSeverity("success");
+      setToastMsg("Campaign berhasil diverifikasi");
+      setToastOpen(true);
+    }
+    setVerifyOpen(false);
+    setToVerify(null);
+  };
+
   return (
     <Box>
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-        <Typography variant="h5" component="h1" className="font-bold text-gray-900 dark:text-white">
-          Daftar Campaign
-        </Typography>
-        <Button 
-          variant="contained" 
-          startIcon={<AddIcon />}
-          className="bg-blue-600 hover:bg-blue-700 text-white normal-case font-semibold rounded-lg shadow-none"
-        >
-          Buat Campaign Baru
-        </Button>
+      <div className="flex flex-col lg:flex-row gap-3 items-start lg:items-center justify-between mb-6">
+        <Typography variant="h5" className="font-bold">Daftar Campaign</Typography>
+        <SearchFilterBar
+          query={query}
+          status={status}
+          onQueryChange={setQuery}
+          onStatusChange={(v) => setStatus(v)}
+          onCreate={openCreate}
+        />
       </div>
 
-      <TableContainer component={Paper} className="shadow-sm border border-gray-200 dark:border-gray-800 dark:bg-[#1e293b] rounded-xl overflow-hidden">
-        <Table sx={{ minWidth: 650 }} aria-label="simple table">
-          <TableHead className="bg-gray-50 dark:bg-[#0f172a]">
-            <TableRow>
-              <TableCell className="font-bold text-gray-700 dark:text-gray-300">Judul Campaign</TableCell>
-              <TableCell className="font-bold text-gray-700 dark:text-gray-300">Penggalang</TableCell>
-              <TableCell className="font-bold text-gray-700 dark:text-gray-300">Target</TableCell>
-              <TableCell className="font-bold text-gray-700 dark:text-gray-300">Terkumpul</TableCell>
-              <TableCell className="font-bold text-gray-700 dark:text-gray-300">Status</TableCell>
-              <TableCell className="font-bold text-gray-700 dark:text-gray-300" align="right">Aksi</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {campaigns.map((row) => (
-              <TableRow
-                key={row.id}
-                sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
-                className="hover:bg-gray-50 dark:hover:bg-[#1e293b]/50 transition-colors"
-              >
-                <TableCell component="th" scope="row" className="font-medium text-gray-900 dark:text-gray-100">
-                  {row.title}
-                  <div className="text-xs text-gray-500 font-normal mt-1">{row.date}</div>
-                </TableCell>
-                <TableCell className="text-gray-600 dark:text-gray-300">{row.creator}</TableCell>
-                <TableCell className="text-gray-600 dark:text-gray-300">{row.target}</TableCell>
-                <TableCell className="text-gray-600 dark:text-gray-300">{row.collected}</TableCell>
-                <TableCell>
-                  <Chip 
-                    label={row.status} 
-                    size="small"
-                    className={`
-                      ${row.status === 'Verified' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : ''}
-                      ${row.status === 'Pending' ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400' : ''}
-                      ${row.status === 'Ended' ? 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300' : ''}
-                      font-semibold border-none
-                    `}
-                  />
-                </TableCell>
-                <TableCell align="right">
-                  <div className="flex gap-2 justify-end">
-                    <IconButton size="small" className="text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20">
-                      <EditIcon fontSize="small" />
-                    </IconButton>
-                    <IconButton size="small" className="text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20">
-                      <DeleteIcon fontSize="small" />
-                    </IconButton>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+      <Grid container spacing={3}>
+        {filtered.map((item) => (
+          <Grid key={item.id} size={{ xs: 12, md: 3 }}>
+            <CampaignCard data={item} onEdit={openEdit} onDelete={openDelete} onVerify={openVerify} />
+          </Grid>
+        ))}
+      </Grid>
+
+      <CampaignFormDialog
+        open={formOpen}
+        mode={formMode}
+        data={formData}
+        onClose={() => setFormOpen(false)}
+        onSubmit={submitForm}
+        onChange={handleFormChange}
+      />
+
+      <ConfirmDialog
+        open={confirmOpen}
+        title="Hapus campaign?"
+        description="Tindakan ini tidak dapat dibatalkan."
+        confirmText="Hapus"
+        confirmColor="error"
+        onCancel={() => setConfirmOpen(false)}
+        onConfirm={confirmDelete}
+      />
+
+      <VerifyCampaignDialog
+        open={verifyOpen}
+        data={toVerify}
+        onCancel={() => setVerifyOpen(false)}
+        onConfirm={confirmVerify}
+      />
+
+      <Snackbar open={toastOpen} autoHideDuration={3000} onClose={() => setToastOpen(false)}>
+        <Alert severity={toastSeverity} onClose={() => setToastOpen(false)} variant="filled">
+          {toastMsg}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }

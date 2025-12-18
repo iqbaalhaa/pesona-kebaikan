@@ -25,7 +25,7 @@ export default function AdminDashboard() {
     <Box>
       <Grid container spacing={3}>
         {stats.map((stat, index) => (
-          <Grid key={index} item xs={12} md={4}>
+          <Grid key={index} size={{ xs: 12, md: 4 }}>
             <Card className="h-full border-none shadow-sm">
               <CardContent className="p-0">
                 <div className={`p-6 rounded-t-xl bg-gradient-to-br ${stat.bg}`}>
@@ -54,7 +54,7 @@ export default function AdminDashboard() {
           </Grid>
         ))}
 
-        <Grid item xs={12} md={8}>
+        <Grid size={{ xs: 12, md: 8 }}>
           <Card className="h-full border-none shadow-sm">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
@@ -97,7 +97,7 @@ export default function AdminDashboard() {
           </Card>
         </Grid>
 
-        <Grid item xs={12} md={4}>
+        <Grid size={{ xs: 12, md: 4 }}>
           <Card className="h-full border-none shadow-sm">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
