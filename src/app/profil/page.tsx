@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useRouter } from "next/navigation";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import Avatar from "@mui/material/Avatar";
@@ -65,6 +66,7 @@ function ProfileMenu({
 }
 
 export default function ProfilePage() {
+	const router = useRouter();
 	return (
 		<Box sx={{ px: 2.5, pt: 2.5, pb: 6 }}>
 			<Box sx={{ mb: 3 }}>
@@ -100,7 +102,10 @@ export default function ProfilePage() {
 				>
 					A
 				</Avatar>
-				<Box sx={{ flex: 1 }}>
+				<Box
+					sx={{ flex: 1, cursor: "pointer" }}
+					onClick={() => router.push("/profil/akun")}
+				>
 					<Typography sx={{ fontSize: 16, fontWeight: 900, color: "#0f172a" }}>
 						Ahmad Fulan
 					</Typography>
