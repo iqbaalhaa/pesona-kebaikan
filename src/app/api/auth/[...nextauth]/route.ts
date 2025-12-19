@@ -1,2 +1,6 @@
-import { handlers } from "@/auth"; // Referring to the auth.ts we just created
-export const { GET, POST } = handlers;
+/* // this is already done in auth.ts
+import { handlers } from "@/auth"
+export const { GET, POST } = handlers */
+
+// but this file has to exist to catch all auth related
+export { GET, POST } from "@/auth";

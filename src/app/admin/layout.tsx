@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { auth } from "@/auth";
+// import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { AppRouterCacheProvider } from "@mui/material-nextjs/v15-appRouter";
 import ThemeWrapper from "@/components/layout/ThemeWrapper";
@@ -18,11 +18,11 @@ export const metadata = {
 };
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-  const session = await auth();
+  // const session = await auth();
 
-  if (!session?.user) {
-    redirect("/login");
-  }
+  // if (!session?.user) {
+  //   redirect("/login");
+  // }
 
   return (
     <AppRouterCacheProvider options={{ enableCssLayer: true }}>
