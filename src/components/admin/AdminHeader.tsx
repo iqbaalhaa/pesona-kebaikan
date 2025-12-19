@@ -239,7 +239,7 @@ export default function AdminHeader() {
             anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
           >
             <MenuItem onClick={handleProfileClose}>
-              <Avatar fontSize="small" /> Profile
+              <Avatar /> Profile
             </MenuItem>
             <Divider />
             <MenuItem onClick={handleProfileClose}>

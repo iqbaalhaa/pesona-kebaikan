@@ -1,4 +1,4 @@
-import type { NextAuthOptions } from "next-auth";
+import type { NextAuthConfig } from "next-auth";
 import type { Adapter } from "next-auth/adapters";
 import Credentials from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@auth/prisma-adapter";
@@ -6,7 +6,7 @@ import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { authConfig } from "./auth.config";
 
-export const authOptions: NextAuthOptions = {
+export const authOptions: NextAuthConfig = {
   ...authConfig,
   // Casting due to adapter type differences across versions
   adapter: PrismaAdapter(prisma) as Adapter,

@@ -10,8 +10,11 @@ import ArticleIcon from "@mui/icons-material/Article";
 import PeopleIcon from "@mui/icons-material/People";
 import AddTask from "@mui/icons-material/AddTask";
 import AdminHeader from "@/components/admin/AdminHeader";
-import { Box, AppBar, Toolbar, Typography } from "@mui/material";
+import { Box, AppBar, Toolbar, Typography, Avatar } from "@mui/material";
 import { SignOutButton } from "@/components/auth/SignOutButton";
+import SearchIcon from "@mui/icons-material/Search";
+import NotificationsNoneIcon from "@mui/icons-material/NotificationsNone";
+import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
 
 export const metadata = {
   title: "Admin - Pesona Kebaikan",

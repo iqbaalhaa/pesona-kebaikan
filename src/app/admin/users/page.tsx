@@ -174,7 +174,7 @@ export default function UsersPage() {
 
       {/* Stats Cards */}
       <Grid container spacing={3} className="mb-8">
-        <Grid item xs={12} sm={4}>
+        <Grid size={{ xs: 12, sm: 4 }}>
           <StatCard
             title="Total Users"
             value={totalUsers}
@@ -182,7 +182,7 @@ export default function UsersPage() {
             color="bg-blue-500"
           />
         </Grid>
-        <Grid item xs={12} sm={4}>
+        <Grid size={{ xs: 12, sm: 4 }}>
           <StatCard
             title="Active Users"
             value={activeUsers}
@@ -190,7 +190,7 @@ export default function UsersPage() {
             color="bg-green-500"
           />
         </Grid>
-        <Grid item xs={12} sm={4}>
+        <Grid size={{ xs: 12, sm: 4 }}>
           <StatCard
             title="New This Month"
             value={newUsers}
