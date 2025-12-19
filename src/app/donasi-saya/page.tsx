@@ -38,7 +38,8 @@ const myDonations = [
 		rawDate: "2025-12-17",
 		status: "Berhasil",
 		paymentMethod: "GoPay",
-		prayer: "Semoga saudara-saudara kita di sana diberikan ketabahan dan kekuatan. Aamiin.",
+		prayer:
+			"Semoga saudara-saudara kita di sana diberikan ketabahan dan kekuatan. Aamiin.",
 		campaignId: "c1",
 		category: "Bencana Alam",
 	},
@@ -284,7 +285,7 @@ export default function MyDonationPage() {
 	};
 
 	return (
-		<Box sx={{ px: 2.5, pt: 2.5, pb: 4, maxWidth: 600, mx: "auto" }}>
+		<Box sx={{ px: 2, pt: 2.5, maxWidth: 600, mx: "auto" }}>
 			<Box
 				sx={{
 					display: "flex",
@@ -348,7 +349,9 @@ export default function MyDonationPage() {
 						Statistik Kebaikanmu
 					</Typography> */}
 
-					<Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 2 }}>
+					<Box
+						sx={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 2 }}
+					>
 						{/* Total Days */}
 						<Box sx={{ textAlign: "center" }}>
 							<Box
@@ -364,7 +367,13 @@ export default function MyDonationPage() {
 							>
 								<CalendarMonthIcon fontSize="small" sx={{ color: "#fff" }} />
 							</Box>
-							<Typography sx={{ fontSize: 24, fontWeight: 900, textShadow: "0 2px 4px rgba(0,0,0,0.1)" }}>
+							<Typography
+								sx={{
+									fontSize: 24,
+									fontWeight: 900,
+									textShadow: "0 2px 4px rgba(0,0,0,0.1)",
+								}}
+							>
 								{stats.days}
 							</Typography>
 							<Typography sx={{ fontSize: 10, opacity: 0.9, fontWeight: 700 }}>
@@ -387,7 +396,13 @@ export default function MyDonationPage() {
 							>
 								<HandshakeIcon fontSize="small" sx={{ color: "#fff" }} />
 							</Box>
-							<Typography sx={{ fontSize: 24, fontWeight: 900, textShadow: "0 2px 4px rgba(0,0,0,0.1)" }}>
+							<Typography
+								sx={{
+									fontSize: 24,
+									fontWeight: 900,
+									textShadow: "0 2px 4px rgba(0,0,0,0.1)",
+								}}
+							>
 								{stats.campaigns}
 							</Typography>
 							<Typography sx={{ fontSize: 10, opacity: 0.9, fontWeight: 700 }}>

@@ -145,12 +145,13 @@ function PopularCard({ c }: { c: Campaign }) {
 			sx={{
 				minWidth: 240,
 				maxWidth: 240,
-				borderRadius: { md: 1 },
+				borderRadius: "10px",
 				border: "1px solid rgba(15,23,42,0.08)",
 				bgcolor: "#fff",
-				boxShadow: "0 14px 30px rgba(15,23,42,.08)",
+				boxShadow: "0 14px 26px rgba(15,23,42,.06)",
 				overflow: "hidden",
 				scrollSnapAlign: "start",
+				position: "relative",
 				cursor: "pointer",
 				userSelect: "none",
 				transition: "transform 140ms ease",
@@ -356,7 +357,7 @@ export default function PopularSection() {
 	}, []);
 
 	return (
-		<Box sx={{ px: 2.5, mt: 2.5 }}>
+		<Box sx={{ px: 2, mt: 2.5 }}>
 			{/* Header */}
 			<Box
 				sx={{

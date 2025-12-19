@@ -5,6 +5,7 @@ import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import Chip from "@mui/material/Chip";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { Category, Campaign } from "@/types";
 import { alpha, useTheme } from "@mui/material/styles";
 
@@ -132,7 +133,7 @@ function CategoryButton({
 			onKeyDown={(e) => e.key === "Enter" && onClick()}
 			className="w-full p-3 cursor-pointer select-none transition-all duration-150 ease-out active:scale-95"
 			sx={{
-				borderRadius: { md: 3 },
+				borderRadius: "8px",
 				border: selected
 					? `1px solid ${alpha(primaryMain, 0.45)}`
 					: `1px solid ${alpha(theme.palette.text.primary, 0.1)}`,
@@ -177,13 +178,13 @@ function CampaignRowCard({ item }: { item: Campaign }) {
 			sx={{
 				// Use theme values for precise border/shadow matching if needed, but tailwind is fine here
 				bgcolor: "#fff",
-				borderRadius: { md: 1 },
+				borderRadius: "16px",
 			}}
 		>
 			{/* Cover */}
 			<Box
 				className="relative w-24 h-24 flex-shrink-0 overflow-hidden bg-gray-100"
-				sx={{ borderRadius: { md: 1 } }}
+				sx={{ borderRadius: "16px" }}
 			>
 				<Image
 					src={imgSrc}
@@ -251,15 +252,17 @@ function CampaignRowCard({ item }: { item: Campaign }) {
 }
 
 export default function CategoryChips() {
+	const router = useRouter();
 	const [selected, setSelected] = React.useState("bencana");
 
 	const filtered = React.useMemo(() => {
+		// "lainnya" no longer shows all campaigns here, but we keep it safe
 		if (selected === "lainnya") return campaigns;
 		return campaigns.filter((c) => c.categoryId === selected);
 	}, [selected]);
 
 	return (
-		<Box className="px-5 mt-8 mb-8">
+		<Box className="px-4 mt-6 mb-6">
 			<Box className="flex items-center justify-between mb-4">
 				<Typography
 					className="text-base font-extrabold"
@@ -276,7 +279,13 @@ export default function CategoryChips() {
 						key={c.id}
 						c={c}
 						selected={selected === c.id}
-						onClick={() => setSelected(c.id)}
+						onClick={() => {
+							if (c.id === "lainnya") {
+								router.push("/kategori");
+							} else {
+								setSelected(c.id);
+							}
+						}}
 					/>
 				))}
 			</Box>

@@ -56,7 +56,7 @@ export default function HeroCarousel() {
 					<div className="absolute inset-0 bg-gradient-to-b from-black/92 via-black/75 to-transparent to-58% from-0% via-24%" />
 				</Box>
 			))}
-			<Box className="absolute inset-0 flex items-center justify-center text-center px-2.5 pt-16 pointer-events-none">
+			<Box className="absolute inset-0 flex items-center justify-center text-center px-4 pt-16 pointer-events-none">
 				<Box className="max-w-[320px]">
 					<Typography
 						variant="h1"

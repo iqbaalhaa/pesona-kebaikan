@@ -140,8 +140,17 @@ function UrgentCard({ item }: { item: Campaign }) {
 
 	return (
 		<Box
-			className="flex-shrink-0 w-[260px] snap-center bg-white border border-slate-200 shadow-sm hover:shadow-md transition-shadow duration-300 cursor-pointer"
-			sx={{ bgcolor: "#fff", borderRadius: { md: 1 } }}
+			sx={{
+				minWidth: 260,
+				maxWidth: 260,
+				borderRadius: "10px",
+				overflow: "hidden",
+				scrollSnapAlign: "start",
+				position: "relative",
+				bgcolor: "#fff",
+				border: "1px solid rgba(15,23,42,0.08)",
+				boxShadow: "0 14px 26px rgba(15,23,42,.06)",
+			}}
 		>
 			{/* Cover */}
 			<Box
@@ -282,7 +291,7 @@ export default function UrgentSection() {
 	}, []);
 
 	return (
-		<Box className="mt-6 px-5 relative group">
+		<Box className="mt-6 px-4 relative group">
 			<Box className="flex items-center justify-between mb-4">
 				<Box className="flex items-center gap-2.5">
 					<Box className="relative flex h-3 w-3">

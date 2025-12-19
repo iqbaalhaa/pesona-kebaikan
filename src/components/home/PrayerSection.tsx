@@ -190,7 +190,7 @@ export default function PrayersSection() {
 	};
 
 	return (
-		<Box sx={{ px: 2.5, mt: 2.5 }}>
+		<Box sx={{ px: 2, mt: 2.5 }}>
 			<Box
 				sx={{
 					display: "flex",
@@ -242,7 +242,7 @@ export default function PrayersSection() {
 							sx={{
 								minWidth: 260,
 								maxWidth: 260,
-								borderRadius: { md: 1 },
+								borderRadius: "10px",
 								bgcolor: "#fff",
 								border: "1px solid rgba(15,23,42,0.08)",
 								boxShadow: "0 14px 26px rgba(15,23,42,.06)",

@@ -127,11 +127,11 @@ export default function FundraiserCTA() {
 	};
 
 	return (
-		<Box sx={{ px: 2.5, mt: 2.5 }}>
+		<Box sx={{ px: 2, mt: 2.5, mb: 4 }}>
 			{/* CTA card */}
 			<Box
 				sx={{
-					borderRadius: { md: 1 },
+					borderRadius: "10px",
 					p: 1.6,
 					border: "1px solid rgba(15,23,42,0.08)",
 					background:

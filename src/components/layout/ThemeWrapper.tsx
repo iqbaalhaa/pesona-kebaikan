@@ -4,6 +4,7 @@ import * as React from "react";
 import { ThemeProvider } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
 import { lightTheme } from "@/theme";
+import { SessionProvider } from "next-auth/react";
 
 export default function ThemeWrapper({
 	children,
@@ -29,9 +30,11 @@ export default function ThemeWrapper({
 	}
 
 	return (
-		<ThemeProvider theme={theme}>
-			<CssBaseline />
-			{children}
-		</ThemeProvider>
+		<SessionProvider>
+			<ThemeProvider theme={theme}>
+				<CssBaseline />
+				{children}
+			</ThemeProvider>
+		</SessionProvider>
 	);
 }

@@ -62,11 +62,16 @@ export default function BlogPage() {
 	const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 	const [filter, setFilter] = React.useState("Semua");
 	const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
-	const [selectedPostId, setSelectedPostId] = React.useState<string | null>(null);
+	const [selectedPostId, setSelectedPostId] = React.useState<string | null>(
+		null
+	);
 	const open = Boolean(anchorEl); // Still used for Menu
 	const drawerOpen = Boolean(selectedPostId); // Used for Drawer logic
 
-	const handleShareClick = (event: React.MouseEvent<HTMLElement>, postId: string) => {
+	const handleShareClick = (
+		event: React.MouseEvent<HTMLElement>,
+		postId: string
+	) => {
 		event.preventDefault();
 		event.stopPropagation();
 		// If desktop, use Menu (requires anchor). If mobile, just set ID to trigger Drawer.
@@ -97,13 +102,19 @@ export default function BlogPage() {
 		let shareUrl = "";
 		switch (platform) {
 			case "twitter":
-				shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
+				shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(
+					text
+				)}&url=${encodeURIComponent(url)}`;
 				break;
 			case "facebook":
-				shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
+				shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(
+					url
+				)}`;
 				break;
 			case "whatsapp":
-				shareUrl = `https://wa.me/?text=${encodeURIComponent(text + " " + url)}`;
+				shareUrl = `https://wa.me/?text=${encodeURIComponent(
+					text + " " + url
+				)}`;
 				break;
 			case "copy":
 				navigator.clipboard.writeText(url);
@@ -124,13 +135,25 @@ export default function BlogPage() {
 
 	const shareOptions = [
 		{ id: "twitter", label: "Twitter", icon: <TwitterIcon fontSize="small" /> },
-		{ id: "facebook", label: "Facebook", icon: <FacebookIcon fontSize="small" /> },
-		{ id: "whatsapp", label: "WhatsApp", icon: <WhatsAppIcon fontSize="small" /> },
-		{ id: "copy", label: "Salin Link", icon: <ContentCopyIcon fontSize="small" /> },
+		{
+			id: "facebook",
+			label: "Facebook",
+			icon: <FacebookIcon fontSize="small" />,
+		},
+		{
+			id: "whatsapp",
+			label: "WhatsApp",
+			icon: <WhatsAppIcon fontSize="small" />,
+		},
+		{
+			id: "copy",
+			label: "Salin Link",
+			icon: <ContentCopyIcon fontSize="small" />,
+		},
 	];
 
 	return (
-		<Box sx={{ px: 2.5, pt: 2.5, pb: 4, maxWidth: 600, mx: "auto" }}>
+		<Box sx={{ px: 2, pt: 2.5, maxWidth: 600, mx: "auto" }}>
 			<Box
 				sx={{
 					display: "flex",
@@ -144,7 +167,11 @@ export default function BlogPage() {
 				</Typography>
 			</Box>
 
-			<Stack direction="row" spacing={1} sx={{ mt: 2, mb: 3, overflowX: "auto", pb: 0.5 }}>
+			<Stack
+				direction="row"
+				spacing={1}
+				sx={{ mt: 2, mb: 3, overflowX: "auto", pb: 0.5 }}
+			>
 				{["Semua", "Inspiration", "Update", "Guide"].map((tag) => (
 					<Chip
 						key={tag}
@@ -159,7 +186,11 @@ export default function BlogPage() {
 
 			<Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
 				{filteredPosts.map((post) => (
-					<Link key={post.id} href={`/blog/${post.id}`} style={{ textDecoration: "none" }}>
+					<Link
+						key={post.id}
+						href={`/blog/${post.id}`}
+						style={{ textDecoration: "none" }}
+					>
 						<Card
 							variant="outlined"
 							sx={{
@@ -201,11 +232,18 @@ export default function BlogPage() {
 									"&:last-child": { pb: 0 },
 								}}
 							>
-								<Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
+								<Box
+									sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}
+								>
 									<Chip
 										size="small"
 										label={post.tag}
-										sx={{ borderRadius: 1, height: 24, fontSize: 11, fontWeight: 700 }}
+										sx={{
+											borderRadius: 1,
+											height: 24,
+											fontSize: 11,
+											fontWeight: 700,
+										}}
 										color="primary"
 										variant="filled"
 									/>
@@ -248,9 +286,22 @@ export default function BlogPage() {
 								>
 									{post.excerpt}
 								</Typography>
-								
-								<Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mt: "auto" }}>
-									<Typography sx={{ fontSize: 13, fontWeight: 700, color: "primary.main" }}>
+
+								<Box
+									sx={{
+										display: "flex",
+										alignItems: "center",
+										justifyContent: "space-between",
+										mt: "auto",
+									}}
+								>
+									<Typography
+										sx={{
+											fontSize: 13,
+											fontWeight: 700,
+											color: "primary.main",
+										}}
+									>
 										Baca Selengkapnya
 									</Typography>
 									<IconButton
@@ -280,7 +331,15 @@ export default function BlogPage() {
 						},
 					}}
 				>
-					<Typography sx={{ fontWeight: 800, mb: 2, fontSize: 16, textAlign: "center", color: "#0f172a" }}>
+					<Typography
+						sx={{
+							fontWeight: 800,
+							mb: 2,
+							fontSize: 16,
+							textAlign: "center",
+							color: "#0f172a",
+						}}
+					>
 						Bagikan ke
 					</Typography>
 					<List sx={{ pt: 0 }}>
@@ -295,7 +354,9 @@ export default function BlogPage() {
 										gap: 2,
 									}}
 								>
-									<ListItemIcon sx={{ minWidth: 0, color: "rgba(15,23,42,.8)" }}>
+									<ListItemIcon
+										sx={{ minWidth: 0, color: "rgba(15,23,42,.8)" }}
+									>
 										{option.icon}
 									</ListItemIcon>
 									<ListItemText

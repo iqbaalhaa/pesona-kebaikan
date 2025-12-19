@@ -13,7 +13,7 @@ import QuickDonate from "@/components/home/QuickDonate";
 
 export default function Home() {
 	return (
-		<Box sx={{ pb: 8 }}>
+		<Box>
 			<HeroCarousel />
 			<QuickDonate />
 			<QuickMenu />

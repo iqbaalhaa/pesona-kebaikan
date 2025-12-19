@@ -4,13 +4,7 @@ import * as React from "react";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 
-function LinkBtn({
-	label,
-	onClick,
-}: {
-	label: string;
-	onClick: () => void;
-}) {
+function LinkBtn({ label, onClick }: { label: string; onClick: () => void }) {
 	return (
 		<Box
 			component="button"
@@ -37,8 +31,8 @@ export default function MiniFooter() {
 	return (
 		<Box
 			sx={{
-				px: 2.5,
-				py: 1.1,
+				px: 2,
+				py: 2,
 				borderTop: "1px solid rgba(15,23,42,0.06)",
 				bgcolor: "#fff",
 			}}
@@ -48,7 +42,7 @@ export default function MiniFooter() {
 					display: "flex",
 					alignItems: "center",
 					justifyContent: "center",
-					gap: 1.25,
+					gap: 1.5,
 				}}
 			>
 				<LinkBtn
