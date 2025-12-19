@@ -69,7 +69,7 @@ function TrustItem({
 
 export default function TrustStrip() {
 	return (
-		<Box sx={{ px: 2.5, mt: 2.5 }}>
+		<Box sx={{ px: 2, mt: 2.5 }}>
 			<Box
 				sx={{
 					borderRadius: "16px", // radius 16px (MUI spacing)

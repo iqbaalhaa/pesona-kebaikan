@@ -62,7 +62,7 @@ export default function QuickMenu() {
 	};
 
 	return (
-		<Box sx={{ px: 2.5, mt: 2 }}>
+		<Box sx={{ px: 2, mt: 2 }}>
 			<Typography
 				sx={{ fontSize: 16, fontWeight: 800, color: "text.primary", mb: 1.5 }}
 			>

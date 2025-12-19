@@ -152,14 +152,13 @@ function PayChip({
 
 export default function DonationBanner() {
 	return (
-		<Box sx={{ px: 2.5, mt: 2.5 }}>
+		<Box sx={{ px: 2, mt: 2.5 }}>
 			<Box
 				sx={{
-					borderRadius: { md: 1 },
-					p: 1.6,
-					border: "1px solid rgba(97,206,112,0.22)",
-					background:
-						"linear-gradient(135deg, rgba(97,206,112,0.20) 0%, rgba(255,255,255,0.94) 55%, rgba(15,23,42,0.02) 100%)",
+					borderRadius: "10px",
+					p: 2,
+					border: "1px solid rgba(15,23,42,0.08)",
+					background: "#fff",
 					boxShadow: "0 18px 34px rgba(15,23,42,.06)",
 				}}
 			>

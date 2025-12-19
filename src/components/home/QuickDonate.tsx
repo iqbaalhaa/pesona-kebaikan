@@ -120,7 +120,7 @@ function MethodChip({
 			sx={{
 				textAlign: "left",
 				width: "100%",
-				borderRadius: "8px",
+				borderRadius: "12px",
 				p: 1.1,
 				cursor: "pointer",
 				border: active
@@ -258,16 +258,14 @@ export default function QuickDonate() {
 	};
 
 	return (
-		<Box sx={{ px: 2.5, mt: 2.5 }}>
-			{/* Card */}
+		<Box sx={{ px: 2, mt: 2, position: "relative" }}>
 			<Box
 				sx={{
-					borderRadius: { md: 1 },
-					p: 1.6,
+					borderRadius: "16px",
+					bgcolor: "#fff",
+					boxShadow: "0 20px 40px -4px rgba(0,0,0,0.12)",
+					p: 2,
 					border: "1px solid rgba(15,23,42,0.08)",
-					background:
-						"linear-gradient(135deg, rgba(97,206,112,0.16) 0%, rgba(255,255,255,0.96) 55%, rgba(15,23,42,0.02) 100%)",
-					boxShadow: "0 18px 34px rgba(15,23,42,.06)",
 					position: "relative",
 					overflow: "hidden",
 				}}
@@ -314,7 +312,7 @@ export default function QuickDonate() {
 							fontWeight: 1000,
 							px: 1,
 							py: "4px",
-							borderRadius: "8px",
+							borderRadius: "12px",
 							color: PRIMARY,
 							bgcolor: "rgba(97,206,112,0.10)",
 							border: "1px solid rgba(97,206,112,0.22)",
@@ -356,7 +354,7 @@ export default function QuickDonate() {
 									}}
 									sx={{
 										flexShrink: 0,
-										borderRadius: "8px",
+										borderRadius: "12px",
 										px: 1.5,
 										py: 0.85,
 										cursor: "pointer",
@@ -387,7 +385,7 @@ export default function QuickDonate() {
 								display: "flex",
 								alignItems: "center",
 								gap: 0.8,
-								borderRadius: "8px",
+								borderRadius: "12px",
 								px: 1.2,
 								py: 0.55,
 								border:
@@ -492,7 +490,7 @@ export default function QuickDonate() {
 						disabled={!isValid}
 						sx={{
 							width: "100%",
-							borderRadius: 1,
+							borderRadius: "16px",
 							py: 1.2,
 							border: "1px solid rgba(97,206,112,0.35)",
 							bgcolor: isValid ? PRIMARY : "rgba(15,23,42,0.08)",
@@ -533,9 +531,9 @@ export default function QuickDonate() {
 							bottom: { xs: 0, md: "auto" },
 							top: { md: "50%" },
 							transform: { md: "translate(-50%, -50%)" },
-							borderTopLeftRadius: { xs: 10, md: 10 },
-							borderTopRightRadius: { xs: 10, md: 10 },
-							borderRadius: { md: 1 },
+							borderTopLeftRadius: { xs: "16px", md: "16px" },
+							borderTopRightRadius: { xs: "16px", md: "16px" },
+							borderRadius: { md: "16px" },
 							bgcolor: "#fff",
 							boxShadow: {
 								xs: "0 -18px 40px rgba(15,23,42,.22)",
@@ -614,7 +612,7 @@ export default function QuickDonate() {
 							{/* Summary */}
 							<Box
 								sx={{
-									borderRadius: 1,
+									borderRadius: "12px",
 									border: "1px solid rgba(15,23,42,0.10)",
 									bgcolor: "#fff",
 									p: 1.2,
@@ -721,7 +719,7 @@ export default function QuickDonate() {
 							<Box
 								sx={{
 									mt: 1,
-									borderRadius: 1,
+									borderRadius: "12px",
 									border: "1px solid rgba(15,23,42,0.10)",
 									bgcolor: "#fff",
 									p: 1.2,
@@ -782,7 +780,7 @@ export default function QuickDonate() {
 											marginTop: 8,
 											outline: "none",
 											border: "1px solid rgba(15,23,42,0.10)",
-											borderRadius: 8,
+											borderRadius: 12,
 											padding: "10px 12px",
 											background: isAnonymous ? "rgba(15,23,42,0.04)" : "#fff",
 											fontWeight: 900,
