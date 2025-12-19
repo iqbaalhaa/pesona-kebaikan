@@ -4,6 +4,7 @@ import bcrypt from "bcryptjs";
 async function main() {
   const hashedPassword = await bcrypt.hash("password123", 10);
 
+  // Create accounts
   const alice = await prisma.user.upsert({
     where: { email: "alice@example.com" },
     update: {},
@@ -11,13 +12,6 @@ async function main() {
       email: "alice@example.com",
       name: "Alice",
       password: hashedPassword,
-      posts: {
-        create: {
-          title: "Check out Prisma with Next.js",
-          content: "https://www.prisma.io/nextjs",
-          published: true,
-        },
-      },
     },
   });
 
@@ -28,21 +22,34 @@ async function main() {
       email: "bob@example.com",
       name: "Bob",
       password: hashedPassword,
-      posts: {
-        create: [
-          {
-            title: "Follow Prisma on Twitter",
-            content: "https://twitter.com/prisma",
-            published: true,
-          },
-          {
-            title: "Follow Nexus on Twitter",
-            content: "https://twitter.com/nexusgql",
-            published: true,
-          },
-        ],
-      },
     },
+  });
+
+  // Create posts for accounts
+  await prisma.post.create({
+    data: {
+      title: "Check out Prisma with Next.js",
+      content: "https://www.prisma.io/nextjs",
+      published: true,
+      userId: alice.id,
+    },
+  });
+
+  await prisma.post.createMany({
+    data: [
+      {
+        title: "Follow Prisma on Twitter",
+        content: "https://twitter.com/prisma",
+        published: true,
+        userId: bob.id,
+      },
+      {
+        title: "Follow Nexus on Twitter",
+        content: "https://twitter.com/nexusgql",
+        published: true,
+        userId: bob.id,
+      },
+    ],
   });
 
   console.log({ alice, bob });
