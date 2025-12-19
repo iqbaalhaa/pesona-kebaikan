@@ -564,8 +564,13 @@ function BottomSheet({
 			anchor="bottom"
 			open={open}
 			onClose={onClose}
+			ModalProps={{ hideBackdrop: true }}
 			PaperProps={{
 				sx: {
+					bottom:
+						"calc(var(--bottom-nav-h, 72px) + env(safe-area-inset-bottom))",
+					maxHeight:
+						"calc(100dvh - (var(--bottom-nav-h, 72px) + env(safe-area-inset-bottom)))",
 					borderTopLeftRadius: 18,
 					borderTopRightRadius: 18,
 					overflow: "hidden",

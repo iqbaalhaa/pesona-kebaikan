@@ -21,6 +21,7 @@ import {
 	Alert,
 	Chip,
 	InputAdornment,
+	ButtonBase,
 } from "@mui/material";
 
 import ArrowBackIosNewRoundedIcon from "@mui/icons-material/ArrowBackIosNewRounded";
@@ -29,7 +30,7 @@ import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import PhotoCameraRoundedIcon from "@mui/icons-material/PhotoCameraRounded";
 
-type StepKey =
+type StepKeySakit =
 	| "tujuan"
 	| "detail"
 	| "riwayat"
@@ -38,10 +39,29 @@ type StepKey =
 	| "cerita"
 	| "ajakan";
 
-const STEPS: { key: StepKey; label: string }[] = [
+const STEPS_SAKIT: { key: StepKeySakit; label: string }[] = [
 	{ key: "tujuan", label: "Tujuan" },
 	{ key: "detail", label: "Detail pasien" },
 	{ key: "riwayat", label: "Riwayat medis" },
+	{ key: "target", label: "Target donasi" },
+	{ key: "judul", label: "Judul" },
+	{ key: "cerita", label: "Cerita" },
+	{ key: "ajakan", label: "Ajakan" },
+];
+
+type StepKeyLainnya =
+	| "tujuan"
+	| "data_diri"
+	| "penerima"
+	| "target"
+	| "judul"
+	| "cerita"
+	| "ajakan";
+
+const STEPS_LAINNYA: { key: StepKeyLainnya; label: string }[] = [
+	{ key: "tujuan", label: "Tujuan" },
+	{ key: "data_diri", label: "Data diri" },
+	{ key: "penerima", label: "Penerima" },
 	{ key: "target", label: "Target donasi" },
 	{ key: "judul", label: "Judul" },
 	{ key: "cerita", label: "Cerita" },
@@ -57,19 +77,44 @@ function formatIDR(numStr: string) {
 	return n.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 }
 
+const CATEGORY_TITLE: Record<string, string> = {
+	pendidikan: "Bantuan Pendidikan",
+	bencana: "Bencana Alam",
+	difabel: "Difabel",
+	infrastruktur: "Infrastruktur Umum",
+	usaha: "Karya Kreatif & Modal Usaha",
+	sosial: "Kegiatan Sosial",
+	kemanusiaan: "Kemanusiaan",
+	lingkungan: "Lingkungan",
+	rumah_ibadah: "Rumah Ibadah",
+};
+
 export default function BuatGalangDanaPage() {
 	const router = useRouter();
 	const sp = useSearchParams();
+
 	const type = sp.get("type") ?? "lainnya";
+	const category = sp.get("category") ?? "";
 
-	// kalau bukan sakit, untuk sementara redirect ke kategori
+	const isSakit = type === "sakit";
+	const isLainnya = type === "lainnya";
+
 	React.useEffect(() => {
-		if (type !== "sakit") router.replace("/galang-dana/kategori");
-	}, [type, router]);
+		// kalau lainnya wajib ada category
+		if (isLainnya && !category) router.replace("/galang-dana/kategori");
+		// kalau type aneh, balikin ke kategori
+		if (!isSakit && !isLainnya) router.replace("/galang-dana/kategori");
+	}, [isLainnya, isSakit, category, router]);
 
+	// step state (1 aja, sesuai type)
 	const [step, setStep] = React.useState(0);
 
-	// Step 1 (Tujuan)
+	const steps = isSakit ? STEPS_SAKIT : STEPS_LAINNYA;
+	const stepKey = steps[step]?.key as StepKeySakit | StepKeyLainnya;
+
+	// =========
+	// SAKIT STATE
+	// =========
 	const [who, setWho] = React.useState<string>("");
 	const [phone, setPhone] = React.useState("");
 	const [bank, setBank] = React.useState<string>(""); // pasien / kk / beda / rs
@@ -80,63 +125,174 @@ export default function BuatGalangDanaPage() {
 	const [t3, setT3] = React.useState(false);
 	const [t4, setT4] = React.useState(false);
 
-	// Step 2
 	const [patientName, setPatientName] = React.useState("");
 	const [patientAge, setPatientAge] = React.useState("");
 	const [patientGender, setPatientGender] = React.useState<"L" | "P" | "">("");
 	const [patientCity, setPatientCity] = React.useState("");
 
-	// Step 3
 	const [inpatient, setInpatient] = React.useState<"ya" | "tidak" | "">("");
 	const [treatment, setTreatment] = React.useState("");
 	const [prevCost, setPrevCost] = React.useState<"mandiri" | "asuransi" | "">(
 		""
 	);
 
-	// Step 4
 	const [target, setTarget] = React.useState("");
 	const [duration, setDuration] = React.useState<
 		"30" | "60" | "120" | "custom" | ""
 	>("");
 	const [usage, setUsage] = React.useState("");
 
-	// Step 5
 	const [title, setTitle] = React.useState("");
 	const [slug, setSlug] = React.useState("");
 	const [coverName, setCoverName] = React.useState<string>("");
 
-	// Step 6
 	const [story, setStory] = React.useState("");
 	const [showStoryEditor, setShowStoryEditor] = React.useState(false);
 
-	// Step 7
 	const [cta, setCta] = React.useState("");
 	const ctaLeft = 160 - cta.length;
 
+	const canOpenConfirm = !!who && phone.trim().length >= 8 && !!bank;
+	const allTermsOk = t1 && t2 && t3 && t4;
+
+	// =========
+	// LAINNYA STATE
+	// =========
+	const purposes = React.useMemo(() => {
+		if (category === "bencana") {
+			return [
+				{
+					key: "acara",
+					title: "Acara/gerakan/kegiatan/program",
+					desc: "Contoh: Program pemulihan psikologis korban bencana, untuk pengadaan kegiatan tertentu bagi korban bencana, dsb.",
+				},
+				{
+					key: "operasional",
+					title: "Biaya operasional lembaga/yayasan",
+					desc: "Contoh: Kebutuhan operasional posko bencana (makanan, air, selimut, dsb.), biaya logistik pengiriman kebutuhan, dsb.",
+				},
+				{
+					key: "infrastruktur",
+					title: "Pembangunan/perbaikan/pembelian infrastruktur",
+					desc: "Contoh: Perbaikan rumah akibat bencana, pembangunan jalan pasca bencana, dsb.",
+				},
+				{
+					key: "korban",
+					title: "Korban Bencana Alam",
+					desc: "Contoh: Bantuan untuk seorang korban bencana alam tertentu, santunan untuk daerah terdampak bencana, dsb.",
+				},
+			];
+		}
+
+		// default kategori lain (boleh kamu refine nanti)
+		return [
+			{
+				key: "program",
+				title: "Acara/gerakan/kegiatan/program",
+				desc: "Contoh: kegiatan sosial, pelatihan, program beasiswa, dsb.",
+			},
+			{
+				key: "operasional",
+				title: "Biaya operasional lembaga/yayasan",
+				desc: "Contoh: biaya logistik, konsumsi, transport, operasional kegiatan, dsb.",
+			},
+			{
+				key: "infrastruktur",
+				title: "Pembangunan/perbaikan/pengadaan",
+				desc: "Contoh: renovasi fasilitas, pengadaan perlengkapan, pembangunan sarana, dsb.",
+			},
+			{
+				key: "penerima",
+				title: "Bantuan untuk penerima manfaat",
+				desc: "Contoh: bantuan individu/keluarga/kelompok penerima manfaat, dsb.",
+			},
+		];
+	}, [category]);
+
+	const [purposeKey, setPurposeKey] = React.useState<string>("");
+	const [beneficiaries, setBeneficiaries] = React.useState(""); // opsional
+	const [agreeA, setAgreeA] = React.useState(false);
+	const [agreeB, setAgreeB] = React.useState(false);
+
+	const [ktpName, setKtpName] = React.useState("");
+	const [phoneOther, setPhoneOther] = React.useState("");
+	const [job, setJob] = React.useState("");
+	const [workplace, setWorkplace] = React.useState("");
+
+	const [soc, setSoc] = React.useState<
+		"" | "facebook" | "instagram" | "twitter" | "linkedin"
+	>("");
+	const [socHandle, setSocHandle] = React.useState("");
+
+	const [receiverName, setReceiverName] = React.useState("");
+	const [goal, setGoal] = React.useState("");
+	const [location, setLocation] = React.useState("");
+
+	const [targetOther, setTargetOther] = React.useState("");
+	const [durationOther, setDurationOther] = React.useState<
+		"30" | "60" | "120" | "custom" | ""
+	>("");
+	const [usageOther, setUsageOther] = React.useState("");
+
+	const [titleOther, setTitleOther] = React.useState("");
+	const [slugOther, setSlugOther] = React.useState("");
+	const [coverNameOther, setCoverNameOther] = React.useState("");
+
+	const [storyOther, setStoryOther] = React.useState("");
+	const [showStoryEditorOther, setShowStoryEditorOther] = React.useState(false);
+
+	const [ctaOther, setCtaOther] = React.useState("");
+	const ctaOtherLeft = 160 - ctaOther.length;
+
+	// =========
+	// SHARED
+	// =========
 	const [snack, setSnack] = React.useState<{
 		open: boolean;
 		msg: string;
 		type: "success" | "info";
 	}>({ open: false, msg: "", type: "info" });
 
-	const stepKey = STEPS[step]?.key;
-
-	const canOpenConfirm = !!who && phone.trim().length >= 8 && !!bank;
-
 	const canNext = React.useMemo(() => {
-		if (stepKey === "tujuan") return canOpenConfirm; // tapi akan lewat dialog terms
-		if (stepKey === "detail")
-			return !!patientName && !!patientAge && !!patientGender;
-		if (stepKey === "riwayat")
-			return !!inpatient && treatment.trim().length >= 10 && !!prevCost;
+		// ---- sakit
+		if (isSakit) {
+			if (stepKey === "tujuan") return canOpenConfirm;
+			if (stepKey === "detail")
+				return !!patientName && !!patientAge && !!patientGender;
+			if (stepKey === "riwayat")
+				return !!inpatient && treatment.trim().length >= 10 && !!prevCost;
+			if (stepKey === "target")
+				return !!onlyDigits(target) && !!duration && usage.trim().length >= 10;
+			if (stepKey === "judul") return !!title && !!slug;
+			if (stepKey === "cerita") return story.trim().length >= 30;
+			if (stepKey === "ajakan") return cta.trim().length >= 10;
+			return false;
+		}
+
+		// ---- lainnya
+		if (stepKey === "tujuan") return !!purposeKey && agreeA && agreeB;
+		if (stepKey === "data_diri")
+			return ktpName.trim().length >= 3 && phoneOther.trim().length >= 8;
+		if (stepKey === "penerima")
+			return (
+				receiverName.trim().length >= 3 &&
+				goal.trim().length >= 10 &&
+				location.trim().length >= 8
+			);
 		if (stepKey === "target")
-			return !!onlyDigits(target) && !!duration && usage.trim().length >= 10;
-		if (stepKey === "judul") return !!title && !!slug;
-		if (stepKey === "cerita") return story.trim().length >= 30;
-		if (stepKey === "ajakan") return cta.trim().length >= 10;
+			return (
+				!!onlyDigits(targetOther) &&
+				!!durationOther &&
+				usageOther.trim().length >= 10
+			);
+		if (stepKey === "judul") return !!titleOther && !!slugOther;
+		if (stepKey === "cerita") return storyOther.trim().length >= 30;
+		if (stepKey === "ajakan") return ctaOther.trim().length >= 10;
 		return false;
 	}, [
+		isSakit,
 		stepKey,
+		// sakit deps
 		canOpenConfirm,
 		patientName,
 		patientAge,
@@ -151,31 +307,57 @@ export default function BuatGalangDanaPage() {
 		slug,
 		story,
 		cta,
+		// lainnya deps
+		purposeKey,
+		agreeA,
+		agreeB,
+		ktpName,
+		phoneOther,
+		receiverName,
+		goal,
+		location,
+		targetOther,
+		durationOther,
+		usageOther,
+		titleOther,
+		slugOther,
+		storyOther,
+		ctaOther,
 	]);
 
 	const goPrev = () => setStep((s) => Math.max(0, s - 1));
-	const goNext = () => setStep((s) => Math.min(STEPS.length - 1, s + 1));
+	const goNext = () => setStep((s) => Math.min(steps.length - 1, s + 1));
 
 	const onClickNext = () => {
-		if (stepKey === "tujuan") {
+		if (isSakit && stepKey === "tujuan") {
 			setOpenTerms(true);
 			return;
 		}
+
 		if (stepKey === "ajakan") {
 			setSnack({
 				open: true,
-				msg: "Draft galang dana medis tersimpan (dummy).",
+				msg: isSakit
+					? "Draft galang dana medis tersimpan (dummy)."
+					: "Draft galang dana tersimpan (dummy).",
 				type: "success",
 			});
 			return;
 		}
+
 		goNext();
 	};
 
-	const allTermsOk = t1 && t2 && t3 && t4;
+	const headerTitle = isSakit
+		? "Bantuan Medis & Kesehatan"
+		: CATEGORY_TITLE[category] ?? "Galang Dana";
 
 	return (
-		<Box sx={{ pb: "calc(88px + env(safe-area-inset-bottom))" }}>
+		<Box
+			sx={{
+				pb: `calc(var(--bottom-nav-h, 72px) + 96px + env(safe-area-inset-bottom))`,
+			}}
+		>
 			{/* Header */}
 			<Paper
 				elevation={0}
@@ -196,7 +378,7 @@ export default function BuatGalangDanaPage() {
 					</IconButton>
 
 					<Typography sx={{ fontWeight: 600, fontSize: 14 }}>
-						Bantuan Medis & Kesehatan
+						{headerTitle}
 					</Typography>
 				</Box>
 			</Paper>
@@ -212,7 +394,7 @@ export default function BuatGalangDanaPage() {
 						"&::-webkit-scrollbar": { display: "none" },
 					}}
 				>
-					{STEPS.map((s, i) => {
+					{steps.map((s, i) => {
 						const active = i === step;
 						const done = i < step;
 						return (
@@ -265,538 +447,1232 @@ export default function BuatGalangDanaPage() {
 
 			{/* Content */}
 			<Box sx={{ px: 2 }}>
-				{stepKey === "tujuan" && (
-					<Box>
-						<Typography sx={{ fontWeight: 600, fontSize: 14, mb: 1 }}>
-							Siapa yang sakit?
-						</Typography>
-
-						<RadioGroup value={who} onChange={(e) => setWho(e.target.value)}>
-							<Paper variant="outlined" sx={{ borderRadius: 2, mb: 1 }}>
-								<FormControlLabel
-									value="self"
-									control={<Radio size="small" />}
-									label="Saya sendiri"
-									sx={{ px: 1.5, py: 0.5, '& .MuiFormControlLabel-label': { fontSize: 13.5 } }}
-								/>
-							</Paper>
-
-							<Paper variant="outlined" sx={{ borderRadius: 2, mb: 1 }}>
-								<FormControlLabel
-									value="kk"
-									control={<Radio size="small" />}
-									label="Keluarga yang satu KK dengan saya"
-									sx={{ px: 1.5, py: 0.5, '& .MuiFormControlLabel-label': { fontSize: 13.5 } }}
-								/>
-							</Paper>
-
-							<Paper variant="outlined" sx={{ borderRadius: 2, mb: 1 }}>
-								<FormControlLabel
-									value="beda_kk"
-									control={<Radio size="small" />}
-									label="Keluarga inti (ayah/ibu/kakak/adik/anak) yang sudah pisah KK dengan saya"
-									sx={{ px: 1.5, py: 0.5, '& .MuiFormControlLabel-label': { fontSize: 13.5 } }}
-								/>
-							</Paper>
-
-							<Paper variant="outlined" sx={{ borderRadius: 2 }}>
-								<FormControlLabel
-									value="other"
-									control={<Radio size="small" />}
-									label="Selain pilihan di atas"
-									sx={{ px: 1.5, py: 0.5, '& .MuiFormControlLabel-label': { fontSize: 13.5 } }}
-								/>
-							</Paper>
-						</RadioGroup>
-
-						<Box sx={{ mt: 2 }}>
-							<Typography sx={{ fontWeight: 600, fontSize: 14 }}>
-								Masukkan no. ponsel kamu
-							</Typography>
-							<Typography
-								sx={{ color: "text.secondary", fontSize: 12.5, mb: 1 }}
-							>
-								Seluruh notifikasi akan dikirim melalui nomor ini
-							</Typography>
-
-							<TextField size="small" sx={{ '& .MuiInputBase-input': { fontSize: 13.5 }, '& .MuiInputLabel-root': { fontSize: 13.5 } }}
-								value={phone}
-								onChange={(e) => setPhone(onlyDigits(e.target.value))}
-								fullWidth
-								placeholder="Pastikan nomor aktif memiliki WA"
-								inputMode="numeric"
-							/>
-						</Box>
-
-						<Box sx={{ mt: 2 }}>
-							<Typography sx={{ fontWeight: 600, fontSize: 14 }}>
-								Pilih rekening bank penggalangan dana
-							</Typography>
-							<Typography
-								sx={{ color: "text.secondary", fontSize: 12.5, mb: 1 }}
-							>
-								Donasi hanya bisa dicairkan ke rekening ini.
-							</Typography>
-
-							<Stack spacing={1}>
-								<Paper variant="outlined" sx={{ borderRadius: 2 }}>
-									<FormControlLabel
-										sx={{ px: 1.5, py: 0.5, width: "100%", '& .MuiFormControlLabel-label': { fontSize: 13.5 } }}
-										control={
-											<Checkbox
-												checked={bank === "pasien"}
-												onChange={() => setBank("pasien")}
-											/>
-										}
-										label="Pasien langsung"
-									/>
-								</Paper>
-
-								<Paper variant="outlined" sx={{ borderRadius: 2 }}>
-									<FormControlLabel
-										sx={{ px: 1.5, py: 0.5, width: "100%", '& .MuiFormControlLabel-label': { fontSize: 13.5 } }}
-										control={
-											<Checkbox
-												checked={bank === "kk"}
-												onChange={() => setBank("kk")}
-											/>
-										}
-										label="Keluarga satu KK"
-									/>
-								</Paper>
-
-								<Paper variant="outlined" sx={{ borderRadius: 2 }}>
-									<FormControlLabel
-										sx={{ px: 1.5, py: 0.5, width: "100%", '& .MuiFormControlLabel-label': { fontSize: 13.5 } }}
-										control={
-											<Checkbox
-												checked={bank === "beda_kk"}
-												onChange={() => setBank("beda_kk")}
-											/>
-										}
-										label="Keluarga inti berbeda KK"
-									/>
-								</Paper>
-
-								<Paper variant="outlined" sx={{ borderRadius: 2 }}>
-									<FormControlLabel
-										sx={{ px: 1.5, py: 0.5, width: "100%", '& .MuiFormControlLabel-label': { fontSize: 13.5 } }}
-										control={
-											<Checkbox
-												checked={bank === "rs"}
-												onChange={() => setBank("rs")}
-											/>
-										}
-										label="Rumah sakit"
-									/>
-								</Paper>
-							</Stack>
-						</Box>
-					</Box>
-				)}
-
-				{stepKey === "detail" && (
-					<Box>
-						<Typography sx={{ fontWeight: 600, fontSize: 14, mb: 1 }}>
-							Detail pasien
-						</Typography>
-
-						<Stack spacing={1.25}>
-							<TextField size="small" sx={{ '& .MuiInputBase-input': { fontSize: 13.5 }, '& .MuiInputLabel-root': { fontSize: 13.5 } }}
-								label="Nama pasien"
-								value={patientName}
-								onChange={(e) => setPatientName(e.target.value)}
-								fullWidth
-							/>
-							<TextField size="small" sx={{ '& .MuiInputBase-input': { fontSize: 13.5 }, '& .MuiInputLabel-root': { fontSize: 13.5 } }}
-								label="Usia pasien"
-								value={patientAge}
-								onChange={(e) => setPatientAge(onlyDigits(e.target.value))}
-								inputMode="numeric"
-								fullWidth
-							/>
-							<TextField size="small" sx={{ '& .MuiInputBase-input': { fontSize: 13.5 }, '& .MuiInputLabel-root': { fontSize: 13.5 } }}
-								label="Domisili pasien (kota/kab)"
-								value={patientCity}
-								onChange={(e) => setPatientCity(e.target.value)}
-								fullWidth
-							/>
-
-							<Paper variant="outlined" sx={{ borderRadius: 2, p: 1 }}>
-								<Typography sx={{ fontWeight: 600, mb: 0.5 }}>
-									Jenis kelamin
+				{/* ========================= */}
+				{/* SAKIT */}
+				{/* ========================= */}
+				{isSakit && (
+					<>
+						{stepKey === "tujuan" && (
+							<Box>
+								<Typography sx={{ fontWeight: 600, fontSize: 14, mb: 1 }}>
+									Siapa yang sakit?
 								</Typography>
+
 								<RadioGroup
-									row
-									value={patientGender}
-									onChange={(e) => setPatientGender(e.target.value as any)}
+									value={who}
+									onChange={(e) => setWho(e.target.value)}
 								>
-									<FormControlLabel
-										value="L"
-										control={<Radio size="small" />}
-										label="Laki-laki"
-									/>
-									<FormControlLabel
-										value="P"
-										control={<Radio size="small" />}
-										label="Perempuan"
-									/>
+									<Paper variant="outlined" sx={{ borderRadius: 2, mb: 1 }}>
+										<FormControlLabel
+											value="self"
+											control={<Radio size="small" />}
+											label="Saya sendiri"
+											sx={{
+												px: 1.5,
+												py: 0.5,
+												"& .MuiFormControlLabel-label": { fontSize: 13.5 },
+											}}
+										/>
+									</Paper>
+
+									<Paper variant="outlined" sx={{ borderRadius: 2, mb: 1 }}>
+										<FormControlLabel
+											value="kk"
+											control={<Radio size="small" />}
+											label="Keluarga yang satu KK dengan saya"
+											sx={{
+												px: 1.5,
+												py: 0.5,
+												"& .MuiFormControlLabel-label": { fontSize: 13.5 },
+											}}
+										/>
+									</Paper>
+
+									<Paper variant="outlined" sx={{ borderRadius: 2, mb: 1 }}>
+										<FormControlLabel
+											value="beda_kk"
+											control={<Radio size="small" />}
+											label="Keluarga inti (ayah/ibu/kakak/adik/anak) yang sudah pisah KK dengan saya"
+											sx={{
+												px: 1.5,
+												py: 0.5,
+												"& .MuiFormControlLabel-label": { fontSize: 13.5 },
+											}}
+										/>
+									</Paper>
+
+									<Paper variant="outlined" sx={{ borderRadius: 2 }}>
+										<FormControlLabel
+											value="other"
+											control={<Radio size="small" />}
+											label="Selain pilihan di atas"
+											sx={{
+												px: 1.5,
+												py: 0.5,
+												"& .MuiFormControlLabel-label": { fontSize: 13.5 },
+											}}
+										/>
+									</Paper>
 								</RadioGroup>
-							</Paper>
-						</Stack>
-					</Box>
-				)}
 
-				{stepKey === "riwayat" && (
-					<Box>
-						<Typography sx={{ fontWeight: 600, fontSize: 14, mb: 1 }}>
-							Apakah pasien sedang menjalani rawat inap di rumah sakit?
-						</Typography>
+								<Box sx={{ mt: 2 }}>
+									<Typography sx={{ fontWeight: 600, fontSize: 14 }}>
+										Masukkan no. ponsel kamu
+									</Typography>
+									<Typography
+										sx={{ color: "text.secondary", fontSize: 12.5, mb: 1 }}
+									>
+										Seluruh notifikasi akan dikirim melalui nomor ini
+									</Typography>
 
-						<RadioGroup
-							value={inpatient}
-							onChange={(e) => setInpatient(e.target.value as any)}
-						>
-							<Paper variant="outlined" sx={{ borderRadius: 2, mb: 1 }}>
-								<FormControlLabel
-									value="ya"
-									control={<Radio size="small" />}
-									label="Ya, sedang rawat inap"
-									sx={{ px: 1.5, py: 0.5, '& .MuiFormControlLabel-label': { fontSize: 13.5 } }}
-								/>
-							</Paper>
-							<Paper variant="outlined" sx={{ borderRadius: 2 }}>
-								<FormControlLabel
-									value="tidak"
-									control={<Radio size="small" />}
-									label="Tidak"
-									sx={{ px: 1.5, py: 0.5, '& .MuiFormControlLabel-label': { fontSize: 13.5 } }}
-								/>
-							</Paper>
-						</RadioGroup>
-
-						<Box sx={{ mt: 2 }}>
-							<Typography sx={{ fontWeight: 600, fontSize: 14, mb: 0.75 }}>
-								Upaya pengobatan yang sudah atau sedang dilakukan
-							</Typography>
-							<TextField size="small" sx={{ '& .MuiInputBase-input': { fontSize: 13.5 }, '& .MuiInputLabel-root': { fontSize: 13.5 } }}
-								value={treatment}
-								onChange={(e) => setTreatment(e.target.value)}
-								fullWidth
-								multiline
-								minRows={4}
-								placeholder="Jelaskan secara lengkap upaya apa yang dilakukan dan tempat dilakukan (cth: operasi, kontrol, terapi, dll)"
-							/>
-						</Box>
-
-						<Box sx={{ mt: 2 }}>
-							<Typography sx={{ fontWeight: 600, fontSize: 14, mb: 0.75 }}>
-								Dari mana sumber biaya pengobatan/perawatan sebelumnya?
-							</Typography>
-
-							<RadioGroup
-								value={prevCost}
-								onChange={(e) => setPrevCost(e.target.value as any)}
-							>
-								<Paper variant="outlined" sx={{ borderRadius: 2, mb: 1 }}>
-									<FormControlLabel
-										value="mandiri"
-										control={<Radio size="small" />}
-										label="Biaya mandiri"
-										sx={{ px: 1.5, py: 0.5, '& .MuiFormControlLabel-label': { fontSize: 13.5 } }}
+									<TextField
+										size="small"
+										sx={{
+											"& .MuiInputBase-input": { fontSize: 13.5 },
+											"& .MuiInputLabel-root": { fontSize: 13.5 },
+										}}
+										value={phone}
+										onChange={(e) => setPhone(onlyDigits(e.target.value))}
+										fullWidth
+										placeholder="Pastikan nomor aktif memiliki WA"
+										inputMode="numeric"
 									/>
-								</Paper>
-								<Paper variant="outlined" sx={{ borderRadius: 2 }}>
-									<FormControlLabel
-										value="asuransi"
-										control={<Radio size="small" />}
-										label="Asuransi (BPJS dan/atau swasta)"
-										sx={{ px: 1.5, py: 0.5, '& .MuiFormControlLabel-label': { fontSize: 13.5 } }}
+								</Box>
+
+								<Box sx={{ mt: 2 }}>
+									<Typography sx={{ fontWeight: 600, fontSize: 14 }}>
+										Pilih rekening bank penggalangan dana
+									</Typography>
+									<Typography
+										sx={{ color: "text.secondary", fontSize: 12.5, mb: 1 }}
+									>
+										Donasi hanya bisa dicairkan ke rekening ini.
+									</Typography>
+
+									<Stack spacing={1}>
+										{[
+											{ k: "pasien", t: "Pasien langsung" },
+											{ k: "kk", t: "Keluarga satu KK" },
+											{ k: "beda_kk", t: "Keluarga inti berbeda KK" },
+											{ k: "rs", t: "Rumah sakit" },
+										].map((x) => (
+											<Paper
+												key={x.k}
+												variant="outlined"
+												sx={{ borderRadius: 2 }}
+											>
+												<FormControlLabel
+													sx={{
+														px: 1.5,
+														py: 0.5,
+														width: "100%",
+														"& .MuiFormControlLabel-label": { fontSize: 13.5 },
+													}}
+													control={
+														<Checkbox
+															checked={bank === x.k}
+															onChange={() => setBank(x.k)}
+														/>
+													}
+													label={x.t}
+												/>
+											</Paper>
+										))}
+									</Stack>
+								</Box>
+							</Box>
+						)}
+
+						{stepKey === "detail" && (
+							<Box>
+								<Typography sx={{ fontWeight: 600, fontSize: 14, mb: 1 }}>
+									Detail pasien
+								</Typography>
+
+								<Stack spacing={1.25}>
+									<TextField
+										size="small"
+										sx={{
+											"& .MuiInputBase-input": { fontSize: 13.5 },
+											"& .MuiInputLabel-root": { fontSize: 13.5 },
+										}}
+										label="Nama pasien"
+										value={patientName}
+										onChange={(e) => setPatientName(e.target.value)}
+										fullWidth
 									/>
-								</Paper>
-							</RadioGroup>
-						</Box>
-					</Box>
-				)}
+									<TextField
+										size="small"
+										sx={{
+											"& .MuiInputBase-input": { fontSize: 13.5 },
+											"& .MuiInputLabel-root": { fontSize: 13.5 },
+										}}
+										label="Usia pasien"
+										value={patientAge}
+										onChange={(e) => setPatientAge(onlyDigits(e.target.value))}
+										inputMode="numeric"
+										fullWidth
+									/>
+									<TextField
+										size="small"
+										sx={{
+											"& .MuiInputBase-input": { fontSize: 13.5 },
+											"& .MuiInputLabel-root": { fontSize: 13.5 },
+										}}
+										label="Domisili pasien (kota/kab)"
+										value={patientCity}
+										onChange={(e) => setPatientCity(e.target.value)}
+										fullWidth
+									/>
 
-				{stepKey === "target" && (
-					<Box>
-						<Typography sx={{ fontWeight: 600, fontSize: 14, mb: 0.75 }}>
-							Tentukan perkiraan biaya yang dibutuhkan
-						</Typography>
-
-						<TextField size="small" sx={{ '& .MuiInputBase-input': { fontSize: 13.5 }, '& .MuiInputLabel-root': { fontSize: 13.5 } }}
-							value={formatIDR(target)}
-							onChange={(e) => setTarget(e.target.value)}
-							fullWidth
-							placeholder="Masukkan jumlah kebutuhan biaya"
-							inputMode="numeric"
-							InputProps={{
-								startAdornment: (
-									<InputAdornment position="start">Rp</InputAdornment>
-								),
-							}}
-						/>
-
-						<Box sx={{ mt: 2 }}>
-							<Typography sx={{ fontWeight: 600, fontSize: 14, mb: 0.75 }}>
-								Tentukan lama galang dana berlangsung
-							</Typography>
-
-							<RadioGroup
-								value={duration}
-								onChange={(e) => setDuration(e.target.value as any)}
-							>
-								<Stack spacing={1}>
-									<Paper variant="outlined" sx={{ borderRadius: 2 }}>
-										<FormControlLabel
-											value="30"
-											control={<Radio size="small" />}
-											label="30 hari"
-											sx={{ px: 1.5, py: 0.5, '& .MuiFormControlLabel-label': { fontSize: 13.5 } }}
-										/>
-									</Paper>
-									<Paper variant="outlined" sx={{ borderRadius: 2 }}>
-										<FormControlLabel
-											value="60"
-											control={<Radio size="small" />}
-											label="60 hari"
-											sx={{ px: 1.5, py: 0.5, '& .MuiFormControlLabel-label': { fontSize: 13.5 } }}
-										/>
-									</Paper>
-									<Paper variant="outlined" sx={{ borderRadius: 2 }}>
-										<FormControlLabel
-											value="120"
-											control={<Radio size="small" />}
-											label="120 hari"
-											sx={{ px: 1.5, py: 0.5, '& .MuiFormControlLabel-label': { fontSize: 13.5 } }}
-										/>
-									</Paper>
-									<Paper variant="outlined" sx={{ borderRadius: 2 }}>
-										<FormControlLabel
-											value="custom"
-											control={<Radio size="small" />}
-											label="pilih tanggal"
-											sx={{ px: 1.5, py: 0.5, '& .MuiFormControlLabel-label': { fontSize: 13.5 } }}
-										/>
+									<Paper variant="outlined" sx={{ borderRadius: 2, p: 1 }}>
+										<Typography sx={{ fontWeight: 600, mb: 0.5 }}>
+											Jenis kelamin
+										</Typography>
+										<RadioGroup
+											row
+											value={patientGender}
+											onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+												setPatientGender(e.target.value as "L" | "P" | "")
+											}
+										>
+											<FormControlLabel
+												value="L"
+												control={<Radio size="small" />}
+												label="Laki-laki"
+											/>
+											<FormControlLabel
+												value="P"
+												control={<Radio size="small" />}
+												label="Perempuan"
+											/>
+										</RadioGroup>
 									</Paper>
 								</Stack>
-							</RadioGroup>
-						</Box>
-
-						<Box sx={{ mt: 2 }}>
-							<Typography sx={{ fontWeight: 600, fontSize: 14, mb: 0.75 }}>
-								Isi rincian penggunaan dana
-							</Typography>
-							<TextField size="small" sx={{ '& .MuiInputBase-input': { fontSize: 13.5 }, '& .MuiInputLabel-root': { fontSize: 13.5 } }}
-								value={usage}
-								onChange={(e) => setUsage(e.target.value)}
-								fullWidth
-								multiline
-								minRows={4}
-								placeholder="Contoh: vitamin Rp2.000.000, rawat inap 10 hari Rp5.000.000, operasi Rp20.000.000"
-							/>
-						</Box>
-					</Box>
-				)}
-
-				{stepKey === "judul" && (
-					<Box>
-						<Typography sx={{ fontWeight: 600, fontSize: 14, mb: 1 }}>
-							Beri judul untuk galang dana ini
-						</Typography>
-
-						<Stack spacing={1.25}>
-							<TextField size="small" sx={{ '& .MuiInputBase-input': { fontSize: 13.5 }, '& .MuiInputLabel-root': { fontSize: 13.5 } }}
-								value={title}
-								onChange={(e) => setTitle(e.target.value)}
-								fullWidth
-								placeholder="Contoh: Bantu Abi melawan kanker hati"
-							/>
-
-							<Box>
-								<Typography sx={{ fontWeight: 600, fontSize: 14, mb: 0.75 }}>
-									Tentukan link untuk galang dana ini
-								</Typography>
-								<TextField size="small" sx={{ '& .MuiInputBase-input': { fontSize: 13.5 }, '& .MuiInputLabel-root': { fontSize: 13.5 } }}
-									value={slug}
-									onChange={(e) =>
-										setSlug(e.target.value.replace(/\s+/g, "").toLowerCase())
-									}
-									fullWidth
-									placeholder="contoh: bantudolawan..."
-								/>
 							</Box>
+						)}
 
+						{stepKey === "riwayat" && (
 							<Box>
-								<Typography sx={{ fontWeight: 600, fontSize: 14, mb: 0.75 }}>
-									Upload foto galang dana
+								<Typography sx={{ fontWeight: 600, fontSize: 14, mb: 1 }}>
+									Apakah pasien sedang menjalani rawat inap di rumah sakit?
 								</Typography>
 
-								<Paper
-									variant="outlined"
-									sx={{
-										borderRadius: 3,
-										p: 1.25,
-										textAlign: "center",
-									}}
+								<RadioGroup
+									value={inpatient}
+									onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+										setInpatient(e.target.value as "ya" | "tidak" | "")
+									}
 								>
-									<input
-										id="cover-upload"
-										type="file"
-										accept="image/*"
-										hidden
-										onChange={(e) =>
-											setCoverName(e.target.files?.[0]?.name ?? "")
-										}
-									/>
-									<Button
-										component="label"
-										htmlFor="cover-upload"
-										startIcon={<PhotoCameraRoundedIcon />}
-										variant="text"
-										sx={{ fontWeight: 700 }}
-									>
-										Upload Foto
-									</Button>
+									<Paper variant="outlined" sx={{ borderRadius: 2, mb: 1 }}>
+										<FormControlLabel
+											value="ya"
+											control={<Radio size="small" />}
+											label="Ya, sedang rawat inap"
+											sx={{
+												px: 1.5,
+												py: 0.5,
+												"& .MuiFormControlLabel-label": { fontSize: 13.5 },
+											}}
+										/>
+									</Paper>
+									<Paper variant="outlined" sx={{ borderRadius: 2 }}>
+										<FormControlLabel
+											value="tidak"
+											control={<Radio size="small" />}
+											label="Tidak"
+											sx={{
+												px: 1.5,
+												py: 0.5,
+												"& .MuiFormControlLabel-label": { fontSize: 13.5 },
+											}}
+										/>
+									</Paper>
+								</RadioGroup>
 
-									{coverName ? (
+								<Box sx={{ mt: 2 }}>
+									<Typography sx={{ fontWeight: 600, fontSize: 14, mb: 0.75 }}>
+										Upaya pengobatan yang sudah atau sedang dilakukan
+									</Typography>
+									<TextField
+										size="small"
+										sx={{
+											"& .MuiInputBase-input": { fontSize: 13.5 },
+											"& .MuiInputLabel-root": { fontSize: 13.5 },
+										}}
+										value={treatment}
+										onChange={(e) => setTreatment(e.target.value)}
+										fullWidth
+										multiline
+										minRows={4}
+										placeholder="Jelaskan secara lengkap upaya apa yang dilakukan dan tempat dilakukan..."
+									/>
+								</Box>
+
+								<Box sx={{ mt: 2 }}>
+									<Typography sx={{ fontWeight: 600, fontSize: 14, mb: 0.75 }}>
+										Dari mana sumber biaya pengobatan/perawatan sebelumnya?
+									</Typography>
+
+									<RadioGroup
+										value={prevCost}
+										onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+											setPrevCost(e.target.value as "mandiri" | "asuransi" | "")
+										}
+									>
+										<Paper variant="outlined" sx={{ borderRadius: 2, mb: 1 }}>
+											<FormControlLabel
+												value="mandiri"
+												control={<Radio size="small" />}
+												label="Biaya mandiri"
+												sx={{
+													px: 1.5,
+													py: 0.5,
+													"& .MuiFormControlLabel-label": { fontSize: 13.5 },
+												}}
+											/>
+										</Paper>
+										<Paper variant="outlined" sx={{ borderRadius: 2 }}>
+											<FormControlLabel
+												value="asuransi"
+												control={<Radio size="small" />}
+												label="Asuransi (BPJS dan/atau swasta)"
+												sx={{
+													px: 1.5,
+													py: 0.5,
+													"& .MuiFormControlLabel-label": { fontSize: 13.5 },
+												}}
+											/>
+										</Paper>
+									</RadioGroup>
+								</Box>
+							</Box>
+						)}
+
+						{stepKey === "target" && (
+							<Box>
+								<Typography sx={{ fontWeight: 600, fontSize: 14, mb: 0.75 }}>
+									Tentukan perkiraan biaya yang dibutuhkan
+								</Typography>
+
+								<TextField
+									size="small"
+									sx={{
+										"& .MuiInputBase-input": { fontSize: 13.5 },
+										"& .MuiInputLabel-root": { fontSize: 13.5 },
+									}}
+									value={formatIDR(target)}
+									onChange={(e) => setTarget(e.target.value)}
+									fullWidth
+									placeholder="Masukkan jumlah kebutuhan biaya"
+									inputMode="numeric"
+									InputProps={{
+										startAdornment: (
+											<InputAdornment position="start">Rp</InputAdornment>
+										),
+									}}
+								/>
+
+								<Box sx={{ mt: 2 }}>
+									<Typography sx={{ fontWeight: 600, fontSize: 14, mb: 0.75 }}>
+										Tentukan lama galang dana berlangsung
+									</Typography>
+
+									<RadioGroup
+										value={duration}
+										onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+											setDuration(
+												e.target.value as "30" | "60" | "120" | "custom" | ""
+											)
+										}
+									>
+										<Stack spacing={1}>
+											{[
+												{ v: "30", t: "30 hari" },
+												{ v: "60", t: "60 hari" },
+												{ v: "120", t: "120 hari" },
+												{ v: "custom", t: "pilih tanggal" },
+											].map((x) => (
+												<Paper
+													key={x.v}
+													variant="outlined"
+													sx={{ borderRadius: 2 }}
+												>
+													<FormControlLabel
+														value={x.v}
+														control={<Radio size="small" />}
+														label={x.t}
+														sx={{
+															px: 1.5,
+															py: 0.5,
+															"& .MuiFormControlLabel-label": {
+																fontSize: 13.5,
+															},
+														}}
+													/>
+												</Paper>
+											))}
+										</Stack>
+									</RadioGroup>
+								</Box>
+
+								<Box sx={{ mt: 2 }}>
+									<Typography sx={{ fontWeight: 600, fontSize: 14, mb: 0.75 }}>
+										Isi rincian penggunaan dana
+									</Typography>
+									<TextField
+										size="small"
+										sx={{
+											"& .MuiInputBase-input": { fontSize: 13.5 },
+											"& .MuiInputLabel-root": { fontSize: 13.5 },
+										}}
+										value={usage}
+										onChange={(e) => setUsage(e.target.value)}
+										fullWidth
+										multiline
+										minRows={4}
+										placeholder="Contoh: vitamin Rp2.000.000, rawat inap 10 hari Rp5.000.000, operasi Rp20.000.000"
+									/>
+								</Box>
+							</Box>
+						)}
+
+						{stepKey === "judul" && (
+							<Box>
+								<Typography sx={{ fontWeight: 600, fontSize: 14, mb: 1 }}>
+									Beri judul untuk galang dana ini
+								</Typography>
+
+								<Stack spacing={1.25}>
+									<TextField
+										size="small"
+										sx={{
+											"& .MuiInputBase-input": { fontSize: 13.5 },
+											"& .MuiInputLabel-root": { fontSize: 13.5 },
+										}}
+										value={title}
+										onChange={(e) => setTitle(e.target.value)}
+										fullWidth
+										placeholder="Contoh: Bantu Abi melawan kanker hati"
+									/>
+
+									<Box>
 										<Typography
-											sx={{ mt: 0.75, fontSize: 12.5, color: "text.secondary" }}
+											sx={{ fontWeight: 600, fontSize: 14, mb: 0.75 }}
 										>
-											Terpilih: <b>{coverName}</b>
+											Tentukan link untuk galang dana ini
 										</Typography>
-									) : null}
-								</Paper>
+										<TextField
+											size="small"
+											sx={{
+												"& .MuiInputBase-input": { fontSize: 13.5 },
+												"& .MuiInputLabel-root": { fontSize: 13.5 },
+											}}
+											value={slug}
+											onChange={(e) =>
+												setSlug(
+													e.target.value.replace(/\s+/g, "").toLowerCase()
+												)
+											}
+											fullWidth
+											placeholder="contoh: bantudolawan..."
+										/>
+									</Box>
+
+									<Box>
+										<Typography
+											sx={{ fontWeight: 600, fontSize: 14, mb: 0.75 }}
+										>
+											Upload foto galang dana
+										</Typography>
+
+										<Paper
+											variant="outlined"
+											sx={{ borderRadius: 3, p: 1.25, textAlign: "center" }}
+										>
+											<input
+												id="cover-upload"
+												type="file"
+												accept="image/*"
+												hidden
+												onChange={(e) =>
+													setCoverName(e.target.files?.[0]?.name ?? "")
+												}
+											/>
+											<Button
+												component="label"
+												htmlFor="cover-upload"
+												startIcon={<PhotoCameraRoundedIcon />}
+												variant="text"
+												sx={{ fontWeight: 700 }}
+											>
+												Upload Foto
+											</Button>
+
+											{coverName ? (
+												<Typography
+													sx={{
+														mt: 0.75,
+														fontSize: 12.5,
+														color: "text.secondary",
+													}}
+												>
+													Terpilih: <b>{coverName}</b>
+												</Typography>
+											) : null}
+										</Paper>
+
+										<Paper
+											elevation={0}
+											sx={{
+												mt: 1.25,
+												p: 1,
+												borderRadius: 2,
+												bgcolor: "rgba(2,132,199,.06)",
+												display: "flex",
+												gap: 1,
+												alignItems: "flex-start",
+											}}
+										>
+											<InfoOutlinedIcon fontSize="small" sx={{ mt: "2px" }} />
+											<Box>
+												<Typography sx={{ fontSize: 12.5, fontWeight: 600 }}>
+													Tips
+												</Typography>
+												<Typography
+													sx={{ fontSize: 12.5, color: "text.secondary" }}
+												>
+													Upload foto yang menggambarkan keadaan pasien saat
+													ini.
+												</Typography>
+											</Box>
+										</Paper>
+									</Box>
+								</Stack>
+							</Box>
+						)}
+
+						{stepKey === "cerita" && (
+							<Box>
+								<Typography sx={{ fontWeight: 600, fontSize: 14, mb: 1 }}>
+									Tuliskan cerita tentang galang dana ini
+								</Typography>
 
 								<Paper
 									elevation={0}
 									sx={{
-										mt: 1.25,
-										p: 1,
-										borderRadius: 2,
-										bgcolor: "rgba(2,132,199,.06)",
-										display: "flex",
-										gap: 1,
-										alignItems: "flex-start",
+										borderRadius: 3,
+										border: "1px solid",
+										borderColor: "divider",
+										p: 1.25,
 									}}
 								>
-									<InfoOutlinedIcon fontSize="small" sx={{ mt: "2px" }} />
-									<Box>
-										<Typography sx={{ fontSize: 12.5, fontWeight: 600 }}>
-											Tips
-										</Typography>
-										<Typography
-											sx={{ fontSize: 12.5, color: "text.secondary" }}
-										>
-											Upload foto yang menggambarkan keadaan pasien saat ini.
-										</Typography>
-									</Box>
+									<Typography sx={{ fontWeight: 600, fontSize: 14, mb: 0.5 }}>
+										Kenapa cerita itu penting?
+									</Typography>
+									<Typography
+										sx={{ fontSize: 12.5, color: "text.secondary", mb: 1.25 }}
+									>
+										Cerita yang lengkap biasanya lebih dipercaya dan peluang
+										donasinya lebih tinggi.
+									</Typography>
+
+									<Button
+										variant="contained"
+										fullWidth
+										onClick={() => setShowStoryEditor(true)}
+										sx={{ borderRadius: 2, fontWeight: 700, py: 1.15 }}
+									>
+										Buat cerita galang dana
+									</Button>
 								</Paper>
-							</Box>
-						</Stack>
-					</Box>
-				)}
 
-				{stepKey === "cerita" && (
-					<Box>
-						<Typography sx={{ fontWeight: 600, fontSize: 14, mb: 1 }}>
-							Tuliskan cerita tentang galang dana ini
-						</Typography>
-
-						<Paper
-							elevation={0}
-							sx={{
-								borderRadius: 3,
-								border: "1px solid",
-								borderColor: "divider",
-								p: 1.25,
-							}}
-						>
-							<Typography sx={{ fontWeight: 600, fontSize: 14, mb: 0.5 }}>
-								Kenapa cerita itu penting?
-							</Typography>
-							<Typography
-								sx={{ fontSize: 12.5, color: "text.secondary", mb: 1.25 }}
-							>
-								Cerita yang lengkap biasanya lebih dipercaya dan peluang
-								donasinya lebih tinggi.
-							</Typography>
-
-							<Button
-								variant="contained"
-								fullWidth
-								onClick={() => setShowStoryEditor(true)}
-								sx={{ borderRadius: 2, fontWeight: 700, py: 1.15 }}
-							>
-								Buat cerita galang dana
-							</Button>
-						</Paper>
-
-						{showStoryEditor && (
-							<Box sx={{ mt: 1.5 }}>
-								<TextField size="small" sx={{ '& .MuiInputBase-input': { fontSize: 13.5 }, '& .MuiInputLabel-root': { fontSize: 13.5 } }}
-									value={story}
-									onChange={(e) => setStory(e.target.value)}
-									fullWidth
-									multiline
-									minRows={8}
-									placeholder="Tulis kronologi, kondisi pasien, kebutuhan biaya, rencana penggunaan dana, dan ajakan..."
-								/>
+								{showStoryEditor && (
+									<Box sx={{ mt: 1.5 }}>
+										<TextField
+											size="small"
+											sx={{
+												"& .MuiInputBase-input": { fontSize: 13.5 },
+												"& .MuiInputLabel-root": { fontSize: 13.5 },
+											}}
+											value={story}
+											onChange={(e) => setStory(e.target.value)}
+											fullWidth
+											multiline
+											minRows={8}
+											placeholder="Tulis kronologi, kondisi pasien, kebutuhan biaya, rencana penggunaan dana, dan ajakan..."
+										/>
+									</Box>
+								)}
 							</Box>
 						)}
-					</Box>
+
+						{stepKey === "ajakan" && (
+							<Box>
+								<Typography sx={{ fontWeight: 600, fontSize: 14, mb: 1 }}>
+									Tulis ajakan singkat untuk donasi di galang dana ini
+								</Typography>
+
+								<TextField
+									size="small"
+									sx={{
+										"& .MuiInputBase-input": { fontSize: 13.5 },
+										"& .MuiInputLabel-root": { fontSize: 13.5 },
+									}}
+									value={cta}
+									onChange={(e) => setCta(e.target.value.slice(0, 160))}
+									fullWidth
+									multiline
+									minRows={4}
+									placeholder="Contoh: Penghasilan saya hanya Rp20rb/hari, padahal Abi butuh biaya berobat..."
+								/>
+
+								<Typography
+									sx={{
+										mt: 0.75,
+										fontSize: 12.5,
+										color: ctaLeft < 0 ? "error.main" : "text.secondary",
+									}}
+								>
+									{cta.length}/160
+								</Typography>
+							</Box>
+						)}
+					</>
 				)}
 
-				{stepKey === "ajakan" && (
-					<Box>
-						<Typography sx={{ fontWeight: 600, fontSize: 14, mb: 1 }}>
-							Tulis ajakan singkat untuk donasi di galang dana ini
-						</Typography>
+				{/* ========================= */}
+				{/* LAINNYA */}
+				{/* ========================= */}
+				{isLainnya && (
+					<>
+						{/* STEP: tujuan */}
+						{stepKey === "tujuan" && (
+							<Box>
+								<Typography sx={{ fontWeight: 600, fontSize: 14, mb: 1 }}>
+									Donasi akan ditujukan kepada...
+								</Typography>
 
-						<TextField size="small" sx={{ '& .MuiInputBase-input': { fontSize: 13.5 }, '& .MuiInputLabel-root': { fontSize: 13.5 } }}
-							value={cta}
-							onChange={(e) => setCta(e.target.value.slice(0, 160))}
-							fullWidth
-							multiline
-							minRows={4}
-							placeholder="Contoh: Penghasilan saya hanya Rp20rb/hari, padahal Abi butuh biaya berobat..."
-						/>
+								{/* kalau belum pilih tujuan, tampil list */}
+								{!purposeKey ? (
+									<Stack spacing={1}>
+										{purposes.map((p) => (
+											<Paper
+												key={p.key}
+												variant="outlined"
+												sx={{ borderRadius: 3, p: 1.25 }}
+											>
+												<Box
+													sx={{
+														display: "flex",
+														gap: 1,
+														alignItems: "flex-start",
+													}}
+												>
+													<Box sx={{ flex: 1 }}>
+														<Typography
+															sx={{ fontWeight: 700, fontSize: 13.5 }}
+														>
+															{p.title}
+														</Typography>
+														<Typography
+															sx={{
+																mt: 0.4,
+																fontSize: 12.5,
+																color: "text.secondary",
+															}}
+														>
+															{p.desc}
+														</Typography>
+													</Box>
 
-						<Typography
-							sx={{
-								mt: 0.75,
-								fontSize: 12.5,
-								color: ctaLeft < 0 ? "error.main" : "text.secondary",
-							}}
-						>
-							{cta.length}/160
-						</Typography>
+													<Button
+														variant="text"
+														onClick={() => setPurposeKey(p.key)}
+														sx={{ fontWeight: 700 }}
+													>
+														Pilih
+													</Button>
+												</Box>
+											</Paper>
+										))}
+									</Stack>
+								) : (
+									<Box>
+										<Paper variant="outlined" sx={{ borderRadius: 3, p: 1.25 }}>
+											<Box
+												sx={{
+													display: "flex",
+													justifyContent: "space-between",
+													gap: 1,
+												}}
+											>
+												<Typography sx={{ fontWeight: 700, fontSize: 13.5 }}>
+													{purposes.find((x) => x.key === purposeKey)?.title ??
+														"-"}
+												</Typography>
+												<Button
+													variant="text"
+													onClick={() => setPurposeKey("")}
+													sx={{ fontWeight: 700 }}
+												>
+													Ubah
+												</Button>
+											</Box>
+										</Paper>
 
-						<Paper
-							elevation={0}
-							sx={{
-								mt: 1.25,
-								p: 1,
-								borderRadius: 2,
-								bgcolor: "background.paper",
-								border: "1px solid",
-								borderColor: "divider",
-							}}
-						>
-							<Typography sx={{ fontWeight: 600, fontSize: 12.5, mb: 0.5 }}>
-								Apa gunanya ajakan singkat?
-							</Typography>
-							<Typography sx={{ fontSize: 12.5, color: "text.secondary" }}>
-								Ajakan singkat dipakai saat kamu membagikan galang dana ke media
-								sosial.
-							</Typography>
-						</Paper>
-					</Box>
+										<Box sx={{ mt: 2 }}>
+											<Typography
+												sx={{ fontWeight: 600, fontSize: 14, mb: 0.75 }}
+											>
+												Berapa jumlah penerima manfaat yang dituju?{" "}
+												<span style={{ color: "rgba(15,23,42,.55)" }}>
+													(opsional)
+												</span>
+											</Typography>
+											<TextField
+												size="small"
+												sx={{
+													"& .MuiInputBase-input": { fontSize: 13.5 },
+													"& .MuiInputLabel-root": { fontSize: 13.5 },
+												}}
+												value={beneficiaries}
+												onChange={(e) =>
+													setBeneficiaries(onlyDigits(e.target.value))
+												}
+												fullWidth
+												inputMode="numeric"
+												placeholder="Contoh: 100"
+											/>
+										</Box>
+
+										<Box sx={{ mt: 2 }}>
+											<Typography sx={{ fontWeight: 600, fontSize: 14, mb: 1 }}>
+												Baca dan beri tanda syarat penggalangan di bawah ini
+											</Typography>
+
+											<Paper variant="outlined" sx={{ borderRadius: 3, p: 1 }}>
+												<FormControlLabel
+													control={
+														<Checkbox
+															checked={agreeA}
+															onChange={(e) => setAgreeA(e.target.checked)}
+														/>
+													}
+													label="Pemilik rekening bertanggung jawab atas penggunaan dana yang diterima dari galang dana ini."
+												/>
+												<Divider sx={{ my: 1 }} />
+												<FormControlLabel
+													control={
+														<Checkbox
+															checked={agreeB}
+															onChange={(e) => setAgreeB(e.target.checked)}
+														/>
+													}
+													label="Kamu sebagai penggalang dana bertanggung jawab atas permintaan pencairan dan pelaporan penggunaan dana."
+												/>
+											</Paper>
+										</Box>
+									</Box>
+								)}
+							</Box>
+						)}
+
+						{/* STEP: data diri */}
+						{stepKey === "data_diri" && (
+							<Box>
+								<Stack spacing={1.25}>
+									<Box>
+										<Typography sx={{ fontWeight: 600, fontSize: 14, mb: 0.6 }}>
+											Nama kamu sesuai KTP
+										</Typography>
+										<TextField
+											size="small"
+											sx={{ "& .MuiInputBase-input": { fontSize: 13.5 } }}
+											value={ktpName}
+											onChange={(e) => setKtpName(e.target.value)}
+											fullWidth
+										/>
+									</Box>
+
+									<Box>
+										<Typography sx={{ fontWeight: 600, fontSize: 14 }}>
+											Masukkan no. ponsel kamu
+										</Typography>
+										<Typography
+											sx={{ color: "text.secondary", fontSize: 12.5, mb: 1 }}
+										>
+											Seluruh notifikasi akan dikirim melalui nomor ini
+										</Typography>
+										<TextField
+											size="small"
+											sx={{ "& .MuiInputBase-input": { fontSize: 13.5 } }}
+											value={phoneOther}
+											onChange={(e) =>
+												setPhoneOther(onlyDigits(e.target.value))
+											}
+											fullWidth
+											inputMode="numeric"
+										/>
+									</Box>
+
+									<Box>
+										<Typography sx={{ fontWeight: 600, fontSize: 14, mb: 0.6 }}>
+											Pekerjaan kamu saat ini
+										</Typography>
+										<TextField
+											size="small"
+											sx={{ "& .MuiInputBase-input": { fontSize: 13.5 } }}
+											value={job}
+											onChange={(e) => setJob(e.target.value)}
+											fullWidth
+											placeholder="Contoh: Karyawan swasta, Pelajar"
+										/>
+									</Box>
+
+									<Box>
+										<Typography sx={{ fontWeight: 600, fontSize: 14, mb: 0.6 }}>
+											Nama sekolah/tempat kerja
+										</Typography>
+										<TextField
+											size="small"
+											sx={{ "& .MuiInputBase-input": { fontSize: 13.5 } }}
+											value={workplace}
+											onChange={(e) => setWorkplace(e.target.value)}
+											fullWidth
+											placeholder="Masukkan nama sekolah/tempat kerja"
+										/>
+									</Box>
+
+									<Box>
+										<Typography sx={{ fontWeight: 600, fontSize: 14 }}>
+											Akun media sosial kamu
+										</Typography>
+										<Typography
+											sx={{ color: "text.secondary", fontSize: 12.5, mb: 1 }}
+										>
+											Galang dana akan ditolak jika akun media sosial kamu tidak
+											dapat ditemukan
+										</Typography>
+
+										<Box
+											sx={{
+												display: "grid",
+												gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+												gap: 1,
+											}}
+										>
+											{(
+												[
+													{ key: "facebook", label: "Facebook" },
+													{ key: "instagram", label: "Instagram" },
+													{ key: "twitter", label: "Twitter" },
+													{ key: "linkedin", label: "LinkedIn" },
+												] as Array<{
+													key:
+														| "facebook"
+														| "instagram"
+														| "twitter"
+														| "linkedin";
+													label: string;
+												}>
+											).map((x) => {
+												const active = soc === x.key;
+												return (
+													<ButtonBase
+														key={x.key}
+														onClick={() => setSoc(x.key)}
+														sx={{
+															borderRadius: 2,
+															border: "1px solid",
+															borderColor: active ? "primary.main" : "divider",
+															p: 1,
+															justifyContent: "flex-start",
+															gap: 1,
+														}}
+													>
+														<Radio checked={active} size="small" />
+														<Typography
+															sx={{ fontWeight: 600, fontSize: 13.5 }}
+														>
+															{x.label}
+														</Typography>
+													</ButtonBase>
+												);
+											})}
+										</Box>
+
+										{soc ? (
+											<TextField
+												size="small"
+												sx={{
+													mt: 1,
+													"& .MuiInputBase-input": { fontSize: 13.5 },
+												}}
+												value={socHandle}
+												onChange={(e) => setSocHandle(e.target.value)}
+												fullWidth
+												placeholder={`Link/username ${soc} (opsional)`}
+											/>
+										) : null}
+									</Box>
+								</Stack>
+							</Box>
+						)}
+
+						{/* STEP: penerima */}
+						{stepKey === "penerima" && (
+							<Box>
+								<Stack spacing={1.25}>
+									<Box>
+										<Typography sx={{ fontWeight: 600, fontSize: 14, mb: 0.6 }}>
+											Nama penerima/infrastruktur
+										</Typography>
+										<TextField
+											size="small"
+											sx={{ "& .MuiInputBase-input": { fontSize: 13.5 } }}
+											value={receiverName}
+											onChange={(e) => setReceiverName(e.target.value)}
+											fullWidth
+											multiline
+											minRows={2}
+											placeholder="Contoh: Masjid Al-Iman / Sekolah X / Posko A"
+										/>
+									</Box>
+
+									<Box>
+										<Typography sx={{ fontWeight: 600, fontSize: 14, mb: 0.6 }}>
+											Tujuan galang dana
+										</Typography>
+										<TextField
+											size="small"
+											sx={{ "& .MuiInputBase-input": { fontSize: 13.5 } }}
+											value={goal}
+											onChange={(e) => setGoal(e.target.value)}
+											fullWidth
+											multiline
+											minRows={3}
+											placeholder="Contoh: pembangunan ulang fasilitas yang rusak..."
+										/>
+									</Box>
+
+									<Box>
+										<Typography sx={{ fontWeight: 600, fontSize: 14, mb: 0.6 }}>
+											Lokasi
+										</Typography>
+										<TextField
+											size="small"
+											sx={{ "& .MuiInputBase-input": { fontSize: 13.5 } }}
+											value={location}
+											onChange={(e) => setLocation(e.target.value)}
+											fullWidth
+											multiline
+											minRows={2}
+											placeholder="Contoh: Kelurahan..., Kecamatan..., Kota/Kab..."
+										/>
+									</Box>
+								</Stack>
+							</Box>
+						)}
+
+						{/* STEP: target */}
+						{stepKey === "target" && (
+							<Box>
+								<Typography sx={{ fontWeight: 600, fontSize: 14, mb: 0.75 }}>
+									Tentukan perkiraan biaya yang dibutuhkan
+								</Typography>
+
+								<TextField
+									size="small"
+									sx={{
+										"& .MuiInputBase-input": { fontSize: 13.5 },
+										"& .MuiInputLabel-root": { fontSize: 13.5 },
+									}}
+									value={formatIDR(targetOther)}
+									onChange={(e) => setTargetOther(e.target.value)}
+									fullWidth
+									placeholder="Masukkan jumlah kebutuhan biaya"
+									inputMode="numeric"
+									InputProps={{
+										startAdornment: (
+											<InputAdornment position="start">Rp</InputAdornment>
+										),
+									}}
+								/>
+
+								<Box sx={{ mt: 2 }}>
+									<Typography sx={{ fontWeight: 600, fontSize: 14, mb: 0.75 }}>
+										Tentukan lama galang dana berlangsung
+									</Typography>
+
+									<RadioGroup
+										value={durationOther}
+										onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+											setDurationOther(
+												e.target.value as "30" | "60" | "120" | "custom" | ""
+											)
+										}
+									>
+										<Stack spacing={1}>
+											{[
+												{ v: "30", t: "30 hari" },
+												{ v: "60", t: "60 hari" },
+												{ v: "120", t: "120 hari" },
+												{ v: "custom", t: "pilih tanggal" },
+											].map((x) => (
+												<Paper
+													key={x.v}
+													variant="outlined"
+													sx={{ borderRadius: 2 }}
+												>
+													<FormControlLabel
+														value={x.v}
+														control={<Radio size="small" />}
+														label={x.t}
+														sx={{
+															px: 1.5,
+															py: 0.5,
+															"& .MuiFormControlLabel-label": {
+																fontSize: 13.5,
+															},
+														}}
+													/>
+												</Paper>
+											))}
+										</Stack>
+									</RadioGroup>
+								</Box>
+
+								<Box sx={{ mt: 2 }}>
+									<Typography sx={{ fontWeight: 600, fontSize: 14, mb: 0.75 }}>
+										Isi rincian penggunaan dana
+									</Typography>
+									<TextField
+										size="small"
+										sx={{
+											"& .MuiInputBase-input": { fontSize: 13.5 },
+											"& .MuiInputLabel-root": { fontSize: 13.5 },
+										}}
+										value={usageOther}
+										onChange={(e) => setUsageOther(e.target.value)}
+										fullWidth
+										multiline
+										minRows={4}
+										placeholder="Contoh: biaya bahan bangunan Rp2.000.000, biaya tukang Rp10.000.000"
+									/>
+								</Box>
+							</Box>
+						)}
+
+						{/* STEP: judul */}
+						{stepKey === "judul" && (
+							<Box>
+								<Typography sx={{ fontWeight: 600, fontSize: 14, mb: 1 }}>
+									Beri judul untuk galang dana ini
+								</Typography>
+
+								<Stack spacing={1.25}>
+									<TextField
+										size="small"
+										sx={{
+											"& .MuiInputBase-input": { fontSize: 13.5 },
+											"& .MuiInputLabel-root": { fontSize: 13.5 },
+										}}
+										value={titleOther}
+										onChange={(e) => setTitleOther(e.target.value)}
+										fullWidth
+										placeholder="Contoh: Bantu renovasi masjid terdampak bencana"
+									/>
+
+									<Box>
+										<Typography
+											sx={{ fontWeight: 600, fontSize: 14, mb: 0.75 }}
+										>
+											Tentukan link untuk galang dana ini
+										</Typography>
+										<TextField
+											size="small"
+											sx={{
+												"& .MuiInputBase-input": { fontSize: 13.5 },
+												"& .MuiInputLabel-root": { fontSize: 13.5 },
+											}}
+											value={slugOther}
+											onChange={(e) =>
+												setSlugOther(
+													e.target.value.replace(/\s+/g, "").toLowerCase()
+												)
+											}
+											fullWidth
+											placeholder="contoh: bantu-renovasi..."
+										/>
+									</Box>
+
+									<Box>
+										<Typography
+											sx={{ fontWeight: 600, fontSize: 14, mb: 0.75 }}
+										>
+											Upload foto galang dana
+										</Typography>
+
+										<Paper
+											variant="outlined"
+											sx={{ borderRadius: 3, p: 1.25, textAlign: "center" }}
+										>
+											<input
+												id="cover-upload-other"
+												type="file"
+												accept="image/*"
+												hidden
+												onChange={(e) =>
+													setCoverNameOther(e.target.files?.[0]?.name ?? "")
+												}
+											/>
+											<Button
+												component="label"
+												htmlFor="cover-upload-other"
+												startIcon={<PhotoCameraRoundedIcon />}
+												variant="text"
+												sx={{ fontWeight: 700 }}
+											>
+												Upload Foto
+											</Button>
+
+											{coverNameOther ? (
+												<Typography
+													sx={{
+														mt: 0.75,
+														fontSize: 12.5,
+														color: "text.secondary",
+													}}
+												>
+													Terpilih: <b>{coverNameOther}</b>
+												</Typography>
+											) : null}
+										</Paper>
+
+										<Paper
+											elevation={0}
+											sx={{
+												mt: 1.25,
+												p: 1,
+												borderRadius: 2,
+												bgcolor: "rgba(2,132,199,.06)",
+												display: "flex",
+												gap: 1,
+												alignItems: "flex-start",
+											}}
+										>
+											<InfoOutlinedIcon fontSize="small" sx={{ mt: "2px" }} />
+											<Box>
+												<Typography sx={{ fontSize: 12.5, fontWeight: 600 }}>
+													Tips
+												</Typography>
+												<Typography
+													sx={{ fontSize: 12.5, color: "text.secondary" }}
+												>
+													Upload foto yang paling menggambarkan kejadian /
+													penerima manfaat.
+												</Typography>
+											</Box>
+										</Paper>
+									</Box>
+								</Stack>
+							</Box>
+						)}
+
+						{/* STEP: cerita */}
+						{stepKey === "cerita" && (
+							<Box>
+								<Typography sx={{ fontWeight: 600, fontSize: 14, mb: 1 }}>
+									Tuliskan cerita tentang galang dana ini
+								</Typography>
+
+								<Paper
+									elevation={0}
+									sx={{
+										borderRadius: 3,
+										border: "1px solid",
+										borderColor: "divider",
+										p: 1.25,
+									}}
+								>
+									<Typography sx={{ fontWeight: 600, fontSize: 14, mb: 0.5 }}>
+										Kenapa cerita itu penting?
+									</Typography>
+									<Typography
+										sx={{ fontSize: 12.5, color: "text.secondary", mb: 1.25 }}
+									>
+										Cerita yang lengkap biasanya lebih dipercaya dan peluang
+										donasinya lebih tinggi.
+									</Typography>
+
+									<Button
+										variant="contained"
+										fullWidth
+										onClick={() => setShowStoryEditorOther(true)}
+										sx={{ borderRadius: 2, fontWeight: 700, py: 1.15 }}
+									>
+										Buat cerita galang dana
+									</Button>
+								</Paper>
+
+								{showStoryEditorOther && (
+									<Box sx={{ mt: 1.5 }}>
+										<TextField
+											size="small"
+											sx={{
+												"& .MuiInputBase-input": { fontSize: 13.5 },
+												"& .MuiInputLabel-root": { fontSize: 13.5 },
+											}}
+											value={storyOther}
+											onChange={(e) => setStoryOther(e.target.value)}
+											fullWidth
+											multiline
+											minRows={8}
+											placeholder="Tulis latar belakang, kondisi, kebutuhan biaya, rencana penggunaan dana, dan ajakan..."
+										/>
+									</Box>
+								)}
+							</Box>
+						)}
+
+						{/* STEP: ajakan */}
+						{stepKey === "ajakan" && (
+							<Box>
+								<Typography sx={{ fontWeight: 600, fontSize: 14, mb: 1 }}>
+									Tulis ajakan singkat untuk donasi di galang dana ini
+								</Typography>
+
+								<TextField
+									size="small"
+									sx={{
+										"& .MuiInputBase-input": { fontSize: 13.5 },
+										"& .MuiInputLabel-root": { fontSize: 13.5 },
+									}}
+									value={ctaOther}
+									onChange={(e) => setCtaOther(e.target.value.slice(0, 160))}
+									fullWidth
+									multiline
+									minRows={4}
+									placeholder="Contoh: Kami butuh bantuan agar fasilitas bisa dipakai warga kembali..."
+								/>
+
+								<Typography
+									sx={{
+										mt: 0.75,
+										fontSize: 12.5,
+										color: ctaOtherLeft < 0 ? "error.main" : "text.secondary",
+									}}
+								>
+									{ctaOther.length}/160
+								</Typography>
+							</Box>
+						)}
+					</>
 				)}
 			</Box>
 
-			{/* Bottom actions (tetap di atas bottom nav app kamu) */}
+			{/* Bottom actions (di atas bottom nav app kamu) */}
 			<Paper
 				elevation={0}
 				sx={{
@@ -805,7 +1681,7 @@ export default function BuatGalangDanaPage() {
 					right: 0,
 					maxWidth: 480,
 					mx: "auto",
-					bottom: "calc(64px + env(safe-area-inset-bottom))", // jangan nutup bottom nav
+					bottom: `calc(var(--bottom-nav-h, 72px) + env(safe-area-inset-bottom))`,
 					borderTop: "1px solid",
 					borderColor: "divider",
 					bgcolor: "background.paper",
@@ -850,12 +1726,18 @@ export default function BuatGalangDanaPage() {
 				</Box>
 			</Paper>
 
-			{/* Dialog konfirmasi terms (mirip screenshot overlay) */}
+			{/* Dialog terms (khusus sakit) */}
 			<Dialog
 				open={openTerms}
 				onClose={() => setOpenTerms(false)}
 				fullWidth
 				maxWidth="sm"
+				BackdropProps={{
+					sx: {
+						// backdrop jangan nutup area bottom nav
+						bottom: `calc(var(--bottom-nav-h, 72px) + env(safe-area-inset-bottom))`,
+					},
+				}}
 				PaperProps={{
 					sx: {
 						borderRadius: 3,
@@ -940,6 +1822,9 @@ export default function BuatGalangDanaPage() {
 				autoHideDuration={2200}
 				onClose={() => setSnack((s) => ({ ...s, open: false }))}
 				anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+				sx={{
+					mb: `calc(var(--bottom-nav-h, 72px) + 16px + env(safe-area-inset-bottom))`,
+				}}
 			>
 				<Alert
 					severity={snack.type}

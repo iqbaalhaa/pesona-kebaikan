@@ -120,7 +120,7 @@ function MethodChip({
 			sx={{
 				textAlign: "left",
 				width: "100%",
-				borderRadius: "12px",
+				borderRadius: "8px",
 				p: 1.1,
 				cursor: "pointer",
 				border: active
@@ -306,11 +306,6 @@ export default function QuickDonate() {
 						>
 							Donasi Cepat
 						</Typography>
-						<Typography
-							sx={{ mt: 0.35, fontSize: 11.5, color: "rgba(15,23,42,.60)" }}
-						>
-							Pilih nominal, langsung bayar. Minimal Rp10.000.
-						</Typography>
 					</Box>
 
 					<Box
@@ -361,7 +356,7 @@ export default function QuickDonate() {
 									}}
 									sx={{
 										flexShrink: 0,
-										borderRadius: "12px",
+										borderRadius: "8px",
 										px: 1.5,
 										py: 0.85,
 										cursor: "pointer",
@@ -392,7 +387,7 @@ export default function QuickDonate() {
 								display: "flex",
 								alignItems: "center",
 								gap: 0.8,
-								borderRadius: "12px",
+								borderRadius: "8px",
 								px: 1.2,
 								py: 0.55,
 								border:
@@ -497,7 +492,7 @@ export default function QuickDonate() {
 						disabled={!isValid}
 						sx={{
 							width: "100%",
-							borderRadius: 3,
+							borderRadius: 1,
 							py: 1.2,
 							border: "1px solid rgba(97,206,112,0.35)",
 							bgcolor: isValid ? PRIMARY : "rgba(15,23,42,0.08)",
@@ -512,12 +507,6 @@ export default function QuickDonate() {
 					>
 						Donasi Sekarang • Rp{rupiah(finalAmount || 0)}
 					</Box>
-
-					<Typography
-						sx={{ mt: 0.85, fontSize: 11, color: "rgba(15,23,42,.55)" }}
-					>
-						Pilih campaign + identitas di langkah berikutnya.
-					</Typography>
 				</Box>
 			</Box>
 
@@ -596,11 +585,6 @@ export default function QuickDonate() {
 								>
 									Konfirmasi Donasi
 								</Typography>
-								<Typography
-									sx={{ mt: 0.35, fontSize: 11.5, color: "rgba(15,23,42,.60)" }}
-								>
-									Pilih campaign, isi identitas, lalu lanjut bayar.
-								</Typography>
 							</Box>
 
 							<Box
@@ -630,7 +614,7 @@ export default function QuickDonate() {
 							{/* Summary */}
 							<Box
 								sx={{
-									borderRadius: 3,
+									borderRadius: 1,
 									border: "1px solid rgba(15,23,42,0.10)",
 									bgcolor: "#fff",
 									p: 1.2,
@@ -737,7 +721,7 @@ export default function QuickDonate() {
 							<Box
 								sx={{
 									mt: 1,
-									borderRadius: 3,
+									borderRadius: 1,
 									border: "1px solid rgba(15,23,42,0.10)",
 									bgcolor: "#fff",
 									p: 1.2,
@@ -798,7 +782,7 @@ export default function QuickDonate() {
 											marginTop: 8,
 											outline: "none",
 											border: "1px solid rgba(15,23,42,0.10)",
-											borderRadius: 12,
+											borderRadius: 8,
 											padding: "10px 12px",
 											background: isAnonymous ? "rgba(15,23,42,0.04)" : "#fff",
 											fontWeight: 900,
@@ -834,7 +818,7 @@ export default function QuickDonate() {
 											sx={{
 												textAlign: "left",
 												width: "100%",
-												borderRadius: 3,
+												borderRadius: 1,
 												p: 1.2,
 												cursor: "pointer",
 												border: active
@@ -877,12 +861,6 @@ export default function QuickDonate() {
 									);
 								})}
 							</Box>
-
-							<Typography
-								sx={{ mt: 1.2, fontSize: 11, color: "rgba(15,23,42,.55)" }}
-							>
-								Dana langsung masuk ke campaign terpilih.
-							</Typography>
 						</Box>
 
 						{/* Footer actions */}

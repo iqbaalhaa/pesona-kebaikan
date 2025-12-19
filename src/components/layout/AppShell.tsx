@@ -12,10 +12,6 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 	const isHome = pathname === "/";
 	const isAdmin = pathname.startsWith("/admin");
 
-	if (isAdmin) {
-		return <>{children}</>;
-	}
-
 	const scrollRef = React.useRef<HTMLDivElement | null>(null);
 	const [scrolled, setScrolled] = React.useState(false);
 
@@ -33,6 +29,10 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 	}, []);
 
 	const appBarVariant = isHome ? (scrolled ? "solid" : "overlay") : "solid";
+
+	if (isAdmin) {
+		return <>{children}</>;
+	}
 
 	return (
 		<Paper

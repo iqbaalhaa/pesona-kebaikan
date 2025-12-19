@@ -21,7 +21,7 @@ function TrustItem({
 				sx={{
 					width: 36,
 					height: 36,
-					borderRadius: "12px",
+					borderRadius: "8px",
 					display: "grid",
 					placeItems: "center",
 					bgcolor: "rgba(97,206,112,0.14)",
@@ -36,8 +36,8 @@ function TrustItem({
 			<Box sx={{ minWidth: 0 }}>
 				<Typography
 					sx={{
-						fontSize: 12.5,
-						fontWeight: 900,
+						fontSize: 12,
+						fontWeight: 800,
 						color: "#0f172a",
 						lineHeight: 1.15,
 						display: "-webkit-box",

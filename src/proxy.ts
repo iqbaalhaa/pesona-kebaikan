@@ -1,9 +1,9 @@
-import NextAuth from "next-auth";
-import { authConfig } from "@/lib/auth.config";
+import { NextResponse } from "next/server";
 
-export default NextAuth(authConfig).auth;
+export default function authProxy() {
+	return NextResponse.next();
+}
 
 export const config = {
-  matcher: ["/admin/:path*"],
+	matcher: ["/admin/:path*"],
 };
-

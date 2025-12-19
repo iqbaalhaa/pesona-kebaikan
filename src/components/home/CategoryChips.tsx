@@ -132,7 +132,7 @@ function CategoryButton({
 			onKeyDown={(e) => e.key === "Enter" && onClick()}
 			className="w-full p-3 cursor-pointer select-none transition-all duration-150 ease-out active:scale-95"
 			sx={{
-				borderRadius: { md: 1 },
+				borderRadius: { md: 3 },
 				border: selected
 					? `1px solid ${alpha(primaryMain, 0.45)}`
 					: `1px solid ${alpha(theme.palette.text.primary, 0.1)}`,
@@ -214,17 +214,17 @@ function CampaignRowCard({ item }: { item: Campaign }) {
 				</Box>
 
 				<Box>
-					<Box className="flex items-center justify-between text-[11px] mb-1">
+					<Box className="flex items-center justify-between text-[11px] mb-1 mt-2">
 						<span className="text-gray-500">Terkumpul</span>
-						<span className="font-bold text-gray-900 dark:text-gray-100">
+						<span className="font-bold text-gray-600">
 							Rp {rupiah(item.collected)}
 						</span>
 					</Box>
 					{/* Progress Bar */}
-					<Box className="h-1.5 w-full bg-white rounded-full overflow-hidden">
+					<Box className="h-1.5 w-full bg-red-500 rounded-full overflow-hidden">
 						<Box
 							className="h-full rounded-full bg-primary"
-							sx={{ width: "65%", bgcolor: "primary.main" }}
+							sx={{ width: "55%", bgcolor: "primary.main" }}
 						/>
 					</Box>
 					<Box className="flex items-center gap-1 mt-1.5">

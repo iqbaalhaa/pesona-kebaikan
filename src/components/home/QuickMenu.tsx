@@ -41,25 +41,6 @@ const menus: MenuItem[] = [
 		label: "Donasi Otomatis",
 		icon: <EventRepeatIcon fontSize="large" color="primary" />,
 	},
-	{
-		label: "Experience",
-		isNew: true,
-		icon: <AutoAwesomeIcon fontSize="large" color="primary" />,
-	},
-	{
-		label: "Kolaborasi CSR",
-		isNew: true,
-		icon: <HandshakeIcon fontSize="large" color="primary" />,
-	},
-	{
-		label: "SalingJaga",
-		isNew: true,
-		icon: <HealthAndSafetyIcon fontSize="large" color="primary" />,
-	},
-	{
-		label: "Dana Abadi",
-		icon: <SavingsIcon fontSize="large" color="primary" />,
-	},
 ];
 
 export default function QuickMenu() {
@@ -110,7 +91,7 @@ export default function QuickMenu() {
 								textAlign: "center",
 								py: 1,
 								position: "relative",
-								borderRadius: "12px",
+								borderRadius: "8px",
 								cursor: "pointer",
 								userSelect: "none",
 								transition: "transform 120ms ease, background-color 120ms ease",
@@ -118,35 +99,12 @@ export default function QuickMenu() {
 								"&:hover": { backgroundColor: "action.hover" },
 							}}
 						>
-							{/* Badge BARU */}
-							{m.isNew && (
-								<Box
-									sx={{
-										position: "absolute",
-										top: 2,
-										left: "50%",
-										transform: "translateX(-50%)",
-										px: 1,
-										py: "2px",
-										borderRadius: 999,
-										fontSize: 9,
-										fontWeight: 800,
-										color: "#fff",
-										bgcolor: "#e11d48",
-										boxShadow: "0 10px 20px rgba(225,29,72,.22)",
-										zIndex: 1,
-									}}
-								>
-									BARU
-								</Box>
-							)}
-
 							{/* Icon bubble */}
 							<Box
 								sx={{
 									mx: "auto",
-									width: 52,
-									height: 52,
+									width: 50,
+									height: 50,
 									borderRadius: 999,
 									display: "grid",
 									placeItems: "center",
@@ -163,8 +121,8 @@ export default function QuickMenu() {
 							<Typography
 								sx={{
 									mt: 0.9,
-									fontSize: 12,
-									fontWeight: 600,
+									fontSize: 11,
+									fontWeight: 700,
 									color: "text.primary",
 									lineHeight: 1.2,
 									px: 0.5,

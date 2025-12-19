@@ -299,10 +299,6 @@ export default function DonationBanner() {
 					/>
 					<PayChip label="Kartu" sub="Visa • Mastercard" icon={<CardIcon />} />
 				</Box>
-
-				<Typography sx={{ mt: 1, fontSize: 11, color: "rgba(15,23,42,.55)" }}>
-					Metode bisa berbeda tergantung campaign & ketersediaan gateway.
-				</Typography>
 			</Box>
 		</Box>
 	);

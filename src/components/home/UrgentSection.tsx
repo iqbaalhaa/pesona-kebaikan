@@ -146,7 +146,7 @@ function UrgentCard({ item }: { item: Campaign }) {
 			{/* Cover */}
 			<Box
 				className="relative h-[140px] overflow-hidden bg-gray-100"
-				sx={{ borderTopLeftRadius: { md: 1 }, borderTopRightRadius: { md: 1 } }}
+				sx={{ borderTopLeftRadius: { md: 3 }, borderTopRightRadius: { md: 3 } }}
 			>
 				<Image
 					src={imgSrc}
@@ -194,7 +194,7 @@ function UrgentCard({ item }: { item: Campaign }) {
 							style={{ objectFit: "cover" }}
 						/>
 					</Box>
-					<Typography className="text-[10px] font-medium text-gray-500 dark:text-gray-400 truncate">
+					<Typography className="text-[10px] font-medium truncate">
 						{item.organizer}
 					</Typography>
 					{item.tag === "ORG" && (
@@ -213,18 +213,14 @@ function UrgentCard({ item }: { item: Campaign }) {
 				{/* Progress Bar Dual */}
 				<ProgressBarDual collected={item.collected} target={item.target || 0} />
 
-				<Box className="flex items-center justify-between mt-2 text-[10px] text-gray-500">
+				<Box className="flex items-center justify-between mt-2 text-[10px]">
 					<Box>
-						<span className="block text-[10px] text-gray-400">Terkumpul</span>
-						<span className="font-bold text-gray-900 dark:text-gray-100">
-							Rp {rupiah(item.collected)}
-						</span>
+						<span className="block text-[10px]">Terkumpul</span>
+						<span className="font-bold ">Rp {rupiah(item.collected)}</span>
 					</Box>
 					<Box className="text-right">
-						<span className="block text-[10px] text-gray-400">Donatur</span>
-						<span className="font-bold text-gray-900 dark:text-gray-100">
-							{item.donors}
-						</span>
+						<span className="block text-[10px]">Donatur</span>
+						<span className="font-bold ">{item.donors}</span>
 					</Box>
 				</Box>
 			</Box>
@@ -305,7 +301,7 @@ export default function UrgentSection() {
 					variant="text"
 					sx={{
 						textTransform: "none",
-						fontWeight: 800,
+						fontWeight: 600,
 						color: "rgba(15,23,42,.60)",
 						px: 1,
 						borderRadius: 2,

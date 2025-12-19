@@ -81,9 +81,9 @@ function ArrowButton({
 			onClick={onClick}
 			onKeyDown={(e) => e.key === "Enter" && onClick()}
 			sx={{
-				width: 38,
-				height: 38,
-				borderRadius: "12px",
+				width: 33,
+				height: 33,
+				borderRadius: "999px",
 				display: "grid",
 				placeItems: "center",
 				cursor: "pointer",
@@ -91,14 +91,13 @@ function ArrowButton({
 				bgcolor: "rgba(255,255,255,0.92)",
 				backdropFilter: "blur(10px)",
 				border: "1px solid rgba(15,23,42,0.10)",
-				boxShadow: "0 14px 26px rgba(15,23,42,.14)",
 				"&:active": { transform: "scale(0.98)" },
 			}}
 		>
 			<Box
 				sx={{
-					fontSize: 20,
-					fontWeight: 900,
+					fontSize: 18,
+					fontWeight: 500,
 					color: "rgba(15,23,42,.75)",
 					mt: "-1px",
 				}}
