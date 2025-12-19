@@ -2,26 +2,120 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+	--background: #f8fafc; /* Matches MUI Light background.default */
+	--foreground: #0f172a; /* Matches MUI Light text.primary */
+	--brand: #61ce70;
+	--mui-font-family: var(--font-pjs), "Plus Jakarta Sans", system-ui,
+		-apple-system, Segoe UI, Roboto, Arial, sans-serif;
+}
+
+.MuiTypography-root,
+.MuiButton-root,
+.MuiChip-root,
+.MuiInputBase-root,
+.MuiBottomNavigation-root,
+.MuiBottomNavigationAction-root,
+.MuiBottomNavigationAction-label {
+	font-family: var(--mui-font-family) !important;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+	--color-background: var(--background);
+	--color-foreground: var(--foreground);
+	--color-primary: var(--brand);
+	--color-primary-soft: color-mix(in srgb, var(--brand), transparent 88%);
+	--color-primary-shadow: color-mix(in srgb, var(--brand), transparent 78%);
+	--font-sans: var(--font-pjs);
 }
 
+/* Dark mode disabled as per user request
 @media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+	:root {
+		--background: #0b1220; 
+		--foreground: #f8fafc; 
+	}
 }
+*/
+
 html,
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-roboto), Roboto, Arial, sans-serif;
+	background: var(--background);
+	color: var(--foreground);
+	font-family: var(--font-pjs), "Plus Jakarta Sans", sans-serif;
+
+	/* Typography Tuning */
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+	letter-spacing: -0.015em; /* Sedikit rapat untuk kesan premium */
+	line-height: 1.6; /* Lebih lega untuk keterbacaan */
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+.no-scrollbar::-webkit-scrollbar {
+	display: none;
+}
+
+/* Hide scrollbar for IE, Edge and Firefox */
+.no-scrollbar {
+	-ms-overflow-style: none; /* IE and Edge */
+	scrollbar-width: none; /* Firefox */
+}
+
+/* Custom Component Styles */
+
+/* Bottom Navigation */
+.bottom-nav {
+	height: 72px !important;
+	padding-left: 8px;
+	padding-right: 8px;
+	background-color: transparent !important;
+}
+
+.bottom-nav .MuiBottomNavigationAction-root {
+	min-width: 0 !important;
+	padding-left: 8px !important;
+	padding-right: 8px !important;
+	color: #0f172a !important; /* Force dark slate color */
+	opacity: 0.6 !important;
+	transition: all 180ms ease !important;
+}
+
+.bottom-nav .MuiBottomNavigationAction-label {
+	font-size: 10px !important;
+	margin-top: 2px;
+	transition: all 180ms ease !important;
+}
+
+.bottom-nav .MuiSvgIcon-root {
+	font-size: 24px !important;
+	transition: transform 180ms ease, filter 180ms ease !important;
+}
+
+.bottom-nav .MuiBottomNavigationAction-wrapper {
+	gap: 4px;
+}
+
+/* Active State */
+.bottom-nav .Mui-selected {
+	color: #61ce70 !important; /* Force primary brand color */
+	opacity: 1 !important;
+}
+
+.bottom-nav .MuiBottomNavigationAction-label.Mui-selected {
+	color: #61ce70 !important;
+	font-weight: 700 !important;
+}
+
+.bottom-nav .MuiBottomNavigationAction-root.Mui-selected .MuiSvgIcon-root {
+	transform: scale(1.06);
+	filter: drop-shadow(0 10px 18px var(--color-primary-shadow));
+}
+
+.bottom-nav
+	.MuiBottomNavigationAction-root.Mui-selected
+	.MuiBottomNavigationAction-wrapper {
+	padding-top: 6px;
+	padding-bottom: 6px;
+	border-radius: 12px;
+	background-color: var(--color-primary-soft);
 }
