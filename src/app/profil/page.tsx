@@ -85,13 +85,15 @@ export default function ProfilePage() {
 	const { data: session, status } = useSession();
 
 	// FIXME: Dummy user for development access as requested
-	// const dummyUser = {
-	// 	name: "Pengguna Tamu",
-	// 	email: "tamu@pesonakebaikan.id",
-	// 	image: null,
-	// };
-	// const user = session?.user || dummyUser;
-	const user = session?.user;
+	const dummyUser = {
+		name: "Pengguna Tamu",
+		email: "tamu@pesonakebaikan.id",
+		image: null,
+	};
+	const user = session?.user || dummyUser;
+	// const user = session?.user;
+
+	const isDummy = user?.email === "tamu@pesonakebaikan.id";
 
 	// Verification State
 	const [openVerification, setOpenVerification] = React.useState(false);
@@ -323,10 +325,16 @@ export default function ProfilePage() {
 					/>
 					{user && (
 						<ProfileMenu
-							icon={<LogoutIcon />}
-							label="Keluar"
-							danger
-							onClick={() => signOut()}
+							icon={isDummy ? <LoginIcon /> : <LogoutIcon />}
+							label={isDummy ? "Masuk ke Akun Asli" : "Keluar"}
+							danger={!isDummy}
+							onClick={() => {
+								if (isDummy) {
+									router.push("/auth/login");
+								} else {
+									signOut();
+								}
+							}}
 						/>
 					)}
 				</List>
