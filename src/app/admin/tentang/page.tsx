@@ -419,7 +419,7 @@ export default function AdminTentangPage() {
         {/* Tab 2: Sosial Media */}
         <CustomTabPanel value={tab} index={2}>
           <Grid container spacing={3}>
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <TextField
                 fullWidth
                 label="Facebook URL"
@@ -428,7 +428,7 @@ export default function AdminTentangPage() {
                 InputProps={{ startAdornment: <InputAdornment position="start"><FacebookIcon /></InputAdornment> }}
               />
             </Grid>
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <TextField
                 fullWidth
                 label="Instagram URL"
@@ -437,7 +437,7 @@ export default function AdminTentangPage() {
                 InputProps={{ startAdornment: <InputAdornment position="start"><InstagramIcon /></InputAdornment> }}
               />
             </Grid>
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <TextField
                 fullWidth
                 label="Twitter / X URL"
@@ -446,7 +446,7 @@ export default function AdminTentangPage() {
                 InputProps={{ startAdornment: <InputAdornment position="start"><TwitterIcon /></InputAdornment> }}
               />
             </Grid>
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <TextField
                 fullWidth
                 label="LinkedIn URL"
@@ -455,7 +455,7 @@ export default function AdminTentangPage() {
                 InputProps={{ startAdornment: <InputAdornment position="start"><LinkedInIcon /></InputAdornment> }}
               />
             </Grid>
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <TextField
                 fullWidth
                 label="YouTube URL"
@@ -474,7 +474,7 @@ export default function AdminTentangPage() {
           </Button>
           <Grid container spacing={3}>
             {data.organization.map((member, index) => (
-              <Grid item xs={12} sm={6} md={4} key={index}>
+              <Grid size={{ xs: 12, sm: 6, md: 4 }} key={index}>
                 <Card variant="outlined" sx={{ borderRadius: 2 }}>
                   <CardContent>
                     <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
@@ -527,7 +527,7 @@ export default function AdminTentangPage() {
                 </Box>
                 <Box sx={{ flexGrow: 1 }}>
                   <Grid container spacing={2} alignItems="center">
-                    <Grid item xs={12} md={5}>
+                    <Grid size={{ xs: 12, md: 5 }}>
                       <TextField
                         size="small"
                         fullWidth
@@ -537,7 +537,7 @@ export default function AdminTentangPage() {
                         onChange={(e) => handleLegalityChange(index, "title", e.target.value)}
                       />
                     </Grid>
-                    <Grid item xs={12} md={5}>
+                    <Grid size={{ xs: 12, md: 5 }}>
                       <Box sx={{ display: "flex", gap: 1 }}>
                         <TextField
                           size="small"

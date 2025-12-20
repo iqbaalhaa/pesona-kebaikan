@@ -249,7 +249,7 @@ export default function SahabatBaikPage({
 									onClick={() => router.push(`/donasi/${campaign.id}`)}
 								>
 									<Grid container>
-										<Grid item xs={4}>
+										<Grid size={{ xs: 4 }}>
 											<Box
 												component="img"
 												src={campaign.image}
@@ -261,7 +261,7 @@ export default function SahabatBaikPage({
 												}}
 											/>
 										</Grid>
-										<Grid item xs={8} sx={{ p: 2 }}>
+										<Grid size={{ xs: 8 }} sx={{ p: 2 }}>
 											<Typography
 												sx={{
 													fontWeight: 700,

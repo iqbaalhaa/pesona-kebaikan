@@ -223,7 +223,7 @@ export default function AdminSidebar({
                           : "0 8px 20px rgba(15,23,42,0.05)",
                       }}
                     >
-                      {React.cloneElement(m.icon as React.ReactElement, {
+                      {React.cloneElement(m.icon as any, {
                         className: isActive
                           ? "text-green-600 dark:text-green-400"
                           : "text-slate-500 dark:text-slate-400 group-hover:text-slate-700 dark:group-hover:text-slate-300",

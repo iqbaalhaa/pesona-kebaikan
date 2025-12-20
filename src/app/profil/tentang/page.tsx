@@ -191,7 +191,7 @@ export default function AboutPage() {
         {aboutData && (
           <Grid container spacing={4} sx={{ mb: 6 }}>
             {aboutData.vision && (
-              <Grid item xs={12} md={6}>
+              <Grid size={{ xs: 12, md: 6 }}>
                 <Paper elevation={0} sx={{ p: 3, height: "100%", borderRadius: 3, bgcolor: "#f8fafc", border: "1px solid #e2e8f0" }}>
                   <Typography variant="h6" fontWeight={700} gutterBottom color="primary">Visi</Typography>
                   <HtmlContent content={aboutData.vision} />
@@ -199,7 +199,7 @@ export default function AboutPage() {
               </Grid>
             )}
             {aboutData.mission && (
-              <Grid item xs={12} md={6}>
+              <Grid size={{ xs: 12, md: 6 }}>
                 <Paper elevation={0} sx={{ p: 3, height: "100%", borderRadius: 3, bgcolor: "#f8fafc", border: "1px solid #e2e8f0" }}>
                   <Typography variant="h6" fontWeight={700} gutterBottom color="primary">Misi</Typography>
                   <HtmlContent content={aboutData.mission} />
@@ -207,7 +207,7 @@ export default function AboutPage() {
               </Grid>
             )}
             {aboutData.goals && (
-              <Grid item xs={12} md={6}>
+              <Grid size={{ xs: 12, md: 6 }}>
                 <Paper elevation={0} sx={{ p: 3, height: "100%", borderRadius: 3, bgcolor: "#f8fafc", border: "1px solid #e2e8f0" }}>
                   <Typography variant="h6" fontWeight={700} gutterBottom color="primary">Tujuan</Typography>
                   <HtmlContent content={aboutData.goals} />
@@ -215,7 +215,7 @@ export default function AboutPage() {
               </Grid>
             )}
             {aboutData.achievements && (
-              <Grid item xs={12} md={6}>
+              <Grid size={{ xs: 12, md: 6 }}>
                 <Paper elevation={0} sx={{ p: 3, height: "100%", borderRadius: 3, bgcolor: "#f8fafc", border: "1px solid #e2e8f0" }}>
                   <Typography variant="h6" fontWeight={700} gutterBottom color="primary">Capaian & Prestasi</Typography>
                   <HtmlContent content={aboutData.achievements} />
@@ -233,7 +233,7 @@ export default function AboutPage() {
             </Typography>
             <Grid container spacing={3} justifyContent="center">
               {aboutData.organization.map((member, index) => (
-                <Grid item xs={6} sm={4} md={3} key={index}>
+                <Grid size={{ xs: 6, sm: 4, md: 3 }} key={index}>
                   <Paper elevation={0} sx={{ p: 2, textAlign: "center", height: "100%", border: "1px solid #e2e8f0", borderRadius: 3 }}>
                     <Avatar
                       src={member.image}

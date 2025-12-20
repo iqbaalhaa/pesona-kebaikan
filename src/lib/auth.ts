@@ -41,7 +41,8 @@ export const authOptions: NextAuthConfig = {
           email: user.email ?? undefined,
           name: user.name ?? undefined,
           image: user.image ?? undefined,
-        } as { id: string; email?: string | null; name?: string | null; image?: string | null };
+          role: user.role,
+        };
       },
     }),
   ],

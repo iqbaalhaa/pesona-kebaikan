@@ -110,7 +110,7 @@ export default function AccountabilityPage() {
       {/* Pillars */}
       <Grid container spacing={2} sx={{ mb: 4 }}>
         {data.cards.map((card, idx) => (
-          <Grid item xs={6} key={idx}>
+          <Grid size={{ xs: 6 }} key={idx}>
             <Paper
               elevation={0}
               variant="outlined"

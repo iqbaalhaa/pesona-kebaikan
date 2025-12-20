@@ -1,3 +1,4 @@
+import "dotenv/config";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { Role, BlogMediaType, CampaignStatus, CampaignMediaType, PaymentMethod } from "@/generated/prisma/enums";

@@ -14,12 +14,12 @@ import {
 	LinearProgress,
 	Menu,
 	MenuItem,
-	ButtonBase,
+	Skeleton,
+	Tooltip,
+	Button,
 	Avatar,
 	AvatarGroup,
 	Divider,
-	Skeleton,
-	Tooltip,
 } from "@mui/material";
 
 import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
@@ -31,7 +31,6 @@ import VisibilityRoundedIcon from "@mui/icons-material/VisibilityRounded";
 import EditRoundedIcon from "@mui/icons-material/EditRounded";
 import StopCircleRoundedIcon from "@mui/icons-material/StopCircleRounded";
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
-import FilterAltRoundedIcon from "@mui/icons-material/FilterAltRounded";
 import RefreshRoundedIcon from "@mui/icons-material/RefreshRounded";
 import Pagination from "@mui/material/Pagination";
 
@@ -52,8 +51,6 @@ type CampaignRow = {
 	status: CampaignStatus;
 	updatedAt: string;
 };
-
-const BRAND = "#61ce70";
 
 const MOCK: CampaignRow[] = [
 	{
@@ -153,58 +150,50 @@ function matchQuery(q: string, row: CampaignRow) {
 }
 
 function statusChip(status: CampaignStatus) {
-	const base = {
-		borderRadius: 999,
-		fontWeight: 1000,
-		height: 26,
-		bgcolor: "rgba(2,6,23,.35)",
-		border: "1px solid rgba(148,163,184,.14)",
-		"& .MuiChip-label": { px: 1.1, fontSize: 12 },
-	};
 	switch (status) {
 		case "draft":
 			return {
 				label: "Draft",
-				sx: { ...base, color: "rgba(226,232,240,.72)" },
+				sx: {
+					bgcolor: "rgba(15,23,42,.06)",
+					borderColor: "rgba(15,23,42,.10)",
+					color: "rgba(15,23,42,.70)",
+				},
 			};
 		case "review":
 			return {
 				label: "Review",
 				sx: {
-					...base,
-					borderColor: "rgba(245,158,11,.25)",
-					bgcolor: "rgba(245,158,11,.14)",
-					color: "rgb(253,186,116)",
+					bgcolor: "rgba(245,158,11,.12)",
+					borderColor: "rgba(245,158,11,.22)",
+					color: "rgba(180,83,9,.95)",
 				},
 			};
 		case "active":
 			return {
 				label: "Aktif",
 				sx: {
-					...base,
-					borderColor: "rgba(97,206,112,.25)",
-					bgcolor: "rgba(97,206,112,.14)",
-					color: "rgb(134,239,172)",
+					bgcolor: "rgba(34,197,94,.12)",
+					borderColor: "rgba(34,197,94,.22)",
+					color: "rgba(22,101,52,.95)",
 				},
 			};
 		case "ended":
 			return {
 				label: "Berakhir",
 				sx: {
-					...base,
-					borderColor: "rgba(56,189,248,.22)",
-					bgcolor: "rgba(56,189,248,.12)",
-					color: "rgb(125,211,252)",
+					bgcolor: "rgba(59,130,246,.12)",
+					borderColor: "rgba(59,130,246,.22)",
+					color: "rgba(30,64,175,.95)",
 				},
 			};
 		case "rejected":
 			return {
 				label: "Ditolak",
 				sx: {
-					...base,
-					borderColor: "rgba(239,68,68,.22)",
 					bgcolor: "rgba(239,68,68,.12)",
-					color: "rgb(252,165,165)",
+					borderColor: "rgba(239,68,68,.22)",
+					color: "rgba(153,27,27,.95)",
 				},
 			};
 	}
@@ -230,12 +219,9 @@ export default function AdminCampaignPage() {
 	const [menu, setMenu] = React.useState<{
 		anchor: HTMLElement | null;
 		row?: CampaignRow;
-	}>({
-		anchor: null,
-	});
+	}>({ anchor: null });
 
 	React.useEffect(() => {
-		// simulate fetch
 		const t = setTimeout(() => {
 			setRows(MOCK);
 			setLoading(false);
@@ -244,7 +230,7 @@ export default function AdminCampaignPage() {
 	}, []);
 
 	const counts = React.useMemo(() => {
-		const c: Record<string, number> = { all: rows.length };
+		const c: Record<string, number> = {};
 		for (const f of FILTERS) c[f.key] = 0;
 		rows.forEach((r) => (c[r.status] = (c[r.status] || 0) + 1));
 		c.all = rows.length;
@@ -288,175 +274,216 @@ export default function AdminCampaignPage() {
 
 	return (
 		<Box>
-			{/* Top header / toolbar */}
+			{/* Top area (premium panel) */}
 			<Paper
 				elevation={0}
 				sx={{
-					p: 1.5,
 					borderRadius: 3,
-					border: "1px solid rgba(148,163,184,.14)",
-					bgcolor: "rgba(15,23,42,.72)",
-					backdropFilter: "blur(10px)",
+					border: "1px solid rgba(15,23,42,.10)",
+					bgcolor: "#fff",
+					overflow: "hidden",
 				}}
 			>
-				<Stack
-					direction={{ xs: "column", md: "row" }}
-					spacing={1.25}
-					alignItems={{ md: "center" }}
-				>
-					<Box sx={{ flex: 1 }}>
-						<Typography
-							sx={{ fontSize: 18, fontWeight: 1000, letterSpacing: -0.3 }}
-						>
-							Campaign
-						</Typography>
-						<Typography
-							sx={{ mt: 0.2, fontSize: 12.5, color: "rgba(226,232,240,.72)" }}
-						>
-							Monitor & kelola campaign dalam format card premium (dark).
-						</Typography>
-					</Box>
-
-					<Stack direction="row" spacing={1} alignItems="center">
-						<TextField
-							size="small"
-							value={q}
-							onChange={(e) => setQ(e.target.value)}
-							placeholder="Cari campaign…"
-							InputProps={{
-								startAdornment: (
-									<InputAdornment position="start">
-										<SearchRoundedIcon fontSize="small" />
-									</InputAdornment>
-								),
-							}}
-							sx={{
-								minWidth: { xs: 220, md: 340 },
-								"& .MuiOutlinedInput-root": {
-									borderRadius: 2.5,
-									bgcolor: "rgba(2,6,23,.35)",
-									border: "1px solid rgba(148,163,184,.12)",
-									color: "rgba(226,232,240,.92)",
-									"& fieldset": { border: "none" },
-								},
-								"& .MuiInputBase-input": { fontSize: 13.5 },
-								"& .MuiInputAdornment-root": { color: "rgba(226,232,240,.7)" },
-							}}
-						/>
-
-						<Tooltip title="Refresh">
-							<IconButton
-								onClick={onRefresh}
-								sx={{
-									borderRadius: 2,
-									width: 38,
-									height: 38,
-									border: "1px solid rgba(148,163,184,.14)",
-									bgcolor: "rgba(2,6,23,.22)",
-									color: "rgba(226,232,240,.85)",
-								}}
-							>
-								<RefreshRoundedIcon fontSize="small" />
-							</IconButton>
-						</Tooltip>
-
-						<ButtonBase
-							component={Link}
-							href="/admin/campaign/create"
-							sx={{
-								height: 38,
-								px: 1.5,
-								borderRadius: 999,
-								fontWeight: 1000,
-								color: "#0b1220",
-								bgcolor: BRAND,
-								boxShadow: "0 10px 26px rgba(97,206,112,.22)",
-								transition: "transform 120ms ease",
-								"&:active": { transform: "scale(.99)" },
-							}}
-						>
-							<AddRoundedIcon fontSize="small" style={{ marginRight: 6 }} />
-							Buat
-						</ButtonBase>
-					</Stack>
-				</Stack>
-
-				<Divider sx={{ mt: 1.25, borderColor: "rgba(148,163,184,.14)" }} />
-
-				{/* Filter chips */}
 				<Box
 					sx={{
-						mt: 1.1,
-						display: "flex",
-						gap: 1,
-						overflowX: "auto",
-						pb: 0.5,
-						"&::-webkit-scrollbar": { display: "none" },
+						p: 2,
+						background:
+							"radial-gradient(900px 380px at 0% 0%, rgba(97,206,112,.18), transparent 55%), radial-gradient(900px 380px at 100% 0%, rgba(59,130,246,.12), transparent 55%)",
 					}}
 				>
-					<Chip
-						icon={<FilterAltRoundedIcon />}
-						label="Filter"
-						variant="outlined"
-						sx={{
-							borderRadius: 999,
-							borderColor: "rgba(148,163,184,.14)",
-							color: "rgba(226,232,240,.72)",
-							bgcolor: "rgba(2,6,23,.18)",
-							"& .MuiChip-icon": { color: "rgba(226,232,240,.65)" },
-						}}
-					/>
-					{FILTERS.map((f) => {
-						const selected = filter === f.key;
-						const n = counts[f.key] ?? 0;
-						return (
-							<Chip
-								key={f.key}
-								clickable
-								onClick={() => setFilter(f.key)}
-								label={
-									<Box
-										sx={{
-											display: "inline-flex",
-											alignItems: "center",
-											gap: 0.8,
-										}}
-									>
-										{f.label}
-										<Box
-											sx={{
-												px: 0.9,
-												height: 18,
-												borderRadius: 999,
-												display: "inline-flex",
-												alignItems: "center",
-												fontSize: 11,
-												fontWeight: 1000,
-												bgcolor: selected
-													? "rgba(2,6,23,.22)"
-													: "rgba(148,163,184,.14)",
-												color: selected
-													? "rgba(226,232,240,.9)"
-													: "rgba(226,232,240,.65)",
-											}}
-										>
-											{n}
-										</Box>
-									</Box>
-								}
-								variant={selected ? "filled" : "outlined"}
+					<Stack
+						direction={{ xs: "column", md: "row" }}
+						spacing={1.5}
+						alignItems={{ xs: "stretch", md: "center" }}
+						justifyContent="space-between"
+					>
+						<Box>
+							<Typography
+								sx={{ fontWeight: 1000, fontSize: 20, color: "#0f172a" }}
+							>
+								Campaign
+							</Typography>
+							<Typography
+								sx={{ mt: 0.25, fontSize: 12.5, color: "rgba(15,23,42,.62)" }}
+							>
+								Monitor & kelola campaign yang terdaftar.
+							</Typography>
+
+							<Stack
+								direction="row"
+								spacing={1}
+								sx={{ mt: 1.25 }}
+								alignItems="center"
+							>
+								<Chip
+									label={`${filtered.length} hasil`}
+									variant="outlined"
+									sx={{
+										borderRadius: 999,
+										fontWeight: 900,
+										bgcolor: "rgba(255,255,255,.55)",
+										borderColor: "rgba(15,23,42,.12)",
+										color: "rgba(15,23,42,.75)",
+									}}
+								/>
+								<Chip
+									label={`Total: ${rows.length}`}
+									variant="outlined"
+									sx={{
+										borderRadius: 999,
+										fontWeight: 900,
+										bgcolor: "rgba(255,255,255,.55)",
+										borderColor: "rgba(15,23,42,.12)",
+										color: "rgba(15,23,42,.75)",
+									}}
+								/>
+							</Stack>
+						</Box>
+
+						<Stack direction="row" spacing={1} alignItems="center">
+							<TextField
+								size="small"
+								value={q}
+								onChange={(e) => setQ(e.target.value)}
+								placeholder="Cari campaign, user, kategori, ID…"
+								InputProps={{
+									startAdornment: (
+										<InputAdornment position="start">
+											<SearchRoundedIcon
+												fontSize="small"
+												style={{ color: "rgba(15,23,42,.45)" }}
+											/>
+										</InputAdornment>
+									),
+								}}
+								sx={{
+									width: { xs: "100%", md: 360 },
+									"& .MuiOutlinedInput-root": {
+										borderRadius: 999,
+										bgcolor: "rgba(255,255,255,.70)",
+										border: "1px solid rgba(15,23,42,.10)",
+										boxShadow: "0 12px 30px rgba(15,23,42,.06)",
+										"& fieldset": { border: "none" },
+									},
+									"& .MuiOutlinedInput-input": { fontSize: 13.5 },
+								}}
+							/>
+
+							<Tooltip title="Refresh">
+								<IconButton
+									onClick={onRefresh}
+									sx={{
+										width: 40,
+										height: 40,
+										borderRadius: 999,
+										bgcolor: "rgba(255,255,255,.70)",
+										border: "1px solid rgba(15,23,42,.10)",
+										boxShadow: "0 12px 30px rgba(15,23,42,.06)",
+									}}
+								>
+									<RefreshRoundedIcon fontSize="small" />
+								</IconButton>
+							</Tooltip>
+
+							<Button
+								component={Link}
+								href="/admin/campaign/create"
+								variant="contained"
+								startIcon={<AddRoundedIcon />}
 								sx={{
 									borderRadius: 999,
 									fontWeight: 1000,
-									borderColor: "rgba(148,163,184,.14)",
-									bgcolor: selected ? "rgba(97,206,112,.14)" : "transparent",
-									color: selected
-										? "rgb(134,239,172)"
-										: "rgba(226,232,240,.75)",
+									textTransform: "none",
+									px: 2,
+									boxShadow: "0 14px 34px rgba(97,206,112,.22)",
+									bgcolor: "#61ce70",
+									"&:hover": { bgcolor: "#55bf64" },
 								}}
-							/>
-						);
-					})}
+							>
+								Buat
+							</Button>
+						</Stack>
+					</Stack>
+
+					<Divider sx={{ mt: 2, borderColor: "rgba(15,23,42,.08)" }} />
+
+					{/* Filter chips */}
+					<Box
+						sx={{
+							mt: 1.5,
+							display: "flex",
+							gap: 1,
+							overflowX: "auto",
+							pb: 0.5,
+							"&::-webkit-scrollbar": { display: "none" },
+						}}
+					>
+						<Chip
+							icon={<CategoryRoundedIcon />}
+							label="Filter"
+							variant="outlined"
+							sx={{
+								borderRadius: 999,
+								bgcolor: "rgba(255,255,255,.55)",
+								borderColor: "rgba(15,23,42,.12)",
+								color: "rgba(15,23,42,.70)",
+								fontWeight: 900,
+							}}
+						/>
+						{FILTERS.map((f) => {
+							const selected = filter === f.key;
+							const n = counts[f.key] ?? 0;
+
+							return (
+								<Chip
+									key={f.key}
+									clickable
+									onClick={() => setFilter(f.key)}
+									label={
+										<Stack direction="row" spacing={1} alignItems="center">
+											<Typography sx={{ fontSize: 12.5, fontWeight: 900 }}>
+												{f.label}
+											</Typography>
+											<Box
+												sx={{
+													minWidth: 26,
+													height: 20,
+													px: 0.9,
+													borderRadius: 999,
+													display: "grid",
+													placeItems: "center",
+													fontSize: 11,
+													fontWeight: 1000,
+													bgcolor: selected
+														? "rgba(255,255,255,.22)"
+														: "rgba(15,23,42,.08)",
+													color: selected ? "#fff" : "rgba(15,23,42,.65)",
+												}}
+											>
+												{n}
+											</Box>
+										</Stack>
+									}
+									variant={selected ? "filled" : "outlined"}
+									sx={{
+										borderRadius: 999,
+										fontWeight: 900,
+										borderColor: selected
+											? "rgba(97,206,112,.60)"
+											: "rgba(15,23,42,.12)",
+										bgcolor: selected ? "#61ce70" : "rgba(255,255,255,.55)",
+										color: selected ? "#fff" : "rgba(15,23,42,.70)",
+										boxShadow: selected
+											? "0 14px 28px rgba(97,206,112,.20)"
+											: "none",
+										"&:hover": {
+											bgcolor: selected ? "#55bf64" : "rgba(255,255,255,.72)",
+										},
+									}}
+								/>
+							);
+						})}
+					</Box>
 				</Box>
 			</Paper>
 
@@ -465,7 +492,7 @@ export default function AdminCampaignPage() {
 				sx={{
 					mt: 2,
 					display: "grid",
-					gap: 1.25,
+					gap: 2,
 					gridTemplateColumns: {
 						xs: "1fr",
 						sm: "repeat(2, minmax(0, 1fr))",
@@ -480,20 +507,20 @@ export default function AdminCampaignPage() {
 								elevation={0}
 								sx={{
 									borderRadius: 3,
-									border: "1px solid rgba(148,163,184,.14)",
-									bgcolor: "rgba(15,23,42,.68)",
-									p: 1.5,
+									border: "1px solid rgba(15,23,42,.10)",
+									bgcolor: "#fff",
+									p: 2,
 								}}
 							>
 								<Stack direction="row" spacing={1.25} alignItems="center">
-									<Skeleton variant="rounded" width={40} height={40} />
+									<Skeleton variant="rounded" width={42} height={42} />
 									<Box sx={{ flex: 1 }}>
 										<Skeleton width="85%" />
 										<Skeleton width="60%" />
 									</Box>
 									<Skeleton variant="rounded" width={36} height={36} />
 								</Stack>
-								<Box sx={{ mt: 1.25 }}>
+								<Box sx={{ mt: 1.5 }}>
 									<Skeleton width="45%" />
 									<Skeleton width="90%" />
 									<Skeleton width="70%" />
@@ -501,24 +528,27 @@ export default function AdminCampaignPage() {
 							</Paper>
 					  ))
 					: paginatedRows.map((row) => (
-							<PremiumCampaignCard key={row.id} row={row} onMenu={openMenu} />
+							<CampaignCard key={row.id} row={row} onMenu={openMenu} />
 					  ))}
 			</Box>
 
 			{/* Pagination */}
-			<Box sx={{ mt: 3, display: "flex", justifyContent: "center" }}>
+			<Box sx={{ mt: 3.5, display: "flex", justifyContent: "center" }}>
 				<Pagination
 					count={Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))}
 					page={page}
 					onChange={(_, p) => setPage(p)}
+					shape="rounded"
 					sx={{
 						"& .MuiPaginationItem-root": {
-							color: "rgba(241,245,249,.85)",
-							borderColor: "rgba(255,255,255,.10)",
+							borderRadius: 2,
+							fontWeight: 900,
+							color: "rgba(15,23,42,.70)",
 						},
 						"& .Mui-selected": {
-							bgcolor: "rgba(97,206,112,.18) !important",
-							color: "rgb(134,239,172) !important",
+							bgcolor: "rgba(97,206,112,.20) !important",
+							color: "rgba(15,23,42,.90) !important",
+							border: "1px solid rgba(97,206,112,.45)",
 						},
 					}}
 				/>
@@ -530,14 +560,14 @@ export default function AdminCampaignPage() {
 				open={!!menu.anchor}
 				onClose={closeMenu}
 				PaperProps={{
+					elevation: 0,
 					sx: {
-						borderRadius: 2.5,
-						border: "1px solid rgba(148,163,184,.14)",
-						bgcolor: "rgba(15,23,42,.92)",
-						backdropFilter: "blur(12px)",
-						boxShadow: "0 22px 60px rgba(0,0,0,.35)",
-						color: "rgba(226,232,240,.92)",
-						minWidth: 220,
+						borderRadius: 3,
+						border: "1px solid rgba(15,23,42,.10)",
+						bgcolor: "#fff",
+						boxShadow: "0 18px 60px rgba(15,23,42,.18)",
+						minWidth: 200,
+						overflow: "hidden",
 					},
 				}}
 			>
@@ -545,28 +575,47 @@ export default function AdminCampaignPage() {
 					component={Link}
 					href={`/admin/campaign/${menu.row?.id ?? ""}`}
 					onClick={closeMenu}
+					sx={{ py: 1.2 }}
 				>
-					<VisibilityRoundedIcon fontSize="small" style={{ marginRight: 10 }} />
-					Detail
+					<VisibilityRoundedIcon
+						fontSize="small"
+						style={{ marginRight: 10, opacity: 0.65 }}
+					/>
+					<Typography sx={{ fontWeight: 800, fontSize: 13.5 }}>
+						Detail
+					</Typography>
 				</MenuItem>
+
 				<MenuItem
 					component={Link}
 					href={`/admin/campaign/${menu.row?.id ?? ""}/edit`}
 					onClick={closeMenu}
+					sx={{ py: 1.2 }}
 				>
-					<EditRoundedIcon fontSize="small" style={{ marginRight: 10 }} />
-					Edit
+					<EditRoundedIcon
+						fontSize="small"
+						style={{ marginRight: 10, opacity: 0.65 }}
+					/>
+					<Typography sx={{ fontWeight: 800, fontSize: 13.5 }}>Edit</Typography>
 				</MenuItem>
+
 				{menu.row?.status === "review" ? (
 					<MenuItem
 						component={Link}
 						href={`/admin/campaign/${menu.row?.id ?? ""}?tab=verify`}
 						onClick={closeMenu}
+						sx={{ py: 1.2 }}
 					>
-						<VerifiedRoundedIcon fontSize="small" style={{ marginRight: 10 }} />
-						Verifikasi
+						<VerifiedRoundedIcon
+							fontSize="small"
+							style={{ marginRight: 10, opacity: 0.65 }}
+						/>
+						<Typography sx={{ fontWeight: 800, fontSize: 13.5 }}>
+							Verifikasi
+						</Typography>
 					</MenuItem>
 				) : null}
+
 				{menu.row?.status === "active" ? (
 					<MenuItem
 						onClick={() => {
@@ -574,12 +623,15 @@ export default function AdminCampaignPage() {
 							closeMenu();
 							onEnd(id);
 						}}
+						sx={{ py: 1.2, color: "#b91c1c" }}
 					>
 						<StopCircleRoundedIcon
 							fontSize="small"
-							style={{ marginRight: 10 }}
+							style={{ marginRight: 10, opacity: 0.85 }}
 						/>
-						Akhiri
+						<Typography sx={{ fontWeight: 900, fontSize: 13.5 }}>
+							Akhiri
+						</Typography>
 					</MenuItem>
 				) : null}
 			</Menu>
@@ -587,7 +639,7 @@ export default function AdminCampaignPage() {
 	);
 }
 
-function PremiumCampaignCard({
+function CampaignCard({
 	row,
 	onMenu,
 }: {
@@ -602,15 +654,26 @@ function PremiumCampaignCard({
 			? {
 					icon: <LocalHospitalRoundedIcon fontSize="small" />,
 					label: "Medis",
-					glow: "rgba(56,189,248,.22)",
-					glow2: "rgba(56,189,248,.10)",
+					pillBg: "rgba(56,189,248,.12)",
+					pillBorder: "rgba(56,189,248,.22)",
+					pillText: "rgba(2,132,199,.95)",
+					glow: "rgba(56,189,248,.18)",
 			  }
 			: {
 					icon: <CategoryRoundedIcon fontSize="small" />,
 					label: "Lainnya",
-					glow: "rgba(97,206,112,.22)",
-					glow2: "rgba(97,206,112,.10)",
+					pillBg: "rgba(97,206,112,.14)",
+					pillBorder: "rgba(97,206,112,.26)",
+					pillText: "rgba(22,101,52,.95)",
+					glow: "rgba(97,206,112,.18)",
 			  };
+
+	const initials = (name: string) => {
+		const s = (name || "").trim();
+		if (!s || s === "—") return "—";
+		const parts = s.split(/\s+/).slice(0, 2);
+		return parts.map((p) => p[0]?.toUpperCase()).join("");
+	};
 
 	return (
 		<Paper
@@ -619,62 +682,47 @@ function PremiumCampaignCard({
 				position: "relative",
 				borderRadius: 3,
 				overflow: "hidden",
-
-				// ✅ surface lebih "angkat"
-				bgcolor: "rgba(17, 24, 39, .98)", // slate-900-ish
-				border: "1px solid rgba(255,255,255,.08)",
-				boxShadow: "0 14px 38px rgba(0,0,0,.35)",
-				backdropFilter: "blur(10px)",
-
-				// ✅ inner highlight biar tepi kebaca
-				"&::before": {
-					content: '""',
-					position: "absolute",
-					inset: 0,
-					borderRadius: 12,
-					pointerEvents: "none",
-					boxShadow: "inset 0 1px 0 rgba(255,255,255,.06)",
-				},
-
-				// ✅ hover lebih “terasa”
+				bgcolor: "#fff",
+				border: "1px solid rgba(15,23,42,.10)",
+				boxShadow: "0 14px 34px rgba(15,23,42,.08)",
 				transition:
 					"transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease",
 				"&:hover": {
 					transform: "translateY(-2px)",
-					borderColor: "rgba(255,255,255,.12)",
-					boxShadow: "0 22px 60px rgba(0,0,0,.45)",
+					boxShadow: "0 24px 70px rgba(15,23,42,.12)",
+					borderColor: "rgba(97,206,112,.45)",
+				},
+				"&::before": {
+					content: '""',
+					position: "absolute",
+					inset: 0,
+					pointerEvents: "none",
+					boxShadow: "inset 0 1px 0 rgba(255,255,255,.9)",
 				},
 			}}
 		>
-			{/* ✅ glow jangan menutupi border: taruh di bawah, opacity kecil */}
 			<Box
 				sx={{
 					position: "absolute",
 					inset: 0,
 					pointerEvents: "none",
-					opacity: 0.85,
-					background: `
-            radial-gradient(520px 260px at 85% 0%, ${typeMeta.glow}, transparent 58%),
-            radial-gradient(520px 260px at 0% 100%, ${typeMeta.glow2}, transparent 62%)
-          `,
+					background: `radial-gradient(520px 260px at 80% 0%, ${typeMeta.glow}, transparent 58%)`,
 				}}
 			/>
 
-			<Box sx={{ position: "relative", p: 1.5 }}>
-				<Stack direction="row" spacing={1.2} alignItems="flex-start">
+			<Box sx={{ position: "relative", p: 2 }}>
+				<Stack direction="row" spacing={1.25} alignItems="flex-start">
 					<Box
 						sx={{
-							width: 40,
-							height: 40,
-							borderRadius: 2,
+							width: 42,
+							height: 42,
+							borderRadius: 2.2,
 							display: "grid",
 							placeItems: "center",
 							flexShrink: 0,
-
-							// ✅ icon chip lebih kontras
-							bgcolor: "rgba(2,6,23,.55)",
-							border: "1px solid rgba(255,255,255,.08)",
-							color: "rgba(226,232,240,.9)",
+							bgcolor: "rgba(15,23,42,.04)",
+							border: "1px solid rgba(15,23,42,.08)",
+							color: "rgba(15,23,42,.72)",
 						}}
 					>
 						{typeMeta.icon}
@@ -684,8 +732,9 @@ function PremiumCampaignCard({
 						<Typography
 							sx={{
 								fontWeight: 1000,
-								fontSize: 13.6,
-								color: "rgba(241,245,249,.92)",
+								fontSize: 14,
+								lineHeight: 1.25,
+								color: "#0f172a",
 								display: "-webkit-box",
 								WebkitLineClamp: 2,
 								WebkitBoxOrient: "vertical",
@@ -697,9 +746,9 @@ function PremiumCampaignCard({
 
 						<Typography
 							sx={{
-								mt: 0.25,
-								fontSize: 12,
-								color: "rgba(226,232,240,.68)",
+								mt: 0.5,
+								fontSize: 12.5,
+								color: "rgba(15,23,42,.60)",
 								whiteSpace: "nowrap",
 								overflow: "hidden",
 								textOverflow: "ellipsis",
@@ -719,12 +768,12 @@ function PremiumCampaignCard({
 								size="small"
 								variant="outlined"
 								sx={{
+									height: 26,
 									borderRadius: 999,
 									fontWeight: 1000,
-									height: 26,
-									bgcolor: "rgba(2,6,23,.40)",
-									borderColor: "rgba(255,255,255,.10)",
-									color: "rgba(241,245,249,.85)",
+									bgcolor: typeMeta.pillBg,
+									borderColor: typeMeta.pillBorder,
+									color: typeMeta.pillText,
 									"& .MuiChip-label": { px: 1.1, fontSize: 12 },
 								}}
 							/>
@@ -732,15 +781,17 @@ function PremiumCampaignCard({
 								label={status.label}
 								size="small"
 								variant="outlined"
-								sx={status.sx}
+								sx={{
+									height: 26,
+									borderRadius: 999,
+									fontWeight: 1000,
+									...status.sx,
+									"& .MuiChip-label": { px: 1.1, fontSize: 12 },
+								}}
 							/>
-							<Typography
-								sx={{ fontSize: 11.5, color: "rgba(226,232,240,.60)" }}
-							>
+							<Typography sx={{ fontSize: 11.5, color: "rgba(15,23,42,.52)" }}>
 								Update{" "}
-								<b style={{ color: "rgba(241,245,249,.88)" }}>
-									{row.updatedAt}
-								</b>
+								<b style={{ color: "rgba(15,23,42,.78)" }}>{row.updatedAt}</b>
 							</Typography>
 						</Stack>
 					</Box>
@@ -748,45 +799,41 @@ function PremiumCampaignCard({
 					<IconButton
 						onClick={(e) => onMenu(e, row)}
 						sx={{
-							borderRadius: 2,
 							width: 36,
 							height: 36,
-							bgcolor: "rgba(2,6,23,.45)",
-							border: "1px solid rgba(255,255,255,.08)",
-							color: "rgba(241,245,249,.86)",
-							"&:hover": { bgcolor: "rgba(2,6,23,.60)" },
+							borderRadius: 2,
+							bgcolor: "rgba(255,255,255,.55)",
+							border: "1px solid rgba(15,23,42,.10)",
+							color: "rgba(15,23,42,.70)",
+							"&:hover": { bgcolor: "rgba(255,255,255,.78)" },
 						}}
 					>
 						<MoreHorizRoundedIcon fontSize="small" />
 					</IconButton>
 				</Stack>
 
-				<Box sx={{ mt: 1.1 }}>
-					<Typography sx={{ fontSize: 12, color: "rgba(226,232,240,.62)" }}>
-						By <b style={{ color: "rgba(241,245,249,.88)" }}>{row.ownerName}</b>{" "}
-						• ID:{" "}
-						<span style={{ color: "rgba(241,245,249,.84)", fontWeight: 900 }}>
+				<Box sx={{ mt: 1.25 }}>
+					<Typography sx={{ fontSize: 12.5, color: "rgba(15,23,42,.62)" }}>
+						By <b style={{ color: "rgba(15,23,42,.86)" }}>{row.ownerName}</b> •
+						ID:{" "}
+						<span style={{ fontWeight: 1000, color: "rgba(15,23,42,.78)" }}>
 							{row.id}
 						</span>
 					</Typography>
 				</Box>
 
-				<Box sx={{ mt: 1.15 }}>
+				<Box sx={{ mt: 1.25 }}>
 					<Stack direction="row" alignItems="baseline" spacing={0.8}>
 						<Typography
-							sx={{
-								fontWeight: 1000,
-								fontSize: 12.8,
-								color: "rgba(241,245,249,.92)",
-							}}
+							sx={{ fontWeight: 1000, fontSize: 13.5, color: "#0f172a" }}
 						>
 							{idr(row.collected)}
 						</Typography>
 						<Typography
 							sx={{
-								fontWeight: 800,
+								fontWeight: 900,
 								fontSize: 12,
-								color: "rgba(226,232,240,.55)",
+								color: "rgba(15,23,42,.52)",
 							}}
 						>
 							/ {idr(row.target || 0)}
@@ -795,8 +842,8 @@ function PremiumCampaignCard({
 						<Typography
 							sx={{
 								fontWeight: 1000,
-								fontSize: 12,
-								color: "rgba(241,245,249,.86)",
+								fontSize: 12.5,
+								color: "rgba(15,23,42,.82)",
 							}}
 						>
 							{progress}%
@@ -807,65 +854,66 @@ function PremiumCampaignCard({
 						variant="determinate"
 						value={progress}
 						sx={{
-							mt: 0.75,
+							mt: 0.8,
 							height: 8,
 							borderRadius: 999,
-							bgcolor: "rgba(255,255,255,.10)",
+							bgcolor: "rgba(15,23,42,.08)",
 							"& .MuiLinearProgress-bar": {
 								borderRadius: 999,
-								background: `linear-gradient(90deg, ${BRAND}, rgba(97,206,112,.50))`,
-								boxShadow: "0 10px 18px rgba(97,206,112,.18)",
+								background:
+									"linear-gradient(90deg, #61ce70, rgba(97,206,112,.55))",
+								boxShadow: "0 14px 30px rgba(97,206,112,.18)",
 							},
 						}}
 					/>
 				</Box>
 
-				<Divider sx={{ my: 1.25, borderColor: "rgba(255,255,255,.08)" }} />
+				<Divider sx={{ my: 1.5, borderColor: "rgba(15,23,42,.08)" }} />
 
-				<Stack direction="row" alignItems="center" spacing={1}>
+				<Stack direction="row" alignItems="center" spacing={1.25}>
 					<AvatarGroup
 						max={4}
 						sx={{
 							"& .MuiAvatar-root": {
-								width: 26,
-								height: 26,
+								width: 28,
+								height: 28,
 								fontSize: 11,
-								border: "1px solid rgba(255,255,255,.10)",
-								bgcolor: "rgba(2,6,23,.55)",
-								color: "rgba(241,245,249,.92)",
+								fontWeight: 1000,
+								bgcolor: "rgba(15,23,42,.06)",
+								color: "rgba(15,23,42,.72)",
+								border: "1px solid rgba(15,23,42,.10)",
 							},
 						}}
 					>
+						<Avatar>{initials(row.ownerName) || "U"}</Avatar>
 						<Avatar>R</Avatar>
 						<Avatar>B</Avatar>
 						<Avatar>N</Avatar>
-						<Avatar>A</Avatar>
 					</AvatarGroup>
 
-					<Typography sx={{ fontSize: 12, color: "rgba(226,232,240,.62)" }}>
-						{row.donors} donatur
+					<Typography sx={{ fontSize: 12.5, color: "rgba(15,23,42,.60)" }}>
+						<b style={{ color: "rgba(15,23,42,.82)" }}>{row.donors}</b> donatur
 					</Typography>
 
 					<Box sx={{ flex: 1 }} />
 
-					<ButtonBase
+					<Button
 						component={Link}
 						href={`/admin/campaign/${row.id}`}
+						variant="contained"
 						sx={{
-							height: 34,
-							px: 1.4,
-							borderRadius: 2,
+							borderRadius: 999,
 							fontWeight: 1000,
-							fontSize: 12.5,
-							color: "#08120b",
-							bgcolor: BRAND,
-							boxShadow: "0 12px 28px rgba(97,206,112,.22)",
-							transition: "transform 120ms ease",
-							"&:active": { transform: "scale(.99)" },
+							textTransform: "none",
+							px: 2,
+							py: 0.8,
+							bgcolor: "#61ce70",
+							boxShadow: "0 16px 34px rgba(97,206,112,.22)",
+							"&:hover": { bgcolor: "#55bf64" },
 						}}
 					>
 						Detail
-					</ButtonBase>
+					</Button>
 				</Stack>
 			</Box>
 		</Paper>
