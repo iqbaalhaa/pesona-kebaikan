@@ -1,4 +1,5 @@
 import type { NextAuthConfig } from "next-auth";
+import { Role } from "@/generated/prisma/enums";
 
 export const authConfig = {
   pages: {
@@ -12,13 +13,13 @@ export const authConfig = {
     },
     session({ session, token }) {
       if (token?.role && session.user) {
-        session.user.role = token.role;
+        session.user.role = token.role as Role;
       }
       return session;
     },
     jwt({ token, user }) {
       if (user) {
-        token.role = user.role;
+        token.role = user.role as Role;
       }
       return token;
     }

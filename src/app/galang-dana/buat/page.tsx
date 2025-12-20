@@ -89,7 +89,7 @@ const CATEGORY_TITLE: Record<string, string> = {
 	rumah_ibadah: "Rumah Ibadah",
 };
 
-export default function BuatGalangDanaPage() {
+function BuatGalangDanaPageContent() {
 	const router = useRouter();
 	const sp = useSearchParams();
 
@@ -1836,5 +1836,13 @@ export default function BuatGalangDanaPage() {
 				</Alert>
 			</Snackbar>
 		</Box>
+	);
+}
+
+export default function BuatGalangDanaPage() {
+	return (
+		<React.Suspense fallback={<Box sx={{ p: 4, textAlign: 'center' }}>Loading...</Box>}>
+			<BuatGalangDanaPageContent />
+		</React.Suspense>
 	);
 }

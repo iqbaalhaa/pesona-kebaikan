@@ -275,7 +275,7 @@ export default function AdminAkuntabilitasPage() {
         <Paper elevation={0} sx={{ p: 3, border: "1px solid #e2e8f0", borderRadius: 3 }}>
           <Typography variant="h6" sx={{ mb: 2, fontWeight: 700 }}>Banner Utama</Typography>
           <Grid container spacing={2}>
-            <Grid item xs={12}>
+            <Grid size={12}>
               <TextField
                 fullWidth
                 label="Judul"
@@ -283,7 +283,7 @@ export default function AdminAkuntabilitasPage() {
                 onChange={(e) => handleHeroChange("title", e.target.value)}
               />
             </Grid>
-            <Grid item xs={12}>
+            <Grid size={12}>
               <TextField
                 fullWidth
                 multiline
@@ -298,22 +298,19 @@ export default function AdminAkuntabilitasPage() {
 
         {/* Cards Section */}
         <Paper elevation={0} sx={{ p: 3, border: "1px solid #e2e8f0", borderRadius: 3 }}>
-          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
-            <Typography variant="h6" sx={{ fontWeight: 700 }}>Pilar Transparansi (Cards)</Typography>
-            <Button startIcon={<AddIcon />} onClick={addCard} variant="outlined" size="small">
-              Tambah Card
-            </Button>
+          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2 }}>
+            <Typography variant="h6" sx={{ fontWeight: 700 }}>Pilar Transparansi</Typography>
+            <Button startIcon={<AddIcon />} size="small" onClick={addCard}>Tambah</Button>
           </Box>
-          
-          <Grid container spacing={3}>
+          <Grid container spacing={2}>
             {data.cards.map((card, index) => (
-              <Grid item xs={12} md={6} key={index}>
-                <Paper variant="outlined" sx={{ p: 2, borderRadius: 2, position: 'relative' }}>
+              <Grid size={{ xs: 12, md: 6 }} key={index}>
+                <Box sx={{ p: 2, border: "1px solid #e2e8f0", borderRadius: 2, position: "relative" }}>
                   <IconButton 
                     size="small" 
                     color="error" 
+                    sx={{ position: "absolute", top: 8, right: 8 }}
                     onClick={() => removeCard(index)}
-                    sx={{ position: 'absolute', top: 8, right: 8 }}
                   >
                     <DeleteIcon fontSize="small" />
                   </IconButton>
@@ -348,7 +345,7 @@ export default function AdminAkuntabilitasPage() {
                     value={card.description}
                     onChange={(e) => handleCardChange(index, "description", e.target.value)}
                   />
-                </Paper>
+                </Box>
               </Grid>
             ))}
           </Grid>
@@ -367,7 +364,7 @@ export default function AdminAkuntabilitasPage() {
             {data.reports.map((report, index) => (
               <Paper key={index} variant="outlined" sx={{ p: 2, borderRadius: 2, display: "flex", gap: 2, alignItems: "flex-start" }}>
                 <Grid container spacing={2}>
-                  <Grid item xs={12} sm={2}>
+                  <Grid size={{ xs: 12, sm: 2 }}>
                     <TextField
                       fullWidth
                       label="Tahun"
@@ -376,7 +373,7 @@ export default function AdminAkuntabilitasPage() {
                       size="small"
                     />
                   </Grid>
-                  <Grid item xs={12} sm={5}>
+                  <Grid size={{ xs: 12, sm: 5 }}>
                     <TextField
                       fullWidth
                       label="Judul Laporan"
@@ -385,7 +382,7 @@ export default function AdminAkuntabilitasPage() {
                       size="small"
                     />
                   </Grid>
-                  <Grid item xs={12} sm={5}>
+                  <Grid size={{ xs: 12, sm: 5 }}>
                      <Box>
                        <Typography variant="caption" sx={{ display: 'block', mb: 0.5, color: 'text.secondary' }}>File Laporan (PDF)</Typography>
                        <FileUpload 

@@ -1,6 +1,7 @@
+import "dotenv/config";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
-import { Role, BlogMediaType } from "@/generated/prisma/enums";
+import { Role, BlogMediaType, CampaignStatus, CampaignMediaType, PaymentMethod } from "@/generated/prisma/enums";
 
 async function upsertPageContent(params: { key: string; title: string; content: string; data?: any }) {
   return prisma.pageContent.upsert({
@@ -54,6 +55,57 @@ async function ensureBlogByTitle(params: {
       gallery: params.gallery?.length
         ? {
             create: params.gallery.map((m) => ({
+              type: m.type,
+              url: m.url,
+              isThumbnail: m.isThumbnail ?? false,
+            })),
+          }
+        : undefined,
+    },
+  });
+}
+
+async function upsertCampaignCategory(name: string) {
+  return prisma.campaignCategory.upsert({
+    where: { name },
+    update: {},
+    create: { name },
+  });
+}
+
+async function ensureCampaign(params: {
+  title: string;
+  story: string;
+  target: number;
+  isEmergency?: boolean;
+  status?: CampaignStatus;
+  categoryId: string;
+  createdById: string;
+  media?: Array<{
+    type: CampaignMediaType;
+    url: string;
+    isThumbnail?: boolean;
+  }>;
+}) {
+  const existing = await prisma.campaign.findFirst({
+    where: { title: params.title },
+    include: { media: true },
+  });
+
+  if (existing) return existing;
+
+  return prisma.campaign.create({
+    data: {
+      title: params.title,
+      story: params.story,
+      target: params.target,
+      isEmergency: params.isEmergency ?? false,
+      status: params.status ?? CampaignStatus.PENDING,
+      categoryId: params.categoryId,
+      createdById: params.createdById,
+      media: params.media?.length
+        ? {
+            create: params.media.map((m) => ({
               type: m.type,
               url: m.url,
               isThumbnail: m.isThumbnail ?? false,
@@ -247,12 +299,115 @@ async function main() {
     ],
   });
 
+  // ============
+  // CAMPAIGN CATEGORY
+  // ============
+  console.log("Seeding CampaignCategory...");
+  const campCatKesehatan = await upsertCampaignCategory("Kesehatan");
+  const campCatPendidikan = await upsertCampaignCategory("Pendidikan");
+  const campCatBencana = await upsertCampaignCategory("Bencana Alam");
+  const campCatZakat = await upsertCampaignCategory("Zakat");
+
+  // ============
+  // CAMPAIGNS
+  // ============
+  console.log("Seeding Campaigns...");
+  
+  // Campaign 1: Kesehatan (Emergency)
+  const campaign1 = await ensureCampaign({
+      title: "Bantu Adik Rizky Sembuh dari Jantung Bocor",
+      story: "Adik Rizky (5 tahun) menderita jantung bocor sejak lahir. Ia membutuhkan biaya operasi segera...",
+      target: 150000000,
+      isEmergency: true,
+      status: CampaignStatus.ACTIVE,
+      categoryId: campCatKesehatan.id,
+      createdById: admin.id,
+      media: [
+          { type: CampaignMediaType.IMAGE, url: "https://picsum.photos/800/600?random=101", isThumbnail: true },
+          { type: CampaignMediaType.IMAGE, url: "https://picsum.photos/800/600?random=102" },
+      ]
+  });
+
+  // Campaign 2: Pendidikan
+  const campaign2 = await ensureCampaign({
+      title: "Renovasi Sekolah Dasar di Desa Terpencil",
+      story: "SD Negeri 01 di Desa X kondisinya sangat memprihatinkan. Atap bocor dan dinding retak...",
+      target: 75000000,
+      status: CampaignStatus.ACTIVE,
+      categoryId: campCatPendidikan.id,
+      createdById: user.id, // User created
+      media: [
+          { type: CampaignMediaType.IMAGE, url: "https://picsum.photos/800/600?random=201", isThumbnail: true },
+      ]
+  });
+
+  // Campaign 3: Completed
+  await ensureCampaign({
+      title: "Paket Sembako untuk Lansia Dhuafa",
+      story: "Mari berbagi kebahagiaan dengan memberikan paket sembako untuk lansia dhuafa...",
+      target: 20000000,
+      status: CampaignStatus.COMPLETED,
+      categoryId: campCatZakat.id,
+      createdById: admin.id,
+      media: [
+          { type: CampaignMediaType.IMAGE, url: "https://picsum.photos/800/600?random=301", isThumbnail: true },
+      ]
+  });
+
+  // ============
+  // DONATIONS
+  // ============
+  console.log("Seeding Donations...");
+  const donationCount = await prisma.donation.count();
+  
+  if (donationCount === 0) {
+      // Donations for Campaign 1
+      await prisma.donation.createMany({
+          data: [
+              {
+                  campaignId: campaign1.id,
+                  donorName: "Hamba Allah",
+                  amount: 500000,
+                  paymentMethod: PaymentMethod.TRANSFER,
+                  status: "COMPLETED",
+                  isAnonymous: true,
+                  message: "Semoga cepat sembuh ya dek Rizky"
+              },
+              {
+                  campaignId: campaign1.id,
+                  donorName: "Andi Wijaya",
+                  donorPhone: "081234567890",
+                  amount: 1000000,
+                  paymentMethod: PaymentMethod.EWALLET,
+                  status: "COMPLETED",
+                  message: "Sedikit rezeki untuk membantu"
+              }
+          ]
+      });
+
+      // Donations for Campaign 2
+      await prisma.donation.createMany({
+          data: [
+              {
+                  campaignId: campaign2.id,
+                  donorName: "Siti Aminah",
+                  amount: 250000,
+                  paymentMethod: PaymentMethod.VIRTUAL_ACCOUNT,
+                  status: "COMPLETED",
+                  message: "Semangat sekolahnya adik-adik"
+              }
+          ]
+      });
+  }
+
   console.log("✅ Seed selesai:", {
     adminEmail: admin.email,
     userEmail: user.email,
     seededFaqs: faqs.length,
     seededPageContent: 4,
     seededCategories: 3,
+    seededCampaignCategories: 4,
+    seededCampaigns: 3,
   });
 }
 

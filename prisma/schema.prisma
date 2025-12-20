@@ -13,16 +13,16 @@ enum Role {
 }
 
 model User {
-  id              String          @id @default(cuid())
-  name            String?
-  email           String          @unique
-  emailVerified   DateTime?
-  image           String?
-  role            Role            @default(USER)
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
-  password        String?
-  phone           String?         @unique
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  role          Role      @default(USER)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  password      String?
+  phone         String?   @unique
 
   accounts        Account[]
   sessions        Session[]
@@ -31,7 +31,8 @@ model User {
   loginActivities LoginActivity[]
 
   // untuk Blog.createdById relation("UserBlogs")
-  blogs           Blog[]          @relation("UserBlogs")
+  blogs     Blog[]     @relation("UserBlogs")
+  campaigns Campaign[] @relation("UserCampaigns")
 }
 
 model LoginActivity {
@@ -42,7 +43,7 @@ model LoginActivity {
   location  String?
   createdAt DateTime @default(now())
 
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([createdAt])
@@ -63,7 +64,7 @@ model Account {
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
-  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@id([provider, providerAccountId])
 }
@@ -75,7 +76,7 @@ model Session {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([expires])
@@ -99,7 +100,7 @@ model Authenticator {
   credentialBackedUp   Boolean
   transports           String?
 
-  user                 User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@id([userId, credentialID])
   @@index([userId])
@@ -113,8 +114,8 @@ model Post {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
 }
@@ -131,11 +132,11 @@ model Faq {
 }
 
 model PageContent {
-  id        String   @id @default(cuid())
-  key       String   @unique // contoh: 'about', 'terms', 'accountability'
-  title     String
-  content   String   @db.Text // HTML / Markdown
-  data      Json?    // banner, vision, mission, socials, struktur organisasi, dll
+  id      String @id @default(cuid())
+  key     String @unique // contoh: 'about', 'terms', 'accountability'
+  title   String
+  content String @db.Text // HTML / Markdown
+  data    Json? // banner, vision, mission, socials, struktur organisasi, dll
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -153,32 +154,32 @@ model BlogCategory {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  blogs     Blog[]
+  blogs Blog[]
 }
 
 model Blog {
-  id          String        @id @default(cuid())
-  title       String
-  content     String
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  id        String   @id @default(cuid())
+  title     String
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  categoryId  String?
-  category    BlogCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  categoryId String?
+  category   BlogCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
 
   createdById String
-  createdBy   User          @relation("UserBlogs", fields: [createdById], references: [id], onDelete: Cascade)
+  createdBy   User   @relation("UserBlogs", fields: [createdById], references: [id], onDelete: Cascade)
 
-  gallery     BlogMedia[]
+  gallery BlogMedia[]
 
   @@index([categoryId])
   @@index([createdById])
 }
 
 model BlogMedia {
-  id          String        @id @default(cuid())
-  blogId      String
-  blog        Blog          @relation(fields: [blogId], references: [id], onDelete: Cascade)
+  id     String @id @default(cuid())
+  blogId String
+  blog   Blog   @relation(fields: [blogId], references: [id], onDelete: Cascade)
 
   type        BlogMediaType
   url         String
@@ -186,4 +187,88 @@ model BlogMedia {
   createdAt   DateTime      @default(now())
 
   @@index([blogId])
+}
+
+model CampaignCategory {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  campaigns Campaign[]
+}
+
+enum CampaignStatus {
+  PENDING
+  ACTIVE
+  REJECTED
+  COMPLETED
+}
+
+model Campaign {
+  id          String         @id @default(cuid())
+  title       String
+  story       String         @db.Text
+  target      Decimal        @db.Decimal(19, 2)
+  isEmergency Boolean        @default(false)
+  verifiedAt  DateTime?
+  status      CampaignStatus @default(PENDING)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  categoryId String
+  category   CampaignCategory @relation(fields: [categoryId], references: [id])
+
+  createdById String
+  createdBy   User   @relation("UserCampaigns", fields: [createdById], references: [id])
+
+  media     CampaignMedia[]
+  donations Donation[]
+
+  @@index([categoryId])
+  @@index([createdById])
+  @@index([status])
+}
+
+enum CampaignMediaType {
+  IMAGE
+  VIDEO
+}
+
+model CampaignMedia {
+  id          String            @id @default(cuid())
+  type        CampaignMediaType
+  url         String
+  isThumbnail Boolean           @default(false)
+  createdAt   DateTime          @default(now())
+
+  campaignId String
+  campaign   Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@index([campaignId])
+}
+
+enum PaymentMethod {
+  EWALLET
+  VIRTUAL_ACCOUNT
+  TRANSFER
+  CARD
+}
+
+model Donation {
+  id            String        @id @default(cuid())
+  donorName     String
+  donorPhone    String?
+  message       String?       @db.Text
+  isAnonymous   Boolean       @default(false)
+  amount        Decimal       @db.Decimal(19, 2)
+  paymentMethod PaymentMethod
+  status        String        @default("PENDING")
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  campaignId String
+  campaign   Campaign @relation(fields: [campaignId], references: [id])
+
+  @@index([campaignId])
 }
