@@ -116,3 +116,16 @@ body {
 	border-radius: 12px;
 	background-color: var(--color-primary-soft);
 }
+
+/* Horizontal Scrollbar Customization */
+.scrollbar-x-popular::-webkit-scrollbar {
+	height: 6px;
+}
+.scrollbar-x-popular::-webkit-scrollbar-thumb {
+	background: rgba(15, 23, 42, 0.18);
+	border-radius: 999px;
+}
+.scrollbar-x-popular::-webkit-scrollbar-track {
+	background: rgba(15, 23, 42, 0.06);
+	border-radius: 999px;
+}
