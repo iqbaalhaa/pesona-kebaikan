@@ -79,6 +79,8 @@ async function ensureCampaign(params: {
   target: number;
   isEmergency?: boolean;
   status?: CampaignStatus;
+  start?: Date;
+  end?: Date;
   categoryId: string;
   createdById: string;
   media?: Array<{
@@ -101,6 +103,8 @@ async function ensureCampaign(params: {
       target: params.target,
       isEmergency: params.isEmergency ?? false,
       status: params.status ?? CampaignStatus.PENDING,
+      start: params.start ?? new Date(),
+      end: params.end,
       categoryId: params.categoryId,
       createdById: params.createdById,
       media: params.media?.length
@@ -313,92 +317,117 @@ async function main() {
   // ============
   console.log("Seeding Campaigns...");
   
-  // Campaign 1: Kesehatan (Emergency)
-  const campaign1 = await ensureCampaign({
-      title: "Bantu Adik Rizky Sembuh dari Jantung Bocor",
-      story: "Adik Rizky (5 tahun) menderita jantung bocor sejak lahir. Ia membutuhkan biaya operasi segera...",
-      target: 150000000,
-      isEmergency: true,
-      status: CampaignStatus.ACTIVE,
-      categoryId: campCatKesehatan.id,
-      createdById: admin.id,
-      media: [
-          { type: CampaignMediaType.IMAGE, url: "https://picsum.photos/800/600?random=101", isThumbnail: true },
-          { type: CampaignMediaType.IMAGE, url: "https://picsum.photos/800/600?random=102" },
-      ]
-  });
+  const campaignCategories = [campCatKesehatan, campCatPendidikan, campCatBencana, campCatZakat];
+  const campaignTitles = [
+    "Bantu Adik Rizky Sembuh dari Jantung Bocor",
+    "Renovasi Sekolah Dasar di Desa Terpencil",
+    "Paket Sembako untuk Lansia Dhuafa",
+    "Bangun Jembatan Asa untuk Desa Seberang",
+    "Operasi Katarak Gratis untuk Dhuafa",
+    "Beasiswa Pendidikan Yatim Piatu",
+    "Bantuan Korban Banjir Bandang",
+    "Sedekah Air Bersih untuk Pesantren",
+    "Bantu Bu Siti Melawan Kanker",
+    "Wakaf Al-Quran untuk Pelosok Negeri",
+    "Santunan Guru Ngaji di Pedalaman",
+    "Modal Usaha untuk Janda Dhuafa",
+    "Bedah Rumah Tak Layak Huni",
+    "Ambulans Gratis untuk Masyarakat Miskin",
+    "Bantu Pembangunan Masjid Desa",
+    "Tebar Hewan Kurban ke Pelosok",
+    "Bingkisan Lebaran untuk Yatim",
+    "Bantu Biaya Persalinan Ibu Dhuafa",
+    "Kursi Roda untuk Difabel",
+    "Makanan Sehat untuk Balita Gizi Buruk"
+  ];
 
-  // Campaign 2: Pendidikan
-  const campaign2 = await ensureCampaign({
-      title: "Renovasi Sekolah Dasar di Desa Terpencil",
-      story: "SD Negeri 01 di Desa X kondisinya sangat memprihatinkan. Atap bocor dan dinding retak...",
-      target: 75000000,
-      status: CampaignStatus.ACTIVE,
-      categoryId: campCatPendidikan.id,
-      createdById: user.id, // User created
-      media: [
-          { type: CampaignMediaType.IMAGE, url: "https://picsum.photos/800/600?random=201", isThumbnail: true },
-      ]
-  });
+  const generatedCampaigns = [];
 
-  // Campaign 3: Completed
-  await ensureCampaign({
-      title: "Paket Sembako untuk Lansia Dhuafa",
-      story: "Mari berbagi kebahagiaan dengan memberikan paket sembako untuk lansia dhuafa...",
-      target: 20000000,
-      status: CampaignStatus.COMPLETED,
-      categoryId: campCatZakat.id,
-      createdById: admin.id,
+  for (let i = 0; i < 20; i++) {
+    const title = campaignTitles[i] || `Campaign Kebaikan #${i + 1}`;
+    const category = campaignCategories[Math.floor(Math.random() * campaignCategories.length)];
+    const isEmergency = Math.random() > 0.8; // 20% chance
+    const target = (Math.floor(Math.random() * 20) + 1) * 5000000; // 5jt - 100jt
+    
+    // Status distribution
+    let status = CampaignStatus.ACTIVE;
+    const randStatus = Math.random();
+    if (randStatus > 0.9) status = CampaignStatus.COMPLETED;
+    else if (randStatus > 0.95) status = CampaignStatus.PENDING;
+
+    const campaign = await ensureCampaign({
+      title: title,
+      story: `Ini adalah deskripsi detail untuk campaign "${title}". 
+      
+Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+
+Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+
+Mohon doa dan dukungannya untuk kelancaran program ini. Terima kasih orang baik!`,
+      target: target,
+      isEmergency: isEmergency,
+      status: status,
+      categoryId: category.id,
+      createdById: i % 2 === 0 ? admin.id : user.id,
       media: [
-          { type: CampaignMediaType.IMAGE, url: "https://picsum.photos/800/600?random=301", isThumbnail: true },
+        { 
+          type: CampaignMediaType.IMAGE, 
+          url: `https://picsum.photos/800/600?random=${100 + i}`, 
+          isThumbnail: true 
+        },
+        { 
+          type: CampaignMediaType.IMAGE, 
+          url: `https://picsum.photos/800/600?random=${200 + i}` 
+        }
       ]
-  });
+    });
+    generatedCampaigns.push(campaign);
+  }
 
   // ============
   // DONATIONS
   // ============
   console.log("Seeding Donations...");
-  const donationCount = await prisma.donation.count();
   
-  if (donationCount === 0) {
-      // Donations for Campaign 1
-      await prisma.donation.createMany({
-          data: [
-              {
-                  campaignId: campaign1.id,
-                  donorName: "Hamba Allah",
-                  amount: 500000,
-                  paymentMethod: PaymentMethod.TRANSFER,
-                  status: "COMPLETED",
-                  isAnonymous: true,
-                  message: "Semoga cepat sembuh ya dek Rizky"
-              },
-              {
-                  campaignId: campaign1.id,
-                  donorName: "Andi Wijaya",
-                  donorPhone: "081234567890",
-                  amount: 1000000,
-                  paymentMethod: PaymentMethod.EWALLET,
-                  status: "COMPLETED",
-                  message: "Sedikit rezeki untuk membantu"
-              }
-          ]
-      });
+  // Clear existing donations if needed or just add more?
+  // User asked for "ada 100 donation", implies total. 
+  // Let's create 100 new donations distributed across campaigns.
+  
+  const donorNames = [
+    "Hamba Allah", "Andi Wijaya", "Siti Aminah", "Budi Santoso", "Dewi Lestari",
+    "Rahmat Hidayat", "Putri Indah", "Agus Setiawan", "Ratna Sari", "Eko Prasetyo",
+    "Anonim", "Donatur Dermawan", "Keluarga Besar X", "Alumni Angkatan 90", "Komunitas Peduli"
+  ];
 
-      // Donations for Campaign 2
-      await prisma.donation.createMany({
-          data: [
-              {
-                  campaignId: campaign2.id,
-                  donorName: "Siti Aminah",
-                  amount: 250000,
-                  paymentMethod: PaymentMethod.VIRTUAL_ACCOUNT,
-                  status: "COMPLETED",
-                  message: "Semangat sekolahnya adik-adik"
-              }
-          ]
-      });
+  const paymentMethods = [
+    PaymentMethod.TRANSFER, 
+    PaymentMethod.EWALLET, 
+    PaymentMethod.VIRTUAL_ACCOUNT, 
+    PaymentMethod.CARD
+  ];
+
+  const donationData = [];
+  
+  for (let i = 0; i < 100; i++) {
+    const campaign = generatedCampaigns[Math.floor(Math.random() * generatedCampaigns.length)];
+    const amount = (Math.floor(Math.random() * 20) + 1) * 50000; // 50rb - 1jt
+    
+    donationData.push({
+      campaignId: campaign.id,
+      donorName: donorNames[Math.floor(Math.random() * donorNames.length)],
+      donorPhone: Math.random() > 0.5 ? `0812${Math.floor(Math.random() * 100000000)}` : null,
+      amount: amount,
+      paymentMethod: paymentMethods[Math.floor(Math.random() * paymentMethods.length)],
+      status: "COMPLETED", // Assume all paid for popularity count
+      isAnonymous: Math.random() > 0.7,
+      message: Math.random() > 0.5 ? "Semoga berkah dan bermanfaat. Aamiin." : null,
+      createdAt: new Date(Date.now() - Math.floor(Math.random() * 30) * 24 * 60 * 60 * 1000) // Random date within last 30 days
+    });
   }
+
+  await prisma.donation.createMany({
+    data: donationData
+  });
 
   console.log("✅ Seed selesai:", {
     adminEmail: admin.email,
@@ -407,7 +436,8 @@ async function main() {
     seededPageContent: 4,
     seededCategories: 3,
     seededCampaignCategories: 4,
-    seededCampaigns: 3,
+    seededCampaigns: generatedCampaigns.length,
+    seededDonations: 100
   });
 }
 
