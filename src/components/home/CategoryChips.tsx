@@ -38,77 +38,6 @@ const categories: Category[] = [
 	},
 ];
 
-const campaigns: Campaign[] = [
-	{
-		id: "c1",
-		categoryId: "bencana",
-		title: "Bersama BAZNAS, Bantu Sesama Bangkit dari Bencana",
-		organizer: "BAZNAS Hub",
-		cover: "/campaign/urgent-2.jpg",
-		collected: 3591602064,
-		daysLeft: 1840,
-		recommended: true,
-	},
-	{
-		id: "c2",
-		categoryId: "bencana",
-		title: "Kelambu Demi Pencegahan Penyakit Banjir Aceh",
-		organizer: "Rumah Zakat",
-		cover: "/campaign/urgent-1.jpg",
-		collected: 165000,
-		daysLeft: 29,
-	},
-	{
-		id: "c3",
-		categoryId: "bencana",
-		title: "Truk Kemanusiaan untuk Korban Bencana",
-		organizer: "IZI Zakat",
-		cover: "/campaign/urgent-3.jpg",
-		collected: 234000,
-		daysLeft: 7,
-	},
-
-	{
-		id: "c4",
-		categoryId: "anak",
-		title: "Bantu Biaya Perawatan Anak Pejuang Sembuh",
-		organizer: "Relawan Pesona",
-		cover: "/campaign/urgent-3.jpg",
-		collected: 18350000,
-		daysLeft: 12,
-		recommended: true,
-	},
-	{
-		id: "c5",
-		categoryId: "anak",
-		title: "Susu dan Nutrisi untuk Balita Kurang Gizi",
-		organizer: "Komunitas Peduli",
-		cover: "/campaign/urgent-1.jpg",
-		collected: 5600000,
-		daysLeft: 18,
-	},
-
-	{
-		id: "c6",
-		categoryId: "kesehatan",
-		title: "Bantu Operasi Darurat untuk Pasien Tidak Mampu",
-		organizer: "Yayasan Harapan",
-		cover: "/campaign/urgent-2.jpg",
-		collected: 22400000,
-		daysLeft: 5,
-		recommended: true,
-	},
-	{
-		id: "c7",
-		categoryId: "kesehatan",
-		title: "Ambulans Gratis untuk Warga",
-		organizer: "Lembaga Sosial",
-		cover: "/campaign/urgent-1.jpg",
-		collected: 12450000,
-		daysLeft: 22,
-	},
-];
-
 function rupiah(n: number) {
 	return new Intl.NumberFormat("id-ID").format(n);
 }
@@ -251,15 +180,25 @@ function CampaignRowCard({ item }: { item: Campaign }) {
 	);
 }
 
-export default function CategoryChips() {
+export default function CategoryChips({
+	campaigns = [],
+}: {
+	campaigns?: Campaign[];
+}) {
 	const router = useRouter();
 	const [selected, setSelected] = React.useState("bencana");
 
 	const filtered = React.useMemo(() => {
 		// "lainnya" no longer shows all campaigns here, but we keep it safe
 		if (selected === "lainnya") return campaigns;
+		// Since real data might have different categoryIds, we might need a better matching strategy.
+		// For now, let's assume categoryId matches or we show all if 'lainnya'.
+		// Or filter by exact match if provided.
+		// If the campaigns from DB don't have "bencana" etc as categoryId, this might show nothing.
+		// Let's try to match loosely or show all for now if no match found?
+		// Better: filtering by the hardcoded IDs.
 		return campaigns.filter((c) => c.categoryId === selected);
-	}, [selected]);
+	}, [selected, campaigns]);
 
 	return (
 		<Box className="px-4 mt-6 mb-6">

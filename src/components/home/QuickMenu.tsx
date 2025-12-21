@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import Box from "@mui/material/Box";
@@ -62,7 +61,7 @@ export default function QuickMenu() {
 	};
 
 	return (
-		<Box sx={{ px: 2, mt: 2 }}>
+		<Box sx={{ px: 2, mt: 2, position: "relative", zIndex: 2 }}>
 			<Typography
 				sx={{ fontSize: 16, fontWeight: 800, color: "text.primary", mb: 1.5 }}
 			>
@@ -79,11 +78,10 @@ export default function QuickMenu() {
 				}}
 			>
 				{menus.map((m) => {
-					const isLink = !!m.href;
-
-					const cell = (
+					return (
 						<Box
-							role={isLink ? "link" : "button"}
+							key={m.label}
+							role="button"
 							tabIndex={0}
 							onClick={() => handleActivate(m)}
 							onKeyDown={(e) => e.key === "Enter" && handleActivate(m)}
@@ -134,22 +132,6 @@ export default function QuickMenu() {
 							>
 								{m.label}
 							</Typography>
-						</Box>
-					);
-
-					// Supaya aksesibilitas & SEO oke, kalau ada href bungkus Link
-					return (
-						<Box key={m.label}>
-							{isLink ? (
-								<Link
-									href={m.href!}
-									style={{ textDecoration: "none", color: "inherit" }}
-								>
-									{cell}
-								</Link>
-							) : (
-								cell
-							)}
 						</Box>
 					);
 				})}

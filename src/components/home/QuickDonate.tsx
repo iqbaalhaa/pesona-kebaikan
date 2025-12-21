@@ -12,25 +12,8 @@ type Campaign = {
 	id: string;
 	title: string;
 	organizer: string;
+	slug?: string;
 };
-
-const campaigns: Campaign[] = [
-	{
-		id: "c1",
-		title: "DARURAT! Bantu Korban Banjir Sumut, Aceh & Sumbar",
-		organizer: "Rumah Zakat",
-	},
-	{
-		id: "c2",
-		title: "Bantu Operasi Darurat untuk Pasien Tidak Mampu",
-		organizer: "Yayasan Harapan",
-	},
-	{
-		id: "c3",
-		title: "Beasiswa Anak Desa untuk Tetap Sekolah",
-		organizer: "Relawan Pesona",
-	},
-];
 
 const amountPresets = [10000, 25000, 50000, 100000];
 
@@ -204,7 +187,11 @@ function Toggle({
 	);
 }
 
-export default function QuickDonate() {
+export default function QuickDonate({
+	campaigns = [],
+}: {
+	campaigns?: Campaign[];
+}) {
 	const [selectedAmount, setSelectedAmount] = React.useState<number>(
 		amountPresets[0]
 	);
@@ -214,7 +201,7 @@ export default function QuickDonate() {
 	// bottom sheet state
 	const [open, setOpen] = React.useState(false);
 	const [campaignId, setCampaignId] = React.useState<string>(
-		campaigns[0]?.id ?? ""
+		campaigns && campaigns.length > 0 ? campaigns[0].id : ""
 	);
 
 	// donor identity
@@ -223,8 +210,14 @@ export default function QuickDonate() {
 
 	const selectedCampaign = React.useMemo(
 		() => campaigns.find((c) => c.id === campaignId) ?? campaigns[0],
-		[campaignId]
+		[campaignId, campaigns]
 	);
+
+	React.useEffect(() => {
+		if (!campaignId && campaigns.length > 0) {
+			setCampaignId(campaigns[0].id);
+		}
+	}, [campaigns, campaignId]);
 
 	const finalAmount = React.useMemo(() => {
 		const clean = custom.replace(/[^\d]/g, "");

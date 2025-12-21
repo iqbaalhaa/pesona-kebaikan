@@ -290,8 +290,8 @@ export default function AdminTransaksiPage() {
 									width: 40,
 									height: 40,
 									borderRadius: 999,
-									bgcolor: alpha(theme.palette.success.main, 0.1),
-									color: theme.palette.success.main,
+									bgcolor: alpha("#22c55e", 0.1),
+									color: "#22c55e",
 									display: "grid",
 									placeItems: "center",
 								}}
@@ -321,8 +321,8 @@ export default function AdminTransaksiPage() {
 									width: 40,
 									height: 40,
 									borderRadius: 999,
-									bgcolor: alpha(theme.palette.info.main, 0.1),
-									color: theme.palette.info.main,
+									bgcolor: alpha("#0288d1", 0.1),
+									color: "#0288d1",
 									display: "grid",
 									placeItems: "center",
 								}}
@@ -352,8 +352,8 @@ export default function AdminTransaksiPage() {
 									width: 40,
 									height: 40,
 									borderRadius: 999,
-									bgcolor: alpha(theme.palette.warning.main, 0.1),
-									color: theme.palette.warning.main,
+									bgcolor: alpha("#f5a623", 0.1),
+									color: "#f5a623",
 									display: "grid",
 									placeItems: "center",
 								}}

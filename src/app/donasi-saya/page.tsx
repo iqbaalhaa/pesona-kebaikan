@@ -15,6 +15,8 @@ import DialogContent from "@mui/material/DialogContent";
 import DialogActions from "@mui/material/DialogActions";
 import IconButton from "@mui/material/IconButton";
 import Grid from "@mui/material/Grid";
+import Skeleton from "@mui/material/Skeleton";
+import Alert from "@mui/material/Alert";
 
 import CloseIcon from "@mui/icons-material/Close";
 import FavoriteIcon from "@mui/icons-material/Favorite";
@@ -27,81 +29,57 @@ import StarsIcon from "@mui/icons-material/Stars";
 import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
 import SpaIcon from "@mui/icons-material/Spa";
 import HandshakeIcon from "@mui/icons-material/Handshake";
+import NavigateBeforeIcon from "@mui/icons-material/NavigateBefore";
+import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 
-// Mock Data updated with category
-const myDonations = [
-	{
-		id: "INV-20251217-001",
-		campaign: "Bantu Korban Banjir Sumut, Aceh & Sumbar",
-		amount: 50000,
-		date: "17 Des 2025",
-		rawDate: "2025-12-17",
-		status: "Berhasil",
-		paymentMethod: "GoPay",
-		prayer:
-			"Semoga saudara-saudara kita di sana diberikan ketabahan dan kekuatan. Aamiin.",
-		campaignId: "c1",
-		category: "Bencana Alam",
-	},
-	{
-		id: "INV-20251217-002",
-		campaign: "Sedekah Jumat Berkah",
-		amount: 20000,
-		date: "17 Des 2025",
-		rawDate: "2025-12-17",
-		status: "Berhasil",
-		paymentMethod: "OVO",
-		prayer: "Semoga berkah untuk semua.",
-		campaignId: "c4",
-		category: "Zakat & Sedekah",
-	},
-	{
-		id: "INV-20251210-023",
-		campaign: "Selamatkan Ratusan Anabul Korban Banjir",
-		amount: 25000,
-		date: "10 Des 2025",
-		rawDate: "2025-12-10",
-		status: "Berhasil",
-		paymentMethod: "OVO",
-		prayer: "Untuk anabul-anabul lucu, semoga selamat semua.",
-		campaignId: "c2",
-		category: "Lingkungan",
-	},
-	{
-		id: "INV-20251201-104",
-		campaign: "Bantu Biaya Berobat Anak Kecil yang Sakit",
-		amount: 100000,
-		date: "01 Des 2025",
-		rawDate: "2025-12-01",
-		status: "Pending",
-		paymentMethod: "BCA Virtual Account",
-		prayer: "",
-		campaignId: "c3",
-		category: "Kesehatan",
-	},
-];
+import { getMyDonations } from "@/actions/my-donations";
+
+interface DonationItem {
+	id: string;
+	campaign: string;
+	amount: number;
+	date: string;
+	rawDate: string;
+	status: string;
+	paymentMethod: string;
+	prayer: string;
+	campaignId: string;
+	category: string;
+}
 
 interface KindnessCalendarProps {
+	donations: DonationItem[];
 	onDateClick: (date: string) => void;
 }
 
-function KindnessCalendar({ onDateClick }: KindnessCalendarProps) {
-	const today = new Date();
-	const currentMonth = today.getMonth();
-	const currentYear = today.getFullYear();
+function KindnessCalendar({ donations, onDateClick }: KindnessCalendarProps) {
+	const [currentDate, setCurrentDate] = React.useState(new Date());
+
+	const currentMonth = currentDate.getMonth();
+	const currentYear = currentDate.getFullYear();
 	const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-	const monthName = today.toLocaleString("id-ID", { month: "long" });
+	const monthName = currentDate.toLocaleString("id-ID", { month: "long" });
+
+	const handlePrevMonth = () => {
+		setCurrentDate(new Date(currentYear, currentMonth - 1, 1));
+	};
+
+	const handleNextMonth = () => {
+		setCurrentDate(new Date(currentYear, currentMonth + 1, 1));
+	};
 
 	const donationData = React.useMemo(() => {
 		// Map date string (YYYY-MM-DD) to boolean
 		const map: Record<string, boolean> = {};
-		myDonations
-			.filter((d) => d.status === "Berhasil")
+		donations
+			.filter(
+				(d) => d.status === "Berhasil" || d.status === "Menunggu Pembayaran"
+			)
 			.forEach((d) => {
 				map[d.rawDate] = true;
 			});
 		return map;
-	}, []);
+	}, [donations]);
 
 	const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
 
@@ -119,10 +97,11 @@ function KindnessCalendar({ onDateClick }: KindnessCalendarProps) {
 		>
 			<Box
 				sx={{
-					p: 2,
+					p: 1.5,
 					background: "linear-gradient(to right, #ecfccb, #dcfce7)",
 					display: "flex",
 					alignItems: "center",
+					justifyContent: "space-between",
 					gap: 1,
 					position: "relative",
 					overflow: "hidden",
@@ -134,22 +113,33 @@ function KindnessCalendar({ onDateClick }: KindnessCalendarProps) {
 						position: "absolute",
 						right: -10,
 						top: -10,
-						fontSize: 80,
+						fontSize: 60,
 						color: "rgba(97,206,112,0.1)",
 						transform: "rotate(-15deg)",
 					}}
 				/>
-				<CalendarMonthIcon sx={{ color: "#16a34a", zIndex: 1 }} />
-				<Typography sx={{ fontWeight: 800, color: "#166534", zIndex: 1 }}>
-					Kalender Kebaikan - {monthName} {currentYear}
-				</Typography>
+
+				<IconButton size="small" onClick={handlePrevMonth} sx={{ zIndex: 1 }}>
+					<NavigateBeforeIcon sx={{ color: "#166534" }} />
+				</IconButton>
+
+				<Box sx={{ display: "flex", alignItems: "center", gap: 1, zIndex: 1 }}>
+					<CalendarMonthIcon sx={{ color: "#16a34a", fontSize: 20 }} />
+					<Typography sx={{ fontWeight: 800, color: "#166534", fontSize: 14 }}>
+						{monthName} {currentYear}
+					</Typography>
+				</Box>
+
+				<IconButton size="small" onClick={handleNextMonth} sx={{ zIndex: 1 }}>
+					<NavigateNextIcon sx={{ color: "#166534" }} />
+				</IconButton>
 			</Box>
-			<CardContent sx={{ p: 2 }}>
+			<CardContent sx={{ p: 1.5 }}>
 				<Box
 					sx={{
 						display: "grid",
 						gridTemplateColumns: "repeat(7, 1fr)",
-						gap: 1,
+						gap: 0.5,
 						textAlign: "center",
 					}}
 				>
@@ -169,10 +159,10 @@ function KindnessCalendar({ onDateClick }: KindnessCalendarProps) {
 									display: "flex",
 									alignItems: "center",
 									justifyContent: "center",
-									borderRadius: 2,
+									borderRadius: 1.5,
 									bgcolor: isDonated ? "rgba(22,163,74,0.15)" : "transparent",
 									color: isDonated ? "#16a34a" : "rgba(15,23,42,.4)",
-									fontSize: 13,
+									fontSize: 12,
 									fontWeight: 700,
 									position: "relative",
 									border: "1px solid",
@@ -186,20 +176,20 @@ function KindnessCalendar({ onDateClick }: KindnessCalendarProps) {
 									},
 								}}
 							>
-								{isDonated ? <FavoriteIcon fontSize="small" /> : day}
+								{isDonated ? <FavoriteIcon sx={{ fontSize: 16 }} /> : day}
 							</Box>
 						);
 					})}
 				</Box>
 				<Typography
 					sx={{
-						mt: 2,
-						fontSize: 12,
+						mt: 1.5,
+						fontSize: 11,
 						color: "rgba(15,23,42,.6)",
 						textAlign: "center",
 					}}
 				>
-					Klik tanda hati untuk melihat kebaikanmu di hari itu.
+					Klik tanda hati untuk melihat kebaikanmu.
 				</Typography>
 			</CardContent>
 		</Card>
@@ -207,17 +197,42 @@ function KindnessCalendar({ onDateClick }: KindnessCalendarProps) {
 }
 
 export default function MyDonationPage() {
+	const [donations, setDonations] = React.useState<DonationItem[]>([]);
+	const [loading, setLoading] = React.useState(true);
+	const [error, setError] = React.useState("");
+	const [missingPhone, setMissingPhone] = React.useState(false);
+
 	// State for Detail Modal
 	const [open, setOpen] = React.useState(false);
-	const [selectedDonation, setSelectedDonation] = React.useState<
-		(typeof myDonations)[0] | null
-	>(null);
+	const [selectedDonation, setSelectedDonation] =
+		React.useState<DonationItem | null>(null);
 
 	// State for Daily Donations Modal (Calendar Click)
 	const [dailyOpen, setDailyOpen] = React.useState(false);
 	const [selectedDate, setSelectedDate] = React.useState<string>("");
 
-	const handleOpenDetail = (donation: (typeof myDonations)[0]) => {
+	React.useEffect(() => {
+		async function fetchData() {
+			try {
+				const res = await getMyDonations();
+				if (res.success && res.data) {
+					// @ts-ignore
+					setDonations(res.data);
+					// @ts-ignore
+					setMissingPhone(res.missingPhone);
+				} else if (res.error) {
+					setError(res.error);
+				}
+			} catch (err) {
+				setError("Terjadi kesalahan saat mengambil data");
+			} finally {
+				setLoading(false);
+			}
+		}
+		fetchData();
+	}, []);
+
+	const handleOpenDetail = (donation: DonationItem) => {
 		setSelectedDonation(donation);
 		setOpen(true);
 	};
@@ -239,13 +254,16 @@ export default function MyDonationPage() {
 
 	// Calculate Stats
 	const stats = React.useMemo(() => {
-		const successful = myDonations.filter((d) => d.status === "Berhasil");
-		const uniqueDays = new Set(successful.map((d) => d.rawDate)).size;
-		const uniqueCampaigns = new Set(successful.map((d) => d.campaignId)).size;
+		const activeDonations = donations.filter(
+			(d) => d.status === "Berhasil" || d.status === "Menunggu Pembayaran"
+		);
+		const uniqueDays = new Set(activeDonations.map((d) => d.rawDate)).size;
+		const uniqueCampaigns = new Set(activeDonations.map((d) => d.campaignId))
+			.size;
 
 		// Top Category
 		const categoryCounts: Record<string, number> = {};
-		successful.forEach((d) => {
+		activeDonations.forEach((d) => {
 			if (d.category) {
 				categoryCounts[d.category] = (categoryCounts[d.category] || 0) + 1;
 			}
@@ -265,15 +283,17 @@ export default function MyDonationPage() {
 			campaigns: uniqueCampaigns,
 			topCategory: topCategory,
 		};
-	}, []);
+	}, [donations]);
 
 	// Filter donations for the selected date in daily modal
 	const dailyDonations = React.useMemo(() => {
 		if (!selectedDate) return [];
-		return myDonations.filter(
-			(d) => d.rawDate === selectedDate && d.status === "Berhasil"
+		return donations.filter(
+			(d) =>
+				d.rawDate === selectedDate &&
+				(d.status === "Berhasil" || d.status === "Menunggu Pembayaran")
 		);
-	}, [selectedDate]);
+	}, [selectedDate, donations]);
 
 	const formatDateIndo = (dateString: string) => {
 		const date = new Date(dateString);
@@ -284,8 +304,45 @@ export default function MyDonationPage() {
 		});
 	};
 
+	if (loading) {
+		return (
+			<Box sx={{ px: 2, pt: 2.5, maxWidth: 600, mx: "auto" }}>
+				<Skeleton variant="text" width="50%" height={40} sx={{ mb: 2 }} />
+				<Skeleton
+					variant="rectangular"
+					height={200}
+					sx={{ borderRadius: 3, mb: 3 }}
+				/>
+				<Skeleton
+					variant="rectangular"
+					height={300}
+					sx={{ borderRadius: 3, mb: 3 }}
+				/>
+				<Skeleton variant="text" width="40%" height={30} sx={{ mb: 2 }} />
+				<Stack spacing={2}>
+					{[1, 2, 3].map((i) => (
+						<Skeleton
+							key={i}
+							variant="rectangular"
+							height={100}
+							sx={{ borderRadius: 3 }}
+						/>
+					))}
+				</Stack>
+			</Box>
+		);
+	}
+
+	if (error) {
+		return (
+			<Box sx={{ px: 2, pt: 2.5, maxWidth: 600, mx: "auto" }}>
+				<Alert severity="error">{error}</Alert>
+			</Box>
+		);
+	}
+
 	return (
-		<Box sx={{ px: 2, pt: 2.5, maxWidth: 600, mx: "auto" }}>
+		<Box sx={{ px: 2, pt: 2.5, pb: 12, maxWidth: 600, mx: "auto" }}>
 			<Box
 				sx={{
 					display: "flex",
@@ -298,6 +355,16 @@ export default function MyDonationPage() {
 					Donasi Saya
 				</Typography>
 			</Box>
+
+			{missingPhone && donations.length === 0 && (
+				<Alert severity="warning" sx={{ borderRadius: 2, mb: 3 }}>
+					<Typography fontWeight={700} sx={{ mb: 0.5 }}>
+						Profil Belum Lengkap
+					</Typography>
+					Untuk melihat riwayat donasi yang tidak terhubung dengan akun ini,
+					pastikan kamu telah melengkapi Nomor HP di profil akunmu.
+				</Alert>
+			)}
 
 			{/* Summary Card (Updated with Gradient & Glassmorphism) */}
 			<Card
@@ -336,19 +403,6 @@ export default function MyDonationPage() {
 				/>
 
 				<CardContent sx={{ p: 2.5, position: "relative", zIndex: 1 }}>
-					{/* <Typography
-						sx={{
-							fontSize: 14,
-							opacity: 0.9,
-							fontWeight: 700,
-							mb: 2,
-							letterSpacing: 0.5,
-							textTransform: "uppercase",
-						}}
-					>
-						Statistik Kebaikanmu
-					</Typography> */}
-
 					<Box
 						sx={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 2 }}
 					>
@@ -448,7 +502,7 @@ export default function MyDonationPage() {
 			</Card>
 
 			{/* Kindness Calendar */}
-			<KindnessCalendar onDateClick={handleDateClick} />
+			<KindnessCalendar donations={donations} onDateClick={handleDateClick} />
 
 			<Typography
 				sx={{ fontSize: 16, fontWeight: 800, color: "#0f172a", mb: 2 }}
@@ -456,131 +510,159 @@ export default function MyDonationPage() {
 				Riwayat Terbaru
 			</Typography>
 
-			<Stack spacing={2}>
-				{myDonations.map((item) => (
-					<Card
-						key={item.id}
-						variant="outlined"
+			{donations.length === 0 ? (
+				<Box sx={{ textAlign: "center", py: 5 }}>
+					<SpaIcon sx={{ fontSize: 60, color: "rgba(0,0,0,0.1)", mb: 2 }} />
+					<Typography sx={{ color: "text.secondary", fontSize: 14 }}>
+						Belum ada riwayat donasi.
+					</Typography>
+					<Typography
 						sx={{
-							borderRadius: 3,
-							borderColor: "rgba(0,0,0,0.06)",
-							bgcolor: "#fff",
-							transition: "all 0.2s ease",
-							"&:hover": { borderColor: "rgba(0,0,0,0.12)" },
+							color: "text.secondary",
+							fontSize: 11,
+							mt: 1,
+							maxWidth: 300,
+							mx: "auto",
 						}}
 					>
-						<CardContent sx={{ p: 2 }}>
-							<Box
-								sx={{
-									display: "flex",
-									justifyContent: "space-between",
-									alignItems: "flex-start",
-									mb: 1.5,
-								}}
-							>
-								<Box sx={{ flex: 1, mr: 1.5 }}>
-									<Typography
-										sx={{
-											fontSize: 14,
-											fontWeight: 800,
-											color: "#0f172a",
-											lineHeight: 1.4,
-										}}
-									>
-										{item.campaign}
-									</Typography>
-									<Typography
-										sx={{
-											fontSize: 11,
-											color: "rgba(15,23,42,.5)",
-											mt: 0.5,
-											fontWeight: 600,
-										}}
-									>
-										{item.date} • {item.id}
-									</Typography>
-								</Box>
-								<Chip
-									label={item.status}
-									size="small"
-									color={item.status === "Berhasil" ? "success" : "warning"}
-									variant={item.status === "Berhasil" ? "filled" : "outlined"}
+						Jika kamu sudah berdonasi, pastikan Nomor HP di profilmu sama dengan
+						yang kamu gunakan saat berdonasi.
+					</Typography>
+					<Button
+						variant="contained"
+						href="/"
+						sx={{ mt: 2, borderRadius: 2, textTransform: "none" }}
+					>
+						Mulai Berdonasi
+					</Button>
+				</Box>
+			) : (
+				<Stack spacing={2}>
+					{donations.map((item) => (
+						<Card
+							key={item.id}
+							variant="outlined"
+							sx={{
+								borderRadius: 3,
+								borderColor: "rgba(0,0,0,0.06)",
+								bgcolor: "#fff",
+								transition: "all 0.2s ease",
+								"&:hover": { borderColor: "rgba(0,0,0,0.12)" },
+							}}
+						>
+							<CardContent sx={{ p: 2 }}>
+								<Box
 									sx={{
-										height: 22,
-										fontSize: 10,
-										fontWeight: 800,
-										borderRadius: 1.5,
+										display: "flex",
+										justifyContent: "space-between",
+										alignItems: "flex-start",
+										mb: 1.5,
 									}}
-								/>
-							</Box>
-
-							<Divider sx={{ my: 1.5, borderStyle: "dashed" }} />
-
-							<Box
-								sx={{
-									display: "flex",
-									justifyContent: "space-between",
-									alignItems: "center",
-								}}
-							>
-								<Box>
-									<Typography
-										sx={{ fontSize: 11, color: "rgba(15,23,42,.6)", mb: 0.2 }}
-									>
-										Jumlah Donasi
-									</Typography>
-									<Typography
-										sx={{ fontSize: 15, fontWeight: 900, color: "#61ce70" }}
-									>
-										Rp {item.amount.toLocaleString("id-ID")}
-									</Typography>
+								>
+									<Box sx={{ flex: 1, mr: 1.5 }}>
+										<Typography
+											sx={{
+												fontSize: 14,
+												fontWeight: 800,
+												color: "#0f172a",
+												lineHeight: 1.4,
+											}}
+										>
+											{item.campaign}
+										</Typography>
+										<Typography
+											sx={{
+												fontSize: 11,
+												color: "rgba(15,23,42,.5)",
+												mt: 0.5,
+												fontWeight: 600,
+											}}
+										>
+											{item.date} • {item.id}
+										</Typography>
+									</Box>
+									<Chip
+										label={item.status}
+										size="small"
+										color={item.status === "Berhasil" ? "success" : "warning"}
+										variant={item.status === "Berhasil" ? "filled" : "outlined"}
+										sx={{
+											height: 22,
+											fontSize: 10,
+											fontWeight: 800,
+											borderRadius: 1.5,
+										}}
+									/>
 								</Box>
-								<Stack direction="row" spacing={1}>
-									<Button
-										variant="outlined"
-										size="small"
-										href={`/galang-dana/${item.campaignId}/donasi`}
-										sx={{
-											textTransform: "none",
-											borderRadius: 2,
-											fontSize: 12,
-											fontWeight: 700,
-											py: 0.5,
-											color: "#16a34a",
-											borderColor: "rgba(22,163,74,0.3)",
-											"&:hover": {
-												borderColor: "#16a34a",
-												bgcolor: "rgba(22,163,74,0.05)",
-											},
-										}}
-									>
-										Donasi Lagi
-									</Button>
-									<Button
-										variant="text"
-										size="small"
-										onClick={() => handleOpenDetail(item)}
-										sx={{
-											textTransform: "none",
-											borderRadius: 2,
-											fontSize: 12,
-											fontWeight: 700,
-											py: 0.5,
-											color: "rgba(15,23,42,.6)",
-											"&:hover": {
-												bgcolor: "rgba(0,0,0,0.04)",
-												color: "rgba(15,23,42,.9)",
-											},
-										}}
-									>
-										Detail
-									</Button>
-								</Stack>
-							</Box>
-						</CardContent>
-					</Card>
-				))}
-			</Stack>
+
+								<Divider sx={{ my: 1.5, borderStyle: "dashed" }} />
+
+								<Box
+									sx={{
+										display: "flex",
+										justifyContent: "space-between",
+										alignItems: "center",
+									}}
+								>
+									<Box>
+										<Typography
+											sx={{ fontSize: 11, color: "rgba(15,23,42,.6)", mb: 0.2 }}
+										>
+											Jumlah Donasi
+										</Typography>
+										<Typography
+											sx={{ fontSize: 15, fontWeight: 900, color: "#61ce70" }}
+										>
+											Rp {item.amount.toLocaleString("id-ID")}
+										</Typography>
+									</Box>
+									<Stack direction="row" spacing={1}>
+										<Button
+											variant="outlined"
+											size="small"
+											href={`/galang-dana/${item.campaignId}/donasi`}
+											sx={{
+												textTransform: "none",
+												borderRadius: 2,
+												fontSize: 12,
+												fontWeight: 700,
+												py: 0.5,
+												color: "#16a34a",
+												borderColor: "rgba(22,163,74,0.3)",
+												"&:hover": {
+													borderColor: "#16a34a",
+													bgcolor: "rgba(22,163,74,0.05)",
+												},
+											}}
+										>
+											Donasi Lagi
+										</Button>
+										<Button
+											variant="text"
+											size="small"
+											onClick={() => handleOpenDetail(item)}
+											sx={{
+												textTransform: "none",
+												borderRadius: 2,
+												fontSize: 12,
+												fontWeight: 700,
+												py: 0.5,
+												color: "rgba(15,23,42,.6)",
+												"&:hover": {
+													bgcolor: "rgba(0,0,0,0.04)",
+													color: "rgba(15,23,42,.9)",
+												},
+											}}
+										>
+											Detail
+										</Button>
+									</Stack>
+								</Box>
+							</CardContent>
+						</Card>
+					))}
+				</Stack>
+			)}
 
 			{/* Detail Modal (Single Donation) */}
 			<Dialog

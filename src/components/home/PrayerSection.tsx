@@ -4,6 +4,7 @@ import * as React from "react";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
+import Link from "next/link";
 import { keyframes } from "@mui/system";
 
 const PRIMARY = "#61ce70";
@@ -16,39 +17,6 @@ type Prayer = {
 	message: string;
 	amiinCount: number;
 };
-
-const prayers: Prayer[] = [
-	{
-		id: "d1",
-		name: "Amanda",
-		time: "9 jam lalu",
-		campaignTitle: "TUHANI Tolong Jamah Anak-Anak...",
-		message: "Smoga bermanfaat dan menjadi berkatt",
-		amiinCount: 5,
-	},
-	{
-		id: "d2",
-		name: "Anonim",
-		time: "3 jam lalu",
-		campaignTitle: "Bantu Operasi Darurat untuk Pasien...",
-		message: "Semoga lekas sembuh dan dipermudah semuanya. Aamiin.",
-		amiinCount: 18,
-	},
-	{
-		id: "d3",
-		name: "Rina",
-		time: "Kemarin",
-		campaignTitle: "DARURAT! Bantu Korban Banjir...",
-		message: "Semoga cepat terkumpul dan penyaluran lancar ya.",
-		amiinCount: 11,
-	},
-];
-
-const heartFloat = keyframes`
-  0%   { transform: translate(0, 0) scale(.85); opacity: 0; }
-  12%  { opacity: 1; }
-  100% { transform: translate(var(--dx), -54px) scale(1.15); opacity: 0; }
-`;
 
 const confettiFloat = keyframes`
   0%   { transform: translate(0, 0) rotate(0deg); opacity: 0; }
@@ -123,7 +91,11 @@ type Particle = {
 	color?: string;
 };
 
-export default function PrayersSection() {
+export default function PrayersSection({
+	prayers = [],
+}: {
+	prayers?: Prayer[];
+}) {
 	const [liked, setLiked] = React.useState<Record<string, boolean>>({});
 	const [particles, setParticles] = React.useState<Particle[]>([]);
 	const [pulsing, setPulsing] = React.useState<Record<string, boolean>>({});
@@ -214,7 +186,8 @@ export default function PrayersSection() {
 						borderRadius: 2,
 						"&:hover": { bgcolor: "rgba(15,23,42,.04)" },
 					}}
-					onClick={() => alert("Lihat semua doa (route menyusul)")}
+					component={Link}
+					href="/galang-dana"
 				>
 					Lihat semua
 				</Button>

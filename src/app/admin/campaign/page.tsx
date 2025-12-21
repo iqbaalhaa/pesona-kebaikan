@@ -20,6 +20,7 @@ import {
 	Avatar,
 	AvatarGroup,
 	Divider,
+	Pagination,
 } from "@mui/material";
 
 import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
@@ -30,13 +31,24 @@ import VerifiedRoundedIcon from "@mui/icons-material/VerifiedRounded";
 import VisibilityRoundedIcon from "@mui/icons-material/VisibilityRounded";
 import EditRoundedIcon from "@mui/icons-material/EditRounded";
 import StopCircleRoundedIcon from "@mui/icons-material/StopCircleRounded";
+import DeleteRoundedIcon from "@mui/icons-material/DeleteRounded";
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import RefreshRoundedIcon from "@mui/icons-material/RefreshRounded";
-import Pagination from "@mui/material/Pagination";
+import {
+	getCampaigns,
+	updateCampaignStatus,
+	deleteCampaign,
+} from "@/actions/campaign";
 
 const PAGE_SIZE = 9;
 
-type CampaignStatus = "draft" | "review" | "active" | "ended" | "rejected";
+type CampaignStatus =
+	| "draft"
+	| "review"
+	| "active"
+	| "ended"
+	| "rejected"
+	| "pending";
 type CampaignType = "sakit" | "lainnya";
 
 type CampaignRow = {
@@ -50,82 +62,10 @@ type CampaignRow = {
 	donors: number;
 	status: CampaignStatus;
 	updatedAt: string;
+	thumbnail?: string;
 };
 
-const MOCK: CampaignRow[] = [
-	{
-		id: "cmp-001",
-		title: "Bantu Abi Melawan Kanker Hati",
-		category: "Bantuan Medis & Kesehatan",
-		type: "sakit",
-		ownerName: "Rifki Dermawan",
-		target: 20000000,
-		collected: 4820000,
-		donors: 119,
-		status: "review",
-		updatedAt: "19 Des 2025",
-	},
-	{
-		id: "cmp-002",
-		title: "Bangun Kembali Masjid Terdampak Bencana",
-		category: "Bencana Alam",
-		type: "lainnya",
-		ownerName: "Budi Sentosa",
-		target: 50000000,
-		collected: 544000,
-		donors: 12,
-		status: "active",
-		updatedAt: "19 Des 2025",
-	},
-	{
-		id: "cmp-003",
-		title: "[Campaign belum ada judul]",
-		category: "Bantuan Pendidikan",
-		type: "lainnya",
-		ownerName: "—",
-		target: 0,
-		collected: 0,
-		donors: 0,
-		status: "draft",
-		updatedAt: "18 Des 2025",
-	},
-	{
-		id: "cmp-004",
-		title: "Biaya Operasional Posko Bencana",
-		category: "Bencana Alam",
-		type: "lainnya",
-		ownerName: "Rani",
-		target: 15000000,
-		collected: 2500000,
-		donors: 44,
-		status: "active",
-		updatedAt: "17 Des 2025",
-	},
-	{
-		id: "cmp-005",
-		title: "Bantu Bayar Biaya Sekolah Anak",
-		category: "Bantuan Pendidikan",
-		type: "lainnya",
-		ownerName: "Asep",
-		target: 8000000,
-		collected: 1200000,
-		donors: 21,
-		status: "review",
-		updatedAt: "16 Des 2025",
-	},
-	{
-		id: "cmp-006",
-		title: "Pengobatan Pasien Stroke",
-		category: "Bantuan Medis & Kesehatan",
-		type: "sakit",
-		ownerName: "Nadia",
-		target: 30000000,
-		collected: 30000000,
-		donors: 980,
-		status: "ended",
-		updatedAt: "10 Des 2025",
-	},
-];
+// Removed MOCK
 
 function idr(n: number) {
 	if (!n) return "Rp0";
@@ -158,6 +98,15 @@ function statusChip(status: CampaignStatus) {
 					bgcolor: "rgba(15,23,42,.06)",
 					borderColor: "rgba(15,23,42,.10)",
 					color: "rgba(15,23,42,.70)",
+				},
+			};
+		case "pending":
+			return {
+				label: "Pending",
+				sx: {
+					bgcolor: "rgba(245,158,11,.12)",
+					borderColor: "rgba(245,158,11,.22)",
+					color: "rgba(180,83,9,.95)",
 				},
 			};
 		case "review":
@@ -201,7 +150,7 @@ function statusChip(status: CampaignStatus) {
 
 const FILTERS: { key: "all" | CampaignStatus; label: string }[] = [
 	{ key: "all", label: "Semua" },
-	{ key: "review", label: "Review" },
+	{ key: "pending", label: "Pending" },
 	{ key: "active", label: "Aktif" },
 	{ key: "draft", label: "Draft" },
 	{ key: "ended", label: "Berakhir" },
@@ -212,6 +161,8 @@ export default function AdminCampaignPage() {
 	const [rows, setRows] = React.useState<CampaignRow[]>([]);
 	const [loading, setLoading] = React.useState(true);
 	const [page, setPage] = React.useState(1);
+	const [totalPages, setTotalPages] = React.useState(1);
+	const [totalRows, setTotalRows] = React.useState(0);
 
 	const [q, setQ] = React.useState("");
 	const [filter, setFilter] = React.useState<"all" | CampaignStatus>("all");
@@ -221,55 +172,61 @@ export default function AdminCampaignPage() {
 		row?: CampaignRow;
 	}>({ anchor: null });
 
+	const fetchCampaigns = React.useCallback(async () => {
+		setLoading(true);
+		try {
+			const res = await getCampaigns(page, PAGE_SIZE, filter, q);
+			if (res.success && res.data) {
+				setRows(res.data as any);
+				setTotalPages(res.totalPages || 1);
+				setTotalRows(res.total || 0);
+			}
+		} catch (e) {
+			console.error(e);
+		}
+		setLoading(false);
+	}, [page, filter, q]);
+
 	React.useEffect(() => {
 		const t = setTimeout(() => {
-			setRows(MOCK);
-			setLoading(false);
+			fetchCampaigns();
 		}, 450);
 		return () => clearTimeout(t);
-	}, []);
-
-	const counts = React.useMemo(() => {
-		const c: Record<string, number> = {};
-		for (const f of FILTERS) c[f.key] = 0;
-		rows.forEach((r) => (c[r.status] = (c[r.status] || 0) + 1));
-		c.all = rows.length;
-		return c;
-	}, [rows]);
-
-	const filtered = React.useMemo(() => {
-		let base = rows.filter((r) => matchQuery(q, r));
-		if (filter !== "all") base = base.filter((r) => r.status === filter);
-		return base;
-	}, [rows, q, filter]);
-
-	React.useEffect(() => {
-		setPage(1);
-	}, [q, filter]);
-
-	const paginatedRows = React.useMemo(() => {
-		const start = (page - 1) * PAGE_SIZE;
-		return filtered.slice(start, start + PAGE_SIZE);
-	}, [filtered, page]);
+	}, [fetchCampaigns]);
 
 	const openMenu = (e: React.MouseEvent<HTMLElement>, row: CampaignRow) =>
 		setMenu({ anchor: e.currentTarget, row });
 	const closeMenu = () => setMenu({ anchor: null, row: undefined });
 
-	const onEnd = (id: string) => {
-		setRows((prev) =>
-			prev.map((x) =>
-				x.id === id ? { ...x, status: "ended", updatedAt: "Hari ini" } : x
-			)
-		);
+	const onEnd = async (id: string) => {
+		if (confirm("Apakah anda yakin ingin mengakhiri campaign ini?")) {
+			await updateCampaignStatus(id, "ENDED");
+			fetchCampaigns();
+		}
+	};
+
+	const onDelete = async (id: string) => {
+		if (confirm("Apakah anda yakin ingin menghapus campaign ini?")) {
+			const res = await deleteCampaign(id);
+			if (res.success) {
+				fetchCampaigns();
+			} else {
+				alert(
+					"Gagal menghapus campaign: " + (res.error || "Terjadi kesalahan")
+				);
+			}
+		}
+	};
+
+	const onVerify = async (id: string) => {
+		if (confirm("Verifikasi campaign ini agar aktif?")) {
+			await updateCampaignStatus(id, "ACTIVE");
+			fetchCampaigns();
+		}
 	};
 
 	const onRefresh = () => {
-		setLoading(true);
-		setTimeout(() => {
-			setRows(MOCK);
-			setLoading(false);
-		}, 350);
+		fetchCampaigns();
 	};
 
 	return (
@@ -316,7 +273,7 @@ export default function AdminCampaignPage() {
 								alignItems="center"
 							>
 								<Chip
-									label={`${filtered.length} hasil`}
+									label={`${rows.length} hasil`}
 									variant="outlined"
 									sx={{
 										borderRadius: 999,
@@ -327,7 +284,7 @@ export default function AdminCampaignPage() {
 									}}
 								/>
 								<Chip
-									label={`Total: ${rows.length}`}
+									label={`Total: ${totalRows}`}
 									variant="outlined"
 									sx={{
 										borderRadius: 999,
@@ -432,7 +389,7 @@ export default function AdminCampaignPage() {
 						/>
 						{FILTERS.map((f) => {
 							const selected = filter === f.key;
-							const n = counts[f.key] ?? 0;
+							// const n = counts[f.key] ?? 0;
 
 							return (
 								<Chip
@@ -444,7 +401,7 @@ export default function AdminCampaignPage() {
 											<Typography sx={{ fontSize: 12.5, fontWeight: 900 }}>
 												{f.label}
 											</Typography>
-											<Box
+											{/* <Box
 												sx={{
 													minWidth: 26,
 													height: 20,
@@ -461,7 +418,7 @@ export default function AdminCampaignPage() {
 												}}
 											>
 												{n}
-											</Box>
+											</Box> */}
 										</Stack>
 									}
 									variant={selected ? "filled" : "outlined"}
@@ -527,7 +484,7 @@ export default function AdminCampaignPage() {
 								</Box>
 							</Paper>
 					  ))
-					: paginatedRows.map((row) => (
+					: rows.map((row) => (
 							<CampaignCard key={row.id} row={row} onMenu={openMenu} />
 					  ))}
 			</Box>
@@ -535,7 +492,7 @@ export default function AdminCampaignPage() {
 			{/* Pagination */}
 			<Box sx={{ mt: 3.5, display: "flex", justifyContent: "center" }}>
 				<Pagination
-					count={Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))}
+					count={totalPages}
 					page={page}
 					onChange={(_, p) => setPage(p)}
 					shape="rounded"
@@ -599,11 +556,13 @@ export default function AdminCampaignPage() {
 					<Typography sx={{ fontWeight: 800, fontSize: 13.5 }}>Edit</Typography>
 				</MenuItem>
 
-				{menu.row?.status === "review" ? (
+				{menu.row?.status === "pending" || menu.row?.status === "review" ? (
 					<MenuItem
-						component={Link}
-						href={`/admin/campaign/${menu.row?.id ?? ""}?tab=verify`}
-						onClick={closeMenu}
+						onClick={() => {
+							const id = menu.row!.id;
+							closeMenu();
+							onVerify(id);
+						}}
 						sx={{ py: 1.2 }}
 					>
 						<VerifiedRoundedIcon
@@ -634,6 +593,23 @@ export default function AdminCampaignPage() {
 						</Typography>
 					</MenuItem>
 				) : null}
+
+				<MenuItem
+					onClick={() => {
+						const id = menu.row!.id;
+						closeMenu();
+						onDelete(id);
+					}}
+					sx={{ py: 1.2, color: "#ef4444" }}
+				>
+					<DeleteRoundedIcon
+						fontSize="small"
+						style={{ marginRight: 10, opacity: 0.85 }}
+					/>
+					<Typography sx={{ fontWeight: 900, fontSize: 13.5 }}>
+						Hapus
+					</Typography>
+				</MenuItem>
 			</Menu>
 		</Box>
 	);
@@ -646,6 +622,7 @@ function CampaignCard({
 	row: CampaignRow;
 	onMenu: (e: React.MouseEvent<HTMLElement>, r: CampaignRow) => void;
 }) {
+	const [imgError, setImgError] = React.useState(false);
 	const progress = pct(row.collected, row.target);
 	const status = statusChip(row.status);
 
@@ -712,21 +689,39 @@ function CampaignCard({
 
 			<Box sx={{ position: "relative", p: 2 }}>
 				<Stack direction="row" spacing={1.25} alignItems="flex-start">
-					<Box
-						sx={{
-							width: 42,
-							height: 42,
-							borderRadius: 2.2,
-							display: "grid",
-							placeItems: "center",
-							flexShrink: 0,
-							bgcolor: "rgba(15,23,42,.04)",
-							border: "1px solid rgba(15,23,42,.08)",
-							color: "rgba(15,23,42,.72)",
-						}}
-					>
-						{typeMeta.icon}
-					</Box>
+					{row.thumbnail && !imgError ? (
+						<Box
+							component="img"
+							src={row.thumbnail}
+							alt={row.title}
+							onError={() => setImgError(true)}
+							sx={{
+								width: 50,
+								height: 50,
+								borderRadius: 2.2,
+								objectFit: "cover",
+								flexShrink: 0,
+								bgcolor: "rgba(15,23,42,.04)",
+								border: "1px solid rgba(15,23,42,.08)",
+							}}
+						/>
+					) : (
+						<Box
+							sx={{
+								width: 42,
+								height: 42,
+								borderRadius: 2.2,
+								display: "grid",
+								placeItems: "center",
+								flexShrink: 0,
+								bgcolor: "rgba(15,23,42,.04)",
+								border: "1px solid rgba(15,23,42,.08)",
+								color: "rgba(15,23,42,.72)",
+							}}
+						>
+							{typeMeta.icon}
+						</Box>
+					)}
 
 					<Box sx={{ flex: 1, minWidth: 0 }}>
 						<Typography

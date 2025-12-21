@@ -104,10 +104,10 @@ export default function FundraiserCTA() {
 	);
 
 	const fundraiserLink = React.useMemo(() => {
-		// dummy format — nanti ganti: baseUrl + /fundraiser/[slug]?ref=...
+		// dummy format — nanti ganti: baseUrl + /donasi/[slug]?ref=...
 		const base = "https://pesonakebaikan.id";
 		const ref = "rifk"; // nanti dari user profile / auth
-		return `${base}/c/${selected?.id}?ref=${ref}`;
+		return `${base}/donasi/${selected?.id}?ref=${ref}`;
 	}, [selected]);
 
 	const onGenerate = () => {

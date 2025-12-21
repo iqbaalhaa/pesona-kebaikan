@@ -6,61 +6,12 @@ import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
 import Image from "next/image";
+import Link from "next/link";
 
+import { useRouter } from "next/navigation";
 import { Campaign } from "@/types";
 
 const PRIMARY = "#61ce70";
-
-const popular: Campaign[] = [
-	{
-		id: "p1",
-		title: "Bantu Operasi Darurat untuk Pasien Tidak Mampu",
-		organizer: "Yayasan Harapan",
-		category: "Kesehatan",
-		cover: "/campaign/urgent-2.jpg",
-		target: 80000000,
-		collected: 52450000,
-		donors: 1240,
-		daysLeft: 5,
-		latestUpdate: "Update: Jadwal operasi dipercepat minggu ini.",
-	},
-	{
-		id: "p2",
-		title: "DARURAT! Bantu Korban Banjir Sumut, Aceh & Sumbar",
-		organizer: "Rumah Zakat",
-		category: "Bencana",
-		cover: "/campaign/urgent-1.jpg",
-		target: 800000000,
-		collected: 563200065,
-		donors: 9234,
-		daysLeft: 12,
-		latestUpdate: "Update: Distribusi logistik tahap 2 dimulai.",
-	},
-	{
-		id: "p3",
-		title: "Beasiswa Anak Desa untuk Tetap Sekolah",
-		organizer: "Relawan Pesona",
-		category: "Pendidikan",
-		cover: "/campaign/urgent-3.jpg",
-		target: 20000000,
-		collected: 5600000,
-		donors: 210,
-		daysLeft: 21,
-		latestUpdate: "Update: Seleksi penerima beasiswa sedang berjalan.",
-	},
-	{
-		id: "p4",
-		title: "Pakan & Perawatan untuk Anabul Terdampak Banjir",
-		organizer: "Suara Kasih Satwa",
-		category: "Hewan",
-		cover: "/campaign/urgent-1.jpg",
-		target: 50000000,
-		collected: 29485592,
-		donors: 785,
-		daysLeft: 9,
-		latestUpdate: "Update: Tim rescue tambah 2 titik evakuasi.",
-	},
-];
 
 function rupiah(n: number) {
 	return new Intl.NumberFormat("id-ID").format(n);
@@ -131,17 +82,17 @@ function ProgressMini({ pct }: { pct: number }) {
 }
 
 function PopularCard({ c }: { c: Campaign }) {
+	const router = useRouter();
 	const [imgSrc, setImgSrc] = React.useState(c.cover || "/defaultimg.webp");
 	const pct = c.target ? Math.round((c.collected / c.target) * 100) : 0;
 
+	const handleCardClick = () => {
+		router.push(`/donasi/${c.slug || c.id}`);
+	};
+
 	return (
 		<Box
-			role="button"
-			tabIndex={0}
-			onClick={() => alert("Ke detail campaign (route menyusul)")}
-			onKeyDown={(e) =>
-				e.key === "Enter" && alert("Ke detail campaign (route menyusul)")
-			}
+			onClick={handleCardClick}
 			sx={{
 				minWidth: 240,
 				maxWidth: 240,
@@ -301,7 +252,11 @@ function PopularCard({ c }: { c: Campaign }) {
 	);
 }
 
-export default function PopularSection() {
+export default function PopularSection({
+	campaigns = [],
+}: {
+	campaigns?: Campaign[];
+}) {
 	const scrollRef = React.useRef<HTMLDivElement | null>(null);
 	const rafRef = React.useRef<number | null>(null);
 
@@ -331,18 +286,20 @@ export default function PopularSection() {
 			rafRef.current = requestAnimationFrame(updateArrows);
 		};
 
+		// Initial check
 		updateArrows();
-		el.addEventListener("scroll", onScroll, { passive: true });
+		// Also check after a short delay to allow rendering
+		setTimeout(updateArrows, 500);
 
-		const ro = new ResizeObserver(() => updateArrows());
-		ro.observe(el);
+		el.addEventListener("scroll", onScroll, { passive: true });
+		window.addEventListener("resize", updateArrows);
 
 		return () => {
 			el.removeEventListener("scroll", onScroll);
-			ro.disconnect();
+			window.removeEventListener("resize", updateArrows);
 			if (rafRef.current) cancelAnimationFrame(rafRef.current);
 		};
-	}, [updateArrows]);
+	}, [updateArrows, campaigns]);
 
 	const scrollPrev = React.useCallback(() => {
 		const el = scrollRef.current;
@@ -355,6 +312,8 @@ export default function PopularSection() {
 		if (!el) return;
 		el.scrollBy({ left: CARD_STEP, top: 0, behavior: "smooth" });
 	}, []);
+
+	if (!campaigns || campaigns.length === 0) return null;
 
 	return (
 		<Box sx={{ px: 2, mt: 2.5 }}>
@@ -382,7 +341,8 @@ export default function PopularSection() {
 						borderRadius: 2,
 						"&:hover": { bgcolor: "rgba(15,23,42,.04)" },
 					}}
-					onClick={() => alert("Lihat semua populer (route menyusul)")}
+					component={Link}
+					href="/galang-dana"
 				>
 					Lihat semua
 				</Button>
@@ -450,7 +410,7 @@ export default function PopularSection() {
 						},
 					}}
 				>
-					{popular.map((c) => (
+					{campaigns.map((c) => (
 						<PopularCard key={c.id} c={c} />
 					))}
 				</Box>

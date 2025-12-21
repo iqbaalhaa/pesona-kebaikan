@@ -5,55 +5,10 @@ import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
+import Link from "next/link";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { Campaign } from "@/types";
-
-const items: Campaign[] = [
-	{
-		id: "1",
-		title: "Selamatkan Ratusan Anabul Korban Banjir Sumatra!",
-		organizer: "Suara Kasih Satwa Indonesia",
-		tag: "ORG",
-		cover: "/campaign/urgent-1.jpg",
-		target: 500000000,
-		collected: 294855927,
-		daysLeft: 68,
-		donors: 3240,
-	},
-	{
-		id: "2",
-		title: "DARURAT! Bantu Korban Banjir Sumut, Aceh & Sumbar",
-		organizer: "Rumah Zakat",
-		tag: "ORG",
-		cover: "/campaign/urgent-2.jpg",
-		target: 800000000,
-		collected: 563200065,
-		daysLeft: 12,
-		donors: 5120,
-	},
-	{
-		id: "3",
-		title: "Bantu Biaya Berobat Anak Kecil yang Sakit",
-		organizer: "Relawan Pesona",
-		tag: "VERIFIED",
-		cover: "/campaign/urgent-3.jpg",
-		target: 50000000,
-		collected: 18350000,
-		daysLeft: 3,
-		donors: 420,
-	},
-	{
-		id: "4",
-		title: "Bantu Renovasi Sekolah Terdampak Gempa",
-		organizer: "Peduli Pendidikan",
-		tag: "ORG",
-		cover: "/campaign/urgent-1.jpg",
-		target: 150000000,
-		collected: 45000000,
-		daysLeft: 25,
-		donors: 890,
-	},
-];
 
 function rupiah(n: number) {
 	return new Intl.NumberFormat("id-ID").format(n);
@@ -136,11 +91,18 @@ function ProgressBarDual({
 }
 
 function UrgentCard({ item }: { item: Campaign }) {
+	const router = useRouter();
 	const [imgSrc, setImgSrc] = React.useState(item.cover || "/defaultimg.webp");
+
+	const handleCardClick = () => {
+		router.push(`/donasi/${item.slug || item.id}`);
+	};
 
 	return (
 		<Box
+			onClick={handleCardClick}
 			sx={{
+				cursor: "pointer",
 				minWidth: 260,
 				maxWidth: 260,
 				borderRadius: "10px",
@@ -150,12 +112,17 @@ function UrgentCard({ item }: { item: Campaign }) {
 				bgcolor: "#fff",
 				border: "1px solid rgba(15,23,42,0.08)",
 				boxShadow: "0 14px 26px rgba(15,23,42,.06)",
+				transition: "transform 0.2s ease",
+				"&:hover": { transform: "translateY(-4px)" },
 			}}
 		>
 			{/* Cover */}
 			<Box
 				className="relative h-[140px] overflow-hidden bg-gray-100"
-				sx={{ borderTopLeftRadius: { md: 3 }, borderTopRightRadius: { md: 3 } }}
+				sx={{
+					borderTopLeftRadius: { md: 3 },
+					borderTopRightRadius: { md: 3 },
+				}}
 			>
 				<Image
 					src={imgSrc}
@@ -167,15 +134,20 @@ function UrgentCard({ item }: { item: Campaign }) {
 					onError={() => setImgSrc("/defaultimg.webp")}
 				/>
 				{/* Tag */}
-				<Box className="absolute top-2 left-2">
+				<Box
+					className="absolute top-2 left-2"
+					onClick={(e) => e.stopPropagation()}
+				>
 					<Chip
 						label={item.tag === "ORG" ? "ORGANISASI" : "TERVERIFIKASI"}
-						size="small"
+						component={Link}
+						href="/galang-dana"
 						className="h-5 text-[9px] font-bold bg-white/95 backdrop-blur-sm shadow-sm"
 						sx={{
 							color: item.tag === "ORG" ? "primary.main" : "info.main",
 							border: "1px solid",
 							borderColor: "rgba(255,255,255,0.2)",
+							cursor: "pointer",
 						}}
 					/>
 				</Box>
@@ -203,7 +175,10 @@ function UrgentCard({ item }: { item: Campaign }) {
 							style={{ objectFit: "cover" }}
 						/>
 					</Box>
-					<Typography className="text-[10px] font-medium truncate">
+					<Typography
+						className="text-[10px] font-medium truncate"
+						sx={{ color: "text.secondary" }}
+					>
 						{item.organizer}
 					</Typography>
 					{item.tag === "ORG" && (
@@ -224,12 +199,14 @@ function UrgentCard({ item }: { item: Campaign }) {
 
 				<Box className="flex items-center justify-between mt-2 text-[10px]">
 					<Box>
-						<span className="block text-[10px]">Terkumpul</span>
-						<span className="font-bold ">Rp {rupiah(item.collected)}</span>
+						<span className="block text-[10px] text-gray-500">Terkumpul</span>
+						<span className="font-bold text-gray-800">
+							Rp {rupiah(item.collected)}
+						</span>
 					</Box>
 					<Box className="text-right">
-						<span className="block text-[10px]">Donatur</span>
-						<span className="font-bold ">{item.donors}</span>
+						<span className="block text-[10px] text-gray-500">Donatur</span>
+						<span className="font-bold text-gray-800">{item.donors}</span>
 					</Box>
 				</Box>
 			</Box>
@@ -237,7 +214,11 @@ function UrgentCard({ item }: { item: Campaign }) {
 	);
 }
 
-export default function UrgentSection() {
+export default function UrgentSection({
+	campaigns = [],
+}: {
+	campaigns?: Campaign[];
+}) {
 	const scrollRef = React.useRef<HTMLDivElement | null>(null);
 	const rafRef = React.useRef<number | null>(null);
 
@@ -267,7 +248,11 @@ export default function UrgentSection() {
 			rafRef.current = requestAnimationFrame(updateArrows);
 		};
 
+		// Initial check
 		updateArrows();
+		// Also check after a short delay to allow rendering
+		setTimeout(updateArrows, 500);
+
 		el.addEventListener("scroll", onScroll, { passive: true });
 		window.addEventListener("resize", updateArrows);
 
@@ -276,7 +261,7 @@ export default function UrgentSection() {
 			window.removeEventListener("resize", updateArrows);
 			if (rafRef.current) cancelAnimationFrame(rafRef.current);
 		};
-	}, [updateArrows]);
+	}, [updateArrows, campaigns]);
 
 	const scrollPrev = React.useCallback(() => {
 		const el = scrollRef.current;
@@ -289,6 +274,8 @@ export default function UrgentSection() {
 		if (!el) return;
 		el.scrollBy({ left: CARD_STEP, top: 0, behavior: "smooth" });
 	}, []);
+
+	if (!campaigns || campaigns.length === 0) return null;
 
 	return (
 		<Box className="mt-6 px-4 relative group">
@@ -307,6 +294,8 @@ export default function UrgentSection() {
 				</Box>
 				<Button
 					size="small"
+					component={Link}
+					href="/galang-dana"
 					variant="text"
 					sx={{
 						textTransform: "none",
@@ -342,7 +331,7 @@ export default function UrgentSection() {
 					scrollPaddingRight: 20,
 				}}
 			>
-				{items.map((item) => (
+				{campaigns.map((item) => (
 					<UrgentCard key={item.id} item={item} />
 				))}
 			</Box>

@@ -3,6 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { getMyCampaigns, deleteCampaign } from "@/actions/campaign";
 
 import HealingRoundedIcon from "@mui/icons-material/HealingRounded";
 import FavoriteRoundedIcon from "@mui/icons-material/FavoriteRounded";
@@ -37,7 +38,7 @@ import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded";
 import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
 import ImageNotSupportedRoundedIcon from "@mui/icons-material/ImageNotSupportedRounded";
 
-type StatusKey = "all" | "action" | "active" | "draft" | "ended";
+type StatusKey = "all" | "action" | "active" | "draft" | "ended" | "pending";
 
 type FundraiseMine = {
 	id: string;
@@ -47,33 +48,26 @@ type FundraiseMine = {
 	stepsTotal: number; // 7
 	updatedAt: string; // "18 Desember 2025"
 	lastStep?: string;
+	thumbnail?: string;
 };
 
 const TABS: { key: StatusKey; label: string }[] = [
 	{ key: "all", label: "Semua" },
 	{ key: "action", label: "Butuh tindakan" },
+	{ key: "pending", label: "Menunggu Review" },
 	{ key: "active", label: "Aktif" },
 	{ key: "draft", label: "Belum jadi" },
 	{ key: "ended", label: "Berakhir" },
 ];
 
-// Dummy data (nanti ganti DB)
-const MOCK: FundraiseMine[] = [
-	{
-		id: "draft-1",
-		title: "[Penggalangan belum ada judul]",
-		status: "draft",
-		stepsDone: 0,
-		stepsTotal: 7,
-		updatedAt: "18 Desember 2025",
-	},
-];
+// Removed MOCK
 
 function statusLabel(s: StatusKey) {
 	if (s === "draft") return "Belum jadi";
 	if (s === "active") return "Aktif";
 	if (s === "action") return "Butuh tindakan";
 	if (s === "ended") return "Berakhir";
+	if (s === "pending") return "Menunggu Review";
 	return "Semua";
 }
 
@@ -118,7 +112,31 @@ export default function GalangDanaSayaPage() {
 	const BOTTOM_NAV_H = 64; // samakan dengan bottom nav kamu
 
 	const [tab, setTab] = React.useState<StatusKey>("all");
-	const [items, setItems] = React.useState<FundraiseMine[]>(MOCK);
+	const [items, setItems] = React.useState<FundraiseMine[]>([]);
+	const [loading, setLoading] = React.useState(true);
+
+	const fetchCampaigns = React.useCallback(async () => {
+		setLoading(true);
+		// Fetch ALL to allow client-side filtering and counting
+		const res = await getMyCampaigns(1, 100, "all");
+		if (res.success && res.data) {
+			const mapped: FundraiseMine[] = res.data.map((c: any) => ({
+				id: c.id,
+				title: c.title,
+				status: c.status,
+				stepsDone: c.status === "draft" ? 3 : 7,
+				stepsTotal: 7,
+				updatedAt: c.updatedAt,
+				thumbnail: c.thumbnail,
+			}));
+			setItems(mapped);
+		}
+		setLoading(false);
+	}, []);
+
+	React.useEffect(() => {
+		fetchCampaigns();
+	}, [fetchCampaigns]);
 
 	const [snack, setSnack] = React.useState({
 		open: false,
@@ -181,17 +199,26 @@ export default function GalangDanaSayaPage() {
 
 	const askDelete = (id: string) => setConfirm({ open: true, id });
 
-	const doDelete = () => {
+	const doDelete = async () => {
 		const id = confirm.id;
 		setConfirm({ open: false, id: undefined });
 		if (!id) return;
 
-		setItems((prev) => prev.filter((x) => x.id !== id));
-		setSnack({
-			open: true,
-			msg: "Draft galang dana dihapus (dummy).",
-			type: "success",
-		});
+		const res = await deleteCampaign(id);
+		if (res.success) {
+			setItems((prev) => prev.filter((x) => x.id !== id));
+			setSnack({
+				open: true,
+				msg: "Campaign berhasil dihapus.",
+				type: "success",
+			});
+		} else {
+			setSnack({
+				open: true,
+				msg: res.error || "Gagal menghapus campaign.",
+				type: "info",
+			});
+		}
 	};
 
 	return (

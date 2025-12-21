@@ -44,4 +44,5 @@ export interface Campaign {
 	tag?: string;
 	donors?: number;
 	latestUpdate?: string;
+	slug?: string;
 }

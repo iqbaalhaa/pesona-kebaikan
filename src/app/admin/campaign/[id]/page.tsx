@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 
 import {
@@ -13,6 +12,7 @@ import {
 	Button,
 	Divider,
 	LinearProgress,
+	CircularProgress,
 	IconButton,
 	TextField,
 	Snackbar,
@@ -44,7 +44,20 @@ import ThumbUpAltRoundedIcon from "@mui/icons-material/ThumbUpAltRounded";
 import ThumbDownAltRoundedIcon from "@mui/icons-material/ThumbDownAltRounded";
 import SaveRoundedIcon from "@mui/icons-material/SaveRounded";
 
-type CampaignStatus = "draft" | "review" | "active" | "ended" | "rejected";
+import {
+	getCampaignById,
+	updateCampaignStatus,
+	deleteCampaign,
+	addCampaignMedia,
+} from "@/actions/campaign";
+
+type CampaignStatus =
+	| "draft"
+	| "review"
+	| "active"
+	| "ended"
+	| "rejected"
+	| "pending";
 type CampaignType = "sakit" | "lainnya";
 
 type AuditEvent = {
@@ -77,6 +90,7 @@ const STATUS_META: Record<
 	active: { label: "Aktif", tone: "success" },
 	ended: { label: "Berakhir", tone: "info" },
 	rejected: { label: "Ditolak", tone: "error" },
+	pending: { label: "Menunggu Verifikasi", tone: "warning" },
 };
 
 function idr(n: number) {
@@ -104,25 +118,8 @@ export default function AdminCampaignDetailPage() {
 	const params = useParams<{ id: string }>();
 	const id = params?.id ?? "";
 
-	// dummy data (nanti fetch by id)
-	const [data, setData] = React.useState({
-		id,
-		title: "Bantu Abi Melawan Kanker Hati",
-		type: "sakit" as CampaignType,
-		category: "Bantuan Medis & Kesehatan",
-		status: "review" as CampaignStatus,
-		ownerName: "Rifki Dermawan",
-		ownerPhone: "08xxxxxxxxxx",
-		target: 20000000,
-		collected: 4820000,
-		donors: 119,
-		createdAt: "18 Desember 2025",
-		updatedAt: "19 Desember 2025",
-		publicUrl: `/campaign/${id || "cmp-001"}`,
-		shortInvite: "Bantu Abi melawan kanker hati. Setiap donasi sangat berarti.",
-		story:
-			"Abi didiagnosa kanker hati dan membutuhkan biaya pengobatan yang besar. Saat ini keluarga sudah berusaha semampunya, namun biaya terus bertambah. Kami membuka penggalangan dana ini untuk membantu biaya rawat jalan, kontrol rutin, obat, dan tindakan medis sesuai rekomendasi dokter.\n\nMohon doa dan dukungan #OrangBaik. Setiap bantuan akan sangat berarti.",
-	});
+	const [loading, setLoading] = React.useState(true);
+	const [data, setData] = React.useState<any>(null);
 
 	const [tab, setTab] = React.useState<
 		"overview" | "story" | "docs" | "verify" | "timeline"
@@ -137,51 +134,121 @@ export default function AdminCampaignDetailPage() {
 	const [confirmEnd, setConfirmEnd] = React.useState(false);
 
 	// docs state
-	const [docs, setDocs] = React.useState<DocItem[]>(() => {
-		const base: DocItem[] = [
-			{
-				key: "cover",
-				title: "Foto Sampul",
-				required: true,
-				help: "Foto utama yang tampil di campaign.",
-				uploaded: false,
-			},
-			{
-				key: "ktp",
-				title: "Identitas / KTP Penggalang",
-				required: true,
-				help: "KTP pemilik akun/penggalang.",
-				uploaded: false,
-			},
-		];
-		if (data.type === "sakit") {
-			base.push(
-				{
-					key: "resume_medis",
-					title: "Surat / Resume Medis",
-					required: true,
-					help: "Dokumen diagnosis/riwayat medis.",
-					uploaded: false,
-				},
-				{
-					key: "surat_rs",
-					title: "Dokumen Rumah Sakit",
-					required: false,
-					help: "Surat rujukan, rincian biaya, dll (opsional).",
-					uploaded: false,
+	const [docs, setDocs] = React.useState<DocItem[]>([]);
+
+	const fetchData = React.useCallback(async () => {
+		setLoading(true);
+		try {
+			const res = await getCampaignById(id);
+			if (res.success && res.data) {
+				const c = res.data;
+				const statusMap: Record<string, CampaignStatus> = {
+					pending: "pending",
+					accepted: "active",
+					rejected: "rejected",
+					finished: "ended",
+				};
+
+				const cleanStory = c.description
+					.replace(/\s*Detail Pasien:[\s\S]*/i, "")
+					.replace(/\s*Tujuan:[\s\S]*/i, "")
+					.trim();
+
+				const mappedData = {
+					id: c.id,
+					title: c.title,
+					type:
+						c.type === "sakit" || c.category === "Bantuan Medis & Kesehatan"
+							? "sakit"
+							: "lainnya",
+					category: c.category || "-",
+					status: statusMap[c.status] || "review",
+					ownerName: c.ownerName || "-",
+					ownerEmail: c.ownerEmail || "-",
+					ownerPhone: c.ownerPhone || "-",
+					phone: c.phone || "-",
+					target: Number(c.target),
+					collected: Number(c.collected),
+					donors: c.donations?.length || 0,
+					createdAt: new Date(c.createdAt).toLocaleDateString("id-ID", {
+						day: "numeric",
+						month: "long",
+						year: "numeric",
+					}),
+					updatedAt: new Date(c.updatedAt).toLocaleDateString("id-ID", {
+						day: "numeric",
+						month: "long",
+						year: "numeric",
+					}),
+					publicUrl: `/donasi/${c.slug || c.id}`,
+					shortInvite: cleanStory.substring(0, 100) + "...",
+					story: cleanStory,
+				};
+				setData(mappedData);
+
+				// Setup docs
+				const base: DocItem[] = [
+					{
+						key: "cover",
+						title: "Foto Sampul",
+						required: false,
+						help: "Foto utama yang tampil di campaign.",
+						uploaded: !!c.thumbnail,
+						previewUrl: c.thumbnail,
+					},
+					{
+						key: "ktp",
+						title: "Identitas / KTP Penggalang",
+						required: false,
+						help: "KTP pemilik akun/penggalang.",
+						uploaded: false, // Need to check if KTP is in media
+					},
+				];
+
+				if (mappedData.type === "sakit") {
+					base.push(
+						{
+							key: "resume_medis",
+							title: "Surat / Resume Medis",
+							required: false,
+							help: "Dokumen diagnosis/riwayat medis.",
+							uploaded: false,
+						},
+						{
+							key: "surat_rs",
+							title: "Dokumen Rumah Sakit",
+							required: false,
+							help: "Surat rujukan, rincian biaya, dll (opsional).",
+							uploaded: false,
+						}
+					);
+				} else {
+					base.push({
+						key: "pendukung",
+						title: "Dokumen Pendukung",
+						required: false,
+						help: "Surat izin, proposal, foto kondisi, dll.",
+						uploaded: false,
+					});
 				}
-			);
-		} else {
-			base.push({
-				key: "pendukung",
-				title: "Dokumen Pendukung",
-				required: false,
-				help: "Surat izin, proposal, foto kondisi, dll.",
-				uploaded: false,
-			});
+				setDocs(base);
+			} else {
+				setSnack({
+					open: true,
+					msg: "Gagal memuat data campaign",
+					type: "error",
+				});
+			}
+		} catch (e) {
+			console.error(e);
+			setSnack({ open: true, msg: "Terjadi kesalahan", type: "error" });
 		}
-		return base;
-	});
+		setLoading(false);
+	}, [id]);
+
+	React.useEffect(() => {
+		if (id) fetchData();
+	}, [id, fetchData]);
 
 	// preview dialog
 	const [preview, setPreview] = React.useState<{
@@ -191,22 +258,31 @@ export default function AdminCampaignDetailPage() {
 	}>({ open: false });
 
 	// audit timeline
-	const [audit, setAudit] = React.useState<AuditEvent[]>(() => [
-		{
-			id: "a1",
-			at: "18/12 09:12",
-			title: "Campaign dibuat",
-			meta: "Draft awal tersimpan.",
-			tone: "info",
-		},
-		{
-			id: "a2",
-			at: "19/12 15:01",
-			title: "Masuk antrian review",
-			meta: "Menunggu verifikasi admin.",
-			tone: "warning",
-		},
-	]);
+	const [audit, setAudit] = React.useState<AuditEvent[]>([]);
+
+	React.useEffect(() => {
+		if (data) {
+			const initialAudit: AuditEvent[] = [
+				{
+					id: "created",
+					at: data.createdAt,
+					title: "Campaign dibuat",
+					meta: "Campaign berhasil dibuat.",
+					tone: "info",
+				},
+			];
+			if (data.status !== "review" && data.status !== "draft") {
+				initialAudit.unshift({
+					id: "updated",
+					at: data.updatedAt,
+					title: "Status diperbarui",
+					meta: `Status saat ini: ${data.status}`,
+					tone: "warning",
+				});
+			}
+			setAudit(initialAudit);
+		}
+	}, [data]);
 
 	const pushAudit = React.useCallback((e: Omit<AuditEvent, "id" | "at">) => {
 		setAudit((prev) => [
@@ -232,8 +308,8 @@ export default function AdminCampaignDetailPage() {
 	const [confirmApprove, setConfirmApprove] = React.useState(false);
 	const [confirmReject, setConfirmReject] = React.useState(false);
 
-	const progress = pct(data.collected, data.target);
-	const statusMeta = STATUS_META[data.status];
+	const progress = pct(data?.collected || 0, data?.target || 0);
+	const statusMeta = data ? STATUS_META[data.status] : STATUS_META.review;
 
 	const toneColor = (tone: typeof statusMeta.tone) => {
 		switch (tone) {
@@ -260,10 +336,10 @@ export default function AdminCampaignDetailPage() {
 			color: theme.palette.mode === "dark" ? alpha(c, 0.95) : c,
 		};
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [data.status, theme.palette.mode]);
+	}, [data?.status, theme.palette.mode]);
 
 	const typeMeta =
-		data.type === "sakit"
+		data?.type === "sakit"
 			? {
 					label: "Medis",
 					icon: <LocalHospitalRoundedIcon fontSize="small" />,
@@ -298,11 +374,12 @@ export default function AdminCampaignDetailPage() {
 		}
 	};
 
-	const canVerify = data.status === "review";
-	const canEnd = data.status === "active";
+	const canVerify = data?.status === "review" || data?.status === "pending";
+	const canEnd = data?.status === "active";
 
 	// derive checklist suggestions from current state (soft suggestion)
 	React.useEffect(() => {
+		if (!data) return;
 		const hasCover = docs.find((d) => d.key === "cover")?.uploaded ?? false;
 		const hasKtp = docs.find((d) => d.key === "ktp")?.uploaded ?? false;
 
@@ -314,7 +391,23 @@ export default function AdminCampaignDetailPage() {
 			targetOk: c.targetOk || (data.target ?? 0) > 0,
 		}));
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [docs, data.story, data.target]);
+	}, [docs, data?.story, data?.target]);
+
+	if (loading) {
+		return (
+			<Box sx={{ p: 4, display: "flex", justifyContent: "center" }}>
+				<CircularProgress />
+			</Box>
+		);
+	}
+
+	if (!data) {
+		return (
+			<Box sx={{ p: 4, display: "flex", justifyContent: "center" }}>
+				<Typography>Data tidak ditemukan</Typography>
+			</Box>
+		);
+	}
 
 	const verifyReady =
 		check.identityOk &&
@@ -324,10 +417,11 @@ export default function AdminCampaignDetailPage() {
 		check.categoryOk &&
 		check.phoneOk;
 
-	const handleUpload = (key: DocKey, file?: File | null) => {
+	const handleUpload = async (key: DocKey, file?: File | null) => {
 		if (!file) return;
-		const url = URL.createObjectURL(file);
 
+		// Optimistic update
+		const url = URL.createObjectURL(file);
 		setDocs((prev) =>
 			prev.map((d) =>
 				d.key === key
@@ -342,13 +436,47 @@ export default function AdminCampaignDetailPage() {
 			)
 		);
 
-		pushAudit({
-			title: "Dokumen diupload",
-			meta: `${file.name} (${key})`,
-			tone: "info",
-		});
+		const formData = new FormData();
+		formData.append("file", file);
+		if (key === "cover") {
+			formData.append("isThumbnail", "true");
+		}
 
-		setSnack({ open: true, msg: "Dokumen diupload (dummy).", type: "success" });
+		try {
+			const res = await addCampaignMedia(id, formData);
+
+			if (res.success) {
+				pushAudit({
+					title: "Dokumen diupload",
+					meta: `${file.name} (${key})`,
+					tone: "info",
+				});
+				setSnack({
+					open: true,
+					msg: "Dokumen berhasil diupload.",
+					type: "success",
+				});
+			} else {
+				throw new Error(res.error);
+			}
+		} catch (e) {
+			console.error(e);
+			// Revert
+			setDocs((prev) =>
+				prev.map((d) =>
+					d.key === key
+						? {
+								...d,
+								uploaded: false,
+								filename: undefined,
+								previewUrl: undefined,
+								updatedAt: undefined,
+						  }
+						: d
+				)
+			);
+			setSnack({ open: true, msg: "Gagal upload dokumen.", type: "error" });
+		}
 	};
 
 	const handleRemoveDoc = (key: DocKey) => {
@@ -372,34 +500,52 @@ export default function AdminCampaignDetailPage() {
 		});
 	};
 
-	const onApprove = () => {
+	const onApprove = async () => {
 		setConfirmApprove(false);
-		setData((d) => ({ ...d, status: "active", updatedAt: "Hari ini" }));
-		pushAudit({
-			title: "Campaign disetujui",
-			meta: "Status berubah menjadi Aktif.",
-			tone: "success",
-		});
-		setSnack({
-			open: true,
-			msg: "Campaign approved (dummy).",
-			type: "success",
-		});
+		const res = await updateCampaignStatus(id, "ACTIVE");
+		if (res.success) {
+			setData((d) => ({ ...d, status: "active", updatedAt: "Hari ini" }));
+			pushAudit({
+				title: "Campaign disetujui",
+				meta: "Status berubah menjadi Aktif.",
+				tone: "success",
+			});
+			setSnack({
+				open: true,
+				msg: "Campaign approved.",
+				type: "success",
+			});
+		} else {
+			setSnack({
+				open: true,
+				msg: "Gagal approve campaign.",
+				type: "error",
+			});
+		}
 	};
 
-	const onReject = () => {
+	const onReject = async () => {
 		setConfirmReject(false);
-		setData((d) => ({ ...d, status: "rejected", updatedAt: "Hari ini" }));
-		pushAudit({
-			title: "Campaign ditolak",
-			meta: rejectReason ? `Alasan: ${rejectReason}` : "Tanpa alasan.",
-			tone: "error",
-		});
-		setSnack({
-			open: true,
-			msg: "Campaign rejected (dummy).",
-			type: "warning",
-		});
+		const res = await updateCampaignStatus(id, "REJECTED");
+		if (res.success) {
+			setData((d) => ({ ...d, status: "rejected", updatedAt: "Hari ini" }));
+			pushAudit({
+				title: "Campaign ditolak",
+				meta: rejectReason ? `Alasan: ${rejectReason}` : "Tanpa alasan.",
+				tone: "error",
+			});
+			setSnack({
+				open: true,
+				msg: "Campaign rejected.",
+				type: "warning",
+			});
+		} else {
+			setSnack({
+				open: true,
+				msg: "Gagal reject campaign.",
+				type: "error",
+			});
+		}
 	};
 
 	const onSaveStory = () => {
@@ -514,8 +660,7 @@ export default function AdminCampaignDetailPage() {
 				>
 					<Stack direction="row" spacing={1} sx={{ flexWrap: "wrap" }}>
 						<Button
-							component={Link}
-							href={`/admin/campaign/${data.id}/edit`}
+							onClick={() => router.push(`/admin/campaign/${data.id}/edit`)}
 							variant="outlined"
 							startIcon={<EditRoundedIcon />}
 							sx={{ borderRadius: 999, fontWeight: 900 }}
@@ -547,7 +692,6 @@ export default function AdminCampaignDetailPage() {
 
 					<Stack direction="row" spacing={1} alignItems="center">
 						<Button
-							component={Link}
 							href={data.publicUrl}
 							target="_blank"
 							variant="contained"
@@ -647,6 +791,8 @@ export default function AdminCampaignDetailPage() {
 								sx={{ flexWrap: "wrap", justifyContent: "flex-end" }}
 							>
 								<QuickPill label="Owner" value={data.ownerName} />
+								<QuickPill label="Email" value={data.ownerEmail} />
+								<QuickPill label="HP" value={data.phone} />
 								<QuickPill label="Kategori" value={data.category} />
 							</Stack>
 						</Stack>
@@ -713,6 +859,19 @@ export default function AdminCampaignDetailPage() {
 								<InfoRow k="Target" v={idr(data.target)} />
 								<InfoRow k="Terkumpul" v={idr(data.collected)} />
 								<InfoRow k="Donatur" v={`${data.donors}`} />
+							</Stack>
+
+							<Divider sx={{ my: 1.25 }} />
+
+							<Typography
+								sx={{ fontWeight: 1000, fontSize: 13.5, color: "text.primary" }}
+							>
+								Penggalang Dana
+							</Typography>
+							<Stack spacing={1} sx={{ mt: 1 }}>
+								<InfoRow k="Nama" v={data.ownerName} />
+								<InfoRow k="Email" v={data.ownerEmail} />
+								<InfoRow k="No. HP" v={data.ownerPhone} />
 							</Stack>
 						</Paper>
 					)}
@@ -955,7 +1114,6 @@ export default function AdminCampaignDetailPage() {
 								<Button
 									variant="contained"
 									startIcon={<ThumbUpAltRoundedIcon />}
-									disabled={!canVerify || !verifyReady}
 									onClick={() => setConfirmApprove(true)}
 									sx={{ borderRadius: 999, fontWeight: 900, boxShadow: "none" }}
 								>
@@ -966,7 +1124,6 @@ export default function AdminCampaignDetailPage() {
 									variant="outlined"
 									color="error"
 									startIcon={<ThumbDownAltRoundedIcon />}
-									disabled={!canVerify}
 									onClick={() => setConfirmReject(true)}
 									sx={{ borderRadius: 999, fontWeight: 900 }}
 								>
@@ -1050,6 +1207,7 @@ export default function AdminCampaignDetailPage() {
 
 						<Stack spacing={1}>
 							<MiniStat label="Pemilik" value={data.ownerName} />
+							<MiniStat label="Email" value={data.ownerEmail} />
 							<MiniStat label="No. HP" value={data.ownerPhone} />
 							<MiniStat label="Kategori" value={data.category} />
 							<MiniStat label="Status" value={statusMeta.label} />
@@ -1097,7 +1255,6 @@ export default function AdminCampaignDetailPage() {
 							</Button>
 
 							<Button
-								component={Link}
 								href={data.publicUrl}
 								target="_blank"
 								variant="contained"

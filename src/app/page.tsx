@@ -10,19 +10,34 @@ import PrayerSection from "@/components/home/PrayerSection";
 import FundraiserCTA from "@/components/home/FundraiserCTA";
 import MiniFooter from "@/components/home/MiniFooter";
 import QuickDonate from "@/components/home/QuickDonate";
+import {
+	getPopularCampaigns,
+	getUrgentCampaigns,
+	getLatestDonations,
+} from "@/actions/campaign";
 
-export default function Home() {
+export default async function Home() {
+	const [urgentRes, popularRes, donationRes] = await Promise.all([
+		getUrgentCampaigns(10),
+		getPopularCampaigns(10),
+		getLatestDonations(10),
+	]);
+
+	const urgentCampaigns = urgentRes.success ? urgentRes.data : [];
+	const popularCampaigns = popularRes.success ? popularRes.data : [];
+	const latestDonations = donationRes.success ? donationRes.data : [];
+
 	return (
 		<Box>
-			<HeroCarousel />
-			<QuickDonate />
+			<HeroCarousel campaigns={popularCampaigns} />
+			<QuickDonate campaigns={popularCampaigns.slice(0, 5)} />
 			<QuickMenu />
-			<UrgentSection />
-			<CategoryChips />
-			<PopularSection />
+			<UrgentSection campaigns={urgentCampaigns} />
+			<CategoryChips campaigns={popularCampaigns} />
+			<PopularSection campaigns={popularCampaigns} />
 			<TrustStrip />
 			<DonationBanner />
-			<PrayerSection />
+			<PrayerSection prayers={latestDonations} />
 			<FundraiserCTA />
 			<MiniFooter />
 		</Box>

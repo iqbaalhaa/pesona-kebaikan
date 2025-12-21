@@ -40,6 +40,7 @@ import CategoryRoundedIcon from "@mui/icons-material/CategoryRounded";
 import DescriptionRoundedIcon from "@mui/icons-material/DescriptionRounded";
 import PhotoRoundedIcon from "@mui/icons-material/PhotoRounded";
 import BadgeRoundedIcon from "@mui/icons-material/BadgeRounded";
+import { getCampaigns, updateCampaignStatus } from "@/actions/campaign";
 
 type CampaignType = "sakit" | "lainnya";
 type CampaignStatus = "draft" | "review" | "active" | "ended" | "rejected";
@@ -48,6 +49,7 @@ type VerifyDocKey = "cover" | "ktp" | "resume_medis" | "surat_rs" | "pendukung";
 
 type CampaignVerifyRow = {
 	id: string;
+	slug?: string;
 	title: string;
 	category: string;
 	type: CampaignType;
@@ -58,6 +60,7 @@ type CampaignVerifyRow = {
 	donors: number;
 	status: CampaignStatus; // di page ini fokus "review"
 	updatedAt: string;
+	thumbnail?: string;
 
 	// ringkasan kelengkapan verifikasi
 	docs: Record<VerifyDocKey, boolean>;
@@ -65,73 +68,6 @@ type CampaignVerifyRow = {
 };
 
 const PAGE_SIZE = 9;
-
-/** Dummy: nanti ganti fetch dari API */
-const MOCK: CampaignVerifyRow[] = [
-	{
-		id: "cmp-001",
-		title: "Bantu Abi Melawan Kanker Hati",
-		category: "Bantuan Medis & Kesehatan",
-		type: "sakit",
-		ownerName: "Rifki Dermawan",
-		ownerPhone: "08xxxxxxxxxx",
-		target: 20000000,
-		collected: 4820000,
-		donors: 119,
-		status: "review",
-		updatedAt: "19 Des 2025",
-		docs: {
-			cover: true,
-			ktp: true,
-			resume_medis: false,
-			surat_rs: false,
-			pendukung: false,
-		},
-		notes: "Resume medis belum diupload.",
-	},
-	{
-		id: "cmp-005",
-		title: "Bantu Bayar Biaya Sekolah Anak",
-		category: "Bantuan Pendidikan",
-		type: "lainnya",
-		ownerName: "Asep",
-		ownerPhone: "08xxxxxxxxxx",
-		target: 8000000,
-		collected: 1200000,
-		donors: 21,
-		status: "review",
-		updatedAt: "16 Des 2025",
-		docs: {
-			cover: true,
-			ktp: false,
-			resume_medis: false,
-			surat_rs: false,
-			pendukung: true,
-		},
-		notes: "KTP belum ada, dokumen pendukung sudah.",
-	},
-	{
-		id: "cmp-010",
-		title: "Bantu Renovasi Rumah Korban Kebakaran",
-		category: "Bencana",
-		type: "lainnya",
-		ownerName: "Rani",
-		ownerPhone: "08xxxxxxxxxx",
-		target: 35000000,
-		collected: 2550000,
-		donors: 44,
-		status: "review",
-		updatedAt: "20 Des 2025",
-		docs: {
-			cover: false,
-			ktp: true,
-			resume_medis: false,
-			surat_rs: false,
-			pendukung: false,
-		},
-		notes: "Cover belum sesuai/masih kosong.",
-	},
-];
 
 function idr(n: number) {
 	if (!n) return "Rp0";
@@ -251,14 +187,38 @@ export default function AdminCampaignVerifikasiPage() {
 		row?: CampaignVerifyRow;
 	}>({ open: false });
 
-	React.useEffect(() => {
-		// simulate fetch
+	const fetchCampaigns = async () => {
 		setLoading(true);
-		const t = setTimeout(() => {
-			setRows(MOCK);
-			setLoading(false);
-		}, 350);
-		return () => clearTimeout(t);
+		const res = await getCampaigns(1, 100, "PENDING");
+		if (res.success && res.data) {
+			const mapped: CampaignVerifyRow[] = res.data.map((c: any) => ({
+				id: c.id,
+				title: c.title,
+				category: c.category,
+				type: c.type,
+				ownerName: c.ownerName,
+				ownerPhone: "-",
+				target: c.target,
+				collected: c.collected,
+				donors: c.donors,
+				status: "review",
+				updatedAt: c.updatedAt,
+				docs: {
+					cover: !!c.thumbnail,
+					ktp: false,
+					resume_medis: false,
+					surat_rs: false,
+					pendukung: false,
+				},
+				notes: "",
+			}));
+			setRows(mapped);
+		}
+		setLoading(false);
+	};
+
+	React.useEffect(() => {
+		fetchCampaigns();
 	}, []);
 
 	React.useEffect(() => {
@@ -311,23 +271,29 @@ export default function AdminCampaignVerifikasiPage() {
 	);
 
 	const onRefresh = () => {
-		setLoading(true);
-		setTimeout(() => {
-			setRows(MOCK);
-			setLoading(false);
-		}, 250);
+		fetchCampaigns();
 	};
 
-	const onApproveDummy = (row: CampaignVerifyRow) => {
-		// dummy: hapus dari list review
-		setRows((prev) => prev.filter((x) => x.id !== row.id));
-		setConfirm({ open: false });
+	const onApprove = async () => {
+		if (!confirm.row) return;
+		const res = await updateCampaignStatus(confirm.row.id, "ACTIVE");
+		if (res.success) {
+			setRows((prev) => prev.filter((x) => x.id !== confirm.row?.id));
+			setConfirm({ open: false });
+		} else {
+			alert("Gagal approve");
+		}
 	};
 
-	const onRejectDummy = (row: CampaignVerifyRow) => {
-		// dummy: hapus dari list review
-		setRows((prev) => prev.filter((x) => x.id !== row.id));
-		setConfirm({ open: false });
+	const onReject = async () => {
+		if (!confirm.row) return;
+		const res = await updateCampaignStatus(confirm.row.id, "REJECTED");
+		if (res.success) {
+			setRows((prev) => prev.filter((x) => x.id !== confirm.row?.id));
+			setConfirm({ open: false });
+		} else {
+			alert("Gagal reject");
+		}
 	};
 
 	return (
@@ -599,6 +565,7 @@ export default function AdminCampaignVerifikasiPage() {
 										width: 44,
 										height: 44,
 										borderRadius: 2.25,
+										overflow: "hidden",
 										// border: "1px solid",
 										// borderColor: alpha(theme.palette.divider, 1),
 										display: "grid",
@@ -609,7 +576,18 @@ export default function AdminCampaignVerifikasiPage() {
 										),
 									}}
 								>
-									{selected.type === "sakit" ? (
+									{selected.thumbnail ? (
+										<Box
+											component="img"
+											src={selected.thumbnail}
+											alt={selected.title}
+											sx={{
+												width: "100%",
+												height: "100%",
+												objectFit: "cover",
+											}}
+										/>
+									) : selected.type === "sakit" ? (
 										<LocalHospitalRoundedIcon fontSize="small" />
 									) : (
 										<CategoryRoundedIcon fontSize="small" />
@@ -834,7 +812,7 @@ export default function AdminCampaignVerifikasiPage() {
 
 								<Button
 									component={Link}
-									href={`/campaign/${selected.id}`}
+									href={`/donasi/${selected.slug || selected.id}`}
 									target="_blank"
 									variant="outlined"
 									endIcon={<OpenInNewRoundedIcon />}
@@ -923,8 +901,8 @@ export default function AdminCampaignVerifikasiPage() {
 					<Button
 						onClick={() => {
 							if (!confirm.row) return;
-							if (confirm.mode === "approve") onApproveDummy(confirm.row);
-							else onRejectDummy(confirm.row);
+							if (confirm.mode === "approve") onApprove();
+							else onReject();
 						}}
 						variant="contained"
 						color={confirm.mode === "approve" ? "primary" : "error"}

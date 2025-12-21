@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useSession } from "next-auth/react";
 
 import {
 	Box,
@@ -29,6 +30,9 @@ import ChevronLeftRoundedIcon from "@mui/icons-material/ChevronLeftRounded";
 import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import PhotoCameraRoundedIcon from "@mui/icons-material/PhotoCameraRounded";
+
+import { createCampaign } from "@/actions/campaign";
+import { CATEGORY_TITLE } from "@/lib/constants";
 
 type StepKeySakit =
 	| "tujuan"
@@ -77,21 +81,19 @@ function formatIDR(numStr: string) {
 	return n.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 }
 
-const CATEGORY_TITLE: Record<string, string> = {
-	pendidikan: "Bantuan Pendidikan",
-	bencana: "Bencana Alam",
-	difabel: "Difabel",
-	infrastruktur: "Infrastruktur Umum",
-	usaha: "Karya Kreatif & Modal Usaha",
-	sosial: "Kegiatan Sosial",
-	kemanusiaan: "Kemanusiaan",
-	lingkungan: "Lingkungan",
-	rumah_ibadah: "Rumah Ibadah",
-};
-
 function BuatGalangDanaPageContent() {
 	const router = useRouter();
 	const sp = useSearchParams();
+	const { data: session, status } = useSession();
+
+	React.useEffect(() => {
+		if (status === "unauthenticated") {
+			const currentUrl = new URLSearchParams(Array.from(sp.entries()));
+			router.replace(
+				`/auth/login?callbackUrl=/galang-dana/buat?${currentUrl.toString()}`
+			);
+		}
+	}, [status, router, sp]);
 
 	const type = sp.get("type") ?? "lainnya";
 	const category = sp.get("category") ?? "";
@@ -105,6 +107,10 @@ function BuatGalangDanaPageContent() {
 		// kalau type aneh, balikin ke kategori
 		if (!isSakit && !isLainnya) router.replace("/galang-dana/kategori");
 	}, [isLainnya, isSakit, category, router]);
+
+	if (status === "loading") {
+		return <Box sx={{ p: 4, textAlign: "center" }}>Loading session...</Box>;
+	}
 
 	// step state (1 aja, sesuai type)
 	const [step, setStep] = React.useState(0);
@@ -145,6 +151,8 @@ function BuatGalangDanaPageContent() {
 	const [title, setTitle] = React.useState("");
 	const [slug, setSlug] = React.useState("");
 	const [coverName, setCoverName] = React.useState<string>("");
+	const [coverFile, setCoverFile] = React.useState<File | null>(null);
+	const [coverPreview, setCoverPreview] = React.useState<string>("");
 
 	const [story, setStory] = React.useState("");
 	const [showStoryEditor, setShowStoryEditor] = React.useState(false);
@@ -237,6 +245,8 @@ function BuatGalangDanaPageContent() {
 	const [titleOther, setTitleOther] = React.useState("");
 	const [slugOther, setSlugOther] = React.useState("");
 	const [coverNameOther, setCoverNameOther] = React.useState("");
+	const [coverFileOther, setCoverFileOther] = React.useState<File | null>(null);
+	const [coverPreviewOther, setCoverPreviewOther] = React.useState<string>("");
 
 	const [storyOther, setStoryOther] = React.useState("");
 	const [showStoryEditorOther, setShowStoryEditorOther] = React.useState(false);
@@ -247,10 +257,11 @@ function BuatGalangDanaPageContent() {
 	// =========
 	// SHARED
 	// =========
+	const [submitting, setSubmitting] = React.useState(false);
 	const [snack, setSnack] = React.useState<{
 		open: boolean;
 		msg: string;
-		type: "success" | "info";
+		type: "success" | "info" | "error";
 	}>({ open: false, msg: "", type: "info" });
 
 	const canNext = React.useMemo(() => {
@@ -328,20 +339,62 @@ function BuatGalangDanaPageContent() {
 	const goPrev = () => setStep((s) => Math.max(0, s - 1));
 	const goNext = () => setStep((s) => Math.min(steps.length - 1, s + 1));
 
-	const onClickNext = () => {
+	const onClickNext = async () => {
 		if (isSakit && stepKey === "tujuan") {
 			setOpenTerms(true);
 			return;
 		}
 
 		if (stepKey === "ajakan") {
-			setSnack({
-				open: true,
-				msg: isSakit
-					? "Draft galang dana medis tersimpan (dummy)."
-					: "Draft galang dana tersimpan (dummy).",
-				type: "success",
-			});
+			setSubmitting(true);
+			const formData = new FormData();
+
+			if (isSakit) {
+				formData.append("title", title);
+				formData.append("slug", slug);
+				formData.append("category", "medis");
+				formData.append("type", "sakit");
+				formData.append("target", target);
+				formData.append("duration", duration);
+				formData.append("phone", phone);
+
+				if (coverFile) formData.append("cover", coverFile);
+
+				formData.append("story", story);
+			} else {
+				formData.append("title", titleOther);
+				formData.append("slug", slugOther);
+				formData.append("category", category); // "pendidikan", "bencana", etc.
+				formData.append("type", "lainnya");
+				formData.append("target", targetOther);
+				formData.append("duration", durationOther);
+				formData.append("phone", phoneOther);
+
+				if (coverFileOther) formData.append("cover", coverFileOther);
+
+				formData.append("story", storyOther);
+			}
+
+			const res = await createCampaign(formData);
+			setSubmitting(false);
+
+			if (res.success) {
+				setSnack({
+					open: true,
+					msg: "Campaign berhasil dibuat!",
+					type: "success",
+				});
+				// Redirect
+				setTimeout(() => {
+					router.push("/galang-dana");
+				}, 1500);
+			} else {
+				setSnack({
+					open: true,
+					msg: res.error || "Gagal membuat campaign",
+					type: "error",
+				});
+			}
 			return;
 		}
 
@@ -895,9 +948,18 @@ function BuatGalangDanaPageContent() {
 												type="file"
 												accept="image/*"
 												hidden
-												onChange={(e) =>
-													setCoverName(e.target.files?.[0]?.name ?? "")
-												}
+												onChange={(e) => {
+													const f = e.target.files?.[0];
+													if (f) {
+														setCoverName(f.name);
+														setCoverFile(f);
+														setCoverPreview(URL.createObjectURL(f));
+													} else {
+														setCoverName("");
+														setCoverFile(null);
+														setCoverPreview("");
+													}
+												}}
 											/>
 											<Button
 												component="label"
@@ -909,7 +971,22 @@ function BuatGalangDanaPageContent() {
 												Upload Foto
 											</Button>
 
-											{coverName ? (
+											{coverPreview ? (
+												<Box
+													component="img"
+													src={coverPreview}
+													alt="Preview"
+													sx={{
+														width: "100%",
+														height: 200,
+														objectFit: "cover",
+														borderRadius: 2,
+														mt: 1,
+													}}
+												/>
+											) : null}
+
+											{coverName && !coverPreview ? (
 												<Typography
 													sx={{
 														mt: 0.75,
@@ -1523,9 +1600,18 @@ function BuatGalangDanaPageContent() {
 												type="file"
 												accept="image/*"
 												hidden
-												onChange={(e) =>
-													setCoverNameOther(e.target.files?.[0]?.name ?? "")
-												}
+												onChange={(e) => {
+													const f = e.target.files?.[0];
+													if (f) {
+														setCoverNameOther(f.name);
+														setCoverFileOther(f);
+														setCoverPreviewOther(URL.createObjectURL(f));
+													} else {
+														setCoverNameOther("");
+														setCoverFileOther(null);
+														setCoverPreviewOther("");
+													}
+												}}
 											/>
 											<Button
 												component="label"
@@ -1537,7 +1623,22 @@ function BuatGalangDanaPageContent() {
 												Upload Foto
 											</Button>
 
-											{coverNameOther ? (
+											{coverPreviewOther ? (
+												<Box
+													component="img"
+													src={coverPreviewOther}
+													alt="Preview"
+													sx={{
+														width: "100%",
+														height: 200,
+														objectFit: "cover",
+														borderRadius: 2,
+														mt: 1,
+													}}
+												/>
+											) : null}
+
+											{coverNameOther && !coverPreviewOther ? (
 												<Typography
 													sx={{
 														mt: 0.75,
@@ -1705,11 +1806,15 @@ function BuatGalangDanaPageContent() {
 						<Button
 							onClick={onClickNext}
 							variant="contained"
-							endIcon={<ChevronRightRoundedIcon />}
+							endIcon={!submitting && <ChevronRightRoundedIcon />}
 							sx={{ borderRadius: 2, fontWeight: 700, px: 2.25 }}
-							disabled={!canNext}
+							disabled={!canNext || submitting}
 						>
-							{stepKey === "ajakan" ? "Selesai" : "Selanjutnya"}
+							{submitting
+								? "Menyimpan..."
+								: stepKey === "ajakan"
+								? "Selesai"
+								: "Selanjutnya"}
 						</Button>
 					</Stack>
 
@@ -1841,7 +1946,9 @@ function BuatGalangDanaPageContent() {
 
 export default function BuatGalangDanaPage() {
 	return (
-		<React.Suspense fallback={<Box sx={{ p: 4, textAlign: 'center' }}>Loading...</Box>}>
+		<React.Suspense
+			fallback={<Box sx={{ p: 4, textAlign: "center" }}>Loading...</Box>}
+		>
 			<BuatGalangDanaPageContent />
 		</React.Suspense>
 	);

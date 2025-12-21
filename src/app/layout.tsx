@@ -4,6 +4,8 @@ import { AppRouterCacheProvider } from "@mui/material-nextjs/v15-appRouter";
 import "./globals.css";
 import AppShell from "@/components/layout/AppShell";
 import ThemeWrapper from "@/components/layout/ThemeWrapper";
+import { auth } from "@/auth";
+import NextAuthProvider from "@/components/providers/NextAuthProvider";
 
 const pjs = Plus_Jakarta_Sans({
 	variable: "--font-pjs",
@@ -17,23 +19,27 @@ export const metadata: Metadata = {
 	description: "Created by Depati Digital",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
 	children,
 }: {
 	children: React.ReactNode;
 }) {
+	const session = await auth();
+
 	return (
 		<html lang="id" suppressHydrationWarning>
 			<body className={`${pjs.variable} antialiased`} suppressHydrationWarning>
-				<AppRouterCacheProvider options={{ enableCssLayer: true }}>
-					<ThemeWrapper>
-						{/* Background luar handled by Global CSS / Body now, but we keep wrapper for layout centering if needed */}
-						<div className="flex min-h-dvh items-center justify-center bg-gray-100 dark:bg-[#0b1220] px-0 sm:px-3 py-0 sm:py-[3px] transition-colors duration-300">
-							{/* Semua logika header overlay + scroll + bottomnav ada di AppShell */}
-							<AppShell>{children}</AppShell>
-						</div>
-					</ThemeWrapper>
-				</AppRouterCacheProvider>
+				<NextAuthProvider session={session}>
+					<AppRouterCacheProvider options={{ enableCssLayer: true }}>
+						<ThemeWrapper>
+							{/* Background luar handled by Global CSS / Body now, but we keep wrapper for layout centering if needed */}
+							<div className="flex min-h-dvh items-center justify-center bg-gray-100 dark:bg-[#0b1220] px-0 sm:px-3 py-0 sm:py-[3px] transition-colors duration-300">
+								{/* Semua logika header overlay + scroll + bottomnav ada di AppShell */}
+								<AppShell>{children}</AppShell>
+							</div>
+						</ThemeWrapper>
+					</AppRouterCacheProvider>
+				</NextAuthProvider>
 			</body>
 		</html>
 	);

@@ -21,6 +21,9 @@ import {
 import ArrowBackIosNewRoundedIcon from "@mui/icons-material/ArrowBackIosNewRounded";
 import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded";
 
+import { getCampaigns } from "@/actions/campaign";
+import { CATEGORY_TITLE } from "@/lib/constants";
+
 import SchoolRoundedIcon from "@mui/icons-material/SchoolRounded";
 import FloodRoundedIcon from "@mui/icons-material/FloodRounded";
 import AccessibleRoundedIcon from "@mui/icons-material/AccessibleRounded";
@@ -177,10 +180,31 @@ export default function GalangDanaKategoriPage() {
 
 	const [open, setOpen] = React.useState(false);
 	const [selected, setSelected] = React.useState<Cat | null>(null);
+	const [realExamples, setRealExamples] = React.useState<Example[]>([]);
+	const [loadingExamples, setLoadingExamples] = React.useState(false);
 
-	const openSheet = (cat: Cat) => {
+	const openSheet = async (cat: Cat) => {
 		setSelected(cat);
 		setOpen(true);
+		setLoadingExamples(true);
+		setRealExamples([]);
+
+		try {
+			const catName = CATEGORY_TITLE[cat.key];
+			if (catName) {
+				const res = await getCampaigns(1, 5, "active", "", undefined, catName);
+				if (res.success && res.data && res.data.length > 0) {
+					const mapped = res.data.map((c: any) => ({
+						title: c.title,
+						img: c.thumbnail || "/defaultimg.webp",
+					}));
+					setRealExamples(mapped);
+				}
+			}
+		} catch (error) {
+			console.error("Failed to fetch examples", error);
+		}
+		setLoadingExamples(false);
 	};
 
 	const chooseThis = () => {
@@ -295,9 +319,16 @@ export default function GalangDanaKategoriPage() {
 							},
 						}}
 					>
-						{(selected?.examples ?? []).map((e) => (
-							<ExampleCard key={e.title} e={e} />
-						))}
+						{loadingExamples ? (
+							<Typography sx={{ fontSize: 13, color: "text.secondary", py: 2 }}>
+								Memuat contoh...
+							</Typography>
+						) : (
+							(realExamples.length > 0
+								? realExamples
+								: selected?.examples ?? []
+							).map((e) => <ExampleCard key={e.title} e={e} />)
+						)}
 					</Box>
 
 					<Stack spacing={1} sx={{ mt: 1 }}>

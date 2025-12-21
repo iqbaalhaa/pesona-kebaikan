@@ -5,7 +5,9 @@ import Box from "@mui/material/Box";
 import Image from "next/image";
 import Typography from "@mui/material/Typography";
 
-const slides = [
+import { Campaign } from "@prisma/client";
+
+const defaultSlides = [
 	{ src: "/brand/carousel1.webp" },
 	{ src: "/brand/carousel2.webp" },
 ];
@@ -26,8 +28,22 @@ function SlideImage({ src }: { src: string }) {
 	);
 }
 
-export default function HeroCarousel() {
+export default function HeroCarousel({
+	campaigns = [],
+}: {
+	campaigns?: Campaign[];
+}) {
 	const [active, setActive] = React.useState(0);
+
+	const slides = React.useMemo(() => {
+		if (campaigns.length === 0) return defaultSlides;
+		// Combine brand images with campaign images, or just use campaign images
+		// Let's take up to 3 campaign images
+		const campaignSlides = campaigns.slice(0, 3).map((c) => ({
+			src: c.thumbnail || "/defaultimg.webp",
+		}));
+		return [...defaultSlides, ...campaignSlides];
+	}, [campaigns]);
 
 	React.useEffect(() => {
 		const t = setInterval(
@@ -35,7 +51,7 @@ export default function HeroCarousel() {
 			4500
 		);
 		return () => clearInterval(t);
-	}, []);
+	}, [slides.length]);
 
 	return (
 		<Box
@@ -47,7 +63,7 @@ export default function HeroCarousel() {
 		>
 			{slides.map((s, i) => (
 				<Box
-					key={s.src}
+					key={i}
 					className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${
 						i === active ? "opacity-100" : "opacity-0"
 					}`}
