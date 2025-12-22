@@ -49,6 +49,7 @@ import {
 	updateCampaignStatus,
 	deleteCampaign,
 	addCampaignMedia,
+	finishCampaign,
 } from "@/actions/campaign";
 import { getCampaignTransactions } from "@/actions/admin";
 import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
@@ -92,7 +93,7 @@ const STATUS_META: Record<
 	draft: { label: "Draft", tone: "neutral" },
 	review: { label: "Review", tone: "warning" },
 	active: { label: "Aktif", tone: "success" },
-	ended: { label: "Berakhir", tone: "info" },
+	ended: { label: "Berakhir", tone: "error" },
 	rejected: { label: "Ditolak", tone: "error" },
 	pending: { label: "Menunggu Verifikasi", tone: "warning" },
 };
@@ -241,10 +242,20 @@ export default function AdminCampaignDetailPage() {
 			if (res.success && res.data) {
 				const c = res.data;
 				const statusMap: Record<string, CampaignStatus> = {
+					// values from getCampaignById
 					pending: "pending",
-					accepted: "active",
+					active: "active",
 					rejected: "rejected",
+					ended: "ended",
+
+					// Fallbacks/Legacy/Direct DB values
+					PENDING: "pending",
+					ACTIVE: "active",
+					REJECTED: "rejected",
+					COMPLETED: "ended",
+					accepted: "active",
 					finished: "ended",
+					review: "review",
 				};
 
 				const cleanStory = c.description
@@ -652,7 +663,7 @@ export default function AdminCampaignDetailPage() {
 			meta: "Judul/Cerita/Ajakan diperbarui.",
 			tone: "info",
 		});
-		setSnack({ open: true, msg: "Disimpan (dummy).", type: "success" });
+		setSnack({ open: true, msg: "Disimpan.", type: "success" });
 	};
 
 	const requiredMissing = docs.filter((d) => d.required && !d.uploaded).length;
@@ -1126,7 +1137,7 @@ export default function AdminCampaignDetailPage() {
 									<Typography
 										sx={{ mt: 0.5, fontSize: 12.5, color: "text.secondary" }}
 									>
-										Centang checklist, lalu approve / reject. (Dummy)
+										Centang checklist, lalu approve / reject.
 									</Typography>
 								</Box>
 
@@ -1280,7 +1291,7 @@ export default function AdminCampaignDetailPage() {
 							<Typography
 								sx={{ mt: 0.5, fontSize: 12.5, color: "text.secondary" }}
 							>
-								Audit log aktivitas campaign (dummy).
+								Audit log aktivitas campaign.
 							</Typography>
 
 							<Divider sx={{ my: 1.25 }} />
@@ -1497,7 +1508,7 @@ export default function AdminCampaignDetailPage() {
 				<DialogTitle sx={{ fontWeight: 1000 }}>Akhiri campaign?</DialogTitle>
 				<DialogContent>
 					<DialogContentText>
-						Campaign akan diubah statusnya menjadi <b>Berakhir</b>. (Dummy)
+						Campaign akan diubah statusnya menjadi <b>Berakhir</b>.
 					</DialogContentText>
 				</DialogContent>
 				<DialogActions sx={{ p: 2, pt: 0 }}>
@@ -1509,23 +1520,41 @@ export default function AdminCampaignDetailPage() {
 						Batal
 					</Button>
 					<Button
-						onClick={() => {
+						onClick={async () => {
 							setConfirmEnd(false);
-							setData((d) => ({
-								...d,
-								status: "ended",
-								updatedAt: "Hari ini",
-							}));
-							pushAudit({
-								title: "Campaign diakhiri",
-								meta: "Status menjadi Berakhir.",
-								tone: "warning",
-							});
-							setSnack({
-								open: true,
-								msg: "Campaign diakhiri (dummy).",
-								type: "success",
-							});
+							try {
+								const res = await finishCampaign(id);
+								if (res.success) {
+									setData((d: any) => ({
+										...d,
+										status: "ended",
+										updatedAt: "Hari ini",
+									}));
+									pushAudit({
+										title: "Campaign diakhiri",
+										meta: "Status menjadi Berakhir.",
+										tone: "warning",
+									});
+									setSnack({
+										open: true,
+										msg: "Campaign berhasil diakhiri.",
+										type: "success",
+									});
+								} else {
+									setSnack({
+										open: true,
+										msg: res.error || "Gagal mengakhiri campaign.",
+										type: "error",
+									});
+								}
+							} catch (e) {
+								console.error(e);
+								setSnack({
+									open: true,
+									msg: "Terjadi kesalahan.",
+									type: "error",
+								});
+							}
 						}}
 						variant="contained"
 						color="error"

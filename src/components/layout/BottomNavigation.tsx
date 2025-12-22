@@ -5,14 +5,14 @@ import { usePathname, useRouter } from "next/navigation";
 import BottomNavigation from "@mui/material/BottomNavigation";
 import BottomNavigationAction from "@mui/material/BottomNavigationAction";
 import Paper from "@mui/material/Paper";
-import VolunteerActivismIcon from "@mui/icons-material/VolunteerActivism";
+import HomeRoundedIcon from "@mui/icons-material/HomeRounded";
 import ArticleIcon from "@mui/icons-material/Article";
 import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
 import CampaignIcon from "@mui/icons-material/Campaign";
 import PersonIcon from "@mui/icons-material/Person";
 
 const menus = [
-	{ label: "Donasi", path: "/", icon: <VolunteerActivismIcon /> },
+	{ label: "Home", path: "/", icon: <HomeRoundedIcon /> },
 	{ label: "Blog", path: "/blog", icon: <ArticleIcon /> },
 	{ label: "Donasi Saya", path: "/donasi-saya", icon: <ReceiptLongIcon /> },
 	{ label: "Galang Dana", path: "/galang-dana", icon: <CampaignIcon /> },

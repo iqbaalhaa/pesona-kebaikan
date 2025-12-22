@@ -30,6 +30,9 @@ import {
 	LinearProgress,
 	Drawer,
 	ButtonBase,
+	Container,
+	alpha,
+	useTheme,
 } from "@mui/material";
 
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
@@ -37,6 +40,9 @@ import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded";
 import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
 import ImageNotSupportedRoundedIcon from "@mui/icons-material/ImageNotSupportedRounded";
+import CampaignRoundedIcon from "@mui/icons-material/CampaignRounded";
+import MoreVertRoundedIcon from "@mui/icons-material/MoreVertRounded";
+import EditRoundedIcon from "@mui/icons-material/EditRounded";
 
 type StatusKey = "all" | "action" | "active" | "draft" | "ended" | "pending";
 
@@ -49,6 +55,11 @@ type FundraiseMine = {
 	updatedAt: string; // "18 Desember 2025"
 	lastStep?: string;
 	thumbnail?: string;
+	collected?: number;
+	target?: number;
+	daysLeft?: number;
+	donors?: number;
+	slug?: string;
 };
 
 const TABS: { key: StatusKey; label: string }[] = [
@@ -56,19 +67,25 @@ const TABS: { key: StatusKey; label: string }[] = [
 	{ key: "action", label: "Butuh tindakan" },
 	{ key: "pending", label: "Menunggu Review" },
 	{ key: "active", label: "Aktif" },
-	{ key: "draft", label: "Belum jadi" },
-	{ key: "ended", label: "Berakhir" },
+	{ key: "draft", label: "Draft" },
+	{ key: "ended", label: "Selesai" },
 ];
 
-// Removed MOCK
-
 function statusLabel(s: StatusKey) {
-	if (s === "draft") return "Belum jadi";
+	if (s === "draft") return "Draft";
 	if (s === "active") return "Aktif";
-	if (s === "action") return "Butuh tindakan";
-	if (s === "ended") return "Berakhir";
+	if (s === "action") return "Butuh Tindakan";
+	if (s === "ended") return "Selesai";
 	if (s === "pending") return "Menunggu Review";
 	return "Semua";
+}
+
+function statusColor(s: StatusKey) {
+	if (s === "active") return "success";
+	if (s === "action") return "error";
+	if (s === "pending") return "warning";
+	if (s === "ended") return "default";
+	return "default";
 }
 
 function stepHint(stepsDone: number, stepsTotal: number) {
@@ -82,23 +99,25 @@ function stepHint(stepsDone: number, stepsTotal: number) {
 		6: "Review & kirim pengajuan",
 	};
 	if (stepsDone >= stepsTotal) return "Selesai • Menunggu review";
-	return `Tahap berikutnya: ${map[stepsDone] ?? "Lanjutkan pengisian"}`;
+	return `Lanjut: ${map[stepsDone] ?? "Lanjutkan pengisian"}`;
 }
 
-function CounterPill({ n }: { n: number }) {
+function CounterPill({ n, active }: { n: number; active?: boolean }) {
 	return (
 		<Box
 			sx={{
 				ml: 0.75,
-				px: 0.9,
+				px: 0.8,
 				height: 20,
 				display: "inline-flex",
 				alignItems: "center",
+				justifyContent: "center",
 				borderRadius: 999,
-				fontSize: 12,
-				fontWeight: 1000,
-				bgcolor: "rgba(15,23,42,.08)",
-				color: "text.primary",
+				fontSize: 11,
+				fontWeight: 800,
+				bgcolor: active ? "primary.main" : "rgba(0,0,0,0.06)",
+				color: active ? "primary.contrastText" : "text.secondary",
+				transition: "all 0.2s",
 			}}
 		>
 			{n}
@@ -108,8 +127,9 @@ function CounterPill({ n }: { n: number }) {
 
 export default function GalangDanaSayaPage() {
 	const router = useRouter();
+	const theme = useTheme();
 
-	const BOTTOM_NAV_H = 64; // samakan dengan bottom nav kamu
+	const BOTTOM_NAV_H = 64;
 
 	const [tab, setTab] = React.useState<StatusKey>("all");
 	const [items, setItems] = React.useState<FundraiseMine[]>([]);
@@ -124,10 +144,15 @@ export default function GalangDanaSayaPage() {
 				id: c.id,
 				title: c.title,
 				status: c.status,
-				stepsDone: c.status === "draft" ? 3 : 7,
+				stepsDone: c.status === "draft" ? 3 : 7, // Dummy logic preserved
 				stepsTotal: 7,
 				updatedAt: c.updatedAt,
 				thumbnail: c.thumbnail,
+				collected: c.collected,
+				target: c.target,
+				daysLeft: c.daysLeft,
+				donors: c.donors,
+				slug: c.slug,
 			}));
 			setItems(mapped);
 		}
@@ -155,13 +180,13 @@ export default function GalangDanaSayaPage() {
 	const [openMedicalReq, setOpenMedicalReq] = React.useState(false);
 
 	const handlePickSakit = () => {
-		setOpenPick(false); // tutup drawer
-		setOpenMedicalReq(true); // buka syarat
+		setOpenPick(false);
+		setOpenMedicalReq(true);
 	};
 
 	const handlePickLainnya = () => {
 		setOpenPick(false);
-		router.push("/galang-dana/kategori"); // ✅ page seluruh kategori
+		router.push("/galang-dana/kategori");
 	};
 
 	const handleAgreeMedical = () => {
@@ -170,7 +195,6 @@ export default function GalangDanaSayaPage() {
 	};
 
 	const handleSeeExample = () => {
-		// kalau belum bikin page contoh, pakai toast dulu
 		setSnack({
 			open: true,
 			msg: "Contoh dokumen medis — segera hadir",
@@ -185,9 +209,12 @@ export default function GalangDanaSayaPage() {
 			active: 0,
 			draft: 0,
 			ended: 0,
+			pending: 0,
 		};
 		items.forEach((x) => {
-			base[x.status] += 1;
+			if (base[x.status] !== undefined) {
+				base[x.status] += 1;
+			}
 		});
 		return base;
 	}, [items]);
@@ -222,290 +249,537 @@ export default function GalangDanaSayaPage() {
 	};
 
 	return (
-		<Box sx={{ px: 2, pb: 2 }}>
-			{/* Header bar */}
-			<Paper
-				elevation={0}
+		<Box
+			sx={{
+				pb: `calc(${BOTTOM_NAV_H}px + 24px)`,
+				bgcolor: "background.default",
+				minHeight: "100dvh",
+			}}
+		>
+			{/* Modern Header */}
+			<Box
 				sx={{
-					mt: 1.5,
-					p: 1.25,
-					borderRadius: 3,
-					border: "1px solid",
+					pt: 3,
+					pb: 1,
+					px: 2,
+					bgcolor: "background.paper",
+					borderBottom: "1px solid",
 					borderColor: "divider",
-					bgcolor: "primary.main",
-					color: "primary.contrastText",
+					position: "sticky",
+					top: 0,
+					zIndex: 10,
 				}}
 			>
-				<Typography sx={{ fontWeight: 1000, fontSize: 16 }}>
-					Galang dana saya
+				<Typography
+					variant="h5"
+					sx={{ fontWeight: 800, fontSize: 22, color: "text.primary" }}
+				>
+					Galang Dana Saya
 				</Typography>
-			</Paper>
-
-			{/* Buat galang dana */}
-			<Box sx={{ mt: 1.5 }}>
-				<Stack
-					direction="row"
-					alignItems="center"
-					justifyContent="space-between"
+				<Typography
+					variant="body2"
+					sx={{ color: "text.secondary", mt: 0.5, fontWeight: 500 }}
 				>
-					<Typography sx={{ fontWeight: 900, fontSize: 13 }}>
-						Buat galang dana
-					</Typography>
-				</Stack>
-
-				<Paper
-					elevation={0}
-					sx={{
-						mt: 1,
-						p: 1.1,
-						borderRadius: 3,
-						border: "1px dashed",
-						borderColor: "primary.main",
-						bgcolor: "background.paper",
-					}}
-				>
-					<Button
-						onClick={() => setOpenPick(true)}
-						fullWidth
-						variant="text"
-						startIcon={<AddRoundedIcon />}
-						sx={{ fontWeight: 1000, borderRadius: 2.5, py: 1.25 }}
-					>
-						Buat baru galang dana +
-					</Button>
-				</Paper>
-
-				{/* Banner panduan */}
-				<Paper
-					elevation={0}
-					sx={{
-						mt: 1,
-						p: 1,
-						borderRadius: 2.5,
-						border: "1px solid",
-						borderColor: "divider",
-						bgcolor: "rgba(2,132,199,.06)",
-					}}
-				>
-					<Stack direction="row" spacing={1} alignItems="center">
-						<InfoOutlinedIcon fontSize="small" />
-						<Typography sx={{ fontSize: 12.5 }}>
-							Ingin galang danamu lebih sukses?{" "}
-							<Box
-								component={Link}
-								href="/galang-dana/panduan"
-								sx={{
-									fontWeight: 900,
-									color: "primary.main",
-									textDecoration: "none",
-								}}
-							>
-								Lihat panduan galang dana
-							</Box>
-						</Typography>
-					</Stack>
-				</Paper>
+					Kelola dan pantau perkembangan campaign kamu
+				</Typography>
 			</Box>
 
-			{/* Kelola */}
-			<Box sx={{ mt: 2 }}>
-				<Typography sx={{ fontWeight: 900, fontSize: 13, mb: 1 }}>
-					Kelola galang dana
-				</Typography>
-
-				{/* Tabs + counter */}
-				<Box
+			<Container maxWidth="sm" sx={{ px: 2, mt: 3 }}>
+				{/* Hero Card for Creation */}
+				<Paper
+					elevation={0}
 					sx={{
-						display: "flex",
-						gap: 1,
-						overflowX: "auto",
-						pb: 0.5,
-						"&::-webkit-scrollbar": { display: "none" },
+						p: 3,
+						borderRadius: 4,
+						background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
+						color: "white",
+						boxShadow: "0 10px 30px -10px rgba(0, 150, 100, 0.4)",
+						position: "relative",
+						overflow: "hidden",
 					}}
 				>
-					{TABS.map((t) => {
-						const n = counts[t.key];
-						const selected = tab === t.key;
+					<Box
+						sx={{
+							position: "absolute",
+							top: -20,
+							right: -20,
+							width: 120,
+							height: 120,
+							bgcolor: "rgba(255,255,255,0.1)",
+							borderRadius: "50%",
+						}}
+					/>
+					<Box
+						sx={{
+							position: "absolute",
+							bottom: -40,
+							left: -10,
+							width: 80,
+							height: 80,
+							bgcolor: "rgba(255,255,255,0.1)",
+							borderRadius: "50%",
+						}}
+					/>
 
-						return (
-							<Chip
-								key={t.key}
-								clickable
-								onClick={() => setTab(t.key)}
-								color={selected ? "primary" : "default"}
-								variant={selected ? "filled" : "outlined"}
-								sx={{ borderRadius: 999, fontWeight: 1000, pr: 0.5 }}
-								label={
-									<Box sx={{ display: "inline-flex", alignItems: "center" }}>
-										{t.label}
-										<CounterPill n={n} />
-									</Box>
-								}
-							/>
-						);
-					})}
-				</Box>
+					<Stack spacing={2} sx={{ position: "relative", zIndex: 1 }}>
+						<Box>
+							<Typography sx={{ fontWeight: 800, fontSize: 18, mb: 0.5 }}>
+								Mulai Kebaikan Baru
+							</Typography>
+							<Typography sx={{ fontSize: 13, opacity: 0.9, maxWidth: "85%" }}>
+								Buat campaign galang dana untuk membantu mereka yang
+								membutuhkan.
+							</Typography>
+						</Box>
 
-				{/* List */}
-				<Box sx={{ mt: 1.25 }}>
-					{filtered.length === 0 ? (
-						<Paper
-							elevation={0}
+						<Button
+							onClick={() => setOpenPick(true)}
+							variant="contained"
+							startIcon={<AddRoundedIcon />}
 							sx={{
-								p: 2,
+								bgcolor: "white",
+								color: "primary.main",
 								borderRadius: 3,
-								border: "1px solid",
-								borderColor: "divider",
-								textAlign: "center",
+								fontWeight: 700,
+								textTransform: "none",
+								py: 1.2,
+								px: 3,
+								alignSelf: "flex-start",
+								boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+								"&:hover": {
+									bgcolor: "rgba(255,255,255,0.9)",
+								},
 							}}
 						>
-							<Typography sx={{ fontWeight: 1000 }}>Belum ada data</Typography>
-							<Typography
-								sx={{ mt: 0.5, fontSize: 12.5, color: "text.secondary" }}
-							>
-								Kamu belum punya galang dana di kategori ini.
-							</Typography>
+							Buat Galang Dana
+						</Button>
+					</Stack>
+				</Paper>
 
-							<Button
-								onClick={() => setOpenPick(true)}
-								variant="contained"
-								sx={{ mt: 1.25, borderRadius: 999, fontWeight: 1000 }}
-								startIcon={<AddRoundedIcon />}
-							>
-								Buat Galang Dana
-							</Button>
-						</Paper>
-					) : (
-						filtered.map((x) => {
-							const pct = Math.min(
-								100,
-								Math.round((x.stepsDone / x.stepsTotal) * 100)
-							);
-							const hint = x.lastStep ?? stepHint(x.stepsDone, x.stepsTotal);
+				{/* Guide Banner */}
+				<Paper
+					elevation={0}
+					component={Link}
+					href="/galang-dana/panduan"
+					sx={{
+						mt: 2,
+						p: 1.5,
+						borderRadius: 3,
+						border: "1px solid",
+						borderColor: alpha(theme.palette.info.main, 0.2),
+						bgcolor: alpha(theme.palette.info.main, 0.05),
+						display: "flex",
+						alignItems: "center",
+						gap: 1.5,
+						textDecoration: "none",
+						transition: "all 0.2s",
+						"&:hover": {
+							bgcolor: alpha(theme.palette.info.main, 0.08),
+						},
+					}}
+				>
+					<Box
+						sx={{
+							width: 36,
+							height: 36,
+							borderRadius: "50%",
+							bgcolor: "white",
+							display: "flex",
+							alignItems: "center",
+							justifyContent: "center",
+							color: "info.main",
+							boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
+						}}
+					>
+						<InfoOutlinedIcon fontSize="small" />
+					</Box>
+					<Box sx={{ flex: 1 }}>
+						<Typography
+							sx={{ fontWeight: 700, fontSize: 13, color: "text.primary" }}
+						>
+							Panduan Galang Dana
+						</Typography>
+						<Typography sx={{ fontSize: 12, color: "text.secondary" }}>
+							Tips agar campaign kamu lebih sukses
+						</Typography>
+					</Box>
+					<ArrowForwardRoundedIcon
+						sx={{ fontSize: 18, color: "text.disabled" }}
+					/>
+				</Paper>
+
+				{/* Campaign List Section */}
+				<Box sx={{ mt: 4 }}>
+					<Stack
+						direction="row"
+						alignItems="center"
+						justifyContent="space-between"
+						sx={{ mb: 2 }}
+					>
+						<Typography sx={{ fontWeight: 800, fontSize: 16 }}>
+							Daftar Campaign
+						</Typography>
+					</Stack>
+
+					{/* Custom Tabs */}
+					<Box
+						sx={{
+							display: "flex",
+							gap: 1,
+							overflowX: "auto",
+							pb: 1,
+							mx: -2,
+							px: 2,
+							"&::-webkit-scrollbar": { display: "none" },
+						}}
+					>
+						{TABS.map((t) => {
+							const n = counts[t.key];
+							const selected = tab === t.key;
 
 							return (
-								<Card
-									key={x.id}
-									elevation={0}
+								<ButtonBase
+									key={t.key}
+									onClick={() => setTab(t.key)}
 									sx={{
-										borderRadius: 3,
+										px: 2,
+										py: 1,
+										borderRadius: 99,
+										bgcolor: selected ? "text.primary" : "transparent",
+										color: selected ? "background.paper" : "text.secondary",
 										border: "1px solid",
-										borderColor: "divider",
-										overflow: "hidden",
-										mb: 1.25,
+										borderColor: selected ? "text.primary" : "divider",
+										fontSize: 13,
+										fontWeight: 700,
+										whiteSpace: "nowrap",
+										transition: "all 0.2s",
+										flexShrink: 0,
 									}}
 								>
-									<CardContent sx={{ p: 1.25 }}>
-										<Stack direction="row" spacing={1.25} alignItems="center">
-											<Paper
-												variant="outlined"
-												sx={{
-													width: 56,
-													height: 56,
-													borderRadius: 2,
-													display: "grid",
-													placeItems: "center",
-													bgcolor: "background.default",
-													flexShrink: 0,
-												}}
-											>
-												<ImageNotSupportedRoundedIcon
-													sx={{ color: "text.disabled" }}
-												/>
-											</Paper>
+									{t.label}
+									{n > 0 && (
+										<Box
+											component="span"
+											sx={{
+												ml: 1,
+												bgcolor: selected
+													? "rgba(255,255,255,0.2)"
+													: "rgba(0,0,0,0.08)",
+												color: selected ? "white" : "text.primary",
+												px: 0.8,
+												py: 0.2,
+												borderRadius: 99,
+												fontSize: 10,
+												fontWeight: 800,
+											}}
+										>
+											{n}
+										</Box>
+									)}
+								</ButtonBase>
+							);
+						})}
+					</Box>
 
-											<Box sx={{ flex: 1, minWidth: 0 }}>
-												<Typography
-													sx={{ fontWeight: 1000, fontSize: 13 }}
-													className="line-clamp-2"
-												>
-													{x.title}
-												</Typography>
+					{/* List Items */}
+					<Box sx={{ mt: 1 }}>
+						{loading ? (
+							<Box sx={{ py: 4, display: "flex", justifyContent: "center" }}>
+								<LinearProgress sx={{ width: "50%", borderRadius: 4 }} />
+							</Box>
+						) : filtered.length === 0 ? (
+							<Paper
+								elevation={0}
+								sx={{
+									py: 6,
+									px: 3,
+									borderRadius: 4,
+									border: "1px dashed",
+									borderColor: "divider",
+									textAlign: "center",
+									bgcolor: "background.default",
+								}}
+							>
+								<Box
+									sx={{
+										width: 64,
+										height: 64,
+										mx: "auto",
+										bgcolor: "rgba(0,0,0,0.03)",
+										borderRadius: "50%",
+										display: "flex",
+										alignItems: "center",
+										justifyContent: "center",
+										mb: 2,
+										color: "text.disabled",
+									}}
+								>
+									<CampaignRoundedIcon sx={{ fontSize: 32 }} />
+								</Box>
+								<Typography sx={{ fontWeight: 700, color: "text.primary" }}>
+									Belum ada campaign
+								</Typography>
+								<Typography
+									sx={{
+										mt: 0.5,
+										fontSize: 13,
+										color: "text.secondary",
+										maxWidth: 280,
+										mx: "auto",
+									}}
+								>
+									Kamu belum memiliki campaign dengan status ini. Yuk buat
+									sekarang!
+								</Typography>
+								<Button
+									onClick={() => setOpenPick(true)}
+									variant="text"
+									color="primary"
+									sx={{ mt: 2, fontWeight: 700 }}
+								>
+									Buat Galang Dana
+								</Button>
+							</Paper>
+						) : (
+							<Stack spacing={2}>
+								{filtered.map((x) => {
+									const isDraft = x.status === "draft";
+									const pct = isDraft
+										? Math.min(
+												100,
+												Math.round((x.stepsDone / x.stepsTotal) * 100)
+										  )
+										: Math.min(
+												100,
+												Math.round(((x.collected || 0) / (x.target || 1)) * 100)
+										  );
 
-												<Stack
-													direction="row"
-													spacing={1}
-													alignItems="center"
-													sx={{ mt: 0.6, flexWrap: "wrap" }}
-												>
-													<Chip
-														label={statusLabel(x.status)}
-														size="small"
-														variant="outlined"
-														sx={{ borderRadius: 999, fontWeight: 1000 }}
+									const hint = isDraft
+										? x.lastStep ?? stepHint(x.stepsDone, x.stepsTotal)
+										: `${new Intl.NumberFormat("id-ID", {
+												style: "currency",
+												currency: "IDR",
+												maximumFractionDigits: 0,
+										  }).format(x.collected || 0)} terkumpul`;
+
+									return (
+										<Paper
+											key={x.id}
+											elevation={0}
+											sx={{
+												borderRadius: 3.5,
+												border: "1px solid",
+												borderColor: "divider",
+												overflow: "hidden",
+												transition: "all 0.2s",
+												"&:hover": {
+													borderColor: "primary.main",
+													boxShadow: "0 8px 24px rgba(0,0,0,0.04)",
+													transform: "translateY(-2px)",
+												},
+											}}
+										>
+											<Box sx={{ p: 2 }}>
+												<Stack direction="row" spacing={2}>
+													<Box
+														sx={{
+															width: 72,
+															height: 72,
+															borderRadius: 2.5,
+															bgcolor: "background.default",
+															display: "flex",
+															alignItems: "center",
+															justifyContent: "center",
+															flexShrink: 0,
+															overflow: "hidden",
+															border: "1px solid",
+															borderColor: "divider",
+														}}
+													>
+														{x.thumbnail ? (
+															<Box
+																component="img"
+																src={x.thumbnail}
+																alt=""
+																sx={{
+																	width: "100%",
+																	height: "100%",
+																	objectFit: "cover",
+																}}
+															/>
+														) : (
+															<ImageNotSupportedRoundedIcon
+																sx={{ color: "text.disabled" }}
+															/>
+														)}
+													</Box>
+
+													<Box sx={{ flex: 1, minWidth: 0 }}>
+														<Stack
+															direction="row"
+															alignItems="flex-start"
+															justifyContent="space-between"
+															spacing={1}
+														>
+															<Typography
+																sx={{
+																	fontWeight: 700,
+																	fontSize: 14,
+																	lineHeight: 1.4,
+																}}
+																className="line-clamp-2"
+															>
+																{x.title}
+															</Typography>
+															<IconButton
+																size="small"
+																onClick={() => askDelete(x.id)}
+															>
+																<MoreVertRoundedIcon fontSize="small" />
+															</IconButton>
+														</Stack>
+
+														<Stack
+															direction="row"
+															spacing={1}
+															alignItems="center"
+															sx={{ mt: 1, flexWrap: "wrap" }}
+														>
+															<Chip
+																label={statusLabel(x.status)}
+																size="small"
+																color={statusColor(x.status) as any}
+																sx={{
+																	height: 22,
+																	fontSize: 11,
+																	fontWeight: 700,
+																	borderRadius: 1,
+																}}
+															/>
+															<Typography
+																sx={{ fontSize: 11, color: "text.secondary" }}
+															>
+																Update: {x.updatedAt}
+															</Typography>
+														</Stack>
+													</Box>
+												</Stack>
+
+												<Box sx={{ mt: 2 }}>
+													<Stack
+														direction="row"
+														justifyContent="space-between"
+														alignItems="center"
+														sx={{ mb: 0.8 }}
+													>
+														<Typography
+															sx={{
+																fontSize: 12,
+																fontWeight: 600,
+																color: "text.secondary",
+															}}
+														>
+															{isDraft ? "Kelengkapan Data" : "Dana Terkumpul"}
+														</Typography>
+														<Typography
+															sx={{
+																fontSize: 12,
+																fontWeight: 700,
+																color: "primary.main",
+															}}
+														>
+															{pct}%
+														</Typography>
+													</Stack>
+													<LinearProgress
+														variant="determinate"
+														value={pct}
+														sx={{
+															height: 6,
+															borderRadius: 99,
+															bgcolor: alpha(theme.palette.primary.main, 0.1),
+															"& .MuiLinearProgress-bar": {
+																borderRadius: 99,
+															},
+														}}
 													/>
 													<Typography
-														sx={{ fontSize: 12, color: "text.secondary" }}
+														sx={{
+															mt: 1,
+															fontSize: 12,
+															color: "text.secondary",
+															display: "flex",
+															alignItems: "center",
+															gap: 0.5,
+														}}
 													>
-														{x.stepsDone} dari {x.stepsTotal} tahap • Update{" "}
-														<b>{x.updatedAt}</b>
+														<InfoOutlinedIcon sx={{ fontSize: 14 }} />
+														{hint}
 													</Typography>
-												</Stack>
+												</Box>
 											</Box>
-										</Stack>
 
-										<Box sx={{ mt: 1.25 }}>
-											<LinearProgress variant="determinate" value={pct} />
-											<Typography
-												sx={{
-													mt: 0.6,
-													fontSize: 12.5,
-													color: "text.secondary",
-												}}
-											>
-												{hint}
-											</Typography>
-										</Box>
+											<Divider />
 
-										<Divider sx={{ my: 1.25 }} />
-
-										<Stack direction="row" spacing={1} alignItems="center">
-											<Button
+											<ButtonBase
 												component={Link}
-												href={`/galang-dana/buat?draft=${x.id}`}
-												fullWidth
-												variant="outlined"
-												endIcon={<ArrowForwardRoundedIcon />}
-												sx={{ borderRadius: 2.5, fontWeight: 1000, py: 1 }}
-											>
-												Lanjutkan
-											</Button>
-
-											<IconButton
-												onClick={() => askDelete(x.id)}
+												href={
+													isDraft
+														? `/galang-dana/buat?draft=${x.id}`
+														: `/galang-dana/${x.slug || x.id}`
+												}
 												sx={{
-													borderRadius: 2.5,
-													border: "1px solid",
-													borderColor: "divider",
-													width: 46,
-													height: 46,
+													width: "100%",
+													py: 1.5,
+													bgcolor: "background.paper",
+													fontSize: 13,
+													fontWeight: 700,
+													color: "primary.main",
+													"&:hover": {
+														bgcolor: alpha(theme.palette.primary.main, 0.05),
+													},
 												}}
 											>
-												<DeleteOutlineRoundedIcon />
-											</IconButton>
-										</Stack>
-									</CardContent>
-								</Card>
-							);
-						})
-					)}
+												{isDraft ? "Lanjutkan Pengisian" : "Lihat Detail"}{" "}
+												<ArrowForwardRoundedIcon sx={{ fontSize: 16, ml: 1 }} />
+											</ButtonBase>
+										</Paper>
+									);
+								})}
+							</Stack>
+						)}
+					</Box>
 				</Box>
-			</Box>
+			</Container>
 
 			{/* Confirm delete */}
-			<Dialog open={confirm.open} onClose={() => setConfirm({ open: false })}>
-				<DialogTitle sx={{ fontWeight: 1000 }}>Hapus draft?</DialogTitle>
+			<Dialog
+				open={confirm.open}
+				onClose={() => setConfirm({ open: false })}
+				PaperProps={{
+					sx: { borderRadius: 4, width: "100%", maxWidth: 360, m: 2 },
+				}}
+			>
+				<DialogTitle sx={{ fontWeight: 800, textAlign: "center", pt: 3 }}>
+					Hapus Campaign?
+				</DialogTitle>
 				<DialogContent>
-					<DialogContentText>
-						Draft yang dihapus tidak bisa dikembalikan (untuk sekarang ini
-						dummy).
+					<DialogContentText sx={{ textAlign: "center", fontSize: 14 }}>
+						Campaign yang dihapus tidak dapat dikembalikan. Apakah kamu yakin
+						ingin melanjutkan?
 					</DialogContentText>
 				</DialogContent>
-				<DialogActions sx={{ p: 2, pt: 0 }}>
+				<DialogActions sx={{ p: 3, pt: 0, justifyContent: "center", gap: 1 }}>
 					<Button
 						onClick={() => setConfirm({ open: false })}
 						variant="outlined"
-						sx={{ borderRadius: 999, fontWeight: 900 }}
+						sx={{
+							borderRadius: 99,
+							fontWeight: 700,
+							px: 3,
+							color: "text.primary",
+							borderColor: "divider",
+						}}
 					>
 						Batal
 					</Button>
@@ -513,9 +787,9 @@ export default function GalangDanaSayaPage() {
 						onClick={doDelete}
 						variant="contained"
 						color="error"
-						sx={{ borderRadius: 999, fontWeight: 1000 }}
+						sx={{ borderRadius: 99, fontWeight: 700, px: 3, boxShadow: "none" }}
 					>
-						Hapus
+						Ya, Hapus
 					</Button>
 				</DialogActions>
 			</Dialog>
@@ -533,11 +807,8 @@ export default function GalangDanaSayaPage() {
 					onClose={() => setSnack((s) => ({ ...s, open: false }))}
 					sx={{
 						borderRadius: 3,
-						bgcolor: snack.type === "success" ? "text.primary" : undefined,
-						color: snack.type === "success" ? "background.paper" : undefined,
-						"& .MuiAlert-icon": {
-							color: snack.type === "success" ? "background.paper" : undefined,
-						},
+						fontWeight: 600,
+						boxShadow: "0 8px 24px rgba(0,0,0,0.1)",
 					}}
 				>
 					{snack.msg}
@@ -549,67 +820,65 @@ export default function GalangDanaSayaPage() {
 				anchor="bottom"
 				open={openPick}
 				onClose={() => setOpenPick(false)}
-				ModalProps={{ hideBackdrop: true }}
+				ModalProps={{ hideBackdrop: false }}
 				PaperProps={{
 					sx: {
-						bottom: `calc(${BOTTOM_NAV_H}px + env(safe-area-inset-bottom))`,
-						maxHeight: `calc(100dvh - (${BOTTOM_NAV_H}px + env(safe-area-inset-bottom)))`,
-						borderTopLeftRadius: 22,
-						borderTopRightRadius: 22,
-						overflow: "hidden",
-						maxWidth: 480,
+						borderTopLeftRadius: 28,
+						borderTopRightRadius: 28,
+						maxHeight: "90dvh",
+						maxWidth: 500,
 						mx: "auto",
-						width: "100%",
-						bgcolor: "#fff",
 					},
 				}}
 			>
-				<Box sx={{ px: 2, pt: 1.5, pb: 1 }}>
-					<Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-						<IconButton
-							onClick={() => setOpenPick(false)}
-							sx={{
-								borderRadius: 999,
-								border: "1px solid",
-								borderColor: "divider",
-								width: 36,
-								height: 36,
-							}}
-						>
-							<CloseRoundedIcon fontSize="small" />
-						</IconButton>
+				<Box
+					sx={{
+						width: 40,
+						height: 4,
+						bgcolor: "divider",
+						borderRadius: 99,
+						mx: "auto",
+						mt: 1.5,
+						mb: 2,
+					}}
+				/>
 
-						<Box sx={{ flex: 1 }}>
-							<Typography sx={{ fontWeight: 1000, fontSize: 16 }}>
-								Hai, #OrangBaik!
-							</Typography>
-							<Typography sx={{ color: "text.secondary", fontSize: 12.5 }}>
-								Kamu ingin menggalang dana untuk...
-							</Typography>
-						</Box>
-					</Box>
-				</Box>
+				<Box sx={{ px: 3, pb: 4 }}>
+					<Typography
+						sx={{ fontWeight: 800, fontSize: 20, mb: 1, textAlign: "center" }}
+					>
+						Mulai Galang Dana
+					</Typography>
+					<Typography
+						sx={{
+							color: "text.secondary",
+							fontSize: 14,
+							mb: 3,
+							textAlign: "center",
+						}}
+					>
+						Pilih kategori yang sesuai dengan tujuan kamu
+					</Typography>
 
-				<Box sx={{ px: 2, pb: 2 }}>
-					<PickCard
-						iconBg="rgba(14,165,233,.12)"
-						icon={<HealingRoundedIcon sx={{ color: "#0ea5e9" }} />}
-						title="Galang dana bantuan orang sakit"
-						desc="Khusus biaya pengobatan atau perawatan penyakit tertentu."
-						buttonText="Buat galang dana orang sakit"
-						onClick={handlePickSakit}
-					/>
+					<Stack spacing={2}>
+						<PickCard
+							iconBg={alpha("#0ea5e9", 0.1)}
+							icon={<HealingRoundedIcon sx={{ color: "#0ea5e9" }} />}
+							title="Bantuan Pengobatan"
+							desc="Galang dana untuk biaya pengobatan, rawat inap, atau kebutuhan medis lainnya."
+							buttonText="Pilih Kategori Ini"
+							onClick={handlePickSakit}
+						/>
 
-					<Box sx={{ height: 12 }} />
-
-					<PickCard
-						iconBg="rgba(251,113,133,.12)"
-						icon={<FavoriteRoundedIcon sx={{ color: "#fb7185" }} />}
-						title="Galang dana bantuan lainnya"
-						desc="Untuk bantuan pendidikan, kemanusiaan, bencana alam, dsb."
-						buttonText="Pilih kategori galang dana"
-						onClick={handlePickLainnya}
-					/>
+						<PickCard
+							iconBg={alpha("#fb7185", 0.1)}
+							icon={<FavoriteRoundedIcon sx={{ color: "#fb7185" }} />}
+							title="Kategori Lainnya"
+							desc="Untuk pendidikan, bencana alam, rumah ibadah, panti asuhan, dan sosial."
+							buttonText="Pilih Kategori Ini"
+							onClick={handlePickLainnya}
+						/>
+					</Stack>
 				</Box>
 			</Drawer>
 
@@ -619,114 +888,108 @@ export default function GalangDanaSayaPage() {
 				onClose={() => setOpenMedicalReq(false)}
 				fullWidth
 				maxWidth="sm"
-				sx={{
-					"& .MuiDialog-container": {
-						// jangan nutup bottom navbar
-						alignItems: "center",
-						pb: `calc(${BOTTOM_NAV_H}px + env(safe-area-inset-bottom) + 8px)`,
-					},
-				}}
-				slotProps={{
-					backdrop: {
-						sx: {
-							bottom: `calc(${BOTTOM_NAV_H}px + env(safe-area-inset-bottom))`,
-						},
-					},
-				}}
 				PaperProps={{
 					sx: {
-						borderRadius: 3,
+						borderRadius: 4,
 						maxWidth: 480,
-						mx: "auto",
-						width: "100%",
-						overflow: "hidden",
+						m: 2,
 					},
 				}}
 			>
-				<Box sx={{ p: 2 }}>
-					<Typography sx={{ fontWeight: 1000, fontSize: 13.5, mb: 1 }}>
-						Pastikan kamu orang yang berhak membuat galang dana dengan memiliki
-						dokumen berikut:
+				<DialogTitle sx={{ fontWeight: 800, fontSize: 18, pb: 1 }}>
+					Syarat Dokumen Medis
+				</DialogTitle>
+				<DialogContent>
+					<Typography sx={{ fontSize: 14, mb: 2, color: "text.secondary" }}>
+						Untuk menjaga kepercayaan donatur, mohon siapkan dokumen berikut:
 					</Typography>
 
-					<Box component="ul" sx={{ m: 0, pl: 2.2 }}>
-						<li>
-							<Typography sx={{ fontSize: 13 }}>
-								<b>KTP</b> kamu sebagai penggalang dana
-							</Typography>
-						</li>
-						<li>
-							<Typography sx={{ fontSize: 13 }}>
-								<b>Kartu Keluarga pasien</b>
-							</Typography>
+					<Stack spacing={2}>
+						{[
+							"Foto KTP penggalang dana",
+							"Foto Kartu Keluarga (KK) pasien",
+							"Surat keterangan medis / diagnosis dokter",
+							"Hasil pemeriksaan penunjang (jika ada)",
+						].map((item, i) => (
 							<Box
-								component="ul"
-								sx={{ mt: 0.5, mb: 0.5, pl: 2.2, color: "text.secondary" }}
+								key={i}
+								sx={{ display: "flex", gap: 1.5, alignItems: "center" }}
 							>
-								<li>
-									<Typography sx={{ fontSize: 13 }}>
-										Jika pasien belum ada di KK, sertakan{" "}
-										<b>akta/Surat Keterangan Lahir</b>
-									</Typography>
-								</li>
+								<Box
+									sx={{
+										width: 24,
+										height: 24,
+										borderRadius: "50%",
+										bgcolor: alpha(theme.palette.primary.main, 0.1),
+										color: "primary.main",
+										fontSize: 12,
+										fontWeight: 700,
+										display: "flex",
+										alignItems: "center",
+										justifyContent: "center",
+									}}
+								>
+									{i + 1}
+								</Box>
+								<Typography sx={{ fontSize: 14, fontWeight: 600 }}>
+									{item}
+								</Typography>
 							</Box>
-						</li>
-						<li>
-							<Typography sx={{ fontSize: 13 }}>
-								<b>Surat keterangan medis</b> dengan keterangan{" "}
-								<b>diagnosis/penyakit</b>
-							</Typography>
-						</li>
-						<li>
-							<Typography sx={{ fontSize: 13 }}>
-								<b>Hasil pemeriksaan</b> (lab, rontgen, dsb.)
-							</Typography>
-						</li>
-					</Box>
+						))}
+					</Stack>
 
 					<Paper
 						elevation={0}
 						sx={{
-							mt: 1.5,
-							p: 1.25,
-							borderRadius: 2,
+							mt: 3,
+							p: 2,
+							borderRadius: 3,
+							bgcolor: alpha(theme.palette.warning.main, 0.05),
 							border: "1px solid",
-							borderColor: "divider",
-							bgcolor: "rgba(2,132,199,.06)",
+							borderColor: alpha(theme.palette.warning.main, 0.2),
 							display: "flex",
-							gap: 1,
-							alignItems: "flex-start",
+							gap: 1.5,
 						}}
 					>
-						<InfoOutlinedIcon fontSize="small" sx={{ mt: "2px" }} />
-						<Typography sx={{ fontSize: 12.5, color: "text.secondary" }}>
-							Disclaimer: Pastikan bahwa setiap dokumen yang diunggah dalam
-							galang dana ini telah melalui proses validasi. Dengan demikian,
-							dokumen yang disertakan adalah asli dan dapat
-							dipertanggungjawabkan.
+						<InfoOutlinedIcon fontSize="small" color="warning" />
+						<Typography sx={{ fontSize: 12, color: "text.secondary" }}>
+							Semua dokumen akan diverifikasi oleh tim kami untuk memastikan
+							keasliannya.
 						</Typography>
 					</Paper>
-
-					<Stack spacing={1.1} sx={{ mt: 1.75 }}>
-						<Button
-							variant="outlined"
-							fullWidth
-							sx={{ borderRadius: 2.5, fontWeight: 900, py: 1.1 }}
-							onClick={handleSeeExample}
-						>
-							Lihat contoh dokumen medis
-						</Button>
-
-						<Button
-							variant="contained"
-							fullWidth
-							sx={{ borderRadius: 2.5, fontWeight: 1000, py: 1.15 }}
-							onClick={handleAgreeMedical}
-						>
-							Mengerti
-						</Button>
-					</Stack>
-				</Box>
+				</DialogContent>
+				<DialogActions
+					sx={{
+						p: 3,
+						pt: 1,
+						display: "flex",
+						flexDirection: "column",
+						gap: 1.5,
+					}}
+				>
+					<Button
+						variant="contained"
+						fullWidth
+						size="large"
+						sx={{ borderRadius: 99, fontWeight: 700, boxShadow: "none" }}
+						onClick={handleAgreeMedical}
+					>
+						Saya Mengerti, Lanjut
+					</Button>
+					<Button
+						variant="text"
+						fullWidth
+						sx={{
+							borderRadius: 99,
+							fontWeight: 600,
+							color: "text.secondary",
+							m: "0 !important",
+						}}
+						onClick={handleSeeExample}
+					>
+						Lihat Contoh Dokumen
+					</Button>
+				</DialogActions>
 			</Dialog>
 		</Box>
 	);
@@ -749,60 +1012,57 @@ function PickCard({
 }) {
 	return (
 		<Paper
+			component={ButtonBase}
+			onClick={onClick}
 			elevation={0}
 			sx={{
+				p: 2,
+				width: "100%",
 				borderRadius: 3,
 				border: "1px solid",
 				borderColor: "divider",
-				overflow: "hidden",
-				boxShadow: "0 10px 28px rgba(15,23,42,.06)",
+				display: "flex",
+				alignItems: "center",
+				gap: 2,
+				textAlign: "left",
+				transition: "all 0.2s",
+				"&:hover": {
+					borderColor: "primary.main",
+					bgcolor: alpha(iconBg, 0.1),
+					transform: "translateY(-2px)",
+					boxShadow: "0 10px 30px rgba(0,0,0,0.05)",
+				},
 			}}
 		>
-			<Box sx={{ p: 1.5, display: "flex", gap: 1.25 }}>
-				<Box
-					sx={{
-						width: 44,
-						height: 44,
-						borderRadius: 2,
-						display: "grid",
-						placeItems: "center",
-						bgcolor: iconBg,
-						flexShrink: 0,
-					}}
-				>
-					{icon}
-				</Box>
-
-				<Box sx={{ flex: 1, minWidth: 0 }}>
-					<Typography sx={{ fontWeight: 1000, fontSize: 13.5 }}>
-						{title}
-					</Typography>
-					<Typography sx={{ mt: 0.4, fontSize: 12.5, color: "text.secondary" }}>
-						{desc}
-					</Typography>
-				</Box>
+			<Box
+				sx={{
+					width: 56,
+					height: 56,
+					borderRadius: 2.5,
+					display: "grid",
+					placeItems: "center",
+					bgcolor: iconBg,
+					flexShrink: 0,
+				}}
+			>
+				{icon}
 			</Box>
 
-			<Box sx={{ px: 1.5, pb: 1.5 }}>
-				<ButtonBase
-					onClick={onClick}
+			<Box sx={{ flex: 1, minWidth: 0 }}>
+				<Typography sx={{ fontWeight: 800, fontSize: 15 }}>{title}</Typography>
+				<Typography
 					sx={{
-						width: "100%",
-						borderRadius: 2,
-						border: "1px solid",
-						borderColor: "primary.main",
-						bgcolor: "primary.main",
-						color: "primary.contrastText",
-						fontWeight: 1000,
-						py: 1.15,
-						justifyContent: "center",
-						transition: "transform 120ms ease",
-						"&:active": { transform: "scale(.99)" },
+						mt: 0.5,
+						fontSize: 13,
+						color: "text.secondary",
+						lineHeight: 1.4,
 					}}
 				>
-					{buttonText}
-				</ButtonBase>
+					{desc}
+				</Typography>
 			</Box>
+
+			<ArrowForwardRoundedIcon sx={{ color: "text.disabled" }} />
 		</Paper>
 	);
 }

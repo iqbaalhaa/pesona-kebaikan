@@ -131,9 +131,9 @@ function statusChip(status: CampaignStatus) {
 			return {
 				label: "Berakhir",
 				sx: {
-					bgcolor: "rgba(59,130,246,.12)",
-					borderColor: "rgba(59,130,246,.22)",
-					color: "rgba(30,64,175,.95)",
+					bgcolor: "rgba(239,68,68,.12)",
+					borderColor: "rgba(239,68,68,.22)",
+					color: "rgba(153,27,27,.95)",
 				},
 			};
 		case "rejected":

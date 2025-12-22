@@ -75,6 +75,11 @@ body {
 	color: #0f172a !important; /* Force dark slate color */
 	opacity: 0.6 !important;
 	transition: all 180ms ease !important;
+	border-radius: 999px !important; /* Round shape for ripple/hover */
+}
+
+.bottom-nav .MuiBottomNavigationAction-root:hover {
+	background-color: rgba(0, 0, 0, 0.04) !important;
 }
 
 .bottom-nav .MuiBottomNavigationAction-label {

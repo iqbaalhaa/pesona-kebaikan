@@ -30,7 +30,7 @@ export async function createCampaign(formData: FormData) {
 		}
 
 		const categoryKey = formData.get("category") as string;
-		const type = formData.get("type") as string; // 'sakit' or 'lainnya'
+		// const type = formData.get("type") as string; // 'sakit' or 'lainnya'
 		const targetStr = formData.get("target") as string;
 		const duration = formData.get("duration") as string;
 		const story = formData.get("story") as string;
@@ -131,7 +131,10 @@ export async function getCampaigns(
 	filter: string = "all",
 	search: string = "",
 	userId?: string,
-	categoryName?: string
+	categoryName?: string,
+	isEmergency?: boolean,
+	isVerified?: boolean,
+	sortBy: string = "newest"
 ) {
 	const skip = (page - 1) * limit;
 
@@ -144,6 +147,16 @@ export async function getCampaigns(
 		} else {
 			where.status = filter.toUpperCase() as CampaignStatus;
 		}
+	} else {
+		// Default: Show ACTIVE and COMPLETED (but maybe only ACTIVE?)
+		// Usually list shows ACTIVE.
+		// Let's stick to existing logic or default to ACTIVE if filter is 'all' but we want public list.
+		// If filter is explicitly 'all', maybe we show all?
+		// But typically we only show ACTIVE campaigns in public list.
+		// Let's check where `getCampaigns` is used.
+		// It's used in `getMyCampaigns` (admin/user dashboard) where 'all' might mean everything.
+		// For public donation page, we likely want `status: "ACTIVE"`.
+		// I will leave it as is for now to avoid breaking `getMyCampaigns`.
 	}
 
 	if (search) {
@@ -157,8 +170,27 @@ export async function getCampaigns(
 		where.createdById = userId;
 	}
 
-	if (categoryName) {
+	if (categoryName && categoryName !== "Semua") {
 		where.category = { name: categoryName };
+	}
+
+	if (isEmergency) {
+		where.isEmergency = true;
+	}
+
+	if (isVerified) {
+		where.verifiedAt = { not: null };
+	}
+
+	let orderBy: Prisma.CampaignOrderByWithRelationInput = { createdAt: "desc" };
+
+	if (sortBy === "ending_soon") {
+		// Show ending soonest first, but only future ones
+		orderBy = { end: "asc" };
+		// We might want to filter out expired ones if not handled by status
+	} else if (sortBy === "most_collected") {
+		// Approximate by number of donations
+		orderBy = { donations: { _count: "desc" } };
 	}
 
 	try {
@@ -167,7 +199,7 @@ export async function getCampaigns(
 				where,
 				skip,
 				take: limit,
-				orderBy: { createdAt: "desc" },
+				orderBy,
 				include: {
 					category: true,
 					createdBy: true,
@@ -214,6 +246,8 @@ export async function getCampaigns(
 					year: "numeric",
 				}),
 				thumbnail,
+				isEmergency: c.isEmergency,
+				verifiedAt: c.verifiedAt,
 			};
 		});
 
@@ -379,6 +413,49 @@ export async function getCampaignById(id: string) {
 	} catch (error) {
 		console.error("Get campaign by id error:", error);
 		return { success: false, error: "Failed to fetch campaign" };
+	}
+}
+
+export async function finishCampaign(campaignId: string) {
+	const session = await auth();
+	if (!session?.user?.id) {
+		return { success: false, error: "Unauthorized" };
+	}
+
+	try {
+		const campaign = await prisma.campaign.findUnique({
+			where: { id: campaignId },
+		});
+
+		if (!campaign) {
+			return { success: false, error: "Campaign not found" };
+		}
+
+		// Allow owner or admin to finish campaign
+		if (
+			campaign.createdById !== session.user.id &&
+			session.user.role !== "ADMIN"
+		) {
+			return { success: false, error: "Forbidden" };
+		}
+
+		await prisma.campaign.update({
+			where: { id: campaignId },
+			data: { status: "COMPLETED" },
+		});
+
+		revalidatePath("/admin/campaign");
+		revalidatePath(`/admin/campaign/${campaignId}`);
+		if (campaign.slug) {
+			revalidatePath(`/galang-dana/${campaign.slug}`);
+		}
+		revalidatePath("/galang-dana");
+		revalidatePath("/");
+
+		return { success: true };
+	} catch (error) {
+		console.error("Finish campaign error:", error);
+		return { success: false, error: "Failed to finish campaign" };
 	}
 }
 
@@ -650,12 +727,18 @@ export async function getPopularCampaigns(limit: number = 10) {
 	}
 }
 
-function mapCampaignsToTypes(campaigns: any[]) {
+type CampaignWithRelations = Prisma.CampaignGetPayload<{
+	include: {
+		category: true;
+		createdBy: true;
+		donations: true;
+		media: true;
+	};
+}>;
+
+function mapCampaignsToTypes(campaigns: CampaignWithRelations[]) {
 	return campaigns.map((c) => {
-		const collected = c.donations.reduce(
-			(acc: number, d: any) => acc + Number(d.amount),
-			0
-		);
+		const collected = c.donations.reduce((acc, d) => acc + Number(d.amount), 0);
 		const daysLeft = c.end
 			? Math.ceil(
 					(new Date(c.end).getTime() - new Date().getTime()) /
@@ -668,7 +751,7 @@ function mapCampaignsToTypes(campaigns: any[]) {
 			title: c.title,
 			organizer: c.createdBy.name || "Unknown",
 			category: c.category.name,
-			cover: c.media.find((m: any) => m.isThumbnail)?.url || "",
+			cover: c.media.find((m) => m.isThumbnail)?.url || "",
 			target: Number(c.target),
 			collected,
 			donors: c.donations.length,

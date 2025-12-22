@@ -88,9 +88,9 @@ function BuatGalangDanaPageContent() {
 
 	React.useEffect(() => {
 		if (status === "unauthenticated") {
-			const currentUrl = new URLSearchParams(Array.from(sp.entries()));
+			const returnUrl = `/galang-dana/buat?${sp.toString()}`;
 			router.replace(
-				`/auth/login?callbackUrl=/galang-dana/buat?${currentUrl.toString()}`
+				`/auth/login?callbackUrl=${encodeURIComponent(returnUrl)}`
 			);
 		}
 	}, [status, router, sp]);
