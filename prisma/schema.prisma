@@ -1,5 +1,5 @@
 generator client {
-  provider = "prisma-client-js"
+  provider = "prisma-client-ts"
   output   = "../src/generated/prisma"
 }
 
@@ -188,8 +188,8 @@ model BlogCategory {
 model Blog {
   id        String   @id @default(cuid())
   title     String
-  content   String   // WYSIWYG HTML/Markdown
-  headerImage String? // path ke gambar header, contoh: 'uploads/blog/xxx.webp'
+  content   String   
+  heroImage String? 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

@@ -18,25 +18,26 @@ import CardMedia from "@mui/material/CardMedia";
 import CardContent from "@mui/material/CardContent";
 import CardActions from "@mui/material/CardActions";
 import Stack from "@mui/material/Stack";
+import { useSession } from "next-auth/react";
 
 const RichTextEditor = dynamic(() => import("@/components/admin/RichTextEditor"), { ssr: false });
 
-const categories = ["Umum", "Tips", "Kisah", "Berita"];
-
 export default function CreateBlogPage() {
   const router = useRouter();
+  const { data: session } = useSession();
   const [form, setForm] = React.useState({
     title: "",
     category: "",
-    headerImage: "",
+    heroImage: "",
     content: "",
   });
   const [toast, setToast] = React.useState<{ open: boolean; msg: string; severity?: "success" | "error" }>({ open: false, msg: "" });
   const [errors, setErrors] = React.useState<{ [k: string]: string }>({});
   const [preview, setPreview] = React.useState<string | null>(null);
   const [headerDragActive, setHeaderDragActive] = React.useState(false);
-  const [categories, setCategories] = React.useState<string[]>(["Umum", "Tips", "Kisah", "Berita"]);
+  const [categories, setCategories] = React.useState<string[]>([]);
   const [loadingCategories, setLoadingCategories] = React.useState(false);
+  const [apiTestResult, setApiTestResult] = React.useState<any>(null);
 
   // Simulasi upload gambar header + preview
   const handleHeaderImage = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -44,7 +45,7 @@ export default function CreateBlogPage() {
     if (!file) return;
     // Simulasi validasi ukuran, seharusnya dicek di backend
     const fakePath = `uploads/blog/${file.name}`;
-    setForm({ ...form, headerImage: fakePath });
+    setForm({ ...form, heroImage: fakePath });
     // Preview lokal
     const reader = new FileReader();
     reader.onload = (ev) => {
@@ -60,7 +61,7 @@ export default function CreateBlogPage() {
     const file = e.dataTransfer.files?.[0];
     if (file && file.type.startsWith("image/")) {
       const fakePath = `uploads/blog/${file.name}`;
-      setForm({ ...form, headerImage: fakePath });
+      setForm({ ...form, heroImage: fakePath });
       // Preview lokal
       const reader = new FileReader();
       reader.onload = (ev) => {
@@ -74,7 +75,7 @@ export default function CreateBlogPage() {
     const newErrors: { [k: string]: string } = {};
     if (!form.title.trim()) newErrors.title = "Judul wajib diisi";
     if (!form.category) newErrors.category = "Kategori wajib diisi";
-    if (!form.headerImage) newErrors.headerImage = "Gambar header wajib diisi";
+    if (!form.heroImage) newErrors.heroImage = "Gambar header wajib diisi";
     if (!form.content.trim()) newErrors.content = "Konten wajib diisi";
     setErrors(newErrors);
     if (Object.keys(newErrors).length > 0) {
@@ -91,7 +92,12 @@ export default function CreateBlogPage() {
         setToast({ open: true, msg: "Kategori tidak valid", severity: "error" });
         return;
       }
-      const createdById = "ADMIN_ID"; // TODO: ganti dengan id user login
+      // Ambil id user login dari session
+      const createdById = session?.user?.id; // Pastikan session.user.id ada
+      if (!createdById) {
+        setToast({ open: true, msg: "User login tidak valid", severity: "error" });
+        return;
+      }
 
       const res = await fetch("/api/admin/blog/create", {
         method: "POST",
@@ -99,19 +105,20 @@ export default function CreateBlogPage() {
         body: JSON.stringify({
           title: form.title,
           categoryId: categoryObj.id,
-          headerImage: form.headerImage,
+          heroImage: form.heroImage,
           content: form.content,
           createdById,
         }),
       });
 
-      // CEK: response harus JSON, jika bukan, tampilkan error
+      // Defensive: check content-type before parsing
+      const contentType = res.headers.get("content-type");
       let data: any = null;
-      const text = await res.text();
-      try {
-        data = JSON.parse(text);
-      } catch {
-        throw new Error("Terjadi kesalahan pada server (bukan JSON)");
+      if (contentType && contentType.includes("application/json")) {
+        data = await res.json();
+      } else {
+        const text = await res.text();
+        throw new Error("Server error: " + text.slice(0, 200));
       }
 
       if (!data.success) throw new Error(data.error || "Gagal membuat blog");
@@ -143,6 +150,19 @@ export default function CreateBlogPage() {
       })
       .finally(() => setLoadingCategories(false));
   }, []);
+
+  // Method untuk uji API GET
+  const handleTestApi = async () => {
+    try {
+      const res = await fetch("/api/admin/blog/create");
+      const data = await res.json();
+      setApiTestResult(data);
+      setToast({ open: true, msg: "GET API sukses", severity: "success" });
+    } catch (e: any) {
+      setApiTestResult({ error: e.message });
+      setToast({ open: true, msg: "GET API gagal", severity: "error" });
+    }
+  };
 
   return (
     <Box maxWidth="md" mx="auto" mt={4}>
@@ -199,17 +219,17 @@ export default function CreateBlogPage() {
               {headerDragActive ? "Drop gambar di sini..." : "Klik atau drag gambar ke sini"}
             </label>
           </div>
-          {errors.headerImage && (
+          {errors.heroImage && (
             <Typography variant="caption" color="error" sx={{ display: "block", mb: 1 }}>
-              {errors.headerImage}
+              {errors.heroImage}
             </Typography>
           )}
-          {preview || form.headerImage ? (
+          {preview || form.heroImage ? (
             <Card sx={{ maxWidth: 320, mb: 1 }}>
-              <CardMedia component="img" height="150" image={preview || `/${form.headerImage}`} alt="Header Preview" sx={{ objectFit: "cover" }} />
+              <CardMedia component="img" height="150" image={preview || `/${form.heroImage}`} alt="Header Preview" sx={{ objectFit: "cover" }} />
               <CardContent>
                 <Typography variant="body2" color="text.secondary">
-                  {form.headerImage}
+                  {form.heroImage}
                 </Typography>
               </CardContent>
             </Card>
@@ -242,6 +262,9 @@ export default function CreateBlogPage() {
           <Button variant="contained" className="bg-blue-600 hover:bg-blue-700 text-white" onClick={handleSubmit}>
             Simpan
           </Button>
+          <Button variant="outlined" color="secondary" onClick={handleTestApi}>
+            Uji API (GET)
+          </Button>
         </DialogActions>
       </Box>
       <Snackbar
@@ -254,6 +277,15 @@ export default function CreateBlogPage() {
           {toast.msg}
         </Alert>
       </Snackbar>
+      {/* Tampilkan hasil GET API untuk debug */}
+      {apiTestResult && (
+        <Box mt={4} p={2} bgcolor="#f5f5f5" borderRadius={2}>
+          <Typography variant="subtitle2" color="primary">
+            Hasil GET API:
+          </Typography>
+          <pre style={{ fontSize: 12, whiteSpace: "pre-wrap" }}>{JSON.stringify(apiTestResult, null, 2)}</pre>
+        </Box>
+      )}
     </Box>
   );
 }

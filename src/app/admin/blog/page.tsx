@@ -12,22 +12,46 @@ import Divider from "@mui/material/Divider";
 import ArticleIcon from "@mui/icons-material/Article";
 import Fade from "@mui/material/Fade";
 
+function stripHtml(html: string): string {
+  if (!html) return "";
+  return html.replace(/<[^>]+>/g, "");
+}
+
+function getExcerpt(html: string, maxLength = 120): string {
+  const text = stripHtml(html).replace(/\s+/g, " ").trim();
+  if (text.length <= maxLength) return text;
+  return text.slice(0, maxLength) + "...";
+}
+
 const categories = ["Umum", "Tips", "Kisah", "Berita"];
 
 export default function AdminBlogPage() {
-  const [items, setItems] = React.useState<BlogItem[]>(
-    Array.from({ length: 8 }, (_, i) => ({
-      id: i + 1,
-      title: `Judul Blog ${i + 1}`,
-      excerpt: "Ini adalah ringkasan singkat konten blog untuk contoh tampilan kartu.",
-      image: "/defaultimg.webp",
-      category: categories[i % categories.length],
-      date: `2024-0${(i % 9) + 1}-1${i % 9}`,
-      author: `Author ${i + 1}`,
-    }))
-  );
-
+  const [items, setItems] = React.useState<BlogItem[]>([]);
   const router = useRouter();
+
+  React.useEffect(() => {
+    fetch("/api/admin/blog/create")
+      .then(async (res) => {
+        if (!res.ok) throw new Error("Gagal mengambil data blog");
+        const data = await res.json();
+        if (data.success && Array.isArray(data.blogs)) {
+          setItems(
+            data.blogs.map((b: any) => ({
+              id: b.id,
+              title: b.title,
+              excerpt: getExcerpt(b.content),
+              image: b.heroImage ? (b.heroImage.startsWith("/") ? b.heroImage : "/" + b.heroImage) : "/defaultimg.webp",
+              category: b.category?.name || "Umum",
+              date: b.createdAt ? new Date(b.createdAt).toLocaleDateString("id-ID") : "",
+              author: b.createdBy?.name || b.createdBy?.email || "Admin",
+            }))
+          );
+        }
+      })
+      .catch(() => {
+        setItems([]);
+      });
+  }, []);
 
   return (
     <Box>
@@ -77,7 +101,7 @@ export default function AdminBlogPage() {
       <Grid container spacing={3} sx={{ px: 2 }}>
         {items.map((b, idx) => (
           <Fade in timeout={400 + idx * 80} key={b.id}>
-            <Grid size={{ xs: 12, md: 3 }}>
+            <Grid item xs={12} sm={6} md={4} lg={3}>
               <Box
                 sx={{
                   transition: "transform 0.2s, box-shadow 0.2s",

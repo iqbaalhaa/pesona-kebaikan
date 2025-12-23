@@ -1,7 +1,7 @@
 import "dotenv/config";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
-import { Role, BlogMediaType, CampaignStatus, CampaignMediaType, PaymentMethod, NotificationType } from "@/generated/prisma";
+import { Role, BlogMediaType, CampaignStatus, CampaignMediaType, PaymentMethod, NotificationType } from "@/generated/prisma/enums";
 
 async function upsertPageContent(params: { key: string; title: string; content: string; data?: any }) {
   return prisma.pageContent.upsert({
@@ -33,10 +33,10 @@ async function ensureBlogByTitle(params: {
   content: string;
   categoryId?: string | null;
   createdById: string;
+  heroImage?: string;
   gallery?: Array<{
     type: BlogMediaType;
     url: string;
-    isThumbnail?: boolean;
   }>;
 }) {
   const existing = await prisma.blog.findFirst({
@@ -52,12 +52,12 @@ async function ensureBlogByTitle(params: {
       content: params.content,
       categoryId: params.categoryId ?? null,
       createdById: params.createdById,
+      heroImage: params.heroImage ?? null,
       gallery: params.gallery?.length
         ? {
             create: params.gallery.map((m) => ({
               type: m.type,
               url: m.url,
-              isThumbnail: m.isThumbnail ?? false,
             })),
           }
         : undefined,
@@ -264,7 +264,6 @@ async function main() {
       {
         type: BlogMediaType.image,
         url: "https://picsum.photos/1200/800?random=11",
-        isThumbnail: true,
       },
       {
         type: BlogMediaType.image,
@@ -283,7 +282,6 @@ async function main() {
       {
         type: BlogMediaType.image,
         url: "https://picsum.photos/1200/800?random=21",
-        isThumbnail: true,
       },
     ],
   });
@@ -298,7 +296,6 @@ async function main() {
       {
         type: BlogMediaType.image,
         url: "https://picsum.photos/1200/800?random=31",
-        isThumbnail: true,
       },
     ],
   });
@@ -316,7 +313,7 @@ async function main() {
   // CAMPAIGNS
   // ============
   console.log("Seeding Campaigns...");
-  
+
   const campaignCategories = [campCatKesehatan, campCatPendidikan, campCatBencana, campCatZakat];
   const campaignTitles = [
     "Bantu Adik Rizky Sembuh dari Jantung Bocor",
@@ -338,7 +335,7 @@ async function main() {
     "Bingkisan Lebaran untuk Yatim",
     "Bantu Biaya Persalinan Ibu Dhuafa",
     "Kursi Roda untuk Difabel",
-    "Makanan Sehat untuk Balita Gizi Buruk"
+    "Makanan Sehat untuk Balita Gizi Buruk",
   ];
 
   const generatedCampaigns = [];
@@ -348,7 +345,7 @@ async function main() {
     const category = campaignCategories[Math.floor(Math.random() * campaignCategories.length)];
     const isEmergency = Math.random() > 0.8; // 20% chance
     const target = (Math.floor(Math.random() * 20) + 1) * 5000000; // 5jt - 100jt
-    
+
     // Status distribution
     let status: CampaignStatus = CampaignStatus.ACTIVE;
     const randStatus = Math.random();
@@ -370,16 +367,16 @@ Mohon doa dan dukungannya untuk kelancaran program ini. Terima kasih orang baik!
       categoryId: category.id,
       createdById: i % 2 === 0 ? admin.id : user.id,
       media: [
-        { 
-          type: CampaignMediaType.IMAGE, 
-          url: `https://picsum.photos/800/600?random=${100 + i}`, 
-          isThumbnail: true 
+        {
+          type: CampaignMediaType.IMAGE,
+          url: `https://picsum.photos/800/600?random=${100 + i}`,
+          isThumbnail: true,
         },
-        { 
-          type: CampaignMediaType.IMAGE, 
-          url: `https://picsum.photos/800/600?random=${200 + i}` 
-        }
-      ]
+        {
+          type: CampaignMediaType.IMAGE,
+          url: `https://picsum.photos/800/600?random=${200 + i}`,
+        },
+      ],
     });
     generatedCampaigns.push(campaign);
   }
@@ -388,30 +385,37 @@ Mohon doa dan dukungannya untuk kelancaran program ini. Terima kasih orang baik!
   // DONATIONS
   // ============
   console.log("Seeding Donations...");
-  
+
   // Clear existing donations if needed or just add more?
-  // User asked for "ada 100 donation", implies total. 
+  // User asked for "ada 100 donation", implies total.
   // Let's create 100 new donations distributed across campaigns.
-  
+
   const donorNames = [
-    "Hamba Allah", "Andi Wijaya", "Siti Aminah", "Budi Santoso", "Dewi Lestari",
-    "Rahmat Hidayat", "Putri Indah", "Agus Setiawan", "Ratna Sari", "Eko Prasetyo",
-    "Anonim", "Donatur Dermawan", "Keluarga Besar X", "Alumni Angkatan 90", "Komunitas Peduli"
+    "Hamba Allah",
+    "Andi Wijaya",
+    "Siti Aminah",
+    "Budi Santoso",
+    "Dewi Lestari",
+    "Rahmat Hidayat",
+    "Putri Indah",
+    "Agus Setiawan",
+    "Ratna Sari",
+    "Eko Prasetyo",
+    "Anonim",
+    "Donatur Dermawan",
+    "Keluarga Besar X",
+    "Alumni Angkatan 90",
+    "Komunitas Peduli",
   ];
 
-  const paymentMethods = [
-    PaymentMethod.TRANSFER, 
-    PaymentMethod.EWALLET, 
-    PaymentMethod.VIRTUAL_ACCOUNT, 
-    PaymentMethod.CARD
-  ];
+  const paymentMethods = [PaymentMethod.TRANSFER, PaymentMethod.EWALLET, PaymentMethod.VIRTUAL_ACCOUNT, PaymentMethod.CARD];
 
   const donationData = [];
-  
+
   for (let i = 0; i < 100; i++) {
     const campaign = generatedCampaigns[Math.floor(Math.random() * generatedCampaigns.length)];
     const amount = (Math.floor(Math.random() * 20) + 1) * 50000; // 50rb - 1jt
-    
+
     donationData.push({
       campaignId: campaign.id,
       donorName: donorNames[Math.floor(Math.random() * donorNames.length)],
@@ -421,12 +425,12 @@ Mohon doa dan dukungannya untuk kelancaran program ini. Terima kasih orang baik!
       status: "COMPLETED", // Assume all paid for popularity count
       isAnonymous: Math.random() > 0.7,
       message: Math.random() > 0.5 ? "Semoga berkah dan bermanfaat. Aamiin." : null,
-      createdAt: new Date(Date.now() - Math.floor(Math.random() * 30) * 24 * 60 * 60 * 1000) // Random date within last 30 days
+      createdAt: new Date(Date.now() - Math.floor(Math.random() * 30) * 24 * 60 * 60 * 1000), // Random date within last 30 days
     });
   }
 
   await prisma.donation.createMany({
-    data: donationData
+    data: donationData,
   });
 
   // ============
@@ -434,7 +438,7 @@ Mohon doa dan dukungannya untuk kelancaran program ini. Terima kasih orang baik!
   // ============
   console.log("Seeding Notifications...");
   await prisma.notification.deleteMany({ where: { userId: user.id } }); // Clear existing for user
-  
+
   await prisma.notification.createMany({
     data: [
       {
@@ -460,8 +464,8 @@ Mohon doa dan dukungannya untuk kelancaran program ini. Terima kasih orang baik!
         type: NotificationType.KABAR,
         createdAt: new Date(), // Just now,
         isRead: false,
-      }
-    ]
+      },
+    ],
   });
 
   console.log("Seeding done.");
