@@ -14,25 +14,23 @@ export const metadata: Metadata = {
 export default async function DonationPage({
 	searchParams,
 }: {
-	searchParams: { [key: string]: string | string[] | undefined };
+	searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
+	const params = await searchParams;
 	const page = 1;
 	const limit = 50; // Load many for exploration
-	const search = typeof searchParams.q === "string" ? searchParams.q : "";
+	const search = typeof params.q === "string" ? params.q : "";
 	const category =
-		typeof searchParams.category === "string"
-			? searchParams.category
-			: undefined;
-	const isEmergency = searchParams.urgent === "true";
-	const isVerified = searchParams.verified === "true";
-	const sort =
-		typeof searchParams.sort === "string" ? searchParams.sort : "newest";
+		typeof params.category === "string" ? params.category : undefined;
+	const isEmergency = params.urgent === "true";
+	const isVerified = params.verified === "true";
+	const sort = typeof params.sort === "string" ? params.sort : "newest";
 
 	const [res, categoriesData] = await Promise.all([
 		getCampaigns(
 			page,
 			limit,
-			"all", // status filter
+			"active", // status filter: only show active campaigns
 			search,
 			undefined, // userId
 			category,
