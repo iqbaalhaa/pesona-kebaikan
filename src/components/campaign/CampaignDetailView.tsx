@@ -3,6 +3,8 @@
 import * as React from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
+import { formatDistanceToNow } from "date-fns";
+import { id } from "date-fns/locale";
 import {
 	Box,
 	Typography,
@@ -32,10 +34,18 @@ import {
 	Alert,
 	Card,
 	CardContent,
+	Collapse,
+	TextField,
+	Select,
+	MenuItem,
+	FormControl,
+	InputLabel,
 } from "@mui/material";
 import { TransitionProps } from "@mui/material/transitions";
 
 // Icons
+import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
+import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import ShareIcon from "@mui/icons-material/Share";
 import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
@@ -55,6 +65,11 @@ import FacebookIcon from "@mui/icons-material/Facebook";
 import TwitterIcon from "@mui/icons-material/Twitter";
 import InstagramIcon from "@mui/icons-material/Instagram";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
+
+import FlagOutlinedIcon from "@mui/icons-material/FlagOutlined";
+import FavoriteIcon from "@mui/icons-material/Favorite";
+import ArticleIcon from "@mui/icons-material/Article";
+import RequestQuoteIcon from "@mui/icons-material/RequestQuote";
 
 // Utils
 function formatIDR(amount: number) {
@@ -97,18 +112,266 @@ function CustomTabPanel(props: TabPanelProps) {
 	);
 }
 
+function UpdateItem({ update, isLast }: { update: any; isLast: boolean }) {
+	const [expanded, setExpanded] = React.useState(false);
+
+	return (
+		<Box sx={{ display: "flex", gap: 2.5 }}>
+			{/* Timeline Indicator */}
+			<Box
+				sx={{
+					display: "flex",
+					flexDirection: "column",
+					alignItems: "center",
+					minWidth: 40,
+				}}
+			>
+				<Box
+					sx={{
+						width: 40,
+						height: 40,
+						borderRadius: "50%",
+						bgcolor: "#fff",
+						display: "flex",
+						alignItems: "center",
+						justifyContent: "center",
+						border:
+							update.type === "withdrawal"
+								? "2px solid #e2e8f0"
+								: "2px solid #bbf7d0",
+						boxShadow: "0 4px 6px rgba(0,0,0,0.02)",
+						zIndex: 1,
+					}}
+				>
+					{update.type === "withdrawal" ? (
+						<AccountBalanceWalletRoundedIcon
+							sx={{ fontSize: 20, color: "#64748b" }}
+						/>
+					) : (
+						<VerifiedUserIcon sx={{ fontSize: 20, color: "#16a34a" }} />
+					)}
+				</Box>
+				{!isLast && (
+					<Box
+						sx={{
+							width: 0,
+							flex: 1,
+							borderLeft: "2px dashed #e2e8f0",
+							my: 0.5,
+							position: "relative",
+							zIndex: 0,
+						}}
+					/>
+				)}
+			</Box>
+
+			{/* Content */}
+			<Box sx={{ flex: 1, pb: isLast ? 0 : 0.2 }}>
+				<Paper
+					elevation={expanded ? 0 : 0}
+					onClick={() => setExpanded(!expanded)}
+					sx={{
+						p: 2.5,
+						borderRadius: 3,
+						cursor: "pointer",
+						border: "1px solid",
+						borderColor: expanded ? "#e2e8f0" : "transparent",
+						bgcolor: expanded ? "#fff" : "transparent",
+						boxShadow: expanded ? "0 4px 20px rgba(0,0,0,0.05)" : "none",
+						transition: "all 0.3s ease",
+						"&:hover": {
+							bgcolor: expanded ? "#fff" : "#f8fafc",
+						},
+					}}
+				>
+					<Box
+						sx={{
+							display: "flex",
+							alignItems: "center",
+							justifyContent: "space-between",
+							mb: 1,
+						}}
+					>
+						<Typography
+							variant="caption"
+							sx={{
+								color: "#64748b",
+								fontWeight: 700,
+								display: "block",
+								fontSize: 11,
+								letterSpacing: 0.5,
+								textTransform: "uppercase",
+							}}
+						>
+							{new Date(update.date).toLocaleDateString("id-ID", {
+								day: "numeric",
+								month: "long",
+								year: "numeric",
+							})}
+						</Typography>
+						<Box
+							sx={{
+								transform: expanded ? "rotate(180deg)" : "rotate(0deg)",
+								transition: "transform 0.3s",
+							}}
+						>
+							<KeyboardArrowDownIcon sx={{ color: "#94a3b8", fontSize: 20 }} />
+						</Box>
+					</Box>
+					<Typography
+						variant="h6"
+						sx={{
+							fontSize: 16,
+							fontWeight: 700,
+							color: "#0f172a",
+							lineHeight: 1.5,
+							mb: expanded ? 2 : 0,
+						}}
+					>
+						{update.title}
+					</Typography>
+
+					<Collapse in={expanded} timeout="auto" unmountOnExit>
+						<Typography
+							variant="body2"
+							sx={{
+								color: "#334155",
+								lineHeight: 1.8,
+								whiteSpace: "pre-wrap",
+								fontSize: 15,
+							}}
+						>
+							{update.content}
+						</Typography>
+
+						{update.images && update.images.length > 0 && (
+							<Box
+								sx={{
+									mt: 3,
+									borderRadius: 3,
+									overflow: "hidden",
+									display: "grid",
+									gridTemplateColumns:
+										update.images.length === 1 ? "1fr" : "repeat(2, 1fr)",
+									gap: 1,
+								}}
+							>
+								{update.images.map((img: string, i: number) => (
+									<Box
+										key={i}
+										component="img"
+										src={img}
+										alt="Update"
+										sx={{
+											width: "100%",
+											height: update.images.length === 1 ? "auto" : 200,
+											objectFit: "cover",
+											borderRadius: 2,
+											gridColumn:
+												update.images.length % 2 !== 0 && i === 0
+													? "span 2"
+													: "auto",
+										}}
+									/>
+								))}
+							</Box>
+						)}
+					</Collapse>
+				</Paper>
+			</Box>
+		</Box>
+	);
+}
+
+import { createReport } from "@/actions/report";
+import { ReportReason } from "@/generated/prisma";
+import ReportProblemRoundedIcon from "@mui/icons-material/ReportProblemRounded";
+import AlertTitle from "@mui/material/AlertTitle";
+
 export default function CampaignDetailView({ data }: { data: any }) {
 	const router = useRouter();
 	const searchParams = useSearchParams();
 	const [tabValue, setTabValue] = React.useState(0);
 	const [showFullStory, setShowFullStory] = React.useState(false);
 
+	// Report state
+	const [reportLoading, setReportLoading] = React.useState(false);
+	const [reportReason, setReportReason] = React.useState<ReportReason | "">("");
+	const [reportDetails, setReportDetails] = React.useState("");
+	const [reporterName, setReporterName] = React.useState("");
+	const [reporterPhone, setReporterPhone] = React.useState("");
+	const [reporterEmail, setReporterEmail] = React.useState("");
+	const [snack, setSnack] = React.useState<{
+		open: boolean;
+		msg: string;
+		type: "success" | "error";
+	}>({ open: false, msg: "", type: "success" });
+
+	const REPORT_REASONS: { value: ReportReason; label: string }[] = [
+		{ value: "FRAUD", label: "Penipuan/Penyalahgunaan dana" },
+		{ value: "COVERED", label: "Sudah di cover pihak lain (BPJS, Asuransi)" },
+		{ value: "FAKE_INFO", label: "Memberikan Informasi Palsu" },
+		{ value: "DECEASED", label: "Beneficiary sudah meninggal" },
+		{
+			value: "NO_PERMISSION",
+			label: "Tidak izin kepada keluarga penerima manfaat",
+		},
+		{ value: "IRRELEVANT", label: "Galang dana tidak relevan" },
+		{ value: "INAPPROPRIATE", label: "Konten tidak pantas" },
+		{ value: "SPAM", label: "Spamming" },
+		{ value: "OTHER", label: "Lainnya" },
+	];
+
+	const handleSubmitReport = async () => {
+		if (
+			!reportReason ||
+			!reportDetails ||
+			!reporterName ||
+			!reporterPhone ||
+			!reporterEmail
+		) {
+			setSnack({ open: true, msg: "Mohon lengkapi semua data", type: "error" });
+			return;
+		}
+
+		setReportLoading(true);
+		const res = await createReport({
+			campaignId: data.id,
+			reason: reportReason as ReportReason,
+			details: reportDetails,
+			reporterName,
+			reporterPhone,
+			reporterEmail,
+		});
+		setReportLoading(false);
+
+		if (res.success) {
+			setOpenReportModal(false);
+			setReportSuccessOpen(true);
+			// Reset form
+			setReportReason("");
+			setReportDetails("");
+			setReporterName("");
+			setReporterPhone("");
+			setReporterEmail("");
+		} else {
+			setSnack({
+				open: true,
+				msg: res.error || "Gagal mengirim laporan",
+				type: "error",
+			});
+		}
+	};
+
 	// Modals State
 	const [openMedicalModal, setOpenMedicalModal] = React.useState(false);
 	const [openDonorsModal, setOpenDonorsModal] = React.useState(false);
 	const [openShareModal, setOpenShareModal] = React.useState(false);
+	const [openFundDetailsModal, setOpenFundDetailsModal] = React.useState(false);
 	const [snackbarOpen, setSnackbarOpen] = React.useState(false);
 	const [donationSuccessOpen, setDonationSuccessOpen] = React.useState(false);
+	const [openReportModal, setOpenReportModal] = React.useState(false);
+	const [reportSuccessOpen, setReportSuccessOpen] = React.useState(false);
 
 	React.useEffect(() => {
 		if (searchParams.get("donation_success") === "true") {
@@ -132,6 +395,31 @@ export default function CampaignDetailView({ data }: { data: any }) {
 	);
 
 	const isMedis = data.category === "Bantuan Medis & Kesehatan";
+
+	const donations = data.donations || [];
+	const prayers = donations.filter(
+		(d: any) => d.comment && d.comment.trim() !== ""
+	);
+	const latestDonations = donations.slice(0, 3);
+	const latestPrayers = prayers.slice(0, 3);
+	const hasWithdrawals =
+		data.updates && data.updates.some((u: any) => u.type === "withdrawal");
+	const withdrawalCount =
+		data.updates?.filter((u: any) => u.type === "withdrawal").length || 0;
+	const updateCount = data.updates?.length || 0;
+
+	// Calculate Fund Details
+	const totalCollected = data.collected || 0;
+	// Mocking fees as 5% for display purposes to match design (in real app, this comes from backend)
+	const fees = Math.round(totalCollected * 0.05);
+	// Calculate withdrawn amount from updates if available
+	const withdrawn =
+		data.updates
+			?.filter((u: any) => u.type === "withdrawal")
+			.reduce((acc: number, curr: any) => acc + (curr.amount || 0), 0) || 0;
+	const remaining = totalCollected - fees - withdrawn;
+	// Mock duration
+	const campaignDuration = 23; // Days running
 
 	// Handle Image Scroll
 	const handleScroll = () => {
@@ -402,76 +690,209 @@ export default function CampaignDetailView({ data }: { data: any }) {
 						/>
 						<Box
 							sx={{
-								display: "flex",
-								justifyContent: "space-between",
-								mt: 1,
+								display: "grid",
+								gridTemplateColumns: "1fr 1px 1fr 1px 1fr",
+								gap: 1,
+								mt: 2,
 								alignItems: "center",
 							}}
 						>
-							<Typography sx={{ fontSize: 12, color: "#64748b" }}>
-								<span style={{ fontWeight: 700, color: "#0f172a" }}>
-									{data.donors}
-								</span>{" "}
-								Donatur
-							</Typography>
-							<Button
-								size="small"
-								sx={{
-									fontSize: 12,
-									textTransform: "none",
-									minWidth: "auto",
-									p: 0,
-								}}
+							{/* Donasi */}
+							<Box
 								onClick={() => setOpenDonorsModal(true)}
+								sx={{
+									textAlign: "center",
+									cursor: "pointer",
+									"&:hover": { opacity: 0.8 },
+								}}
 							>
-								Lihat Semua
-							</Button>
+								<Box
+									sx={{
+										display: "flex",
+										alignItems: "center",
+										justifyContent: "center",
+										gap: 1,
+										mb: 0.5,
+									}}
+								>
+									<FavoriteIcon sx={{ color: "#0ea5e9", fontSize: 20 }} />
+									<Typography sx={{ fontWeight: 700, fontSize: 16 }}>
+										{data.donors}
+									</Typography>
+								</Box>
+								<Typography sx={{ fontSize: 12, color: "#64748b" }}>
+									Donasi
+								</Typography>
+							</Box>
+
+							<Divider orientation="vertical" sx={{ height: 30 }} />
+
+							{/* Kabar Terbaru */}
+							<Box
+								onClick={() => setTabValue(1)}
+								sx={{
+									textAlign: "center",
+									cursor: "pointer",
+									"&:hover": { opacity: 0.8 },
+								}}
+							>
+								<Box
+									sx={{
+										display: "flex",
+										alignItems: "center",
+										justifyContent: "center",
+										gap: 1,
+										mb: 0.5,
+									}}
+								>
+									<ArticleIcon sx={{ color: "#64748b", fontSize: 20 }} />
+									<Typography sx={{ fontWeight: 700, fontSize: 16 }}>
+										{updateCount}
+									</Typography>
+								</Box>
+								<Typography sx={{ fontSize: 12, color: "#64748b" }}>
+									Kabar Terbaru
+								</Typography>
+							</Box>
+
+							<Divider orientation="vertical" sx={{ height: 30 }} />
+
+							{/* Pencairan Dana */}
+							<Box
+								onClick={() => setTabValue(1)}
+								sx={{
+									textAlign: "center",
+									cursor: "pointer",
+									"&:hover": { opacity: 0.8 },
+								}}
+							>
+								<Box
+									sx={{
+										display: "flex",
+										alignItems: "center",
+										justifyContent: "center",
+										gap: 1,
+										mb: 0.5,
+									}}
+								>
+									<RequestQuoteIcon sx={{ color: "#64748b", fontSize: 20 }} />
+									<Typography sx={{ fontWeight: 700, fontSize: 16 }}>
+										{withdrawalCount} kali
+									</Typography>
+								</Box>
+								<Typography sx={{ fontSize: 12, color: "#64748b" }}>
+									Pencairan Dana
+								</Typography>
+							</Box>
 						</Box>
 					</Box>
 
 					<Divider sx={{ my: 3 }} />
 
-					{/* Organizer & Beneficiary Info */}
-					<Stack spacing={2.5}>
-						{/* Penggalang Dana */}
-						<Box
+					{/* Informasi Penggalangan Dana */}
+					<Box sx={{ mb: 3 }}>
+						<Typography
+							variant="h6"
 							sx={{
-								display: "flex",
-								alignItems: "flex-start",
-								gap: 2,
-								cursor: "pointer",
-								"&:hover": {
-									bgcolor: "#f8fafc",
-									borderRadius: 2,
-									mx: -1,
-									p: 1,
-								},
+								fontSize: 16,
+								fontWeight: 700,
+								color: "#0f172a",
+								mb: 2,
 							}}
 						>
-							<Avatar
-								sx={{ width: 48, height: 48, border: "2px solid #f1f5f9" }}
-							>
-								{data.ownerName.charAt(0)}
-							</Avatar>
-							<Box sx={{ flex: 1 }}>
-								<Typography sx={{ fontSize: 12, color: "#64748b", mb: 0.5 }}>
+							Informasi Penggalangan Dana
+						</Typography>
+						<Box
+							sx={{
+								border: "1px solid #e2e8f0",
+								borderRadius: 3,
+								overflow: "hidden",
+							}}
+						>
+							<Box sx={{ p: 2 }}>
+								<Typography
+									sx={{
+										fontSize: 13,
+										fontWeight: 700,
+										color: "#334155",
+										mb: 2,
+									}}
+								>
 									Penggalang Dana
 								</Typography>
-								<Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-									<Typography sx={{ fontWeight: 700, fontSize: 14 }}>
-										{data.ownerName}
-									</Typography>
-									<VerifiedUserIcon sx={{ fontSize: 16, color: "#3b82f6" }} />
+								<Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+									<Avatar
+										sx={{ width: 48, height: 48, border: "1px solid #f1f5f9" }}
+										src={data.ownerAvatar}
+									>
+										{data.ownerName.charAt(0)}
+									</Avatar>
+									<Box>
+										<Box
+											sx={{
+												display: "flex",
+												alignItems: "center",
+												gap: 0.5,
+												mb: 0.25,
+											}}
+										>
+											<Typography
+												sx={{ fontWeight: 700, fontSize: 14, color: "#0f172a" }}
+											>
+												{data.ownerName}
+											</Typography>
+											<VerifiedUserIcon
+												sx={{ fontSize: 16, color: "#3b82f6" }}
+											/>
+											<Chip
+												label="ORG"
+												size="small"
+												sx={{
+													height: 16,
+													fontSize: 9,
+													fontWeight: 700,
+													bgcolor: "#e0f2fe",
+													color: "#0284c7",
+													borderRadius: 1,
+													px: 0.5,
+													"& .MuiChip-label": { px: 0.5 },
+												}}
+											/>
+										</Box>
+										<Typography sx={{ fontSize: 12, color: "#64748b" }}>
+											Identitas terverifikasi
+										</Typography>
+									</Box>
 								</Box>
-								<Typography sx={{ fontSize: 12, color: "#64748b" }}>
-									Identitas terverifikasi
-								</Typography>
+							</Box>
+
+							<Divider />
+
+							<Box
+								onClick={() => setOpenFundDetailsModal(true)}
+								sx={{
+									display: "flex",
+									alignItems: "center",
+									justifyContent: "space-between",
+									p: 2,
+									cursor: "pointer",
+									"&:hover": { bgcolor: "#f8fafc" },
+								}}
+							>
+								<Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+									<AccountBalanceWalletOutlinedIcon
+										sx={{ color: "#64748b", fontSize: 22 }}
+									/>
+									<Typography
+										sx={{ fontSize: 14, fontWeight: 600, color: "#334155" }}
+									>
+										Rincian penggunaan dana
+									</Typography>
+								</Box>
+								<NavigateNextIcon sx={{ color: "#94a3b8" }} />
 							</Box>
 						</Box>
-
-						{/* Note: Detailed medical/beneficiary info is not in the current API response yet. */}
-						{/* We display basic info if available or skip */}
-					</Stack>
+					</Box>
 
 					<Divider sx={{ my: 3 }} />
 
@@ -544,6 +965,256 @@ export default function CampaignDetailView({ data }: { data: any }) {
 						>
 							{showFullStory ? "Tutup Cerita" : "Baca Selengkapnya"}
 						</Button>
+
+						<Divider sx={{ my: 3 }} />
+
+						{/* Pencairan Dana */}
+						{hasWithdrawals && (
+							<Box
+								onClick={() => setTabValue(1)}
+								sx={{
+									display: "flex",
+									justifyContent: "space-between",
+									alignItems: "center",
+									mb: 3,
+									cursor: "pointer",
+								}}
+							>
+								<Typography variant="h6" sx={{ fontWeight: 700 }}>
+									Pencairan Dana
+								</Typography>
+								<NavigateNextIcon sx={{ color: "#94a3b8" }} />
+							</Box>
+						)}
+
+						{/* Donasi */}
+						<Box sx={{ mb: 4 }}>
+							<Box
+								onClick={() => setOpenDonorsModal(true)}
+								sx={{
+									display: "flex",
+									justifyContent: "space-between",
+									alignItems: "center",
+									mb: 2.5,
+									cursor: "pointer",
+									"&:hover .MuiTypography-root": { color: "#0ea5e9" },
+								}}
+							>
+								<Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+									<Typography
+										variant="h6"
+										sx={{ fontWeight: 700, transition: "color 0.2s" }}
+									>
+										Donasi
+									</Typography>
+									<Chip
+										label={data.donors}
+										size="small"
+										sx={{
+											bgcolor: "#e0f2fe",
+											color: "#0284c7",
+											fontWeight: 700,
+											height: 24,
+											borderRadius: 1.5,
+										}}
+									/>
+								</Box>
+								<NavigateNextIcon sx={{ color: "#94a3b8" }} />
+							</Box>
+
+							<Stack spacing={2}>
+								{latestDonations.map((d: any) => (
+									<Paper
+										elevation={0}
+										key={d.id}
+										sx={{
+											display: "flex",
+											gap: 2,
+											p: 2,
+											bgcolor: "#f8fafc",
+											borderRadius: 3,
+											border: "1px solid #f1f5f9",
+										}}
+									>
+										<Avatar
+											sx={{
+												width: 44,
+												height: 44,
+												bgcolor: "#fff",
+												border: "1px solid #e2e8f0",
+												color: "#64748b",
+												fontWeight: 700,
+											}}
+											src="/images/avatar-placeholder.png"
+										>
+											{d.name.charAt(0)}
+										</Avatar>
+										<Box sx={{ flex: 1 }}>
+											<Box
+												sx={{
+													display: "flex",
+													justifyContent: "space-between",
+													alignItems: "flex-start",
+												}}
+											>
+												<Typography
+													sx={{
+														fontWeight: 700,
+														fontSize: 14,
+														color: "#0f172a",
+													}}
+												>
+													{d.name}
+												</Typography>
+												<Typography
+													sx={{
+														fontSize: 11,
+														color: "#94a3b8",
+														fontWeight: 500,
+													}}
+												>
+													{formatDistanceToNow(new Date(d.date), {
+														addSuffix: true,
+														locale: id,
+													})}
+												</Typography>
+											</Box>
+											<Typography
+												sx={{ fontSize: 13, color: "#334155", mt: 0.5 }}
+											>
+												Berdonasi sebesar{" "}
+												<span style={{ fontWeight: 700, color: "#61ce70" }}>
+													{formatIDR(d.amount)}
+												</span>
+											</Typography>
+										</Box>
+									</Paper>
+								))}
+							</Stack>
+						</Box>
+
+						{/* Doa-doa */}
+						<Box sx={{ mb: 1 }}>
+							<Box
+								onClick={() => setOpenDonorsModal(true)}
+								sx={{
+									display: "flex",
+									justifyContent: "space-between",
+									alignItems: "center",
+									mb: 2.5,
+									cursor: "pointer",
+									"&:hover .MuiTypography-root": { color: "#0ea5e9" },
+								}}
+							>
+								<Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+									<Typography
+										variant="h6"
+										sx={{ fontWeight: 700, transition: "color 0.2s" }}
+									>
+										Doa-doa Orang Baik
+									</Typography>
+									<Chip
+										label={prayers.length}
+										size="small"
+										sx={{
+											bgcolor: "#e0f2fe",
+											color: "#0284c7",
+											fontWeight: 700,
+											height: 24,
+											borderRadius: 1.5,
+										}}
+									/>
+								</Box>
+								<NavigateNextIcon sx={{ color: "#94a3b8" }} />
+							</Box>
+
+							<Stack spacing={2}>
+								{latestPrayers.map((d: any) => (
+									<Paper
+										elevation={0}
+										key={d.id}
+										sx={{
+											display: "flex",
+											gap: 2,
+											p: 2,
+											bgcolor: "#fff",
+											borderRadius: 3,
+											border: "1px solid #e2e8f0",
+											boxShadow: "0 2px 8px rgba(0,0,0,0.03)",
+										}}
+									>
+										<Avatar
+											sx={{
+												width: 44,
+												height: 44,
+												bgcolor: "#f1f5f9",
+												color: "#64748b",
+												fontWeight: 700,
+											}}
+											src="/images/avatar-placeholder.png"
+										>
+											{d.name.charAt(0)}
+										</Avatar>
+										<Box sx={{ flex: 1 }}>
+											<Box
+												sx={{
+													display: "flex",
+													justifyContent: "space-between",
+													alignItems: "center",
+													mb: 0.5,
+												}}
+											>
+												<Typography
+													sx={{
+														fontWeight: 700,
+														fontSize: 14,
+														color: "#0f172a",
+													}}
+												>
+													{d.name}
+												</Typography>
+												<Typography sx={{ fontSize: 11, color: "#94a3b8" }}>
+													{formatDistanceToNow(new Date(d.date), {
+														addSuffix: true,
+														locale: id,
+													})}
+												</Typography>
+											</Box>
+											<Typography
+												sx={{
+													fontSize: 14,
+													color: "#334155",
+													fontStyle: "italic",
+													lineHeight: 1.6,
+												}}
+											>
+												"{d.comment}"
+											</Typography>
+										</Box>
+									</Paper>
+								))}
+								{latestPrayers.length === 0 && (
+									<Box
+										sx={{
+											textAlign: "center",
+											py: 4,
+											bgcolor: "#f8fafc",
+											borderRadius: 3,
+										}}
+									>
+										<Typography
+											sx={{
+												fontSize: 13,
+												color: "#64748b",
+												fontStyle: "italic",
+											}}
+										>
+											Belum ada doa.
+										</Typography>
+									</Box>
+								)}
+							</Stack>
+						</Box>
 					</CustomTabPanel>
 
 					{/* Tab: Kabar Terbaru */}
@@ -551,141 +1222,11 @@ export default function CampaignDetailView({ data }: { data: any }) {
 						{data.updates && data.updates.length > 0 ? (
 							<Stack spacing={0}>
 								{data.updates.map((update: any, index: number) => (
-									<Box key={update.id} sx={{ display: "flex", gap: 2 }}>
-										{/* Timeline Indicator */}
-										<Box
-											sx={{
-												display: "flex",
-												flexDirection: "column",
-												alignItems: "center",
-												minWidth: 40,
-											}}
-										>
-											<Box
-												sx={{
-													width: 40,
-													height: 40,
-													borderRadius: "50%",
-													bgcolor:
-														update.type === "withdrawal"
-															? "#f1f5f9"
-															: "#dcfce7",
-													display: "flex",
-													alignItems: "center",
-													justifyContent: "center",
-													border: "4px solid white",
-													boxShadow: "0 2px 4px rgba(0,0,0,0.05)",
-													zIndex: 1,
-												}}
-											>
-												{update.type === "withdrawal" ? (
-													<AccountBalanceWalletRoundedIcon
-														sx={{ fontSize: 20, color: "#64748b" }}
-													/>
-												) : (
-													<VerifiedUserIcon
-														sx={{ fontSize: 20, color: "#16a34a" }}
-													/>
-												)}
-											</Box>
-											{index !== data.updates.length - 1 && (
-												<Box
-													sx={{
-														width: 2,
-														flex: 1,
-														bgcolor: "#e2e8f0",
-														my: -1,
-														position: "relative",
-														zIndex: 0,
-													}}
-												/>
-											)}
-										</Box>
-
-										{/* Content */}
-										<Box sx={{ flex: 1, pb: 5 }}>
-											<Box sx={{ mb: 1.5 }}>
-												<Typography
-													variant="caption"
-													sx={{
-														color: "#94a3b8",
-														fontWeight: 600,
-														textTransform: "uppercase",
-														letterSpacing: 0.5,
-														fontSize: 11,
-													}}
-												>
-													{new Date(update.date).toLocaleDateString("id-ID", {
-														day: "numeric",
-														month: "long",
-														year: "numeric",
-													})}
-												</Typography>
-												<Typography
-													variant="h6"
-													sx={{ fontSize: 16, fontWeight: 700, mt: 0.5 }}
-												>
-													{update.title}
-												</Typography>
-											</Box>
-
-											<Paper
-												elevation={0}
-												sx={{
-													p: 2.5,
-													bgcolor: "#f8fafc",
-													borderRadius: 3,
-													border: "1px solid #e2e8f0",
-												}}
-											>
-												<Typography
-													variant="body2"
-													sx={{
-														color: "#334155",
-														lineHeight: 1.7,
-														whiteSpace: "pre-wrap",
-													}}
-												>
-													{update.content}
-												</Typography>
-
-												{update.images && update.images.length > 0 && (
-													<Box
-														sx={{
-															mt: 2,
-															borderRadius: 2,
-															overflow: "hidden",
-															display: "grid",
-															gridTemplateColumns:
-																update.images.length === 1
-																	? "1fr"
-																	: "repeat(2, 1fr)",
-															gap: 0.5,
-														}}
-													>
-														{update.images.map((img: string, i: number) => (
-															<Box
-																key={i}
-																component="img"
-																src={img}
-																alt="Update"
-																sx={{
-																	width: "100%",
-																	height:
-																		update.images.length === 1 ? "auto" : 160,
-																	objectFit: "cover",
-																	gridColumn:
-																		update.images.length % 2 !== 0 && i === 0
-																			? "span 2"
-																			: "auto",
-																}}
-															/>
-														))}
-													</Box>
-												)}
-											</Paper>
-										</Box>
-									</Box>
+									<UpdateItem
+										key={update.id}
+										update={update}
+										isLast={index === data.updates.length - 1}
+									/>
 								))}
 							</Stack>
 						) : (
@@ -725,6 +1266,27 @@ export default function CampaignDetailView({ data }: { data: any }) {
 							</Box>
 						)}
 					</CustomTabPanel>
+
+					<Box sx={{ mt: 4, mb: 2, textAlign: "center" }}>
+						<Button
+							color="inherit"
+							size="small"
+							startIcon={<FlagOutlinedIcon />}
+							onClick={() => setOpenReportModal(true)}
+							sx={{
+								color: "#94a3b8",
+								textTransform: "none",
+								fontSize: 13,
+								fontWeight: 500,
+								"&:hover": {
+									bgcolor: "#f1f5f9",
+									color: "#64748b",
+								},
+							}}
+						>
+							Jika penggalangan dana ini mencurigakan, laporkan
+						</Button>
+					</Box>
 				</Box>
 			</Container>
 
@@ -896,6 +1458,215 @@ export default function CampaignDetailView({ data }: { data: any }) {
 				</DialogContent>
 			</Dialog>
 
+			{/* Fund Details Modal */}
+			<Dialog
+				open={openFundDetailsModal}
+				onClose={() => setOpenFundDetailsModal(false)}
+				TransitionComponent={Transition}
+				fullWidth
+				maxWidth="xs"
+				PaperProps={{
+					sx: { borderRadius: "16px" },
+				}}
+			>
+				<DialogTitle sx={{ fontWeight: 700, fontSize: 18 }}>
+					Rincian Penggunaan Dana
+				</DialogTitle>
+				<DialogContent dividers>
+					{/* Header Status */}
+					<Box sx={{ display: "flex", gap: 2, mb: 3 }}>
+						<AccountBalanceWalletRoundedIcon
+							sx={{ color: "#0284c7", fontSize: 28 }}
+						/>
+						<Box>
+							<Typography sx={{ fontWeight: 700, fontSize: 15, mb: 0.5 }}>
+								Status Dana Terkumpul
+							</Typography>
+							<Typography sx={{ fontSize: 13, color: "#64748b" }}>
+								Penggalang dana sudah mengumpulkan dana selama{" "}
+								{campaignDuration} hari.
+							</Typography>
+						</Box>
+					</Box>
+
+					{/* Total Collected */}
+					<Box
+						sx={{
+							display: "flex",
+							justifyContent: "space-between",
+							alignItems: "center",
+							mb: 2,
+						}}
+					>
+						<Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+							<Chip
+								label="100%"
+								size="small"
+								sx={{
+									bgcolor: "#0ea5e9",
+									color: "white",
+									fontWeight: 700,
+									height: 24,
+								}}
+							/>
+							<Typography sx={{ fontWeight: 700, fontSize: 14 }}>
+								Dana terkumpul
+							</Typography>
+						</Box>
+						<Typography sx={{ fontWeight: 700, fontSize: 16 }}>
+							{formatIDR(totalCollected)}
+						</Typography>
+					</Box>
+
+					{/* Breakdown Box */}
+					<Box
+						sx={{
+							bgcolor: "#e0f2fe",
+							borderRadius: 2,
+							p: 2,
+							mb: 3,
+						}}
+					>
+						<Box sx={{ mb: 1.5 }}>
+							<Chip
+								label="100%"
+								size="small"
+								sx={{
+									bgcolor: "#0ea5e9",
+									color: "white",
+									fontWeight: 700,
+									height: 20,
+									fontSize: 11,
+									mb: 1,
+								}}
+							/>
+						</Box>
+
+						<Stack spacing={1.5}>
+							<Box
+								sx={{
+									display: "flex",
+									justifyContent: "space-between",
+									fontSize: 14,
+								}}
+							>
+								<Typography sx={{ fontSize: 14, color: "#334155" }}>
+									Dana untuk penggalangan dana
+								</Typography>
+								<Typography sx={{ fontSize: 14, fontWeight: 500 }}>
+									{formatIDR(totalCollected)}
+								</Typography>
+							</Box>
+							<Box
+								sx={{
+									display: "flex",
+									justifyContent: "space-between",
+									fontSize: 14,
+								}}
+							>
+								<Typography sx={{ fontSize: 14, color: "#334155" }}>
+									Biaya transaksi dan teknologi*
+								</Typography>
+								<Typography sx={{ fontSize: 14, fontWeight: 500 }}>
+									{formatIDR(fees)}
+								</Typography>
+							</Box>
+							<Box
+								sx={{
+									display: "flex",
+									justifyContent: "space-between",
+									fontSize: 14,
+								}}
+							>
+								<Typography sx={{ fontSize: 14, color: "#334155" }}>
+									Sudah dicairkan
+								</Typography>
+								<Typography sx={{ fontSize: 14, fontWeight: 500 }}>
+									{formatIDR(withdrawn)}
+								</Typography>
+							</Box>
+
+							<Divider sx={{ borderColor: "#bae6fd" }} />
+
+							<Box
+								sx={{
+									display: "flex",
+									justifyContent: "space-between",
+									fontSize: 14,
+								}}
+							>
+								<Typography sx={{ fontSize: 14, fontWeight: 700 }}>
+									Belum dicairkan**
+								</Typography>
+								<Typography sx={{ fontSize: 14, fontWeight: 700 }}>
+									{formatIDR(remaining)}
+								</Typography>
+							</Box>
+						</Stack>
+					</Box>
+
+					{/* Optional Donation */}
+					<Box sx={{ mb: 3 }}>
+						<Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
+							<Chip
+								label="0%"
+								size="small"
+								sx={{
+									bgcolor: "#e2e8f0",
+									color: "#64748b",
+									fontWeight: 700,
+									height: 20,
+									fontSize: 11,
+								}}
+							/>
+							<Typography sx={{ fontSize: 14, color: "#64748b" }}>
+								Donasi operasional yayasan pesona kebaikan
+							</Typography>
+						</Box>
+					</Box>
+
+					{/* Footnotes */}
+					<Box
+						sx={{
+							bgcolor: "#fefce8",
+							p: 2,
+							borderRadius: 2,
+							fontSize: 12,
+							color: "#854d0e",
+						}}
+					>
+						<Typography sx={{ fontSize: 12, mb: 1, lineHeight: 1.5 }}>
+							* Biaya ini 100% dibayarkan kepada pihak ketiga penyedia layanan
+							transaksi digital dan Virtual Account, dompet digital dan QRIS
+							serta layanan notifikasi (SMS, WA & email) dan server. Pesona
+							Kebaikan tidak mengambil keuntungan dari layanan ini.
+						</Typography>
+						<Typography sx={{ fontSize: 12, lineHeight: 1.5 }}>
+							** Dana dapat dicairkan dan dikelola oleh penggalang dana. Jika
+							terdapat sisa uang, belum dicairkan, maka uang tersebut akan
+							disalurkan ke penerima manfaat yang ditunjuk.
+						</Typography>
+					</Box>
+				</DialogContent>
+				<DialogActions sx={{ p: 2 }}>
+					<Button
+						fullWidth
+						variant="contained"
+						onClick={() => setOpenFundDetailsModal(false)}
+						sx={{
+							bgcolor: "#0ea5e9",
+							textTransform: "none",
+							fontWeight: 700,
+							py: 1.5,
+							borderRadius: 2,
+							"&:hover": { bgcolor: "#0284c7" },
+						}}
+					>
+						Tutup
+					</Button>
+				</DialogActions>
+			</Dialog>
+
 			{/* Donors Modal */}
 			<Dialog
 				open={openDonorsModal}
@@ -1028,6 +1799,281 @@ export default function CampaignDetailView({ data }: { data: any }) {
 				message="Tautan berhasil disalin"
 				anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
 			/>
+
+			{/* Report Modal */}
+			<Dialog
+				open={openReportModal}
+				onClose={() => setOpenReportModal(false)}
+				TransitionComponent={Transition}
+				fullWidth
+				maxWidth="sm"
+				PaperProps={{
+					sx: {
+						borderRadius: "24px",
+						maxHeight: "90vh",
+						bgcolor: "#ffffff",
+						backgroundImage: "none",
+						boxShadow: "0 20px 40px -4px rgba(0,0,0,0.1)",
+					},
+				}}
+			>
+				<DialogTitle
+					sx={{
+						display: "flex",
+						justifyContent: "space-between",
+						alignItems: "center",
+						p: 3,
+						pb: 2,
+					}}
+				>
+					<Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+						<Box
+							sx={{
+								width: 40,
+								height: 40,
+								borderRadius: "12px",
+								bgcolor: "#fee2e2",
+								display: "flex",
+								alignItems: "center",
+								justifyContent: "center",
+							}}
+						>
+							<ReportProblemRoundedIcon sx={{ color: "#ef4444" }} />
+						</Box>
+						<Box>
+							<Typography
+								variant="h6"
+								fontWeight={800}
+								sx={{ lineHeight: 1.2 }}
+							>
+								Laporkan Campaign
+							</Typography>
+							<Typography variant="body2" color="text.secondary">
+								Bantu kami menjaga keamanan platform
+							</Typography>
+						</Box>
+					</Box>
+					<IconButton
+						onClick={() => setOpenReportModal(false)}
+						sx={{
+							bgcolor: "#f1f5f9",
+							"&:hover": { bgcolor: "#e2e8f0" },
+						}}
+					>
+						<CloseIcon fontSize="small" />
+					</IconButton>
+				</DialogTitle>
+
+				<DialogContent sx={{ p: 3, pt: 1 }}>
+					<Alert
+						severity="info"
+						icon={false}
+						sx={{
+							mb: 3,
+							bgcolor: "#f0f9ff",
+							color: "#0c4a6e",
+							border: "1px solid #bae6fd",
+							"& .MuiAlert-message": { width: "100%" },
+							borderRadius: "16px",
+						}}
+					>
+						<AlertTitle sx={{ fontWeight: 700, mb: 0.5 }}>
+							Identitas Pelapor Dilindungi
+						</AlertTitle>
+						<Typography variant="body2" sx={{ opacity: 0.9 }}>
+							Data diri Anda tidak akan dibagikan kepada penggalang dana. Kami
+							menjaga kerahasiaan identitas pelapor sepenuhnya.
+						</Typography>
+					</Alert>
+
+					<Stack spacing={2.5}>
+						<Box>
+							<Typography
+								variant="subtitle2"
+								fontWeight={700}
+								sx={{ mb: 1, color: "#334155" }}
+							>
+								Data Pelapor
+							</Typography>
+							<Stack spacing={2}>
+								<TextField
+									fullWidth
+									placeholder="Nama Lengkap"
+									value={reporterName}
+									onChange={(e) => setReporterName(e.target.value)}
+									InputProps={{
+										sx: { borderRadius: "12px", bgcolor: "#f8fafc" },
+									}}
+									sx={{
+										"& .MuiOutlinedInput-notchedOutline": {
+											borderColor: "#e2e8f0",
+										},
+									}}
+								/>
+								<Box sx={{ display: "flex", gap: 2 }}>
+									<TextField
+										fullWidth
+										placeholder="No. WhatsApp"
+										value={reporterPhone}
+										onChange={(e) => setReporterPhone(e.target.value)}
+										InputProps={{
+											sx: { borderRadius: "12px", bgcolor: "#f8fafc" },
+										}}
+										sx={{
+											"& .MuiOutlinedInput-notchedOutline": {
+												borderColor: "#e2e8f0",
+											},
+										}}
+									/>
+									<TextField
+										fullWidth
+										placeholder="Email Aktif"
+										value={reporterEmail}
+										onChange={(e) => setReporterEmail(e.target.value)}
+										InputProps={{
+											sx: { borderRadius: "12px", bgcolor: "#f8fafc" },
+										}}
+										sx={{
+											"& .MuiOutlinedInput-notchedOutline": {
+												borderColor: "#e2e8f0",
+											},
+										}}
+									/>
+								</Box>
+							</Stack>
+						</Box>
+
+						<Box>
+							<Typography
+								variant="subtitle2"
+								fontWeight={700}
+								sx={{ mb: 1, color: "#334155" }}
+							>
+								Detail Masalah
+							</Typography>
+							<Stack spacing={2}>
+								<FormControl fullWidth>
+									<Select
+										value={reportReason}
+										onChange={(e) =>
+											setReportReason(e.target.value as ReportReason)
+										}
+										displayEmpty
+										renderValue={(selected) => {
+											if (!selected) {
+												return (
+													<Typography color="text.secondary">
+														Pilih jenis pelanggaran
+													</Typography>
+												);
+											}
+											return REPORT_REASONS.find((r) => r.value === selected)
+												?.label;
+										}}
+										sx={{
+											borderRadius: "12px",
+											bgcolor: "#f8fafc",
+											"& .MuiOutlinedInput-notchedOutline": {
+												borderColor: "#e2e8f0",
+											},
+										}}
+									>
+										{REPORT_REASONS.map((option) => (
+											<MenuItem key={option.value} value={option.value}>
+												{option.label}
+											</MenuItem>
+										))}
+									</Select>
+								</FormControl>
+
+								<TextField
+									fullWidth
+									multiline
+									rows={4}
+									placeholder="Ceritakan detail masalah atau bukti yang Anda temukan..."
+									value={reportDetails}
+									onChange={(e) => setReportDetails(e.target.value)}
+									InputProps={{
+										sx: { borderRadius: "12px", bgcolor: "#f8fafc" },
+									}}
+									sx={{
+										"& .MuiOutlinedInput-notchedOutline": {
+											borderColor: "#e2e8f0",
+										},
+									}}
+								/>
+							</Stack>
+						</Box>
+					</Stack>
+				</DialogContent>
+				<DialogActions sx={{ p: 3, pt: 1 }}>
+					<Button
+						onClick={() => setOpenReportModal(false)}
+						disabled={reportLoading}
+						sx={{
+							color: "#64748b",
+							fontWeight: 700,
+							textTransform: "none",
+							borderRadius: "12px",
+							px: 3,
+						}}
+					>
+						Batal
+					</Button>
+					<Button
+						variant="contained"
+						onClick={handleSubmitReport}
+						disabled={reportLoading}
+						sx={{
+							bgcolor: "#ef4444",
+							color: "white",
+							textTransform: "none",
+							fontWeight: 700,
+							px: 4,
+							py: 1.2,
+							borderRadius: "12px",
+							boxShadow: "0 10px 20px -5px rgba(239, 68, 68, 0.3)",
+							"&:hover": {
+								bgcolor: "#dc2626",
+								boxShadow: "0 15px 25px -5px rgba(239, 68, 68, 0.4)",
+							},
+						}}
+					>
+						{reportLoading ? "Mengirim..." : "Kirim Laporan"}
+					</Button>
+				</DialogActions>
+			</Dialog>
+
+			<Snackbar
+				open={reportSuccessOpen}
+				autoHideDuration={6000}
+				onClose={() => setReportSuccessOpen(false)}
+				anchorOrigin={{ vertical: "top", horizontal: "center" }}
+			>
+				<Alert
+					onClose={() => setReportSuccessOpen(false)}
+					severity="success"
+					sx={{ width: "100%", borderRadius: "12px", boxShadow: 3 }}
+				>
+					Laporan berhasil dikirim. Terima kasih atas kepedulian Anda.
+				</Alert>
+			</Snackbar>
+
+			{/* Generic Snackbar */}
+			<Snackbar
+				open={snack.open}
+				autoHideDuration={4000}
+				onClose={() => setSnack({ ...snack, open: false })}
+				anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+			>
+				<Alert
+					onClose={() => setSnack({ ...snack, open: false })}
+					severity={snack.type}
+					sx={{ width: "100%", borderRadius: "12px", boxShadow: 3 }}
+				>
+					{snack.msg}
+				</Alert>
+			</Snackbar>
 
 			{/* Donation Success Snackbar */}
 			<Snackbar

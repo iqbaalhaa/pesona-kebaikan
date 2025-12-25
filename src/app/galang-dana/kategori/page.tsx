@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 
 import {
 	Box,
@@ -16,6 +17,7 @@ import {
 	Drawer,
 	Button,
 	Stack,
+	LinearProgress,
 } from "@mui/material";
 
 import ArrowBackIosNewRoundedIcon from "@mui/icons-material/ArrowBackIosNewRounded";
@@ -177,6 +179,13 @@ function ExampleCard({ e }: { e: Example }) {
 
 export default function GalangDanaKategoriPage() {
 	const router = useRouter();
+	const { status } = useSession();
+
+	React.useEffect(() => {
+		if (status === "unauthenticated") {
+			router.replace("/auth/login?callbackUrl=/galang-dana/kategori");
+		}
+	}, [status, router]);
 
 	const [open, setOpen] = React.useState(false);
 	const [selected, setSelected] = React.useState<Cat | null>(null);
@@ -216,6 +225,14 @@ export default function GalangDanaKategoriPage() {
 			)}`
 		);
 	};
+
+	if (status === "loading") {
+		return (
+			<Box sx={{ minHeight: "100dvh", display: "grid", placeItems: "center" }}>
+				<LinearProgress sx={{ width: 120, borderRadius: 99 }} />
+			</Box>
+		);
+	}
 
 	return (
 		<Box sx={{ pb: "calc(var(--bottom-nav-h, 72px) + 12px)" }}>

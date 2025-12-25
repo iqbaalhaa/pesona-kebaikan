@@ -66,9 +66,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 				sx={{
 					flex: 1,
 					overflowY: "auto",
-					background: isHome
-						? "linear-gradient(180deg,rgba(255, 255, 255, 1) 0%, rgba(176, 230, 183, 1) 50%, rgba(97, 206, 112, 1) 100%)"
-						: "var(--background)",
+					backgroundColor: isHome ? "#EFF6FF" : undefined,
 					pb: shouldHideNav ? 0 : 7, // Space for bottom nav
 					pt: isHome || shouldHideNav ? 0 : 8, // Add space under AppBar for solid variant (Toolbar ~64px)
 				}}

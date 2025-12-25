@@ -234,6 +234,7 @@ enum CampaignStatus {
   ACTIVE
   REJECTED
   COMPLETED
+  DRAFT
 }
 
 model Campaign {
@@ -262,6 +263,7 @@ model Campaign {
   donations Donation[]
   withdrawals Withdrawal[]
   updates     CampaignUpdate[]
+  reports     Report[]
 
   @@index([categoryId])
   @@index([createdById])
@@ -360,4 +362,37 @@ model CampaignUpdateMedia {
   update    CampaignUpdate @relation(fields: [updateId], references: [id], onDelete: Cascade)
 
   @@index([updateId])
+}
+
+enum ReportReason {
+  FRAUD // Penipuan/Penyalahgunaan dana
+  COVERED // Sudah dicover pihak lain
+  FAKE_INFO // Informasi palsu
+  DECEASED // Penerima sudah meninggal
+  NO_PERMISSION // Tanpa izin
+  IRRELEVANT // Tidak relevan/jokes
+  INAPPROPRIATE // Konten tidak pantas
+  SPAM // Spamming
+  OTHER // Lainnya
+}
+
+model Report {
+  id        String       @id @default(cuid())
+  reason    ReportReason
+  details   String       @db.Text
+  
+  // Reporter info
+  reporterName  String
+  reporterPhone String
+  reporterEmail String
+
+  status    String   @default("PENDING") // PENDING, REVIEWED, RESOLVED, REJECTED
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  campaignId String
+  campaign   Campaign @relation(fields: [campaignId], references: [id])
+
+  @@index([campaignId])
+  @@index([status])
 }

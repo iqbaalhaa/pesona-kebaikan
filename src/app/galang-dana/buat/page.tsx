@@ -503,6 +503,64 @@ function BuatGalangDanaPageContent() {
 		goNext();
 	};
 
+	const handleSaveDraft = async () => {
+		setSubmitting(true);
+		const formData = new FormData();
+		formData.append("status", "DRAFT");
+
+		if (isSakit) {
+			formData.append("title", title);
+			formData.append("slug", slug);
+			formData.append("category", "medis");
+			formData.append("type", "sakit");
+			formData.append("target", target);
+			formData.append("duration", duration);
+			formData.append("phone", phone);
+
+			if (coverFile) formData.append("cover", coverFile);
+
+			formData.append("story", story);
+		} else {
+			formData.append("title", titleOther);
+			formData.append("slug", slugOther);
+			formData.append("category", category);
+			formData.append("type", "lainnya");
+			formData.append("target", targetOther);
+			formData.append("duration", durationOther);
+			formData.append("phone", phoneOther);
+
+			if (coverFileOther) formData.append("cover", coverFileOther);
+
+			formData.append("story", storyOther);
+		}
+
+		let res;
+		if (isEdit) {
+			res = await updateCampaign(draftId!, formData);
+		} else {
+			res = await createCampaign(formData);
+		}
+
+		setSubmitting(false);
+
+		if (res.success) {
+			setSnack({
+				open: true,
+				msg: "Draft berhasil disimpan!",
+				type: "success",
+			});
+			setTimeout(() => {
+				router.push("/galang-dana");
+			}, 1500);
+		} else {
+			setSnack({
+				open: true,
+				msg: res.error || "Gagal menyimpan draft",
+				type: "error",
+			});
+		}
+	};
+
 	const headerTitle = isEdit
 		? "Edit Campaign"
 		: isSakit
@@ -1918,9 +1976,8 @@ function BuatGalangDanaPageContent() {
 					</Stack>
 
 					<Button
-						onClick={() =>
-							setSnack({ open: true, msg: "Disimpan (dummy).", type: "info" })
-						}
+						onClick={handleSaveDraft}
+						disabled={submitting}
 						variant="text"
 						fullWidth
 						sx={{ mt: 0.5, fontWeight: 600, color: "text.secondary" }}

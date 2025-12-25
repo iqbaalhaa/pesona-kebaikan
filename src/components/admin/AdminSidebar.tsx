@@ -109,6 +109,12 @@ const menus: { title: string; items: MenuItem[] }[] = [
 				icon: <NotificationsIcon fontSize="small" />,
 				desc: "Broadcast & pesan",
 			},
+			{
+				label: "Pusat Pengaduan",
+				href: "/admin/pengaduan",
+				icon: <AddTask fontSize="small" />,
+				desc: "Laporkan masalah",
+			},
 		],
 	},
 	{

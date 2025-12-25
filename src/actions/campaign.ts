@@ -14,7 +14,13 @@ export async function createCampaign(formData: FormData) {
 	}
 
 	try {
-		const title = formData.get("title") as string;
+		const status = (formData.get("status") as CampaignStatus) || "PENDING";
+
+		let title = formData.get("title") as string;
+		if (status === "DRAFT" && !title) {
+			title = "Draft Campaign";
+		}
+
 		let slug = formData.get("slug") as string;
 
 		if (!slug) {
@@ -33,7 +39,12 @@ export async function createCampaign(formData: FormData) {
 		// const type = formData.get("type") as string; // 'sakit' or 'lainnya'
 		const targetStr = formData.get("target") as string;
 		const duration = formData.get("duration") as string;
-		const story = formData.get("story") as string;
+		let story = formData.get("story") as string;
+
+		if (status === "DRAFT" && !story) {
+			story = "";
+		}
+
 		const phone = formData.get("phone") as string;
 
 		// File upload
@@ -78,6 +89,8 @@ export async function createCampaign(formData: FormData) {
 		}
 
 		// Create Campaign
+		// status is already defined above
+
 		const campaign = await prisma.campaign.create({
 			data: {
 				title,
@@ -89,7 +102,7 @@ export async function createCampaign(formData: FormData) {
 				phone,
 				categoryId: category.id,
 				createdById: session.user.id,
-				status: "PENDING", // Default status
+				status,
 				media: coverUrl
 					? {
 							create: {
@@ -106,9 +119,12 @@ export async function createCampaign(formData: FormData) {
 		revalidatePath("/admin/campaign");
 
 		return { success: true, campaignId: campaign.id };
-	} catch (error) {
+	} catch (error: any) {
 		console.error("Create campaign error:", error);
-		return { success: false, error: "Failed to create campaign" };
+		return {
+			success: false,
+			error: error.message || "Failed to create campaign",
+		};
 	}
 }
 
@@ -567,11 +583,12 @@ export async function updateCampaign(id: string, formData: FormData) {
 		const targetStr = formData.get("target") as string;
 		const story = formData.get("story") as string;
 		const phone = formData.get("phone") as string;
+		const status = formData.get("status") as CampaignStatus | null;
 
-		const target = parseFloat(targetStr);
+		const target = parseFloat(targetStr?.replace(/[^\d]/g, "") || "0") || 0;
 
 		const category = await prisma.campaignCategory.findFirst({
-			where: { name: CATEGORY_TITLE[categoryKey] },
+			where: { name: CATEGORY_TITLE[categoryKey] || "Lainnya" },
 		});
 
 		if (!category) {
@@ -613,6 +630,7 @@ export async function updateCampaign(id: string, formData: FormData) {
 				target,
 				phone,
 				categoryId: category.id,
+				...(status ? { status } : {}),
 			},
 		});
 
@@ -622,9 +640,12 @@ export async function updateCampaign(id: string, formData: FormData) {
 		revalidatePath("/");
 
 		return { success: true };
-	} catch (error) {
+	} catch (error: any) {
 		console.error("Update campaign error:", error);
-		return { success: false, error: "Failed to update campaign" };
+		return {
+			success: false,
+			error: error.message || "Failed to update campaign",
+		};
 	}
 }
 

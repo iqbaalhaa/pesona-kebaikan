@@ -3,6 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { getMyCampaigns, deleteCampaign } from "@/actions/campaign";
 
 import HealingRoundedIcon from "@mui/icons-material/HealingRounded";
@@ -128,6 +129,13 @@ function CounterPill({ n, active }: { n: number; active?: boolean }) {
 export default function GalangDanaSayaPage() {
 	const router = useRouter();
 	const theme = useTheme();
+	const { status } = useSession();
+
+	React.useEffect(() => {
+		if (status === "unauthenticated") {
+			router.replace("/auth/login?callbackUrl=/galang-dana");
+		}
+	}, [status, router]);
 
 	const BOTTOM_NAV_H = 64;
 
@@ -247,6 +255,14 @@ export default function GalangDanaSayaPage() {
 			});
 		}
 	};
+
+	if (status === "loading") {
+		return (
+			<Box sx={{ minHeight: "100dvh", display: "grid", placeItems: "center" }}>
+				<LinearProgress sx={{ width: 120, borderRadius: 99 }} />
+			</Box>
+		);
+	}
 
 	return (
 		<Box
