@@ -39,7 +39,9 @@ export default function SimpleAppBar({ variant = "solid" }: SimpleAppBarProps) {
 	const isOverlay = variant === "overlay";
 
 	// Notification State
-	const [anchorEl, setAnchorEl] = React.useState<HTMLButtonElement | null>(null);
+	const [anchorEl, setAnchorEl] = React.useState<HTMLButtonElement | null>(
+		null
+	);
 	const [tabValue, setTabValue] = React.useState(0);
 	const [notifications, setNotifications] = React.useState<any[]>([]);
 	const [unreadCount, setUnreadCount] = React.useState(0);
@@ -52,12 +54,16 @@ export default function SimpleAppBar({ variant = "solid" }: SimpleAppBarProps) {
 
 	const fetchNotifications = async () => {
 		if (!session?.user?.id) return;
-		const { notifications, unreadCount } = await getNotifications(session.user.id);
+		const { notifications, unreadCount } = await getNotifications(
+			session.user.id
+		);
 		setNotifications(notifications);
 		setUnreadCount(unreadCount);
 	};
 
-	const handleOpenNotifications = (event: React.MouseEvent<HTMLButtonElement>) => {
+	const handleOpenNotifications = (
+		event: React.MouseEvent<HTMLButtonElement>
+	) => {
 		setAnchorEl(event.currentTarget);
 		// Optionally refresh notifications on open
 		fetchNotifications();
@@ -75,8 +81,8 @@ export default function SimpleAppBar({ variant = "solid" }: SimpleAppBarProps) {
 	const id = open ? "notification-popover" : undefined;
 
 	// Filter notifications based on tab
-	const displayedNotifications = notifications.filter(n => 
-		tabValue === 0 ? n.type === 'KABAR' : n.type === 'PESAN'
+	const displayedNotifications = notifications.filter((n) =>
+		tabValue === 0 ? n.type === "KABAR" : n.type === "PESAN"
 	);
 
 	// Colors depend on variant
@@ -177,9 +183,22 @@ export default function SimpleAppBar({ variant = "solid" }: SimpleAppBarProps) {
 										color: isOverlay
 											? "rgba(255,255,255,0.9)"
 											: theme.palette.text.secondary,
+										display: "flex",
 									}}
 								>
-									🔎
+									<svg
+										width="18"
+										height="18"
+										viewBox="0 0 24 24"
+										fill="none"
+										stroke="currentColor"
+										strokeWidth="2"
+										strokeLinecap="round"
+										strokeLinejoin="round"
+									>
+										<circle cx="11" cy="11" r="8" />
+										<path d="m21 21-4.35-4.35" />
+									</svg>
 								</Box>
 							),
 						}}
@@ -260,29 +279,49 @@ export default function SimpleAppBar({ variant = "solid" }: SimpleAppBarProps) {
 							) : (
 								displayedNotifications.map((item) => (
 									<React.Fragment key={item.id}>
-										<ListItemButton 
+										<ListItemButton
 											alignItems="flex-start"
-											sx={{ bgcolor: item.isRead ? 'transparent' : alpha(theme.palette.primary.main, 0.05) }}
+											sx={{
+												bgcolor: item.isRead
+													? "transparent"
+													: alpha(theme.palette.primary.main, 0.05),
+											}}
 											onClick={() => {
 												if (!item.isRead) {
 													markAsRead(item.id);
-													setNotifications(prev => prev.map(n => n.id === item.id ? { ...n, isRead: true } : n));
-													setUnreadCount(prev => Math.max(0, prev - 1));
+													setNotifications((prev) =>
+														prev.map((n) =>
+															n.id === item.id ? { ...n, isRead: true } : n
+														)
+													);
+													setUnreadCount((prev) => Math.max(0, prev - 1));
 												}
 											}}
 										>
 											<ListItemAvatar>
-												<Avatar sx={{ 
-													bgcolor: item.type === 'KABAR' ? "#f0fdf4" : "#eff6ff", 
-													color: item.type === 'KABAR' ? "#16a34a" : "#2563eb" 
-												}}>
-													{item.type === 'KABAR' ? <CampaignIcon /> : <AdminPanelSettingsIcon />}
+												<Avatar
+													sx={{
+														bgcolor:
+															item.type === "KABAR" ? "#f0fdf4" : "#eff6ff",
+														color:
+															item.type === "KABAR" ? "#16a34a" : "#2563eb",
+													}}
+												>
+													{item.type === "KABAR" ? (
+														<CampaignIcon />
+													) : (
+														<AdminPanelSettingsIcon />
+													)}
 												</Avatar>
 											</ListItemAvatar>
 											<ListItemText
 												primary={
 													<Typography
-														sx={{ fontSize: 14, fontWeight: 700, color: "#0f172a" }}
+														sx={{
+															fontSize: 14,
+															fontWeight: 700,
+															color: "#0f172a",
+														}}
 													>
 														{item.title}
 													</Typography>
@@ -308,9 +347,15 @@ export default function SimpleAppBar({ variant = "solid" }: SimpleAppBarProps) {
 															variant="caption"
 															sx={{ fontSize: 11, color: "#94a3b8" }}
 														>
-															{new Date(item.createdAt).toLocaleDateString('id-ID', { 
-																day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' 
-															})}
+															{new Date(item.createdAt).toLocaleDateString(
+																"id-ID",
+																{
+																	day: "numeric",
+																	month: "short",
+																	hour: "2-digit",
+																	minute: "2-digit",
+																}
+															)}
 														</Typography>
 													</React.Fragment>
 												}

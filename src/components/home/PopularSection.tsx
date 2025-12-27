@@ -64,7 +64,7 @@ function ProgressMini({ pct }: { pct: number }) {
 			sx={{
 				height: 6,
 				borderRadius: 999,
-				bgcolor: "rgba(15,23,42,0.08)",
+				bgcolor: "#e11d48",
 				overflow: "hidden",
 			}}
 		>
@@ -84,7 +84,9 @@ function ProgressMini({ pct }: { pct: number }) {
 function PopularCard({ c }: { c: Campaign }) {
 	const router = useRouter();
 	const [imgSrc, setImgSrc] = React.useState(c.cover || "/defaultimg.webp");
-	const pct = c.target ? Math.round((c.collected / c.target) * 100) : 0;
+	const rawPct = c.target ? Math.round((c.collected / c.target) * 100) : 0;
+	const pct = Math.min(100, Math.max(0, rawPct));
+	const displayPct = Math.min(100, Math.max(0, rawPct));
 
 	const handleCardClick = () => {
 		router.push(`/donasi/${c.slug || c.id}`);
@@ -94,9 +96,9 @@ function PopularCard({ c }: { c: Campaign }) {
 		<Box
 			onClick={handleCardClick}
 			sx={{
-				minWidth: 240,
-				maxWidth: 240,
-				borderRadius: "10px",
+				minWidth: 200,
+				maxWidth: 200,
+				borderRadius: 1,
 				border: "1px solid rgba(15,23,42,0.08)",
 				bgcolor: "#fff",
 				boxShadow: "0 14px 26px rgba(15,23,42,.06)",
@@ -115,7 +117,7 @@ function PopularCard({ c }: { c: Campaign }) {
 					src={imgSrc}
 					alt={c.title}
 					fill
-					sizes="240px"
+					sizes="200px"
 					style={{ objectFit: "cover" }}
 					onError={() => setImgSrc("/defaultimg.webp")}
 				/>
@@ -263,7 +265,7 @@ export default function PopularSection({
 	const [canLeft, setCanLeft] = React.useState(false);
 	const [canRight, setCanRight] = React.useState(false);
 
-	const CARD_STEP = 252; // 240 width + gap (12px)
+	const CARD_STEP = 212; // 200 width + gap (12px)
 
 	const updateArrows = React.useCallback(() => {
 		const el = scrollRef.current;

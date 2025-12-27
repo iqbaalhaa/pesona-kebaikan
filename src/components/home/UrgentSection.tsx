@@ -103,9 +103,9 @@ function UrgentCard({ item }: { item: Campaign }) {
 			onClick={handleCardClick}
 			sx={{
 				cursor: "pointer",
-				minWidth: 260,
-				maxWidth: 260,
-				borderRadius: "10px",
+				minWidth: 200,
+				maxWidth: 200,
+				borderRadius: 1,
 				overflow: "hidden",
 				scrollSnapAlign: "start",
 				position: "relative",
@@ -120,15 +120,15 @@ function UrgentCard({ item }: { item: Campaign }) {
 			<Box
 				className="relative h-[140px] overflow-hidden bg-gray-100"
 				sx={{
-					borderTopLeftRadius: { md: 3 },
-					borderTopRightRadius: { md: 3 },
+					borderTopLeftRadius: { md: 1 },
+					borderTopRightRadius: { md: 1 },
 				}}
 			>
 				<Image
 					src={imgSrc}
 					alt={item.title}
 					fill
-					sizes="260px"
+					sizes="200px"
 					style={{ objectFit: "cover" }}
 					className="group-hover:scale-105 transition-transform duration-500"
 					onError={() => setImgSrc("/defaultimg.webp")}

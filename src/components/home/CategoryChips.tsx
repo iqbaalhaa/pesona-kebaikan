@@ -64,7 +64,7 @@ function CategoryButton({
 			onKeyDown={(e) => e.key === "Enter" && onClick()}
 			className="w-full p-3 cursor-pointer select-none transition-all duration-150 ease-out active:scale-95"
 			sx={{
-				borderRadius: "8px",
+				borderRadius: 1,
 				border: selected
 					? `1px solid ${alpha(primaryMain, 0.45)}`
 					: `1px solid ${alpha(theme.palette.text.primary, 0.1)}`,
@@ -105,7 +105,7 @@ function ProgressMini({ pct }: { pct: number }) {
 			sx={{
 				height: 6,
 				borderRadius: 999,
-				bgcolor: "rgba(15,23,42,0.08)",
+				bgcolor: "#e11d48",
 				overflow: "hidden",
 			}}
 		>
@@ -125,7 +125,9 @@ function ProgressMini({ pct }: { pct: number }) {
 function CampaignRowCard({ item }: { item: Campaign }) {
 	const router = useRouter();
 	const [imgSrc, setImgSrc] = React.useState(item.cover || "/defaultimg.webp");
-	const pct = item.target ? Math.round((item.collected / item.target) * 100) : 0;
+	const pct = item.target
+		? Math.round((item.collected / item.target) * 100)
+		: 0;
 
 	const handleCardClick = () => {
 		router.push(`/donasi/${item.slug || item.id}`);
@@ -135,7 +137,8 @@ function CampaignRowCard({ item }: { item: Campaign }) {
 		<Box
 			onClick={handleCardClick}
 			sx={{
-				minWidth: 240,
+				minWidth: 200,
+				maxWidth: 200,
 				borderRadius: "10px",
 				border: "1px solid rgba(15,23,42,0.08)",
 				bgcolor: "#fff",
@@ -149,71 +152,76 @@ function CampaignRowCard({ item }: { item: Campaign }) {
 			}}
 		>
 			{/* Cover */}
-			<Box sx={{ position: "relative", height: 140 }}>
-				<Image
-					src={imgSrc}
-					alt={item.title}
-					fill
-					sizes="(max-width: 768px) 100vw, 400px"
-					style={{ objectFit: "cover" }}
-					onError={() => setImgSrc("/defaultimg.webp")}
-				/>
+			<Box sx={{ position: "relative", height: 120 }}>
 				<Box
-					sx={{
-						position: "absolute",
-						inset: 0,
-						background:
-							"linear-gradient(to top, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.0) 70%)",
-						pointerEvents: "none",
-					}}
-				/>
-
-				<Box sx={{ position: "absolute", top: 10, left: 10 }}>
-					<Chip
-						label={item.category}
-						size="small"
+					className="relative w-full h-full flex-shrink-0 overflow-hidden bg-gray-100"
+					sx={{ borderRadius: 1 }}
+				>
+					<Image
+						src={imgSrc}
+						alt={item.title}
+						fill
+						sizes="(max-width: 768px) 100vw, 400px"
+						style={{ objectFit: "cover" }}
+						onError={() => setImgSrc("/defaultimg.webp")}
+					/>
+					<Box
 						sx={{
-							height: 22,
-							bgcolor: "rgba(255,255,255,0.92)",
-							backdropFilter: "blur(10px)",
-							fontWeight: 900,
-							"& .MuiChip-label": { px: 1, fontSize: 11 },
+							position: "absolute",
+							inset: 0,
+							background:
+								"linear-gradient(to top, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.0) 70%)",
+							pointerEvents: "none",
 						}}
 					/>
-				</Box>
 
-				<Box
-					sx={{
-						position: "absolute",
-						bottom: 10,
-						left: 10,
-						px: 1,
-						py: "2px",
-						borderRadius: 999,
-						fontSize: 10,
-						fontWeight: 900,
-						color: "#fff",
-						bgcolor: "rgba(15,23,42,0.72)",
-						backdropFilter: "blur(10px)",
-					}}
-				>
-					{item.daysLeft} hari
+					<Box sx={{ position: "absolute", top: 10, left: 10 }}>
+						<Chip
+							label={item.category}
+							size="small"
+							sx={{
+								height: 22,
+								bgcolor: "rgba(255,255,255,0.92)",
+								backdropFilter: "blur(10px)",
+								fontWeight: 900,
+								"& .MuiChip-label": { px: 1, fontSize: 11 },
+							}}
+						/>
+					</Box>
+
+					<Box
+						sx={{
+							position: "absolute",
+							bottom: 10,
+							left: 10,
+							px: 1,
+							py: "2px",
+							borderRadius: 999,
+							fontSize: 10,
+							fontWeight: 900,
+							color: "#fff",
+							bgcolor: "rgba(15,23,42,0.72)",
+							backdropFilter: "blur(10px)",
+						}}
+					>
+						{item.daysLeft} hari
+					</Box>
 				</Box>
 			</Box>
 
 			{/* Body */}
-			<Box sx={{ p: 1.5 }}>
+			<Box sx={{ p: 1.25 }}>
 				<Typography
 					sx={{
-						fontSize: 14,
+						fontSize: 13,
 						fontWeight: 900,
 						color: "text.primary",
-						lineHeight: 1.3,
+						lineHeight: 1.25,
 						display: "-webkit-box",
 						WebkitLineClamp: 2,
 						WebkitBoxOrient: "vertical",
 						overflow: "hidden",
-						minHeight: 38,
+						minHeight: 34,
 					}}
 				>
 					{item.title}
@@ -224,7 +232,7 @@ function CampaignRowCard({ item }: { item: Campaign }) {
 						display: "flex",
 						alignItems: "center",
 						gap: 0.75,
-						mt: 1,
+						mt: 0.8,
 					}}
 				>
 					<Typography sx={{ fontSize: 11, color: "rgba(15,23,42,.60)" }}>
@@ -280,7 +288,7 @@ function CampaignRowCard({ item }: { item: Campaign }) {
 						}}
 					>
 						<Typography
-							sx={{ fontSize: 12, fontWeight: 900, color: "text.primary" }}
+							sx={{ fontSize: 11, fontWeight: 900, color: "text.primary" }}
 						>
 							Rp {rupiah(item.collected)}
 						</Typography>
@@ -314,7 +322,8 @@ export default function CategoryChips({
 		return campaigns.filter((c) => {
 			const cat = (c.category || "").toLowerCase();
 			if (activeId === "bencana") return cat.includes("bencana");
-			if (activeId === "anak") return cat.includes("anak") || cat.includes("bayi");
+			if (activeId === "anak")
+				return cat.includes("anak") || cat.includes("bayi");
 			if (activeId === "kesehatan")
 				return cat.includes("sehat") || cat.includes("medis");
 			return true;
