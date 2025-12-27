@@ -6,104 +6,82 @@ import { JSDOM } from "jsdom";
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { title, categoryId, heroImage, content, createdById } = body;
+    const { title, categoryId, headerImage, content } = body;
 
-    // Logging untuk debug input
-    console.log("POST /api/admin/blog/create", { title, categoryId, heroImage, createdById, contentLength: content?.length });
-    // Tambahkan log user
-    const user = await prisma.user.findUnique({ where: { id: createdById } });
-    console.log("User found:", user);
+    /* ======================
+       HARDCODE USER (AMAN BUAT DEV)
+       GANTI NANTI KALO AUTH SUDAH ADA
+    ====================== */
+    const user = await prisma.user.findFirst({
+      where: { role: "ADMIN" }, // atau email tertentu
+    });
 
-    // Validasi
-    if (!title || !categoryId || !heroImage || !content || !createdById) {
-      return NextResponse.json({ success: false, error: "Semua field wajib diisi" }, { status: 400 });
-    }
-
-    // Pastikan user dengan id createdById ada
     if (!user) {
-      return NextResponse.json({ success: false, error: `User dengan id '${createdById}' tidak ditemukan.` }, { status: 400 });
+      return NextResponse.json(
+        { success: false, error: "User tidak ditemukan" },
+        { status: 400 }
+      );
     }
 
-    // Parse gallery dari konten (ambil semua <img> dan <iframe>)
+    /* ======================
+       VALIDASI
+    ====================== */
+    if (!title || !categoryId || !content) {
+      return NextResponse.json(
+        { success: false, error: "Field wajib diisi" },
+        { status: 400 }
+      );
+    }
+
+    /* ======================
+       PARSE GALLERY
+    ====================== */
     const dom = new JSDOM(content);
-    const imgs = Array.from(dom.window.document.querySelectorAll("img"))
-      .map((img) => {
-        const el = img as HTMLImageElement;
-        return {
-          type: "image" as const,
-          url: el.getAttribute("src")?.replace(/^\//, "") || "",
-        };
-      })
-      .filter((m) => m.url);
-    const iframes = Array.from(dom.window.document.querySelectorAll("iframe"))
-      .map((el) => {
-        const iframe = el as HTMLIFrameElement;
-        return {
-          type: "video" as const,
-          url: iframe.getAttribute("src") || "",
-        };
-      })
-      .filter((m) => m.url);
 
-    const gallery: { type: "image" | "video"; url: string }[] = [...imgs, ...iframes];
+    const images = Array.from(dom.window.document.querySelectorAll("img")).map(
+      (img) => ({
+        type: "image" as const,
+        url: (img as HTMLImageElement).getAttribute("src") || "",
+      })
+    );
 
-    // Simpan Blog
+    const videos = Array.from(
+      dom.window.document.querySelectorAll("iframe")
+    ).map((iframe) => ({
+      type: "video" as const,
+      url: (iframe as HTMLIFrameElement).getAttribute("src") || "",
+    }));
+
+    const gallery = [...images, ...videos].filter((m) => m.url);
+
+    /* ======================
+       CREATE BLOG
+    ====================== */
     const blog = await prisma.blog.create({
       data: {
         title,
-        content, // pastikan field ini ada di schema
-        heroImage,
+        content,
+        headerImage: headerImage || null,
         category: { connect: { id: categoryId } },
-        createdBy: { connect: { id: createdById } },
-        gallery: {
-          create: gallery.map((m) => ({
-            type: m.type,
-            url: m.url,
-          })),
-        },
+        createdBy: { connect: { id: user.id } }, // ✅ FIX ERROR
+        gallery: gallery.length
+          ? {
+              create: gallery.map((m) => ({
+                type: m.type,
+                url: m.url,
+              })),
+            }
+          : undefined,
       },
     });
 
-    // Logging hasil simpan
-    console.log("Blog created:", blog.id);
-
-    return NextResponse.json({ success: true, id: blog.id });
+    return NextResponse.json({ success: true, data: blog });
   } catch (e: any) {
-    console.error("Error in POST /api/admin/blog/create:", e);
-    return NextResponse.json({ success: false, error: e.message || "Terjadi kesalahan" }, { status: 500 });
-  }
-}
-
-// Endpoint GET untuk uji API (ambil 5 blog terakhir, lengkap dengan relasi)
-export async function GET() {
-  try {
-    const blogs = await prisma.blog.findMany({
-      orderBy: { createdAt: "desc" },
-      take: 5,
-      select: {
-        id: true,
-        title: true,
-        content: true,
-        heroImage: true,
-        createdAt: true,
-        category: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-        createdBy: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
-        },
-      },
-    });
-    return NextResponse.json({ success: true, blogs });
-  } catch (e: any) {
-    return NextResponse.json({ success: false, error: e.message || "Terjadi kesalahan" }, { status: 500 });
+    console.error(e);
+    return NextResponse.json(
+      { success: false, error: e.message },
+      { status: 500 }
+    );
   }
 }
 

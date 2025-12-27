@@ -15,6 +15,8 @@ import ChildCareIcon from "@mui/icons-material/ChildCare";
 import MedicalServicesIcon from "@mui/icons-material/MedicalServices";
 import GridViewIcon from "@mui/icons-material/GridView";
 
+const PRIMARY = "#61ce70";
+
 const categories: Category[] = [
 	{
 		id: "bencana",
@@ -97,20 +99,57 @@ function CategoryButton({
 	);
 }
 
+function ProgressMini({ pct }: { pct: number }) {
+	return (
+		<Box
+			sx={{
+				height: 6,
+				borderRadius: 999,
+				bgcolor: "rgba(15,23,42,0.08)",
+				overflow: "hidden",
+			}}
+		>
+			<Box
+				sx={{
+					height: "100%",
+					width: `${Math.min(100, Math.max(0, pct))}%`,
+					bgcolor: PRIMARY,
+					borderRadius: 999,
+					transition: "width 250ms ease",
+				}}
+			/>
+		</Box>
+	);
+}
+
 function CampaignRowCard({ item }: { item: Campaign }) {
-	const theme = useTheme();
+	const router = useRouter();
 	const [imgSrc, setImgSrc] = React.useState(item.cover || "/defaultimg.webp");
+	const pct = item.target ? Math.round((item.collected / item.target) * 100) : 0;
+
+	const handleCardClick = () => {
+		router.push(`/donasi/${item.slug || item.id}`);
+	};
 
 	return (
 		<Box
-			className="flex gap-3 p-3 bg-white shadow-sm border border-slate-200"
+			onClick={handleCardClick}
 			sx={{
-				// Use theme values for precise border/shadow matching if needed, but tailwind is fine here
+				minWidth: 240,
+				borderRadius: "10px",
+				border: "1px solid rgba(15,23,42,0.08)",
 				bgcolor: "#fff",
-				borderRadius: 1,
+				boxShadow: "0 14px 26px rgba(15,23,42,.06)",
+				overflow: "hidden",
+				position: "relative",
+				cursor: "pointer",
+				userSelect: "none",
+				transition: "transform 140ms ease",
+				"&:active": { transform: "scale(0.99)" },
 			}}
 		>
 			{/* Cover */}
+			<Box sx={{ position: "relative", height: 140 }}>
 			<Box
 				className="relative w-24 h-24 flex-shrink-0 overflow-hidden bg-gray-100"
 				sx={{ borderRadius: 1 }}
@@ -119,60 +158,136 @@ function CampaignRowCard({ item }: { item: Campaign }) {
 					src={imgSrc}
 					alt={item.title}
 					fill
-					sizes="96px"
+					sizes="(max-width: 768px) 100vw, 400px"
 					style={{ objectFit: "cover" }}
 					onError={() => setImgSrc("/defaultimg.webp")}
 				/>
-			</Box>
+				<Box
+					sx={{
+						position: "absolute",
+						inset: 0,
+						background:
+							"linear-gradient(to top, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.0) 70%)",
+						pointerEvents: "none",
+					}}
+				/>
 
-			{/* Info */}
-			<Box className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
-				<Box>
-					<Typography
-						variant="caption"
-						className="text-[10px] font-bold uppercase tracking-wider text-primary"
-						sx={{ color: "primary.main" }}
-					>
-						{item.organizer}
-					</Typography>
-					<Typography
-						className="text-[13px] font-bold leading-snug line-clamp-2 mt-0.5"
-						sx={{ color: "text.primary" }}
-					>
-						{item.title}
-					</Typography>
+				<Box sx={{ position: "absolute", top: 10, left: 10 }}>
+					<Chip
+						label={item.category}
+						size="small"
+						sx={{
+							height: 22,
+							bgcolor: "rgba(255,255,255,0.92)",
+							backdropFilter: "blur(10px)",
+							fontWeight: 900,
+							"& .MuiChip-label": { px: 1, fontSize: 11 },
+						}}
+					/>
 				</Box>
 
-				<Box>
-					<Box className="flex items-center justify-between text-[11px] mb-1 mt-2">
-						<span className="text-gray-500">Terkumpul</span>
-						<span className="font-bold text-gray-600">
-							Rp {rupiah(item.collected)}
-						</span>
-					</Box>
-					{/* Progress Bar */}
-					<Box className="h-1.5 w-full bg-red-500 rounded-full overflow-hidden">
-						<Box
-							className="h-full rounded-full bg-primary"
-							sx={{ width: "55%", bgcolor: "primary.main" }}
-						/>
-					</Box>
-					<Box className="flex items-center gap-1 mt-1.5">
-						<Typography variant="caption" className="text-[10px] text-gray-500">
-							Sisa hari
-						</Typography>
-						<Chip
-							label={`${item.daysLeft} hari`}
-							size="small"
+				<Box
+					sx={{
+						position: "absolute",
+						bottom: 10,
+						left: 10,
+						px: 1,
+						py: "2px",
+						borderRadius: 999,
+						fontSize: 10,
+						fontWeight: 900,
+						color: "#fff",
+						bgcolor: "rgba(15,23,42,0.72)",
+						backdropFilter: "blur(10px)",
+					}}
+				>
+					{item.daysLeft} hari
+				</Box>
+			</Box>
+
+			{/* Body */}
+			<Box sx={{ p: 1.5 }}>
+				<Typography
+					sx={{
+						fontSize: 14,
+						fontWeight: 900,
+						color: "text.primary",
+						lineHeight: 1.3,
+						display: "-webkit-box",
+						WebkitLineClamp: 2,
+						WebkitBoxOrient: "vertical",
+						overflow: "hidden",
+						minHeight: 38,
+					}}
+				>
+					{item.title}
+				</Typography>
+
+				<Box
+					sx={{
+						display: "flex",
+						alignItems: "center",
+						gap: 0.75,
+						mt: 1,
+					}}
+				>
+					<Typography sx={{ fontSize: 11, color: "rgba(15,23,42,.60)" }}>
+						{item.organizer}
+					</Typography>
+					<Chip
+						label="ORG"
+						size="small"
+						sx={{
+							height: 18,
+							bgcolor: "rgba(97,206,112,0.14)",
+							color: PRIMARY,
+							fontWeight: 900,
+							"& .MuiChip-label": { px: 0.8, fontSize: 9 },
+						}}
+					/>
+				</Box>
+
+				<Box sx={{ mt: 1.5 }}>
+					<Box
+						sx={{
+							display: "flex",
+							alignItems: "center",
+							justifyContent: "space-between",
+							mb: 0.5,
+						}}
+					>
+						<Typography
 							sx={{
-								height: 18,
-								fontSize: 9,
+								fontSize: 10,
 								fontWeight: 700,
-								bgcolor: alpha(theme.palette.primary.main, 0.1),
-								color: "primary.main",
-								"& .MuiChip-label": { px: 0.8 },
+								color: "rgba(15,23,42,.50)",
 							}}
-						/>
+						>
+							Terkumpul
+						</Typography>
+						<Typography
+							sx={{
+								fontSize: 10,
+								fontWeight: 900,
+								color: PRIMARY,
+							}}
+						>
+							{pct}%
+						</Typography>
+					</Box>
+					<ProgressMini pct={pct} />
+					<Box
+						sx={{
+							display: "flex",
+							justifyContent: "space-between",
+							mt: 0.5,
+						}}
+					>
+						<Typography
+							sx={{ fontSize: 12, fontWeight: 900, color: "text.primary" }}
+						>
+							Rp {rupiah(item.collected)}
+						</Typography>
 					</Box>
 				</Box>
 			</Box>
@@ -186,55 +301,99 @@ export default function CategoryChips({
 	campaigns?: Campaign[];
 }) {
 	const router = useRouter();
-	const [selected, setSelected] = React.useState("bencana");
+	const [activeId, setActiveId] = React.useState<string>("bencana");
 
 	const filtered = React.useMemo(() => {
-		// "lainnya" no longer shows all campaigns here, but we keep it safe
-		if (selected === "lainnya") return campaigns;
-		// Since real data might have different categoryIds, we might need a better matching strategy.
-		// For now, let's assume categoryId matches or we show all if 'lainnya'.
-		// Or filter by exact match if provided.
-		// If the campaigns from DB don't have "bencana" etc as categoryId, this might show nothing.
-		// Let's try to match loosely or show all for now if no match found?
-		// Better: filtering by the hardcoded IDs.
-		return campaigns.filter((c) => c.categoryId === selected);
-	}, [selected, campaigns]);
+		if (activeId === "lainnya") {
+			// Show campaigns that don't fit in main categories
+			return campaigns.filter(
+				(c) =>
+					!["bencana", "anak", "kesehatan"].includes(
+						(c.category || "").toLowerCase()
+					)
+			);
+		}
+		// Match category ID (assuming your DB categories map loosely to these IDs)
+		// Or simply filter by checking if category string contains key words
+		return campaigns.filter((c) => {
+			const cat = (c.category || "").toLowerCase();
+			if (activeId === "bencana") return cat.includes("bencana");
+			if (activeId === "anak") return cat.includes("anak") || cat.includes("bayi");
+			if (activeId === "kesehatan")
+				return cat.includes("sehat") || cat.includes("medis");
+			return true;
+		});
+	}, [activeId, campaigns]);
 
 	return (
-		<Box className="px-4 mt-6 mb-6">
-			<Box className="flex items-center justify-between mb-4">
-				<Typography
-					className="text-base font-extrabold"
-					sx={{ color: "text.primary" }}
-				>
-					Pilih Kategori
+		<Box sx={{ px: 2, mt: 3 }}>
+			<Box
+				sx={{
+					display: "flex",
+					justifyContent: "space-between",
+					alignItems: "center",
+					mb: 2,
+				}}
+			>
+				<Typography sx={{ fontSize: 16, fontWeight: 900, color: "#0f172a" }}>
+					Kategori Pilihan
 				</Typography>
 			</Box>
 
-			{/* Grid Categories */}
-			<Box className="grid grid-cols-4 gap-3">
-				{categories.map((c) => (
+			{/* Chips Grid */}
+			<Box className="grid grid-cols-4 gap-2">
+				{categories.map((cat) => (
 					<CategoryButton
-						key={c.id}
-						c={c}
-						selected={selected === c.id}
+						key={cat.id}
+						c={cat}
+						selected={activeId === cat.id}
 						onClick={() => {
-							if (c.id === "lainnya") {
+							if (cat.id === "lainnya") {
 								router.push("/kategori");
 							} else {
-								setSelected(c.id);
+								setActiveId(cat.id);
 							}
 						}}
 					/>
 				))}
 			</Box>
 
-			{/* List Campaign */}
-			<Box className="mt-5 flex flex-col gap-3">
-				{filtered.map((item) => (
-					<CampaignRowCard key={item.id} item={item} />
-				))}
+			{/* Filtered List - Horizontal Scroll */}
+			<Box sx={{ mt: 3 }}>
+				{filtered.length > 0 ? (
+					<Box
+						sx={{
+							display: "flex",
+							gap: 1.5,
+							overflowX: "auto",
+							pb: 1,
+							scrollSnapType: "x mandatory",
+							WebkitOverflowScrolling: "touch",
+							"&::-webkit-scrollbar": { height: 6 },
+							"&::-webkit-scrollbar-thumb": {
+								background: "rgba(15,23,42,0.18)",
+								borderRadius: 999,
+							},
+							"&::-webkit-scrollbar-track": {
+								background: "rgba(15,23,42,0.06)",
+								borderRadius: 999,
+							},
+						}}
+					>
+						{filtered.map((item) => (
+							<Box key={item.id} sx={{ scrollSnapAlign: "start" }}>
+								<CampaignRowCard item={item} />
+							</Box>
+						))}
+					</Box>
+				) : (
+					<Typography className="text-center text-gray-500 text-sm py-8">
+						Belum ada penggalangan dana di kategori ini
+					</Typography>
+				)}
 			</Box>
+
+			<Box sx={{ mt: 2, height: 1, bgcolor: "rgba(15,23,42,0.06)" }} />
 		</Box>
 	);
 }

@@ -14,15 +14,18 @@ import {
 	getPopularCampaigns,
 	getUrgentCampaigns,
 	getLatestDonations,
+	getAllActiveCampaigns,
 } from "@/actions/campaign";
 import type { Campaign } from "@/types";
 
 export default async function Home() {
-	const [urgentRes, popularRes, donationRes] = await Promise.all([
-		getUrgentCampaigns(10),
-		getPopularCampaigns(10),
-		getLatestDonations(10),
-	]);
+	const [urgentRes, popularRes, donationRes, allCampaignsRes] =
+		await Promise.all([
+			getUrgentCampaigns(10),
+			getPopularCampaigns(10),
+			getLatestDonations(10),
+			getAllActiveCampaigns(100),
+		]);
 
 	const urgentCampaigns: Campaign[] = Array.isArray(urgentRes.data)
 		? urgentRes.data
@@ -31,6 +34,9 @@ export default async function Home() {
 		? popularRes.data
 		: [];
 	const latestDonations = "data" in donationRes ? donationRes.data : [];
+	const allCampaigns: Campaign[] = Array.isArray(allCampaignsRes.data)
+		? allCampaignsRes.data
+		: [];
 
 	return (
 		<Box>
@@ -38,7 +44,7 @@ export default async function Home() {
 			<QuickDonate campaigns={popularCampaigns.slice(0, 5)} />
 			<QuickMenu />
 			<UrgentSection campaigns={urgentCampaigns} />
-			<CategoryChips campaigns={popularCampaigns} />
+			<CategoryChips campaigns={allCampaigns} />
 			<PopularSection campaigns={popularCampaigns} />
 			<TrustStrip />
 			<DonationBanner />

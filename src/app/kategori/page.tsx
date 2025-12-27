@@ -1,10 +1,10 @@
 "use client";
-
 import * as React from "react";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import { useRouter } from "next/navigation";
 import { alpha, useTheme } from "@mui/material/styles";
+import { getCategoryIcon } from "@/lib/categoryIcons";
 
 // Icons
 import ThunderstormIcon from "@mui/icons-material/Thunderstorm";
@@ -21,84 +21,30 @@ import SoupKitchenIcon from "@mui/icons-material/SoupKitchen";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import HandshakeIcon from "@mui/icons-material/Handshake";
 
-const allCategories = [
-	{
-		id: "bencana",
-		label: "Bencana Alam",
-		icon: <ThunderstormIcon sx={{ fontSize: 28 }} />,
-		color: "#ef4444", // red
-	},
-	{
-		id: "anak",
-		label: "Balita & Anak Sakit",
-		icon: <ChildCareIcon sx={{ fontSize: 28 }} />,
-		color: "#f59e0b", // amber
-	},
-	{
-		id: "kesehatan",
-		label: "Bantuan Medis",
-		icon: <MedicalServicesIcon sx={{ fontSize: 28 }} />,
-		color: "#3b82f6", // blue
-	},
-	{
-		id: "zakat",
-		label: "Zakat",
-		icon: <VolunteerActivismIcon sx={{ fontSize: 28 }} />,
-		color: "#10b981", // emerald
-	},
-	{
-		id: "wakaf",
-		label: "Wakaf",
-		icon: <MosqueIcon sx={{ fontSize: 28 }} />,
-		color: "#059669", // green
-	},
-	{
-		id: "pendidikan",
-		label: "Pendidikan",
-		icon: <SchoolIcon sx={{ fontSize: 28 }} />,
-		color: "#8b5cf6", // violet
-	},
-	{
-		id: "lingkungan",
-		label: "Lingkungan",
-		icon: <ForestIcon sx={{ fontSize: 28 }} />,
-		color: "#22c55e", // green
-	},
-	{
-		id: "panti",
-		label: "Panti Asuhan",
-		icon: <HomeIcon sx={{ fontSize: 28 }} />,
-		color: "#ec4899", // pink
-	},
-	{
-		id: "difabel",
-		label: "Difabel",
-		icon: <AccessibleIcon sx={{ fontSize: 28 }} />,
-		color: "#6366f1", // indigo
-	},
-	{
-		id: "infrastruktur",
-		label: "Infrastruktur",
-		icon: <ConstructionIcon sx={{ fontSize: 28 }} />,
-		color: "#64748b", // slate
-	},
-	{
-		id: "kemanusiaan",
-		label: "Kemanusiaan",
-		icon: <HandshakeIcon sx={{ fontSize: 28 }} />,
-		color: "#f43f5e", // rose
-	},
-	{
-		id: "pangan",
-		label: "Bantuan Pangan",
-		icon: <SoupKitchenIcon sx={{ fontSize: 28 }} />,
-		color: "#ea580c", // orange
-	},
-];
+type DbCategory = { id: string; name: string; createdAt: string; updatedAt: string };
 
 export default function KategoriPage() {
 	const router = useRouter();
 	const theme = useTheme();
+	const [rows, setRows] = React.useState<DbCategory[]>([]);
+	const [loading, setLoading] = React.useState(true);
+
+	React.useEffect(() => {
+		let mounted = true;
+		(async () => {
+			try {
+				setLoading(true);
+				const res = await fetch("/api/campaigns/categories", { cache: "no-store" });
+				const data = await res.json();
+				if (mounted) setRows(Array.isArray(data) ? data : []);
+			} finally {
+				if (mounted) setLoading(false);
+			}
+		})();
+		return () => {
+			mounted = false;
+		};
+	}, []);
 
 	return (
 		<Box>
@@ -151,13 +97,37 @@ export default function KategoriPage() {
 						gap: 2,
 					}}
 				>
-					{allCategories.map((cat) => (
+					{loading ? (
+						Array.from({ length: 12 }).map((_, i) => (
+							<Box
+								key={i}
+								sx={{
+									bgcolor: "#fff",
+									borderRadius: "16px",
+									p: 2,
+									border: "1px solid rgba(15,23,42,0.08)",
+									boxShadow: "0 4px 12px rgba(15,23,42,0.03)",
+									height: "100%",
+								}}
+							>
+								<Box
+									sx={{
+										width: 56,
+										height: 56,
+										borderRadius: "16px",
+										bgcolor: "action.hover",
+									}}
+								/>
+								<Box sx={{ mt: 1.5, height: 16, bgcolor: "action.hover", borderRadius: 1 }} />
+							</Box>
+						))
+					) : rows.map((cat) => {
+						const { icon, color } = getCategoryIcon(cat.name);
+						return (
 						<Box
 							key={cat.id}
 							component="button"
 							onClick={() => {
-								// Handle click - maybe navigate to filter page or just show toast for now
-								// For now, let's just assume it goes to a filter view or stays here
 								console.log("Clicked", cat.id);
 							}}
 							sx={{
@@ -175,7 +145,7 @@ export default function KategoriPage() {
 								transition: "all 0.2s ease",
 								"&:active": {
 									transform: "scale(0.96)",
-									bgcolor: alpha(cat.color, 0.05),
+									bgcolor: alpha(color, 0.05),
 								},
 								height: "100%",
 							}}
@@ -187,12 +157,12 @@ export default function KategoriPage() {
 									borderRadius: "16px",
 									display: "grid",
 									placeItems: "center",
-									bgcolor: alpha(cat.color, 0.1),
-									color: cat.color,
+									bgcolor: alpha(color, 0.1),
+									color: color,
 									mb: 1.5,
 								}}
 							>
-								{cat.icon}
+								{icon}
 							</Box>
 							<Typography
 								sx={{
@@ -202,10 +172,11 @@ export default function KategoriPage() {
 									lineHeight: 1.25,
 								}}
 							>
-								{cat.label}
+								{cat.name}
 							</Typography>
 						</Box>
-					))}
+						);
+					})}
 				</Box>
 			</Box>
 		</Box>

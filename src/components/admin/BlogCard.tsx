@@ -1,23 +1,28 @@
-'use client';
+"use client";
 
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
 import Typography from "@mui/material/Typography";
 import Chip from "@mui/material/Chip";
 import IconButton from "@mui/material/IconButton";
+import Stack from "@mui/material/Stack";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import Image from "next/image";
 
+/* ================= TYPES ================= */
+
 export type BlogItem = {
-  id: number;
+  id: string;
   title: string;
   excerpt: string;
   category: string;
   date: string;
-  image?: string | null;
+  image?: string | null; // tetap ada, tapi tidak dipakai
   author?: string;
 };
+
+/* ================= COMPONENT ================= */
 
 export default function BlogCard({
   data,
@@ -25,45 +30,133 @@ export default function BlogCard({
   onDelete,
 }: {
   data: BlogItem;
-  onEdit?: (id: number) => void;
-  onDelete?: (id: number) => void;
+  onEdit?: (id: string) => void;
+  onDelete?: (id: string) => void;
 }) {
   return (
-    <Card className="h-full border border-gray-200 dark:border-gray-800 dark:bg-[#0f172a]">
-      <div className="relative h-32 w-full overflow-hidden">
+    <Card
+      elevation={0}
+      sx={{
+        height: "100%",
+        display: "flex",
+        flexDirection: "column",
+        borderRadius: 3,
+        border: "1px solid rgba(15,23,42,.10)",
+        overflow: "hidden",
+        transition:
+          "transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease",
+        "&:hover": {
+          transform: "translateY(-2px)",
+          boxShadow: "0 18px 42px rgba(15,23,42,.12)",
+          borderColor: "rgba(15,23,42,.18)",
+        },
+      }}
+    >
+      {/* ===== IMAGE (DEFAULT ONLY) ===== */}
+      <div className="relative h-36 w-full overflow-hidden bg-slate-100">
         <Image
-          src={data.image || "/defaultimg.webp"}
+          src="/defaultimg.webp"
           alt={data.title}
           fill
-          className="object-cover"
           sizes="400px"
+          className="object-cover"
+          priority={false}
         />
-      </div>
-      <CardContent className="flex-1 flex flex-col gap-2 p-3">
-        <div className="flex items-start justify-between gap-2">
-          <Typography variant="subtitle2" className="font-semibold text-sm line-clamp-2">
-            {data.title}
-          </Typography>
-          <Chip size="small" label={data.category} className="text-[10px] h-5" />
+
+        {/* category badge */}
+        <div className="absolute left-2 top-2">
+          <Chip
+            size="small"
+            label={data.category}
+            sx={{
+              height: 20,
+              fontSize: 10,
+              fontWeight: 800,
+              borderRadius: 999,
+              bgcolor: "rgba(255,255,255,.85)",
+              backdropFilter: "blur(6px)",
+            }}
+          />
         </div>
-        <Typography variant="body2" className="text-xs text-gray-500 line-clamp-3">
+      </div>
+
+      {/* ===== CONTENT ===== */}
+      <CardContent
+        sx={{
+          flex: 1,
+          display: "flex",
+          flexDirection: "column",
+          gap: 1,
+          p: 1.75,
+        }}
+      >
+        <Typography
+          sx={{
+            fontSize: 13.5,
+            fontWeight: 800,
+            lineHeight: 1.35,
+            display: "-webkit-box",
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: "vertical",
+            overflow: "hidden",
+          }}
+        >
+          {data.title}
+        </Typography>
+
+        <Typography
+          sx={{
+            fontSize: 12,
+            color: "rgba(15,23,42,.55)",
+            display: "-webkit-box",
+            WebkitLineClamp: 3,
+            WebkitBoxOrient: "vertical",
+            overflow: "hidden",
+          }}
+        >
           {data.excerpt}
         </Typography>
-        <div className="mt-1 flex items-center justify-between">
-          <div className="text-[11px] text-gray-400">{data.date}</div>
-          <div className="flex gap-1">
-            {onEdit ? (
-              <IconButton size="small" className="text-blue-600 dark:text-blue-400" onClick={() => onEdit(data.id)}>
-                <EditIcon fontSize="small" />
-              </IconButton>
-            ) : null}
-            {onDelete ? (
-              <IconButton size="small" className="text-red-600 dark:text-red-400" onClick={() => onDelete(data.id)}>
-                <DeleteIcon fontSize="small" />
-              </IconButton>
-            ) : null}
-          </div>
-        </div>
+
+        <Stack
+          direction="row"
+          alignItems="center"
+          justifyContent="space-between"
+          sx={{ mt: "auto" }}
+        >
+          <Typography sx={{ fontSize: 11, color: "rgba(15,23,42,.45)" }}>
+            {data.date}
+            {data.author ? ` • ${data.author}` : ""}
+          </Typography>
+
+          {(onEdit || onDelete) && (
+            <Stack direction="row" spacing={0.5}>
+              {onEdit && (
+                <IconButton
+                  size="small"
+                  onClick={() => onEdit(data.id)}
+                  sx={{
+                    color: "rgba(59,130,246,.9)",
+                    "&:hover": { bgcolor: "rgba(59,130,246,.08)" },
+                  }}
+                >
+                  <EditIcon fontSize="small" />
+                </IconButton>
+              )}
+              {onDelete && (
+                <IconButton
+                  size="small"
+                  onClick={() => onDelete(data.id)}
+                  sx={{
+                    color: "rgba(239,68,68,.9)",
+                    "&:hover": { bgcolor: "rgba(239,68,68,.08)" },
+                  }}
+                >
+                  <DeleteIcon fontSize="small" />
+                </IconButton>
+              )}
+            </Stack>
+          )}
+        </Stack>
       </CardContent>
     </Card>
   );

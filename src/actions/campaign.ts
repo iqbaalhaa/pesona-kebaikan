@@ -64,15 +64,31 @@ export async function createCampaign(formData: FormData) {
 		}
 
 		// Category
-		const categoryName = CATEGORY_TITLE[categoryKey] || "Lainnya";
 		let category = await prisma.campaignCategory.findUnique({
-			where: { name: categoryName },
+			where: { slug: categoryKey },
 		});
 
 		if (!category) {
-			category = await prisma.campaignCategory.create({
-				data: { name: categoryName },
+			const categoryName = CATEGORY_TITLE[categoryKey] || "Lainnya";
+			category = await prisma.campaignCategory.findUnique({
+				where: { name: categoryName },
 			});
+
+			if (category) {
+				if (!category.slug) {
+					category = await prisma.campaignCategory.update({
+						where: { id: category.id },
+						data: { slug: categoryKey },
+					});
+				}
+			} else {
+				category = await prisma.campaignCategory.create({
+					data: {
+						name: categoryName,
+						slug: categoryKey,
+					},
+				});
+			}
 		}
 
 		// Target amount
@@ -958,6 +974,35 @@ export async function getPopularCampaigns(limit: number = 10) {
 	} catch (error) {
 		console.error("Get popular campaigns error:", error);
 		return { success: false, error: "Failed to fetch popular campaigns" };
+	}
+}
+
+export async function getAllActiveCampaigns(limit: number = 50) {
+	try {
+		// Fetch active campaigns
+		const campaigns = await prisma.campaign.findMany({
+			where: {
+				status: "ACTIVE",
+			},
+			orderBy: {
+				createdAt: "desc",
+			},
+			take: limit,
+			include: {
+				category: true,
+				createdBy: true,
+				donations: true,
+				media: true,
+			},
+		});
+
+		return {
+			success: true,
+			data: mapCampaignsToTypes(campaigns),
+		};
+	} catch (error) {
+		console.error("Get all active campaigns error:", error);
+		return { success: false, error: "Failed to fetch campaigns" };
 	}
 }
 

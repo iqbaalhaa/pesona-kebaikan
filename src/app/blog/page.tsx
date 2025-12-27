@@ -34,9 +34,10 @@ export default async function BlogPage({
 
   const mappedPosts = blogs.map((blog) => {
     // Find thumbnail or first image
-    const thumbnail =
-      blog.gallery.find((m) => m.isThumbnail && m.type === "image") ||
-      blog.gallery.find((m) => m.type === "image");
+    const cover =
+      blog.headerImage ||
+      blog.gallery.find((m) => m.type === "image")?.url ||
+      "/defaultimg.webp";
 
     // Create excerpt from content (strip HTML if needed, or just take substring)
     const plainTextContent = blog.content.replace(/<[^>]*>?/gm, '');
@@ -49,7 +50,7 @@ export default async function BlogPage({
       id: blog.id,
       title: blog.title,
       excerpt: excerpt,
-      cover: thumbnail ? thumbnail.url : "/defaultimg.webp",
+      cover: cover,
       date: new Date(blog.createdAt).toLocaleDateString("id-ID", {
         day: "2-digit",
         month: "short",

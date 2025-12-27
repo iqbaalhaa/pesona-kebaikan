@@ -41,12 +41,11 @@ export default async function BlogDetailPage({
   }
 
   // Map data
-  const thumbnail =
-    blog.gallery.find((m) => m.isThumbnail && m.type === "image") ||
-    blog.gallery.find((m) => m.type === "image");
-  
-  const cover = thumbnail ? thumbnail.url : "/defaultimg.webp";
-  
+  const cover =
+    blog.headerImage ||
+    blog.gallery.find((m) => m.type === "image")?.url ||
+    "/defaultimg.webp";
+
   const images = blog.gallery
     .filter((m) => m.type === "image")
     .map((m) => m.url);
