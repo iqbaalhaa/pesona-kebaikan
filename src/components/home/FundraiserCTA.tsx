@@ -131,7 +131,7 @@ export default function FundraiserCTA() {
 			{/* CTA card */}
 			<Box
 				sx={{
-					borderRadius: "10px",
+					borderRadius: 1,
 					p: 1.6,
 					border: "1px solid rgba(15,23,42,0.08)",
 					background:
@@ -166,7 +166,7 @@ export default function FundraiserCTA() {
 						sx={{
 							width: 44,
 							height: 44,
-							borderRadius: "12px",
+							borderRadius: 1,
 							display: "grid",
 							placeItems: "center",
 							bgcolor: "rgba(97,206,112,0.16)",

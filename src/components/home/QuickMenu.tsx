@@ -72,25 +72,25 @@ export default function QuickMenu() {
 				sx={{
 					display: "grid",
 					gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
-					gap: 1.25,
-					borderRadius: "12px",
-					bgcolor: "background.paper",
-				}}
-			>
-				{menus.map((m) => {
-					return (
-						<Box
-							key={m.label}
-							role="button"
-							tabIndex={0}
-							onClick={() => handleActivate(m)}
-							onKeyDown={(e) => e.key === "Enter" && handleActivate(m)}
-							sx={{
-								textAlign: "center",
-								py: 1,
-								position: "relative",
-								borderRadius: "8px",
-								cursor: "pointer",
+				gap: 1.25,
+				borderRadius: 1,
+				bgcolor: "background.paper",
+			}}
+		>
+			{menus.map((m) => {
+				return (
+					<Box
+						key={m.label}
+						role="button"
+						tabIndex={0}
+						onClick={() => handleActivate(m)}
+						onKeyDown={(e) => e.key === "Enter" && handleActivate(m)}
+						sx={{
+							textAlign: "center",
+							py: 1,
+							position: "relative",
+							borderRadius: 1,
+							cursor: "pointer",
 								userSelect: "none",
 								transition: "transform 120ms ease, background-color 120ms ease",
 								"&:active": { transform: "scale(0.98)" },

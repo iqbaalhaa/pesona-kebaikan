@@ -103,7 +103,7 @@ function MethodChip({
 			sx={{
 				textAlign: "left",
 				width: "100%",
-				borderRadius: "12px",
+				borderRadius: 1,
 				p: 1.1,
 				cursor: "pointer",
 				border: active
@@ -254,7 +254,7 @@ export default function QuickDonate({
 		<Box sx={{ px: 2, mt: 2, position: "relative" }}>
 			<Box
 				sx={{
-					borderRadius: "16px",
+					borderRadius: 1,
 					bgcolor: "#fff",
 					boxShadow: "0 20px 40px -4px rgba(0,0,0,0.12)",
 					p: 2,

@@ -62,7 +62,7 @@ function CategoryButton({
 			onKeyDown={(e) => e.key === "Enter" && onClick()}
 			className="w-full p-3 cursor-pointer select-none transition-all duration-150 ease-out active:scale-95"
 			sx={{
-				borderRadius: "8px",
+				borderRadius: 1,
 				border: selected
 					? `1px solid ${alpha(primaryMain, 0.45)}`
 					: `1px solid ${alpha(theme.palette.text.primary, 0.1)}`,
@@ -107,13 +107,13 @@ function CampaignRowCard({ item }: { item: Campaign }) {
 			sx={{
 				// Use theme values for precise border/shadow matching if needed, but tailwind is fine here
 				bgcolor: "#fff",
-				borderRadius: "16px",
+				borderRadius: 1,
 			}}
 		>
 			{/* Cover */}
 			<Box
 				className="relative w-24 h-24 flex-shrink-0 overflow-hidden bg-gray-100"
-				sx={{ borderRadius: "16px" }}
+				sx={{ borderRadius: 1 }}
 			>
 				<Image
 					src={imgSrc}
