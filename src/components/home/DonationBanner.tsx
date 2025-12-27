@@ -4,7 +4,7 @@ import * as React from "react";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 
-const MIDTRANS_BLUE = "#2C7BE5"; 
+const MIDTRANS_BLUE = "#2C7BE5";
 
 function Svg({ children }: { children: React.ReactNode }) {
 	return (
@@ -155,7 +155,7 @@ export default function DonationBanner() {
 		<Box sx={{ px: 2, mt: 2.5 }}>
 			<Box
 				sx={{
-					borderRadius: "10px",
+					borderRadius: 1,
 					p: 2,
 					border: "1px solid rgba(15,23,42,0.08)",
 					background: "#fff",
@@ -197,7 +197,7 @@ export default function DonationBanner() {
 						sx={{
 							width: 44,
 							height: 44,
-							borderRadius: 3,
+							borderRadius: 1,
 							display: "grid",
 							placeItems: "center",
 							bgcolor: "rgba(97,206,112,0.18)",

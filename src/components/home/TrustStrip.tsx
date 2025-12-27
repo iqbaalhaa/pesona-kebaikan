@@ -72,7 +72,7 @@ export default function TrustStrip() {
 		<Box sx={{ px: 2, mt: 2.5 }}>
 			<Box
 				sx={{
-					borderRadius: "16px", // radius 16px (MUI spacing)
+					borderRadius: 1, // radius 16px (MUI spacing)
 					p: 1.6,
 					border: "1px solid rgba(15,23,42,0.08)",
 					background:
