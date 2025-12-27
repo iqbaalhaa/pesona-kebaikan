@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 import {
   Box,
@@ -15,63 +16,88 @@ import {
   Divider,
   Button,
   CircularProgress,
+  Select,
+  MenuItem,
+  FormControl,
 } from "@mui/material";
 
 import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import RefreshRoundedIcon from "@mui/icons-material/RefreshRounded";
+import FilterListRoundedIcon from "@mui/icons-material/FilterListRounded";
 
 import BlogCard, { BlogItem } from "@/components/admin/BlogCard";
-import {stripHtml} from "@/utils/striphtml";
+import { stripHtml } from "@/utils/striphtml";
 
 /* ================= TYPES ================= */
 
 type ApiBlog = {
   id: string;
   title: string;
-  excerpt: string;
-  headerImage?: string | null;
+  content: string;
+  heroImage?: string | null;
   createdAt: string;
   category?: {
     id: string;
     name: string;
   } | null;
-  author: {
+  createdBy: {
     id: string;
     name: string | null;
-    image?: string | null;
   };
 };
 
+type Category = {
+  id: string;
+  name: string;
+};
+
 export default function AdminBlogPage() {
+  const router = useRouter();
   const [items, setItems] = React.useState<BlogItem[]>([]);
   const [q, setQ] = React.useState("");
+  const [categoryId, setCategoryId] = React.useState("all");
+  const [categories, setCategories] = React.useState<Category[]>([]);
   const [loading, setLoading] = React.useState(false);
 
   /* ================= FETCH ================= */
 
-  const fetchBlogs = React.useCallback(async (keyword = "") => {
+  const fetchCategories = React.useCallback(async () => {
+    try {
+      const res = await fetch("/api/admin/blog-categories");
+      const json = await res.json();
+      if (Array.isArray(json)) {
+        setCategories(json);
+      }
+    } catch (err) {
+      console.error("Failed to fetch categories", err);
+    }
+  }, []);
+
+  const fetchBlogs = React.useCallback(async (keyword = "", catId = "all") => {
     try {
       setLoading(true);
-      const res = await fetch(
-        `/api/admin/blog?q=${encodeURIComponent(keyword)}`
-      );
+      let url = `/api/admin/blogs?search=${encodeURIComponent(keyword)}`;
+      if (catId !== "all") {
+        url += `&categoryId=${catId}`;
+      }
+      
+      const res = await fetch(url);
       const json = await res.json();
 
       const mapped: BlogItem[] = json.data.map((b: ApiBlog) => ({
-  id: b.id,
-  title: b.title,
-  excerpt: stripHtml(b.excerpt), // 🔥 FIX DI SINI
-  image: "/defaultimg.webp",
-  category: b.category?.name || "Uncategorized",
-  date: new Date(b.createdAt).toLocaleDateString("id-ID", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  }),
-  author: b.author?.name || "Admin",
-}));
-
+        id: b.id,
+        title: b.title,
+        excerpt: stripHtml(b.content, 150),
+        image: b.heroImage || null,
+        category: b.category?.name || "Uncategorized",
+        date: new Date(b.createdAt).toLocaleDateString("id-ID", {
+          day: "2-digit",
+          month: "short",
+          year: "numeric",
+        }),
+        author: b.createdBy?.name || "Admin",
+      }));
 
       setItems(mapped);
     } catch (err) {
@@ -81,16 +107,46 @@ export default function AdminBlogPage() {
     }
   }, []);
 
+  /* ================= HANDLERS ================= */
+
+  const handleView = (id: string) => {
+    window.open(`/blog/${id}`, "_blank");
+  };
+
+  const handleEdit = (id: string) => {
+    router.push(`/admin/blog/edit/${id}`);
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!window.confirm("Apakah Anda yakin ingin menghapus artikel ini?")) return;
+
+    try {
+      const res = await fetch(`/api/admin/blogs/${id}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        fetchBlogs(q);
+      } else {
+        const json = await res.json();
+        alert(json.error || "Gagal menghapus artikel");
+      }
+    } catch (err) {
+      console.error("Failed to delete blog", err);
+      alert("Terjadi kesalahan saat menghapus artikel");
+    }
+  };
+
   /* ================= INIT ================= */
   React.useEffect(() => {
+    fetchCategories();
     fetchBlogs();
-  }, [fetchBlogs]);
+  }, [fetchCategories, fetchBlogs]);
 
   /* ================= SEARCH (DEBOUNCE) ================= */
   React.useEffect(() => {
-    const t = setTimeout(() => fetchBlogs(q), 350);
+    const t = setTimeout(() => fetchBlogs(q, categoryId), 350);
     return () => clearTimeout(t);
-  }, [q, fetchBlogs]);
+  }, [q, categoryId, fetchBlogs]);
 
   /* ================= UI ================= */
   return (
@@ -142,11 +198,37 @@ export default function AdminBlogPage() {
 
             {/* RIGHT */}
             <Stack direction="row" spacing={1} alignItems="center">
+              <FormControl size="small" sx={{ minWidth: 140 }}>
+                <Select
+                  value={categoryId}
+                  onChange={(e) => setCategoryId(e.target.value)}
+                  displayEmpty
+                  sx={{
+                    borderRadius: 999,
+                    bgcolor: "rgba(255,255,255,.70)",
+                    "& .MuiOutlinedInput-notchedOutline": { border: "none" },
+                    boxShadow: "0 0 0 1px rgba(15,23,42,.10)",
+                  }}
+                  startAdornment={
+                    <InputAdornment position="start" sx={{ ml: 1 }}>
+                      <FilterListRoundedIcon fontSize="small" />
+                    </InputAdornment>
+                  }
+                >
+                  <MenuItem value="all">Semua Kategori</MenuItem>
+                  {categories.map((c) => (
+                    <MenuItem key={c.id} value={c.id}>
+                      {c.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+
               <TextField
                 size="small"
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
-                placeholder="Cari judul, kategori…"
+                placeholder="Cari judul…"
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
@@ -155,7 +237,7 @@ export default function AdminBlogPage() {
                   ),
                 }}
                 sx={{
-                  width: { xs: "100%", md: 320 },
+                  width: { xs: "100%", md: 240 },
                   "& .MuiOutlinedInput-root": {
                     borderRadius: 999,
                     bgcolor: "rgba(255,255,255,.70)",
@@ -166,7 +248,7 @@ export default function AdminBlogPage() {
               />
 
               <IconButton
-                onClick={() => fetchBlogs(q)}
+                onClick={() => fetchBlogs(q, categoryId)}
                 sx={{
                   width: 40,
                   height: 40,
@@ -233,7 +315,12 @@ export default function AdminBlogPage() {
                 "&:hover": { transform: "translateY(-3px)" },
               }}
             >
-              <BlogCard data={b} />
+              <BlogCard
+                data={b}
+                onView={handleView}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+              />
             </Box>
           ))}
         </Box>

@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { JSDOM } from "jsdom";
-import { BlogMediaType } from "@/generated/prisma/enums";
+import { BlogMediaType } from "@/generated/prisma";
 
 // Helper to extract media from HTML content
 function extractMediaFromContent(content: string) {
@@ -92,6 +92,7 @@ export const blogService = {
         orderBy: { createdAt: "desc" },
         include: {
           category: true,
+          gallery: true,
           createdBy: {
             select: {
               id: true,
@@ -167,7 +168,8 @@ export const blogService = {
     const { title, content, categoryId, heroImage } = data;
 
     return prisma.$transaction(async (tx) => {
-      const blog = await tx.blog.update({
+      // 1. Update basic fields
+      const updatedBlog = await tx.blog.update({
         where: { id },
         data: {
           title,
@@ -177,19 +179,24 @@ export const blogService = {
         },
       });
 
-      // If content is updated, sync gallery
+      // 2. Extract media from new content
       if (content) {
-        // Delete existing media
+        const mediaItems = extractMediaFromContent(content);
+        
+        // 3. Delete old media (simple approach: delete all and recreate)
+        // Or smarter: diffing. For now, let's just keep appending or replace?
+        // If we want to keep the gallery consistent with content, we should probably clear and re-add.
+        // BUT, what if there are media items added manually not in content?
+        // The current requirement seems to be auto-extraction.
+        // Let's wipe and re-add for consistency with content.
         await tx.blogMedia.deleteMany({
           where: { blogId: id },
         });
 
-        // Extract and create new media
-        const mediaItems = extractMediaFromContent(content);
         if (mediaItems.length > 0) {
           await tx.blogMedia.createMany({
             data: mediaItems.map((item) => ({
-              blogId: blog.id,
+              blogId: id,
               type: item.type,
               url: item.url,
             })),
@@ -197,13 +204,19 @@ export const blogService = {
         }
       }
 
-      return blog;
+      return updatedBlog;
     });
   },
 
   async deleteBlog(id: string) {
     return prisma.blog.delete({
       where: { id },
+    });
+  },
+
+  async getBlogCategories() {
+    return prisma.blogCategory.findMany({
+      orderBy: { name: "asc" },
     });
   },
 };

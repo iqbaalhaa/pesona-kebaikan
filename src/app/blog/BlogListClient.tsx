@@ -146,7 +146,7 @@ export default function BlogListClient({
   ];
 
   return (
-    <Box sx={{ px: 2, pt: 2.5, maxWidth: 600, mx: "auto" }}>
+    <Box sx={{ px: 2, pt: 2.5, maxWidth: 800, mx: "auto" }}>
       <Box
         sx={{
           display: "flex",
@@ -172,22 +172,22 @@ export default function BlogListClient({
             color={currentCategory === tag ? "primary" : "default"}
             variant={currentCategory === tag ? "filled" : "outlined"}
             onClick={() => handleFilterChange(tag)}
-            sx={{ fontWeight: 600 }}
+            sx={{ fontWeight: 600, cursor: "pointer" }}
           />
         ))}
       </Stack>
 
-      <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
         {posts.length === 0 ? (
            <Typography sx={{ textAlign: 'center', mt: 4, color: 'text.secondary' }}>
              Tidak ada artikel ditemukan.
            </Typography>
         ) : (
           posts.map((post) => (
-            <Link
-              key={post.id}
+            <Link 
+              key={post.id} 
               href={`/blog/${post.id}`}
-              style={{ textDecoration: "none" }}
+              style={{ textDecoration: 'none', display: 'block' }}
             >
               <Card
                 variant="outlined"
@@ -195,7 +195,7 @@ export default function BlogListClient({
                   display: "flex",
                   flexDirection: { xs: "column", sm: "row" },
                   gap: 2,
-                  p: 1.5,
+                  p: 2,
                   borderRadius: 3,
                   borderColor: "rgba(0,0,0,0.08)",
                   bgcolor: "#fff",
@@ -212,8 +212,8 @@ export default function BlogListClient({
                   image={post.cover}
                   alt={post.title}
                   sx={{
-                    width: { xs: "100%", sm: 140 },
-                    height: { xs: 180, sm: 140 },
+                    width: { xs: "100%", sm: 200 },
+                    height: { xs: 200, sm: 160 },
                     borderRadius: 2,
                     objectFit: "cover",
                     flexShrink: 0,
@@ -231,16 +231,27 @@ export default function BlogListClient({
                   }}
                 >
                   <Box
-                    sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}
+                    sx={{ 
+                      display: "flex", 
+                      alignItems: "center", 
+                      gap: 1, 
+                      mb: 1.5,
+                    }}
                   >
                     <Chip
                       size="small"
                       label={post.tag}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleFilterChange(post.tag);
+                      }}
                       sx={{
                         borderRadius: 1,
                         height: 24,
                         fontSize: 11,
                         fontWeight: 700,
+                        cursor: "pointer",
                       }}
                       color="primary"
                       variant="filled"
@@ -257,11 +268,11 @@ export default function BlogListClient({
                   </Box>
                   <Typography
                     sx={{
-                      fontSize: 16,
+                      fontSize: 18,
                       fontWeight: 800,
                       color: "#0f172a",
                       lineHeight: 1.3,
-                      mb: 0.5,
+                      mb: 1,
                       display: "-webkit-box",
                       WebkitLineClamp: 2,
                       WebkitBoxOrient: "vertical",
@@ -272,10 +283,10 @@ export default function BlogListClient({
                   </Typography>
                   <Typography
                     sx={{
-                      fontSize: 13.5,
+                      fontSize: 14.5,
                       color: "rgba(15,23,42,.70)",
-                      lineHeight: 1.5,
-                      mb: 1.5,
+                      lineHeight: 1.6,
+                      mb: 2,
                       display: "-webkit-box",
                       WebkitLineClamp: 2,
                       WebkitBoxOrient: "vertical",
@@ -305,7 +316,10 @@ export default function BlogListClient({
                     <IconButton
                       size="small"
                       onClick={(e) => handleShareClick(e, post.id)}
-                      sx={{ color: "rgba(15,23,42,.4)" }}
+                      sx={{ 
+                        color: "rgba(15,23,42,.4)",
+                        "&:hover": { color: "primary.main" }
+                      }}
                     >
                       <ShareIcon fontSize="small" />
                     </IconButton>

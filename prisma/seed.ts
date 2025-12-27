@@ -1,8 +1,9 @@
 import "dotenv/config";
-import { prisma } from "@/lib/prisma";
-import bcrypt from "bcryptjs";
-import fs from "fs";
-import path from "path";
+import { prisma } from "../src/lib/prisma";
+import * as bcrypt from "bcryptjs";
+import * as fs from "fs";
+import * as path from "path";
+
 // Enums defined locally to avoid generator issues
 const Role = {
 	USER: "USER",
@@ -23,10 +24,14 @@ const CampaignStatus = {
 	DRAFT: "DRAFT",
 } as const;
 
+type CampaignStatus = (typeof CampaignStatus)[keyof typeof CampaignStatus];
+
 const CampaignMediaType = {
 	IMAGE: "IMAGE",
 	VIDEO: "VIDEO",
 } as const;
+
+type CampaignMediaType = (typeof CampaignMediaType)[keyof typeof CampaignMediaType];
 
 const PaymentMethod = {
 	EWALLET: "EWALLET",
@@ -48,7 +53,7 @@ async function upsertPageContent(params: {
 	key: string;
 	title: string;
 	content: string;
-	data?: any;
+	data?: Record<string, unknown>;
 }) {
 	return prisma.pageContent.upsert({
 		where: { key: params.key },
@@ -74,11 +79,14 @@ async function upsertBlogCategory(name: string) {
 	});
 }
 
+type BlogMediaType = "image" | "video" | "file";
+
 async function ensureBlog(params: {
 	title: string;
 	content: string;
 	categoryId?: string | null;
 	createdById: string;
+	heroImage?: string;
 	gallery?: {
 		type: BlogMediaType;
 		url: string;
@@ -293,16 +301,20 @@ async function main() {
 		content: `<p>Dengan menggunakan layanan ini, Anda setuju dengan aturan kami.</p>`,
 	});
 
-  /* ===== BLOG ===== */
-  const edukasi = await upsertBlogCategory("Edukasi");
-  const berita = await upsertBlogCategory("Berita");
-  const inspirasi = await upsertBlogCategory("Inspirasi");
+	/* ===== BLOG ===== */
+	// Categories: Edukasi, Cerita, Transparansi, Update, Panduan
+	const catEdukasi = await upsertBlogCategory("Edukasi");
+	const catCerita = await upsertBlogCategory("Cerita");
+	const catTransparansi = await upsertBlogCategory("Transparansi");
+	const catUpdate = await upsertBlogCategory("Update");
+	const catPanduan = await upsertBlogCategory("Panduan");
 
-  await ensureBlog({
-    title: "Kenapa Transparansi Penting dalam Donasi: Membangun Kepercayaan di Era Digital",
-    createdById: admin.id,
-    categoryId: edukasi.id,
-    content: `
+	await ensureBlog({
+		title: "Kenapa Transparansi Penting dalam Donasi: Membangun Kepercayaan di Era Digital",
+		createdById: admin.id,
+		categoryId: catTransparansi.id,
+		heroImage: "https://picsum.photos/1200/800?1",
+		content: `
       <h2>Pentingnya Transparansi dalam Berdonasi</h2>
       <p>Di era digital saat ini, transparansi menjadi kunci utama dalam membangun kepercayaan antara donatur dan lembaga pengelola donasi. Masyarakat semakin cerdas dan kritis dalam memilih kemana mereka akan menyalurkan bantuan. Oleh karena itu, platform donasi harus mampu menyajikan data yang terbuka dan dapat dipertanggungjawabkan.</p>
       
@@ -320,15 +332,51 @@ async function main() {
       
       <img src="https://picsum.photos/1200/800?1" alt="Ilustrasi Transparansi" />
     `,
-    gallery: [
-      { type: BlogMediaType.image, url: "https://picsum.photos/1200/800?1" },
-    ],
-  });
+		gallery: [
+			{ type: "image", url: "https://picsum.photos/1200/800?1" },
+		],
+	});
+
+	await ensureBlog({
+		title: "Panduan Mudah Berdonasi di Pesona Kebaikan",
+		createdById: admin.id,
+		categoryId: catPanduan.id,
+		heroImage: "https://picsum.photos/1200/800?2",
+		content: `
+			<h2>Langkah-langkah Berdonasi</h2>
+			<p>Berdonasi di Pesona Kebaikan sangat mudah dan cepat. Ikuti langkah-langkah berikut:</p>
+			<ol>
+				<li>Pilih campaign yang ingin Anda bantu.</li>
+				<li>Klik tombol "Donasi Sekarang".</li>
+				<li>Masukkan nominal donasi.</li>
+				<li>Pilih metode pembayaran (Transfer Bank, E-Wallet, dll).</li>
+				<li>Selesaikan pembayaran dan konfirmasi.</li>
+			</ol>
+			<p>Semoga panduan ini membantu Anda dalam menyalurkan kebaikan!</p>
+		`,
+		gallery: [
+			{ type: "image", url: "https://picsum.photos/1200/800?2" },
+		],
+	});
+
+	await ensureBlog({
+		title: "Cerita Inspiratif: Dari Kebaikan Kecil Menjadi Dampak Besar",
+		createdById: admin.id,
+		categoryId: catCerita.id,
+		heroImage: "https://picsum.photos/1200/800?3",
+		content: `
+			<p>Setiap donasi, sekecil apapun, memiliki dampak yang luar biasa bagi mereka yang membutuhkan. Mari simak cerita inspiratif dari para penerima manfaat...</p>
+			<p>Bersama kita bisa membuat perubahan nyata.</p>
+		`,
+		gallery: [
+			{ type: "image", url: "https://picsum.photos/1200/800?3" },
+		],
+	});
 
   await ensureBlog({
     title: "Cara Memilih Campaign yang Terpercaya dan Amanah",
     createdById: admin.id,
-    categoryId: edukasi.id,
+    categoryId: catEdukasi.id,
     content: `
       <h2>Panduan Memilih Campaign Donasi</h2>
       <p>Banyaknya platform donasi online memberikan kemudahan bagi kita untuk berbagi. Namun, di sisi lain, risiko penyalahgunaan dana juga semakin besar. Bagaimana cara memastikan donasi kita sampai ke tangan yang berhak? Berikut adalah beberapa tips cerdas dalam memilih campaign donasi.</p>
@@ -354,7 +402,7 @@ async function main() {
   await ensureBlog({
     title: "Kisah Inspiratif: Dari Recehan Menjadi Harapan Baru",
     createdById: admin.id,
-    categoryId: inspirasi.id,
+    categoryId: catCerita.id,
     content: `
       <h2>Kekuatan Gotong Royong</h2>
       <p>Seringkali kita merasa bahwa bantuan kecil tidak berarti apa-apa. "Hanya sepuluh ribu rupiah, bisa buat apa?" pikir kita. Namun, kisah kali ini membuktikan sebaliknya. Berawal dari gerakan recehan yang diinisiasi oleh sekelompok pemuda di desa kecil, sebuah sekolah yang nyaris roboh akhirnya bisa berdiri tegak kembali.</p>
@@ -365,6 +413,32 @@ async function main() {
       
       <p>Kini, sekolah itu telah direnovasi total. Tidak ada lagi atap bocor. Tidak ada lagi lantai tanah yang becek. Anak-anak bisa belajar dengan nyaman dan penuh semangat. Ini adalah bukti nyata bahwa kebaikan, sekecil apapun, jika dilakukan bersama-sama, akan menciptakan dampak yang luar biasa.</p>
     `,
+  });
+
+  await ensureBlog({
+    title: "Update Penyaluran Donasi: Bantuan Telah Tiba di Lokasi Bencana",
+    createdById: admin.id,
+    categoryId: catUpdate.id,
+    content: `
+      <h2>Laporan Penyaluran Donasi</h2>
+      <p>Alhamdulillah, berkat bantuan dari #OrangBaik semua, tim relawan Pesona Kebaikan telah berhasil menyalurkan bantuan tahap pertama untuk korban banjir bandang di Kabupaten X.</p>
+
+      <p>Bantuan yang disalurkan meliputi:</p>
+      <ul>
+        <li>500 paket sembako</li>
+        <li>200 selimut tebal</li>
+        <li>Obat-obatan dan vitamin</li>
+        <li>Perlengkapan bayi</li>
+      </ul>
+
+      <p>Tim kami menempuh perjalanan darat selama 8 jam, dilanjutkan dengan perahu karet untuk menembus daerah yang masih terisolir. Warga menyambut kedatangan bantuan dengan penuh haru.</p>
+
+      <p>Terima kasih atas kepedulian Anda. Kami akan terus memberikan update berkala mengenai kondisi di lapangan dan penyaluran bantuan selanjutnya.</p>
+    `,
+    heroImage: "https://picsum.photos/1200/800?4",
+    gallery: [
+      { type: "image", url: "https://picsum.photos/1200/800?4" },
+    ],
   });
 
   /* ===== CAMPAIGN ===== */

@@ -1,4 +1,4 @@
-import { getBlogs, getBlogCategories } from "@/services/blogService";
+import { blogService } from "@/services/blogService";
 import BlogListClient from "./BlogListClient";
 
 export default async function BlogPage({
@@ -19,7 +19,7 @@ export default async function BlogPage({
   // OR update getBlogs to filter by category name.
   // Let's check getBlogs implementation. It uses `categoryId`.
   
-  const categoriesData = await getBlogCategories();
+  const categoriesData = await blogService.getBlogCategories();
   const categoryNames = categoriesData.map((c) => c.name);
 
   let categoryId: string | undefined;
@@ -30,16 +30,25 @@ export default async function BlogPage({
     }
   }
 
-  const { blogs } = await getBlogs(1, 100, categoryId); // Fetching 100 for now to mimic "load all" behavior within reason
+  const { data: blogs } = await blogService.getBlogs({ page: 1, limit: 100, categoryId }); // Fetching 100 for now to mimic "load all" behavior within reason
 
   const mappedPosts = blogs.map((blog) => {
+    // Try to find image in content
+    // Improved regex to capture src with single or double quotes
+    const contentImageMatch = blog.content.match(/<img[^>]+src=["']([^"']+)["']/i);
+    const contentImage = contentImageMatch ? contentImageMatch[1] : null;
+
     // Find thumbnail or first image
+    // Check if heroImage is valid (not null/undefined and not empty string)
+    const hasHeroImage = blog.heroImage && blog.heroImage.trim().length > 0;
+
     const cover =
-      blog.headerImage ||
-      blog.gallery.find((m) => m.type === "image")?.url ||
+      (hasHeroImage ? blog.heroImage : null) ||
+      contentImage ||
+      blog.gallery?.find((m) => m.type === "image")?.url ||
       "/defaultimg.webp";
 
-    // Create excerpt from content (strip HTML if needed, or just take substring)
+    // Create excerpt from content (strips HTML if needed, or just take substring)
     const plainTextContent = blog.content.replace(/<[^>]*>?/gm, '');
     const excerpt =
       plainTextContent.length > 100

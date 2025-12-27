@@ -8,6 +8,13 @@ import IconButton from "@mui/material/IconButton";
 import Stack from "@mui/material/Stack";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import AutoStoriesIcon from "@mui/icons-material/AutoStories";
+import SchoolIcon from "@mui/icons-material/School";
+import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
+import UpdateIcon from "@mui/icons-material/Update";
+import MenuBookIcon from "@mui/icons-material/MenuBook";
+import ArticleIcon from "@mui/icons-material/Article";
 import Image from "next/image";
 
 /* ================= TYPES ================= */
@@ -22,14 +29,26 @@ export type BlogItem = {
   author?: string;
 };
 
+const getCategoryIcon = (category: string) => {
+  const cat = category.toLowerCase();
+  if (cat.includes("cerita")) return <AutoStoriesIcon sx={{ fontSize: 14 }} />;
+  if (cat.includes("edukasi")) return <SchoolIcon sx={{ fontSize: 14 }} />;
+  if (cat.includes("transparansi")) return <VerifiedUserIcon sx={{ fontSize: 14 }} />;
+  if (cat.includes("update")) return <UpdateIcon sx={{ fontSize: 14 }} />;
+  if (cat.includes("panduan")) return <MenuBookIcon sx={{ fontSize: 14 }} />;
+  return <ArticleIcon sx={{ fontSize: 14 }} />;
+};
+
 /* ================= COMPONENT ================= */
 
 export default function BlogCard({
   data,
+  onView,
   onEdit,
   onDelete,
 }: {
   data: BlogItem;
+  onView?: (id: string) => void;
   onEdit?: (id: string) => void;
   onDelete?: (id: string) => void;
 }) {
@@ -52,10 +71,10 @@ export default function BlogCard({
         },
       }}
     >
-      {/* ===== IMAGE (DEFAULT ONLY) ===== */}
+      {/* ===== IMAGE ===== */}
       <div className="relative h-36 w-full overflow-hidden bg-slate-100">
         <Image
-          src="/defaultimg.webp"
+          src={data.image || "/defaultimg.webp"}
           alt={data.title}
           fill
           sizes="400px"
@@ -67,14 +86,20 @@ export default function BlogCard({
         <div className="absolute left-2 top-2">
           <Chip
             size="small"
+            icon={getCategoryIcon(data.category)}
             label={data.category}
             sx={{
-              height: 20,
-              fontSize: 10,
-              fontWeight: 800,
+              height: 24,
+              fontSize: 11,
+              fontWeight: 700,
               borderRadius: 999,
-              bgcolor: "rgba(255,255,255,.85)",
+              bgcolor: "rgba(255,255,255,.90)",
               backdropFilter: "blur(6px)",
+              "& .MuiChip-icon": {
+                fontSize: 14,
+                color: "rgba(15,23,42,.7)",
+                ml: 0.5,
+              },
             }}
           />
         </div>
@@ -128,8 +153,20 @@ export default function BlogCard({
             {data.author ? ` • ${data.author}` : ""}
           </Typography>
 
-          {(onEdit || onDelete) && (
+          {(onView || onEdit || onDelete) && (
             <Stack direction="row" spacing={0.5}>
+              {onView && (
+                <IconButton
+                  size="small"
+                  onClick={() => onView(data.id)}
+                  sx={{
+                    color: "rgba(15,23,42,.7)",
+                    "&:hover": { bgcolor: "rgba(15,23,42,.08)" },
+                  }}
+                >
+                  <VisibilityIcon fontSize="small" />
+                </IconButton>
+              )}
               {onEdit && (
                 <IconButton
                   size="small"

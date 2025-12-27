@@ -21,28 +21,22 @@ import {
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import ImageIcon from "@mui/icons-material/Image";
 import ArticleIcon from "@mui/icons-material/Article";
-import CodeIcon from "@mui/icons-material/Code";
-import CampaignIcon from "@mui/icons-material/Campaign";
+
+import { uploadImage } from "@/actions/upload";
 
 const RichTextEditor = dynamic(
   () => import("@/components/admin/RichTextEditor"),
   { ssr: false }
 );
 
-/* ---------- category config ---------- */
-const CATEGORIES = [
-  { value: "general", label: "General", icon: <ArticleIcon /> },
-  { value: "tech", label: "Technology", icon: <CodeIcon /> },
-  { value: "marketing", label: "Marketing", icon: <CampaignIcon /> },
-];
-
 export default function CreateBlogFancyPage() {
   const router = useRouter();
 
+  const [categories, setCategories] = React.useState<{ id: string; name: string }[]>([]);
+  
   const [form, setForm] = React.useState({
     title: "",
-    subtitle: "",
-    category: "general",
+    category: "",
     headerImage: "",
     content: "",
   });
@@ -54,32 +48,78 @@ export default function CreateBlogFancyPage() {
     msg: "",
   });
 
+  React.useEffect(() => {
+    fetch("/api/admin/blog-categories")
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setCategories(data);
+          if (data.length > 0) {
+            setForm((f) => ({ ...f, category: data[0].id }));
+          }
+        }
+      })
+      .catch((err) => console.error("Failed to fetch categories", err));
+  }, []);
+
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+
   /* ---------- drag & drop ---------- */
-  const handleDrop = (e: React.DragEvent) => {
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    await processFile(file);
+  };
+
+  const handleDrop = async (e: React.DragEvent) => {
     e.preventDefault();
     setDrag(false);
 
     const file = e.dataTransfer.files?.[0];
     if (!file) return;
 
+    await processFile(file);
+  };
+
+  const processFile = async (file: File) => {
+    // Preview
     const reader = new FileReader();
     reader.onload = (ev) => setPreview(ev.target?.result as string);
     reader.readAsDataURL(file);
 
-    setForm((f) => ({ ...f, headerImage: `uploads/blog/${file.name}` }));
+    // Upload
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const res = await uploadImage(formData);
+      if (res.success && res.url) {
+        setForm((f) => ({ ...f, headerImage: res.url }));
+        setToast({ open: true, msg: "Image uploaded successfully", severity: "success" });
+      } else {
+        setToast({ open: true, msg: "Failed to upload image", severity: "error" });
+      }
+    } catch (error) {
+      setToast({ open: true, msg: "Error uploading image", severity: "error" });
+    }
   };
 
   /* ---------- submit ---------- */
   const handleSubmit = async () => {
     try {
-      const res = await fetch("/api/admin/blog/create", {
+      const res = await fetch("/api/admin/blogs", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify({
+            title: form.title,
+            content: form.content,
+            categoryId: form.category,
+            heroImage: form.headerImage,
+        }),
       });
 
       const data = await res.json();
-      if (!data.success) throw new Error(data.error);
+      if (!res.ok) throw new Error(data.error || "Failed to create blog");
 
       setToast({ open: true, msg: "Article published 🎉", severity: "success" });
       setTimeout(() => router.push("/admin/blog"), 1200);
@@ -136,17 +176,7 @@ export default function CreateBlogFancyPage() {
                 onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
               />
 
-              <TextField
-                placeholder="Short description that hooks readers..."
-                variant="standard"
-                fullWidth
-                InputProps={{
-                  disableUnderline: true,
-                  sx: { fontSize: 16, color: "text.secondary" },
-                }}
-                value={form.subtitle}
-                onChange={(e) => setForm((f) => ({ ...f, subtitle: e.target.value }))}
-              />
+
             </Stack>
 
             {/* CATEGORY */}
@@ -160,10 +190,10 @@ export default function CreateBlogFancyPage() {
                 value={form.category}
                 onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))}
               >
-                {CATEGORIES.map((c) => (
+                {categories.map((c) => (
                   <FormControlLabel
-                    key={c.value}
-                    value={c.value}
+                    key={c.id}
+                    value={c.id}
                     control={<Radio sx={{ display: "none" }} />}
                     label={
                       <Paper
@@ -176,13 +206,13 @@ export default function CreateBlogFancyPage() {
                           gap: 1.5,
                           cursor: "pointer",
                           border:
-                            form.category === c.value
+                            form.category === c.id
                               ? "2px solid #0284c7"
                               : "1px solid #e5e7eb",
                         }}
                       >
-                        {c.icon}
-                        <Typography fontSize={14}>{c.label}</Typography>
+                        <ArticleIcon />
+                        <Typography fontSize={14}>{c.name}</Typography>
                       </Paper>
                     }
                   />
@@ -197,6 +227,7 @@ export default function CreateBlogFancyPage() {
               </Typography>
 
               <Paper
+                onClick={() => fileInputRef.current?.click()}
                 onDragOver={(e) => {
                   e.preventDefault();
                   setDrag(true);
@@ -214,6 +245,13 @@ export default function CreateBlogFancyPage() {
                   cursor: "pointer",
                 }}
               >
+                <input
+                  type="file"
+                  hidden
+                  ref={fileInputRef}
+                  onChange={handleFileSelect}
+                  accept="image/*"
+                />
                 {preview ? (
                   <Box
                     component="img"
@@ -280,15 +318,6 @@ export default function CreateBlogFancyPage() {
           {toast.msg}
         </Alert>
       </Snackbar>
-      {/* Tampilkan hasil GET API untuk debug */}
-      {apiTestResult && (
-        <Box mt={4} p={2} bgcolor="#f5f5f5" borderRadius={2}>
-          <Typography variant="subtitle2" color="primary">
-            Hasil GET API:
-          </Typography>
-          <pre style={{ fontSize: 12, whiteSpace: "pre-wrap" }}>{JSON.stringify(apiTestResult, null, 2)}</pre>
-        </Box>
-      )}
     </Box>
   );
 }

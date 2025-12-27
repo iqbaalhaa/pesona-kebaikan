@@ -12,7 +12,7 @@ import FacebookIcon from "@mui/icons-material/Facebook";
 import InstagramIcon from "@mui/icons-material/Instagram";
 import WhatsAppIcon from "@mui/icons-material/WhatsApp";
 import TwitterIcon from "@mui/icons-material/Twitter";
-import { getBlogById } from "@/services/blogService";
+import { blogService } from "@/services/blogService";
 
 export default async function BlogDetailPage({
   params,
@@ -20,7 +20,7 @@ export default async function BlogDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const resolvedParams = await params;
-  const blog = await getBlogById(resolvedParams.id);
+  const blog = await blogService.getBlogById(resolvedParams.id);
 
   if (!blog) {
     return (
@@ -41,33 +41,24 @@ export default async function BlogDetailPage({
   }
 
   // Map data
+  const contentImageMatch = blog.content.match(/<img[^>]+src=["']([^"']+)["']/i);
+  const contentImage = contentImageMatch ? contentImageMatch[1] : null;
+
+  const hasHeroImage = blog.heroImage && blog.heroImage.trim().length > 0;
+
   const cover =
-    blog.headerImage ||
+    (hasHeroImage ? blog.heroImage : null) ||
+    contentImage ||
     blog.gallery.find((m) => m.type === "image")?.url ||
     "/defaultimg.webp";
 
-  const images = blog.gallery
-    .filter((m) => m.type === "image")
-    .map((m) => m.url);
-    
   const video = blog.gallery.find((m) => m.type === "video")?.url;
-
-  // Handle content: split by newline if it's plain text, or just use as is if HTML.
-  // The original UI expects an array of strings.
-  // If we assume the content is HTML (from SunEditor), we might want to render it as HTML.
-  // But for now, to match the UI which maps paragraphs to Typography, let's split by \n.
-  // However, SunEditor produces HTML. Splitting HTML by \n is risky.
-  // If the content is HTML, we should probably use dangerouslySetInnerHTML or a parser.
-  // But the user task is "connect to data".
-  // I'll stick to splitting by \n for now, assuming the data might be plain text or simple HTML.
-  // If it's HTML, we might need a different approach, but let's assume it's text-ish.
-  const contentParagraphs = blog.content.split("\n").filter((p) => p.trim() !== "");
 
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://pesonakebaikan.id";
   const postUrl = `${baseUrl}/blog/${blog.id}`;
 
   return (
-    <Box sx={{ px: 2, pt: 2.5, pb: 4, maxWidth: 1040, mx: "auto" }}>
+    <Box sx={{ px: 2, pt: 2.5, pb: 4, maxWidth: 800, mx: "auto" }}>
       <Box
         sx={{
           display: "flex",
@@ -132,169 +123,139 @@ export default async function BlogDetailPage({
         />
       </Card>
 
-      <Box
-        sx={{
-          mt: 2.5,
-          display: "grid",
-          gap: 2,
-          gridTemplateColumns: { xs: "1fr", md: "1.5fr 1fr" },
-        }}
-      >
-        <Box>
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-            {contentParagraphs.map((p, i) => (
-              <Typography
-                key={i}
-                sx={{
-                  fontSize: 15.5,
-                  color: "rgba(15,23,42,.80)",
-                  lineHeight: 1.75,
-                }}
-              >
-                {p}
-              </Typography>
-            ))}
-          </Box>
+      <Box sx={{ mt: 4 }}>
+        {/* CONTENT */}
+        <Box
+          sx={{
+            "& img": {
+              maxWidth: "100%",
+              height: "auto",
+              borderRadius: 2,
+              my: 2,
+            },
+            "& p": {
+              fontSize: 16,
+              lineHeight: 1.8,
+              color: "rgba(15,23,42,.80)",
+              mb: 2,
+            },
+            "& h1, & h2, & h3, & h4, & h5, & h6": {
+              color: "#0f172a",
+              fontWeight: 800,
+              mt: 3,
+              mb: 1,
+            },
+            "& ul, & ol": {
+              pl: 3,
+              mb: 2,
+              color: "rgba(15,23,42,.80)",
+            },
+            "& li": {
+              mb: 0.5,
+            },
+            "& a": {
+              color: "primary.main",
+              textDecoration: "underline",
+            },
+          }}
+          dangerouslySetInnerHTML={{ __html: blog.content }}
+        />
 
-          {video && (
-            <Card
-              variant="outlined"
-              sx={{
-                mt: 3,
-                borderRadius: 2,
-                overflow: "hidden",
-                borderColor: "rgba(0,0,0,0.08)",
-              }}
-            >
-              <CardMedia
-                component="video"
-                src={video}
-                controls
-                sx={{
-                  width: "100%",
-                  height: { xs: 220, md: 360 },
-                  backgroundColor: "black",
-                }}
-              />
-            </Card>
-          )}
-        </Box>
-
-        <Box>
-          <Typography
-            sx={{ fontWeight: 900, fontSize: 14.5, color: "#0f172a", mb: 1 }}
-          >
-            Galeri
-          </Typography>
-          <Box
+        {video && (
+          <Card
+            variant="outlined"
             sx={{
-              display: "grid",
-              gap: 1.5,
-              gridTemplateColumns: "repeat(2, 1fr)",
+              mt: 3,
+              borderRadius: 2,
+              overflow: "hidden",
+              borderColor: "rgba(0,0,0,0.08)",
             }}
           >
-            {images.length === 0 && (
-              <Typography sx={{ fontSize: 13, color: "rgba(15,23,42,.60)", gridColumn: "span 2" }}>
-                Tidak ada gambar lain.
-              </Typography>
-            )}
-            {images.map((src, i) => {
-              // Jika jumlah ganjil, gambar pertama jadi full width biar keren
-              const isFullWidth = images.length % 2 !== 0 && i === 0;
-              return (
-                <Card
-                  key={i}
-                  variant="outlined"
-                  sx={{
-                    gridColumn: isFullWidth ? "span 2" : "span 1",
-                    borderRadius: 2,
-                    overflow: "hidden",
-                    borderColor: "rgba(0,0,0,0.08)",
-                  }}
-                >
-                  <CardMedia
-                    component="img"
-                    image={src}
-                    alt={`image-${i + 1}`}
-                    sx={{
-                      height: isFullWidth ? 200 : 120,
-                      width: "100%",
-                      objectFit: "cover",
-                    }}
-                  />
-                </Card>
-              );
-            })}
-          </Box>
-          <Divider sx={{ my: 2 }} />
-          <Typography sx={{ fontSize: 13, color: "rgba(15,23,42,.60)" }}>
-            Bagikan
-          </Typography>
-          <Stack direction="row" spacing={1} sx={{ mt: 1 }}>
-            <IconButton
-              size="small"
-              href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(
-                blog.title
-              )}&url=${encodeURIComponent(postUrl)}`}
-              component="a"
-              target="_blank"
-              rel="noopener noreferrer"
+            <CardMedia
+              component="video"
+              src={video}
+              controls
               sx={{
-                border: "1px solid rgba(0,0,0,0.12)",
-                borderRadius: 2,
-                color: "rgba(15,23,42,.7)",
+                width: "100%",
+                height: { xs: 220, md: 360 },
+                backgroundColor: "black",
               }}
-            >
-              <TwitterIcon fontSize="small" />
-            </IconButton>
-            <IconButton
-              size="small"
-              href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(
-                postUrl
-              )}`}
-              component="a"
-              target="_blank"
-              rel="noopener noreferrer"
-              sx={{
-                border: "1px solid rgba(0,0,0,0.12)",
-                borderRadius: 2,
-                color: "rgba(15,23,42,.7)",
-              }}
-            >
-              <FacebookIcon fontSize="small" />
-            </IconButton>
-            <IconButton
-              size="small"
-              href="https://www.instagram.com/"
-              component="a"
-              target="_blank"
-              rel="noopener noreferrer"
-              sx={{
-                border: "1px solid rgba(0,0,0,0.12)",
-                borderRadius: 2,
-                color: "rgba(15,23,42,.7)",
-              }}
-            >
-              <InstagramIcon fontSize="small" />
-            </IconButton>
-            <IconButton
-              size="small"
-              href={`https://wa.me/?text=${encodeURIComponent(
-                blog.title + " " + postUrl
-              )}`}
-              component="a"
-              target="_blank"
-              rel="noopener noreferrer"
-              sx={{
-                border: "1px solid rgba(0,0,0,0.12)",
-                borderRadius: 2,
-                color: "rgba(15,23,42,.7)",
-              }}
-            >
-              <WhatsAppIcon fontSize="small" />
-            </IconButton>
-          </Stack>
-        </Box>
+            />
+          </Card>
+        )}
+      </Box>
+
+      <Divider sx={{ my: 4 }} />
+
+      {/* SHARE BUTTONS */}
+      <Box>
+        <Typography sx={{ fontSize: 14, fontWeight: 700, color: "#0f172a", mb: 1.5 }}>
+          Bagikan Artikel
+        </Typography>
+        <Stack direction="row" spacing={1.5}>
+          <IconButton
+            href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(
+              blog.title
+            )}&url=${encodeURIComponent(postUrl)}`}
+            component="a"
+            target="_blank"
+            rel="noopener noreferrer"
+            sx={{
+              border: "1px solid rgba(0,0,0,0.12)",
+              borderRadius: 2,
+              color: "rgba(15,23,42,.7)",
+              "&:hover": { bgcolor: "rgba(15,23,42,.05)" },
+            }}
+          >
+            <TwitterIcon fontSize="small" />
+          </IconButton>
+          <IconButton
+            href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(
+              postUrl
+            )}`}
+            component="a"
+            target="_blank"
+            rel="noopener noreferrer"
+            sx={{
+              border: "1px solid rgba(0,0,0,0.12)",
+              borderRadius: 2,
+              color: "rgba(15,23,42,.7)",
+              "&:hover": { bgcolor: "rgba(15,23,42,.05)" },
+            }}
+          >
+            <FacebookIcon fontSize="small" />
+          </IconButton>
+          <IconButton
+            href="https://www.instagram.com/"
+            component="a"
+            target="_blank"
+            rel="noopener noreferrer"
+            sx={{
+              border: "1px solid rgba(0,0,0,0.12)",
+              borderRadius: 2,
+              color: "rgba(15,23,42,.7)",
+              "&:hover": { bgcolor: "rgba(15,23,42,.05)" },
+            }}
+          >
+            <InstagramIcon fontSize="small" />
+          </IconButton>
+          <IconButton
+            href={`https://wa.me/?text=${encodeURIComponent(
+              blog.title + " " + postUrl
+            )}`}
+            component="a"
+            target="_blank"
+            rel="noopener noreferrer"
+            sx={{
+              border: "1px solid rgba(0,0,0,0.12)",
+              borderRadius: 2,
+              color: "rgba(15,23,42,.7)",
+              "&:hover": { bgcolor: "rgba(15,23,42,.05)" },
+            }}
+          >
+            <WhatsAppIcon fontSize="small" />
+          </IconButton>
+        </Stack>
       </Box>
     </Box>
   );
