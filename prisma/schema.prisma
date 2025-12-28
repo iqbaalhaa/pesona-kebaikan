@@ -23,6 +23,7 @@ model User {
   updatedAt     DateTime  @updatedAt
   password      String?
   phone         String?   @unique
+  phoneVerified DateTime?
 
   accounts        Account[]
   sessions        Session[]
@@ -31,9 +32,9 @@ model User {
   loginActivities LoginActivity[]
 
   // untuk Blog.createdById relation("UserBlogs")
-  blogs     Blog[]     @relation("UserBlogs")
-  campaigns Campaign[] @relation("UserCampaigns")
-  donations Donation[] @relation("UserDonations")
+  blogs         Blog[]         @relation("UserBlogs")
+  campaigns     Campaign[]     @relation("UserCampaigns")
+  donations     Donation[]     @relation("UserDonations")
   notifications Notification[]
 }
 
@@ -135,9 +136,9 @@ model Withdrawal {
 }
 
 model NotifyKey {
-  key   String @id // 'whatsapp' or other provider keys
-  value String
-  name  String? // Optional description
+  key       String   @id // 'whatsapp' or other provider keys
+  value     String
+  name      String? // Optional description
   updatedAt DateTime @updatedAt
 }
 
@@ -195,8 +196,8 @@ model BlogCategory {
 model Blog {
   id        String   @id @default(cuid())
   title     String
-  content   String   
-  heroImage String? 
+  content   String
+  heroImage String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -220,9 +221,9 @@ model BlogMedia {
   blogId String
   blog   Blog   @relation(fields: [blogId], references: [id], onDelete: Cascade)
 
-  type        BlogMediaType
-  url         String // path ke file di uploads/blog atau link video
-  createdAt   DateTime      @default(now())
+  type      BlogMediaType
+  url       String // path ke file di uploads/blog atau link video
+  createdAt DateTime      @default(now())
 
   @@index([blogId])
 }
@@ -269,8 +270,8 @@ model Campaign {
   createdById String
   createdBy   User   @relation("UserCampaigns", fields: [createdById], references: [id])
 
-  media     CampaignMedia[]
-  donations Donation[]
+  media       CampaignMedia[]
+  donations   Donation[]
   withdrawals Withdrawal[]
   updates     CampaignUpdate[]
   reports     Report[]
@@ -310,8 +311,8 @@ model Carousel {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  campaignId  String?
-  campaign    Campaign? @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  campaignId String?
+  campaign   Campaign? @relation(fields: [campaignId], references: [id], onDelete: Cascade)
 
   @@index([campaignId])
 }
@@ -338,8 +339,8 @@ model Donation {
   campaignId String
   campaign   Campaign @relation(fields: [campaignId], references: [id])
 
-  userId     String?
-  user       User?    @relation("UserDonations", fields: [userId], references: [id])
+  userId String?
+  user   User?   @relation("UserDonations", fields: [userId], references: [id])
 
   @@index([campaignId])
   @@index([userId])
@@ -357,9 +358,9 @@ model Notification {
   type      NotificationType
   isRead    Boolean          @default(false)
   createdAt DateTime         @default(now())
-  
-  userId    String
-  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
 }
@@ -375,7 +376,7 @@ model CampaignUpdate {
   campaignId String
   campaign   Campaign @relation(fields: [campaignId], references: [id])
 
-  media     CampaignUpdateMedia[]
+  media CampaignUpdateMedia[]
 
   @@index([campaignId])
 }
@@ -386,8 +387,8 @@ model CampaignUpdateMedia {
   type      String   @default("IMAGE")
   createdAt DateTime @default(now())
 
-  updateId  String
-  update    CampaignUpdate @relation(fields: [updateId], references: [id], onDelete: Cascade)
+  updateId String
+  update   CampaignUpdate @relation(fields: [updateId], references: [id], onDelete: Cascade)
 
   @@index([updateId])
 }
@@ -405,10 +406,10 @@ enum ReportReason {
 }
 
 model Report {
-  id        String       @id @default(cuid())
-  reason    ReportReason
-  details   String       @db.Text
-  
+  id      String       @id @default(cuid())
+  reason  ReportReason
+  details String       @db.Text
+
   // Reporter info
   reporterName  String
   reporterPhone String
@@ -467,12 +468,12 @@ model Village {
 }
 
 model OtpRequest {
-  id        String    @id @default(cuid())
-  phone     String
-  otp_hash  String
+  id         String    @id @default(cuid())
+  phone      String
+  otp_hash   String
   expires_at DateTime
-  used_at   DateTime?
-  
+  used_at    DateTime?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
