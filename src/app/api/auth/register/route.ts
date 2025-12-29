@@ -30,10 +30,20 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    const verificationToken = await generateVerificationToken(email);
-    await sendVerificationEmail(verificationToken.identifier, verificationToken.token);
+    // For development, if email config is missing, we skip sending email
+    if (process.env.EMAIL_SERVER_HOST) {
+      const verificationToken = await generateVerificationToken(email);
+      try {
+        await sendVerificationEmail(verificationToken.identifier, verificationToken.token);
+      } catch (emailError) {
+        console.error("Failed to send verification email:", emailError);
+        // We still want to return success if user is created, but maybe warn
+      }
+    } else {
+      console.warn("Skipping email verification - SMTP config missing");
+    }
 
-    return NextResponse.json({ success: true, message: "Email konfirmasi telah dikirim!" });
+    return NextResponse.json({ success: true, message: "Registrasi berhasil!" });
   } catch (error) {
     console.error("Registration error:", error);
     return NextResponse.json({ error: "Terjadi kesalahan saat registrasi" }, { status: 500 });
