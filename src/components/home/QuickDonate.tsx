@@ -158,7 +158,7 @@ export default function QuickDonate({
 	const [message, setMessage] = React.useState<string>("");
 
 	const selectedCampaign = React.useMemo(
-		() => campaigns.find((c) => c.id === campaignId) || null,
+		() => campaigns.find((c) => c.id === campaignId),
 		[campaignId, campaigns]
 	);
 
@@ -490,11 +490,6 @@ export default function QuickDonate({
 						<Box sx={{ px: 2.2, py: 1.4, flex: 1, overflowY: "auto" }}>
 							{/* Campaign Selection */}
 							<Box sx={{ mb: 3 }}>
-								{/* Debug info - remove later */}
-								{/* <Typography variant="caption" color="error" sx={{ display: 'block' }}>
-									DEBUG: Loaded {campaigns.length} campaigns
-								</Typography> */}
-
 								<Typography
 									sx={{
 										fontSize: 12,
