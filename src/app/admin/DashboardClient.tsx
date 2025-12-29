@@ -16,6 +16,7 @@ import {
 	useTheme,
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
+import * as echarts from "echarts";
 
 import {
 	ResponsiveContainer,
@@ -179,9 +180,12 @@ function KpiCard({
 							color: toneColor,
 						}}
 					>
-						{React.cloneElement(icon as React.ReactElement, {
-							fontSize: "small",
-						} as any)}
+						{React.cloneElement(
+							icon as React.ReactElement,
+							{
+								fontSize: "small",
+							} as any
+						)}
 					</Box>
 
 					<IconButton
@@ -405,12 +409,157 @@ function FlowMini({
 	);
 }
 
+function MapIndonesia({
+	theme,
+	mapMetric,
+	provinceStats,
+	fmtIDR,
+}: {
+	theme: any;
+	mapMetric: "users" | "donation";
+	provinceStats: Array<{ name: string; users: number; donation: number }>;
+	fmtIDR: (n: number) => string;
+}) {
+	const containerRef = React.useRef<HTMLDivElement>(null);
+	const [loaded, setLoaded] = React.useState(false);
+	const metricValues = provinceStats.map((p: ProvinceStat) =>
+		mapMetric === "users" ? p.users : p.donation
+	);
+	const min = Math.min(...metricValues);
+	const max = Math.max(...metricValues);
+
+	React.useEffect(() => {
+		let chart: echarts.ECharts | null = null;
+		let disposed = false;
+		async function setup() {
+			try {
+				const res = await fetch(
+					"https://raw.githubusercontent.com/superpikar/indonesia-geojson/master/indonesia-province.json"
+				);
+				const geojson = await res.json();
+				echarts.registerMap("Indonesia", geojson as any);
+				if (!containerRef.current) return;
+				chart = echarts.init(containerRef.current);
+				setLoaded(true);
+
+				const data = provinceStats.map((p) => ({
+					name: p.name,
+					value: mapMetric === "users" ? p.users : p.donation,
+				}));
+
+				const option: echarts.EChartsOption = {
+					backgroundColor: "transparent",
+					tooltip: {
+						trigger: "item",
+						formatter: (params: any) => {
+							const v = params.value || 0;
+							const valText =
+								mapMetric === "users"
+									? `${Number(v).toLocaleString("id-ID")} pengguna`
+									: fmtIDR(Number(v));
+							return `${params.name}<br/>${valText}`;
+						},
+						borderRadius: 8,
+						backgroundColor: theme.palette.background.paper,
+						borderColor: alpha(theme.palette.divider, 0.12),
+						textStyle: { color: theme.palette.text.primary, fontWeight: 800 },
+					},
+					visualMap: {
+						left: "left",
+						min,
+						max,
+						inRange: {
+							color: [
+								alpha(theme.palette.primary.main, 0.2),
+								alpha(theme.palette.primary.main, 0.5),
+								alpha(theme.palette.primary.main, 0.8),
+							],
+						},
+						text: ["Tinggi", "Rendah"],
+						textStyle: {
+							color: theme.palette.text.secondary,
+							fontWeight: 900,
+						},
+						calculable: true,
+					},
+					series: [
+						{
+							type: "map",
+							map: "Indonesia",
+							itemStyle: {
+								borderColor: alpha(theme.palette.background.paper, 0.9),
+								borderWidth: 0.6,
+							},
+							emphasis: {
+								itemStyle: {
+									areaColor: alpha(theme.palette.primary.main, 0.9),
+								},
+							},
+							data,
+						} as any,
+					],
+				};
+				chart.setOption(option);
+
+				const handleResize = () => {
+					chart && chart.resize();
+				};
+				window.addEventListener("resize", handleResize);
+			} catch (err) {
+				console.error(err);
+			}
+		}
+		setup();
+		return () => {
+			if (chart) {
+				chart.dispose();
+			}
+		};
+	}, [mapMetric, provinceStats, theme, fmtIDR]);
+
+	React.useEffect(() => {
+		if (!loaded) return;
+		// update data only
+		const chart = containerRef.current
+			? echarts.getInstanceByDom(containerRef.current)
+			: null;
+		if (!chart) return;
+		const data = provinceStats.map((p) => ({
+			name: p.name,
+			value: mapMetric === "users" ? p.users : p.donation,
+		}));
+		const metricValuesNow = provinceStats.map((p) =>
+			mapMetric === "users" ? p.users : p.donation
+		);
+		chart.setOption({
+			visualMap: {
+				min: Math.min(...metricValuesNow),
+				max: Math.max(...metricValuesNow),
+			},
+			series: [{ data }] as any,
+		});
+	}, [loaded, mapMetric, provinceStats]);
+
+	return (
+		<Box
+			ref={containerRef}
+			sx={{
+				width: "100%",
+				height: "100%",
+				borderRadius: 2,
+			}}
+		/>
+	);
+}
+
 interface DashboardClientProps {
 	session: any;
 	kpi: any;
 	reviewSolvedRate: number;
 	recentQueue: any[];
 }
+
+type ProvinceStat = { name: string; users: number; donation: number };
 
 export default function DashboardClient({
 	session,
@@ -462,6 +611,62 @@ export default function DashboardClient({
 		{ day: "D-1", value: 7 },
 		{ day: "Hari ini", value: 4 },
 	];
+
+	const provinceStats: ProvinceStat[] = kpi?.provinceStats ?? [
+		{ name: "DKI Jakarta", users: 12450, donation: 215000000 },
+		{ name: "Jawa Barat", users: 18230, donation: 175000000 },
+		{ name: "Jawa Timur", users: 16890, donation: 189000000 },
+		{ name: "Jawa Tengah", users: 14210, donation: 132000000 },
+		{ name: "Banten", users: 9200, donation: 86000000 },
+		{ name: "DI Yogyakarta", users: 5100, donation: 48000000 },
+		{ name: "Sumatera Utara", users: 7600, donation: 72000000 },
+		{ name: "Aceh", users: 4300, donation: 38000000 },
+		{ name: "Kalimantan Timur", users: 5200, donation: 69000000 },
+		{ name: "Bali", users: 6100, donation: 54000000 },
+	];
+
+	const [mapMetric, setMapMetric] = React.useState<"users" | "donation">(
+		"users"
+	);
+
+	function normalizeProvName(s: string) {
+		const x = s.toLowerCase().trim();
+		if (x.includes("daerah khusus ibu")) return "dki jakarta";
+		if (x.includes("yogyakarta")) return "di yogyakarta";
+		if (x.includes("nanggroe aceh") || x === "aceh") return "aceh";
+		return x.replace("provinsi ", "").replace("propinsi ", "");
+	}
+
+	function getValueByProvince(name: string) {
+		const norm = normalizeProvName(name);
+		const found =
+			provinceStats.find(
+				(p) =>
+					normalizeProvName(p.name) === norm ||
+					normalizeProvName(p.name).includes(norm) ||
+					norm.includes(normalizeProvName(p.name))
+			) ?? null;
+		if (!found) return 0;
+		return mapMetric === "users" ? found.users : found.donation;
+	}
+
+	const metricValues = provinceStats.map((p: ProvinceStat) =>
+		mapMetric === "users" ? p.users : p.donation
+	);
+	const metricMin = Math.min(...metricValues);
+	const metricMax = Math.max(...metricValues);
+
+	function colorFor(value: number) {
+		const range = metricMax - metricMin || 1;
+		const ratio = Math.min(1, Math.max(0, (value - metricMin) / range));
+		const base = theme.palette.primary.main;
+		const low = alpha(base, 0.18);
+		const mid = alpha(base, 0.36);
+		const hi = alpha(base, 0.62);
+		if (ratio < 0.33) return low;
+		if (ratio < 0.66) return mid;
+		return hi;
+	}
 
 	// tooltip style shared
 	const tooltipStyle = {
@@ -785,6 +990,86 @@ export default function DashboardClient({
 									</Pie>
 								</PieChart>
 							</ResponsiveContainer>
+						</ChartCard>
+					</Grid>
+
+					<Grid size={{ xs: 12 }}>
+						<ChartCard
+							title="Peta Sebaran Provinsi"
+							subtitle={`Warna menunjukkan ${
+								mapMetric === "users" ? "jumlah pengguna" : "total donasi"
+							} per provinsi`}
+							right={
+								<Stack direction="row" spacing={1}>
+									<Chip
+										label="Pengguna"
+										size="small"
+										onClick={() => setMapMetric("users")}
+										sx={{
+											height: 24,
+											borderRadius: 999,
+											fontWeight: 900,
+											bgcolor:
+												mapMetric === "users"
+													? alpha(theme.palette.primary.main, 0.18)
+													: alpha(theme.palette.action.hover, 0.06),
+										}}
+									/>
+									<Chip
+										label="Donasi"
+										size="small"
+										onClick={() => setMapMetric("donation")}
+										sx={{
+											height: 24,
+											borderRadius: 999,
+											fontWeight: 900,
+											bgcolor:
+												mapMetric === "donation"
+													? alpha(theme.palette.success.main, 0.18)
+													: alpha(theme.palette.action.hover, 0.06),
+										}}
+									/>
+								</Stack>
+							}
+							height={420}
+						>
+							<MapIndonesia
+								theme={theme}
+								mapMetric={mapMetric}
+								provinceStats={provinceStats}
+								fmtIDR={fmtIDR}
+							/>
+
+							<Stack
+								direction="row"
+								spacing={1}
+								alignItems="center"
+								sx={{ mt: 1.25 }}
+							>
+								<Typography sx={{ fontSize: 12, color: "text.secondary" }}>
+									Skala:
+								</Typography>
+								<Box
+									sx={{
+										height: 10,
+										borderRadius: 999,
+										flex: 1,
+										background: `linear-gradient(90deg, ${alpha(
+											theme.palette.primary.main,
+											0.18
+										)}, ${alpha(theme.palette.primary.main, 0.62)})`,
+										border: "1px solid",
+										borderColor: alpha(theme.palette.divider, 0.12),
+									}}
+								/>
+								<Typography sx={{ fontSize: 12, color: "text.secondary" }}>
+									{mapMetric === "users"
+										? `${metricMin.toLocaleString(
+												"id-ID"
+										  )} → ${metricMax.toLocaleString("id-ID")} pengguna`
+										: `${fmtIDR(metricMin)} → ${fmtIDR(metricMax)}`}
+								</Typography>
+							</Stack>
 						</ChartCard>
 					</Grid>
 
