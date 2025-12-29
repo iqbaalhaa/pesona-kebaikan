@@ -10,6 +10,7 @@ const Role = {
 	ADMIN: "ADMIN",
 } as const;
 
+
 const BlogMediaType = {
 	image: "image",
 	video: "video",
@@ -278,10 +279,10 @@ async function main() {
 	});
 
 	const user = await prisma.user.upsert({
-		where: { email: "user@pesonakebaikan.id" },
+		where: { email: "alfadlirputra@gmail.com" },
 		update: {},
 		create: {
-			email: "user@pesonakebaikan.id",
+			email: "alfadlirputra@gmail.com",
 			name: "Normal User",
 			role: Role.USER,
 			password,

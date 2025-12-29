@@ -1,0 +1,81 @@
+"use client";
+
+import * as React from "react";
+import { useRouter } from "next/navigation";
+import Paper from "@mui/material/Paper";
+import Avatar from "@mui/material/Avatar";
+import Box from "@mui/material/Box";
+import Stack from "@mui/material/Stack";
+import Typography from "@mui/material/Typography";
+import IconButton from "@mui/material/IconButton";
+import Tooltip from "@mui/material/Tooltip";
+import EditIcon from "@mui/icons-material/Edit";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+
+export default function ProfileCard({ user }: { user: any }) {
+  const router = useRouter();
+  return (
+    <Paper
+      elevation={0}
+      variant="outlined"
+      sx={{
+        p: 2.5,
+        mb: 3,
+        borderRadius: 4,
+        display: "flex",
+        alignItems: "center",
+        gap: 2,
+        bgcolor: "#fff",
+        borderColor: "rgba(0,0,0,0.08)",
+        position: "relative",
+        overflow: "hidden",
+      }}
+    >
+      <Avatar
+        src={user?.image || "/avatar-placeholder.jpg"}
+        sx={{
+          width: 72,
+          height: 72,
+          bgcolor: "#61ce70",
+          fontSize: 28,
+          fontWeight: 800,
+          border: "3px solid #fff",
+          boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+        }}
+      >
+        {user?.name?.[0]?.toUpperCase() || "A"}
+      </Avatar>
+      <Box sx={{ flex: 1, cursor: "pointer" }} onClick={() => router.push("/profil/akun")}>
+        <Stack direction="row" alignItems="center" gap={0.5}>
+          <Typography sx={{ fontSize: 18, fontWeight: 900, color: "#0f172a" }}>
+            {user?.name || "Pengguna"}
+          </Typography>
+          <Tooltip title="Verified User">
+            <CheckCircleIcon sx={{ fontSize: 18, color: "#61ce70" }} />
+          </Tooltip>
+        </Stack>
+        <Typography sx={{ fontSize: 14, color: "rgba(15,23,42,0.6)" }}>
+          {user?.email}
+        </Typography>
+        <Box sx={{ mt: 0.5, display: "flex", alignItems: "center", gap: 0.5 }}>
+          <Box sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: "#61ce70" }} />
+          <Typography sx={{ fontSize: 12, fontWeight: 700, color: "#61ce70" }}>Member Basic</Typography>
+        </Box>
+      </Box>
+      <IconButton
+        sx={{
+          bgcolor: "#f8fafc",
+          color: "#334155",
+          borderRadius: 3,
+          p: 1.5,
+          border: "1px solid #e2e8f0",
+          "&:hover": { bgcolor: "#f1f5f9" },
+        }}
+        onClick={() => router.push("/profil/akun")}
+      >
+        <EditIcon />
+      </IconButton>
+    </Paper>
+  );
+}
+
