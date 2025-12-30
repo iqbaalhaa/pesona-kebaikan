@@ -27,7 +27,7 @@ async function main() {
 		console.log("Blogs seeded.");
 
 		// 5. Campaigns
-		await seedCampaigns(admin.id);
+		await seedCampaigns();
 		console.log("Campaigns seeded.");
 
 		console.log("Seeding completed.");

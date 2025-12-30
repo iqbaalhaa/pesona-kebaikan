@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import * as React from "react";
@@ -24,7 +25,18 @@ import BusinessIcon from "@mui/icons-material/Business";
 import WhatsAppIcon from "@mui/icons-material/WhatsApp";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import { requestEmailVerification } from "@/actions/email";
-import { requestOtp, verifyOtp } from "@/actions/otp";
+import { requestVerificationOtp, verifyOtp } from "@/actions/otp";
+
+interface Province {
+  id: string;
+  name: string;
+}
+
+interface Regency {
+  id: string;
+  name: string;
+  provinceId: string;
+}
 
 export default function VerificationDialog({
   open,
@@ -38,40 +50,58 @@ export default function VerificationDialog({
   const { data: session } = useSession();
   const [verificationType, setVerificationType] = React.useState<"individu" | "organisasi" | null>(null);
   const [activeStep, setActiveStep] = React.useState(0);
-  const [provinces, setProvinces] = React.useState<any[]>([]);
-  const [regencies, setRegencies] = React.useState<any[]>([]);
-  const [selectedProvince, setSelectedProvince] = React.useState<any>(null);
-  const [selectedRegency, setSelectedRegency] = React.useState<any>(null);
-  const [emailDebug, setEmailDebug] = React.useState<any>(null);
+  const [provinces, setProvinces] = React.useState<Province[]>([]);
+  const [regencies, setRegencies] = React.useState<Regency[]>([]);
+  const [selectedProvince, setSelectedProvince] = React.useState<Province | null>(null);
+  const [selectedRegency, setSelectedRegency] = React.useState<Regency | null>(null);
+  const [emailDebug, setEmailDebug] = React.useState<unknown>(null);
   const [phone, setPhone] = React.useState<string>("");
   const [waOtp, setWaOtp] = React.useState<string>("");
   const [waLoading, setWaLoading] = React.useState<boolean>(false);
 
+  const [waCooldown, setWaCooldown] = React.useState<number>(0);
+  const [showResend, setShowResend] = React.useState<boolean>(false);
+
   React.useEffect(() => {
-    if (open) {
-      setVerificationType(null);
-      setActiveStep(0);
-      setEmailDebug(null);
+    let timer: NodeJS.Timeout;
+    if (waCooldown > 0) {
+      timer = setInterval(() => {
+        setWaCooldown((prev) => prev - 1);
+      }, 1000);
+    } else if (waCooldown === 0 && showResend) {
+      // Cooldown finished
     }
-  }, [open]);
+    return () => clearInterval(timer);
+  }, [waCooldown, showResend]);
 
   React.useEffect(() => {
     if (open) {
+      // Don't reset everything if user accidentally closed it, but maybe reset step if needed?
+      // For now, let's keep state persistence as requested, so we remove the resetting logic
+      // except for initial load if we want to ensure clean slate only on full reload.
+      // But user asked "kalo tak sengaja diclose jg ttap yg sudah diinput", so we do NOTHING here
+      // regarding state reset.
+      
+      // We only fetch data if needed
+      if (provinces.length === 0) {
+        fetch("/api/address?type=province")
+          .then((res) => res.json())
+          .then((data) => {
+            if (Array.isArray(data)) setProvinces(data);
+          })
+          .catch(() => {});
+      }
+    }
+  }, [open]);
+
+  // Initial phone set only if empty
+  React.useEffect(() => {
+    if (open && !phone && session?.user) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const p = (session?.user as any)?.phone || "";
-      setPhone(p);
+      if (p) setPhone(p);
     }
-  }, [open, session]);
-
-  React.useEffect(() => {
-    if (open) {
-      fetch("/api/address?type=province")
-        .then((res) => res.json())
-        .then((data) => {
-          if (Array.isArray(data)) setProvinces(data);
-        })
-        .catch(() => {});
-    }
-  }, [open]);
+  }, [open, session, phone]);
 
   React.useEffect(() => {
     if (selectedProvince?.id) {
@@ -89,6 +119,44 @@ export default function VerificationDialog({
 
   const handleNext = () => setActiveStep((s) => s + 1);
   const handleBack = () => setActiveStep((s) => s - 1);
+
+  const handleOtpChange = (value: string, index: number) => {
+    // Only allow numbers
+    if (!/^\d*$/.test(value)) return;
+
+    const newOtp = waOtp.split("");
+    // Ensure we have 6 chars
+    while (newOtp.length < 6) newOtp.push("");
+    
+    newOtp[index] = value;
+    const otpString = newOtp.join("").substring(0, 6);
+    setWaOtp(otpString);
+
+    // Auto-focus next input
+    if (value && index < 5) {
+      const nextInput = document.getElementById(`otp-input-${index + 1}`);
+      nextInput?.focus();
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent, index: number) => {
+    if (e.key === "Backspace" && !waOtp[index] && index > 0) {
+      const prevInput = document.getElementById(`otp-input-${index - 1}`);
+      prevInput?.focus();
+    }
+  };
+
+  const handlePaste = (e: React.ClipboardEvent) => {
+    e.preventDefault();
+    const pastedData = e.clipboardData.getData("text").replace(/\D/g, "").substring(0, 6);
+    if (pastedData) {
+      setWaOtp(pastedData);
+      // Focus the last filled input or the first empty one
+      const targetIndex = Math.min(pastedData.length, 5);
+      const targetInput = document.getElementById(`otp-input-${targetIndex === 6 ? 5 : targetIndex}`);
+      targetInput?.focus();
+    }
+  };
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm" PaperProps={{ sx: { borderRadius: 2, overflow: "hidden" } }}>
@@ -188,71 +256,127 @@ export default function VerificationDialog({
                   <Alert icon={<WhatsAppIcon fontSize="inherit" />} severity="success" sx={{ mb: 2, borderRadius: 1, bgcolor: "#dcfce7", color: "#166534" }}>
                     Kami akan mengirimkan kode OTP ke WhatsApp Anda.
                   </Alert>
+          <Stack spacing={2} sx={{ mb: 3 }}>
+            <Box>
+              <Typography variant="caption" sx={{ fontWeight: 600, color: "text.secondary", mb: 1, display: "block" }}>
+                Nomor WhatsApp
+              </Typography>
+              <Stack direction="row" spacing={1}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  placeholder="Contoh: 081234567890"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  InputProps={{ sx: { borderRadius: 1.5 } }}
+                  disabled={waCooldown > 0}
+                />
+                <Button
+                  variant="contained"
+                  sx={{ 
+                    borderRadius: 1.5, 
+                    textTransform: "none", 
+                    whiteSpace: "nowrap",
+                    minWidth: 100,
+                    bgcolor: waCooldown > 0 ? "#e2e8f0" : "#61ce70",
+                    color: waCooldown > 0 ? "#94a3b8" : "white",
+                    boxShadow: "none",
+                    "&:hover": {
+                      bgcolor: waCooldown > 0 ? "#e2e8f0" : "#51b860",
+                      boxShadow: "none",
+                    }
+                  }}
+                  disabled={waLoading || !phone || waCooldown > 0}
+                  onClick={async () => {
+                    try {
+                      setWaLoading(true);
+                      const res = await requestVerificationOtp(phone);
+                      if (res.success) {
+                        setWaCooldown(60); // 60 seconds cooldown
+                        setShowResend(true);
+                      }
+                      alert(res.success ? "OTP berhasil dikirim ke WhatsApp" : res.error || "Gagal mengirim OTP");
+                    } finally {
+                      setWaLoading(false);
+                    }
+                  }}
+                >
+                  {waLoading ? "..." : waCooldown > 0 ? `${waCooldown}s` : showResend ? "Kirim Ulang" : "Kirim Kode"}
+                </Button>
+              </Stack>
+            </Box>
+
+            <Box>
+              <Typography variant="caption" sx={{ fontWeight: 600, color: "text.secondary", mb: 1, display: "block" }}>
+                Kode OTP (6 Digit)
+              </Typography>
+              <Stack direction="row" spacing={1} justifyContent="space-between" onPaste={handlePaste}>
+                {[0, 1, 2, 3, 4, 5].map((index) => (
                   <TextField
-                    label="Nomor WhatsApp"
-                    fullWidth
+                    key={index}
+                    id={`otp-input-${index}`}
                     size="small"
-                    placeholder="0812xxxx"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    sx={{ mb: 2 }}
-                    InputProps={{ sx: { borderRadius: 1 } }}
+                    value={waOtp[index] || ""}
+                    onChange={(e) => handleOtpChange(e.target.value, index)}
+                    onKeyDown={(e) => handleKeyDown(e, index)}
+                    inputProps={{
+                      maxLength: 1,
+                      style: { textAlign: "center", padding: "8px" },
+                    }}
+                    sx={{
+                      width: "48px",
+                      "& .MuiOutlinedInput-root": {
+                        borderRadius: 1.5,
+                        "&.Mui-focused fieldset": {
+                          borderColor: "#61ce70",
+                          borderWidth: 2,
+                        },
+                      },
+                    }}
                   />
-                  <Stack direction="row" spacing={1} sx={{ mb: 2 }}>
-                    <TextField
-                      size="small"
-                      placeholder="Kode OTP WA"
-                      fullWidth
-                      value={waOtp}
-                      onChange={(e) => setWaOtp(e.target.value)}
-                      InputProps={{ sx: { borderRadius: 1 } }}
-                    />
-                    <Button
-                      variant="outlined"
-                      sx={{ borderRadius: 2, textTransform: "none", whiteSpace: "nowrap" }}
-                      disabled={waLoading || !phone}
-                      onClick={async () => {
-                        try {
-                          setWaLoading(true);
-                          const res = await requestOtp(phone, "Verifikasi Akun", "-");
-                          alert(res.success ? "OTP berhasil dikirim ke WhatsApp" : res.error || "Gagal mengirim OTP");
-                        } finally {
-                          setWaLoading(false);
-                        }
-                      }}
-                    >
-                      Kirim Kode
-                    </Button>
-                  </Stack>
-                  <Box sx={{ mb: 2 }}>
-                    <Button
-                      variant="contained"
-                      onClick={async () => {
-                        if (!phone || !waOtp) {
-                          alert("Nomor WhatsApp dan OTP wajib diisi");
-                          return;
-                        }
-                        try {
-                          setWaLoading(true);
-                          const res = await verifyOtp(phone, waOtp);
-                          if (res.success) {
-                            handleNext();
-                          } else {
-                            alert(res.error || "Verifikasi OTP gagal");
-                          }
-                        } finally {
-                          setWaLoading(false);
-                        }
-                      }}
-                      disabled={waLoading || !phone || !waOtp}
-                      sx={{ bgcolor: "#61ce70", textTransform: "none", fontWeight: 700, borderRadius: 2, boxShadow: "none" }}
-                    >
-                      Verifikasi & Lanjut
-                    </Button>
-                    <Button onClick={handleBack} sx={{ mt: 1, mr: 1, color: "text.secondary", textTransform: "none" }}>
-                      Kembali
-                    </Button>
-                  </Box>
+                ))}
+              </Stack>
+            </Box>
+          </Stack>
+          
+          <Box sx={{ mb: 2 }}>
+            <Button
+              variant="contained"
+              onClick={async () => {
+                if (!phone || waOtp.length < 6) {
+                  alert("Nomor WhatsApp dan 6 digit OTP wajib diisi");
+                  return;
+                }
+                try {
+                  setWaLoading(true);
+                  const res = await verifyOtp(phone, waOtp);
+                  if (res.success) {
+                    setActiveStep((s) => s + 1);
+                  } else {
+                    alert(res.error || "Verifikasi OTP gagal");
+                  }
+                } finally {
+                  setWaLoading(false);
+                }
+              }}
+              disabled={waLoading || !phone || waOtp.length < 6}
+              fullWidth
+              sx={{ 
+                bgcolor: "#61ce70", 
+                textTransform: "none", 
+                fontWeight: 700, 
+                borderRadius: 2, 
+                boxShadow: "none",
+                py: 1.5,
+                "&:hover": { bgcolor: "#51b860", boxShadow: "none" }
+              }}
+            >
+              Verifikasi & Lanjut
+            </Button>
+            <Button onClick={() => setActiveStep((s) => s - 1)} fullWidth sx={{ mt: 1, color: "text.secondary", textTransform: "none" }}>
+              Kembali
+            </Button>
+          </Box>
                 </StepContent>
               </Step>
 
@@ -282,7 +406,7 @@ export default function VerificationDialog({
                     <Box sx={{ mb: 2, p: 2, borderRadius: 1, bgcolor: "#f8fafc", border: "1px solid #e2e8f0" }}>
                       <Typography sx={{ fontWeight: 700, mb: 1 }}>Log Pengiriman Email</Typography>
                       <Stack spacing={1}>
-                        {(emailDebug.attempts ?? []).map((a: any, idx: number) => (
+                        {(emailDebug as any).attempts && ((emailDebug as any).attempts as any[]).map((a: any, idx: number) => (
                           <Alert key={idx} severity={a.ok ? "success" : "error"} sx={{ borderRadius: 1 }}>
                             <Typography variant="caption">
                               {a.phase}: {a.ok ? "OK" : "Gagal"} — {a.message}
@@ -294,14 +418,14 @@ export default function VerificationDialog({
                             ) : null}
                           </Alert>
                         ))}
-                        {emailDebug.send ? (
-                          <Alert severity={emailDebug.send.ok ? "success" : "error"} sx={{ borderRadius: 1 }}>
+                        {(emailDebug as any).send ? (
+                          <Alert severity={(emailDebug as any).send.ok ? "success" : "error"} sx={{ borderRadius: 1 }}>
                             <Typography variant="caption">
-                              send: {emailDebug.send.ok ? "OK" : "Gagal"} — messageId={emailDebug.send.messageId || "-"}
+                              send: {(emailDebug as any).send.ok ? "OK" : "Gagal"} — messageId={(emailDebug as any).send.messageId || "-"}
                             </Typography>
-                            {emailDebug.send.options ? (
+                            {(emailDebug as any).send.options ? (
                               <Typography variant="caption" sx={{ display: "block", color: "text.secondary" }}>
-                                host={emailDebug.send.options.host} port={emailDebug.send.options.port} secure={String(emailDebug.send.options.secure)}
+                                host={(emailDebug as any).send.options.host} port={(emailDebug as any).send.options.port} secure={String((emailDebug as any).send.options.secure)}
                               </Typography>
                             ) : null}
                           </Alert>
