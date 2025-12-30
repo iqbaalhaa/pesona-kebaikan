@@ -36,6 +36,17 @@ model User {
   campaigns     Campaign[]     @relation("UserCampaigns")
   donations     Donation[]     @relation("UserDonations")
   notifications Notification[]
+
+  // Address
+  provinceId String?
+  province   Province? @relation(fields: [provinceId], references: [id])
+  regencyId  String?
+  regency    Regency?  @relation(fields: [regencyId], references: [id])
+  districtId String?
+  district   District? @relation(fields: [districtId], references: [id])
+  villageId  String?
+  village    Village?  @relation(fields: [villageId], references: [id])
+  address    String?   @db.Text
 }
 
 model LoginActivity {
@@ -434,6 +445,7 @@ model Province {
   code      String    @unique
   name      String
   regencies Regency[]
+  users     User[]
 }
 
 model Regency {
@@ -443,7 +455,7 @@ model Regency {
   provinceId String
   province   Province   @relation(fields: [provinceId], references: [id])
   districts  District[]
-
+  users      User[]
   @@index([provinceId])
 }
 
@@ -454,7 +466,7 @@ model District {
   regencyId String
   regency   Regency   @relation(fields: [regencyId], references: [id])
   villages  Village[]
-
+  users     User[]
   @@index([regencyId])
 }
 
@@ -464,6 +476,7 @@ model Village {
   name       String
   districtId String
   district   District @relation(fields: [districtId], references: [id])
+  users      User[]
 
   @@index([districtId])
 }

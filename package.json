@@ -22,6 +22,7 @@
 		"@prisma/extension-accelerate": "^3.0.1",
 		"bcryptjs": "^3.0.3",
 		"date-fns": "^4.1.0",
+		"echarts": "^5.5.0",
 		"jsdom": "^27.3.0",
 		"jspdf": "^3.0.4",
 		"jspdf-autotable": "^5.0.2",
@@ -32,12 +33,12 @@
 		"react": "19.2.1",
 		"react-dom": "19.2.1",
 		"recharts": "^3.6.0",
-		"echarts": "^5.5.0",
 		"suneditor": "^2.47.8",
 		"suneditor-react": "^3.6.1",
 		"xlsx": "^0.18.5"
 	},
 	"devDependencies": {
+		"@faker-js/faker": "^10.1.0",
 		"@tailwindcss/postcss": "^4",
 		"@types/jsdom": "^27.0.0",
 		"@types/node": "^20",
