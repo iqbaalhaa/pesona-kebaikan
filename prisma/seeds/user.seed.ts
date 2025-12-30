@@ -31,38 +31,40 @@ export async function seedUsers() {
 
 	// Generate 100 dummy users with addresses
 	console.log("Generating 100 dummy users...");
-	
-	// Fetch some villages to use for addresses
-	// We select villages and include their full hierarchy (District -> Regency -> Province)
-	const villages = await prisma.village.findMany({
-		take: 100,
-		include: {
-			district: {
-				include: {
-					regency: {
-						include: {
-							province: true,
-						},
-					},
-				},
-			},
-		},
-	});
 
-	if (villages.length === 0) {
-		console.warn("No villages found. Dummy users will be created without addresses. Make sure to run address seeder first.");
-	}
+	// Fetch all provinces IDs to distribute users across Indonesia
+	const provinces = await prisma.province.findMany({ select: { id: true } });
 
 	for (let i = 0; i < 100; i++) {
 		const firstName = faker.person.firstName();
 		const lastName = faker.person.lastName();
 		const email = faker.internet.email({ firstName, lastName }).toLowerCase();
-		
-		// Pick a random village if available
+
+		// Pick a random province
+		const randomProvince =
+			provinces[Math.floor(Math.random() * provinces.length)];
+
+		// Pick a random village in that province
+		const village = await prisma.village.findFirst({
+			where: { district: { regency: { provinceId: randomProvince.id } } },
+			// Skip a random amount to vary within province (limit skip to avoid performance hit, assuming each province has > 0 villages)
+			// For simplicity in seed, just take the first one or a random one from top 10
+			skip: Math.floor(Math.random() * 10),
+			include: {
+				district: {
+					include: {
+						regency: {
+							include: {
+								province: true,
+							},
+						},
+					},
+				},
+			},
+		});
+
 		let addressData = {};
-		if (villages.length > 0) {
-			const village = villages[Math.floor(Math.random() * villages.length)];
-			// Automatically populate the full hierarchy based on the chosen village
+		if (village) {
 			addressData = {
 				villageId: village.id,
 				districtId: village.district.id,
@@ -84,12 +86,11 @@ export async function seedUsers() {
 				},
 			});
 		} catch (error) {
-			// Ignore duplicates (email or phone) and continue
-			// console.log(`Skipped duplicate user generation: ${email}`);
+			// Ignore duplicates
 		}
 	}
-	
+
 	console.log("Dummy users generation completed.");
 
-    return admin;
+	return admin;
 }

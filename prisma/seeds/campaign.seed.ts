@@ -1,5 +1,6 @@
 import { prisma } from "../../src/lib/prisma";
-import { CampaignStatus, CampaignMediaType } from "@/generated/prisma";
+import { CampaignStatus, CampaignMediaType, PaymentMethod } from "@/generated/prisma";
+import { faker } from "@faker-js/faker";
 
 async function upsertCampaignCategory(name: string) {
 	return prisma.campaignCategory.upsert({
@@ -9,147 +10,128 @@ async function upsertCampaignCategory(name: string) {
 	});
 }
 
-async function ensureCampaign(params: {
-	title: string;
-	story: string;
-	target: number;
-	categoryId: string;
-	createdById: string;
-	isEmergency?: boolean;
-	status?: CampaignStatus;
-	media?: {
-		type: CampaignMediaType;
-		url: string;
-		isThumbnail?: boolean;
-	}[];
-}) {
-	const exists = await prisma.campaign.findFirst({
-		where: { title: params.title },
-	});
-
-	if (exists) return exists;
-
-	return prisma.campaign.create({
-		data: {
-			title: params.title,
-			story: params.story,
-			target: params.target, // ✅ number langsung
-			categoryId: params.categoryId,
-			createdById: params.createdById,
-			isEmergency: params.isEmergency ?? false,
-			status: params.status ?? CampaignStatus.ACTIVE,
-			start: new Date(),
-			media: params.media?.length
-				? {
-						create: params.media.map((m) => ({
-							type: m.type,
-							url: m.url,
-							isThumbnail: m.isThumbnail ?? false,
-						})),
-				  }
-				: undefined,
-		},
-	});
+function pickRandom<T>(arr: T[]): T {
+	return arr[Math.floor(Math.random() * arr.length)];
 }
 
-export async function seedCampaigns(adminId: string) {
-  /* ===== CAMPAIGN ===== */
-  const kesehatan = await upsertCampaignCategory("Kesehatan");
-  const pendidikan = await upsertCampaignCategory("Pendidikan");
-  const bencana = await upsertCampaignCategory("Bencana Alam");
-  const kemanusiaan = await upsertCampaignCategory("Kemanusiaan");
+function makeSlug(title: string) {
+	return title
+		.toLowerCase()
+		.replace(/[^a-z0-9\s-]/g, "")
+		.trim()
+		.replace(/\s+/g, "-")
+		.concat("-", faker.string.alphanumeric(6).toLowerCase());
+}
 
-  await Promise.all([
-    ensureCampaign({
-      title: "Bantu Adik Rizky Berjuang Melawan Kelainan Jantung Bawaan",
-      categoryId: kesehatan.id,
-      createdById: adminId,
-      target: 100_000_000,
-      story: `
-        <p>Hai Orang Baik,</p>
-        <p>Perkenalkan, nama saya Andi, ayah dari <strong>Rizky (5 tahun)</strong>. Saat ini, putra kecil kami sedang berjuang melawan penyakit jantung bawaan yang dideritanya sejak lahir. Rizky adalah anak yang ceria dan aktif, namun belakangan ini kondisinya semakin menurun.</p>
+export async function seedCampaigns() {
+	// Ensure categories
+	const kesehatan = await upsertCampaignCategory("Kesehatan");
+	const pendidikan = await upsertCampaignCategory("Pendidikan");
+	const bencana = await upsertCampaignCategory("Bencana Alam");
+	const kemanusiaan = await upsertCampaignCategory("Kemanusiaan");
 
-        <p>Awalnya, Rizky sering mengeluh sesak napas dan cepat lelah saat bermain. Kulitnya sering membiru jika ia terlalu banyak beraktivitas. Setelah kami bawa ke rumah sakit rujukan di Jakarta, dokter mendiagnosa Rizky mengalami kebocoran pada katup jantungnya dan harus segera menjalani operasi.</p>
+	const categories = [kesehatan, pendidikan, bencana, kemanusiaan];
 
-        <h3>Kenapa Kami Menggalang Dana?</h3>
-        <p>Biaya operasi dan perawatan pasca-operasi sangatlah besar. Meskipun kami memiliki BPJS, ada banyak biaya lain yang tidak tercover, seperti obat-obatan khusus, susu penunjang nutrisi, serta biaya akomodasi selama kami harus tinggal di Jakarta menunggu jadwal operasi. Sebagai buruh harian lepas, penghasilan saya tidak menentu dan jauh dari cukup untuk menutupi kebutuhan tersebut.</p>
+	// Load users to assign as campaign creators and donors
+	const users = await prisma.user.findMany({ select: { id: true, name: true } });
+	if (users.length === 0) {
+		console.warn("No users found. Skipping campaign seeding.");
+		return;
+	}
 
-        <p>Kami sangat berharap bantuan dan doa dari teman-teman semua agar Rizky bisa segera dioperasi dan kembali bermain seperti anak-anak lainnya. Setiap rupiah yang teman-teman donasikan akan sangat berarti bagi kesembuhan Rizky.</p>
+	// Seed 10 campaigns per category
+	for (const category of categories) {
+		for (let i = 0; i < 10; i++) {
+			const createdBy = pickRandom(users);
+			const title = `${category.name} - ${faker.company.catchPhrase()}`;
+			const slug = makeSlug(title);
 
-        <p>Rencana penggunaan dana:</p>
-        <ul>
-          <li>Biaya obat-obatan dan vitamin penunjang: Rp 20.000.000</li>
-          <li>Biaya operasional & akomodasi di Jakarta: Rp 15.000.000</li>
-          <li>Biaya pendampingan medis & check-up rutin: Rp 15.000.000</li>
-          <li>Dana darurat pasca operasi: Rp 50.000.000</li>
-        </ul>
+			const story = `
+        <p>${faker.lorem.paragraph()}</p>
+        <p>${faker.lorem.paragraph()}</p>
+        <p>${faker.lorem.paragraph()}</p>
+      `;
 
-        <p>Terima kasih atas kebaikan hati teman-teman semua. Semoga Tuhan membalas kebaikan kalian dengan berlipat ganda.</p>
-      `,
-      media: [
-        {
-          type: CampaignMediaType.IMAGE,
-          url: "https://picsum.photos/800/600?10",
-          isThumbnail: true,
-        },
-        {
-          type: CampaignMediaType.IMAGE,
-          url: "https://picsum.photos/800/600?20",
-          isThumbnail: false,
-        },
-      ],
-    }),
-    ensureCampaign({
-      title: "Bangun Sekolah Impian untuk Anak-Anak Desa Mekar Jaya",
-      categoryId: pendidikan.id,
-      createdById: adminId,
-      target: 250_000_000,
-      story: `
-        <p>Assalamu'alaikum Warahmatullahi Wabarakatuh,</p>
-        <p>Di pelosok Desa Mekar Jaya, terdapat sebuah sekolah dasar kayu yang sudah berdiri sejak 30 tahun lalu. Kondisinya kini sangat memprihatinkan. Dinding-dinding kayunya mulai lapuk dimakan rayap, atapnya bocor di banyak titik, dan lantainya masih berupa tanah yang akan menjadi lumpur saat musim hujan tiba.</p>
+			// Upsert campaign by unique slug
+			const campaign = await prisma.campaign.upsert({
+				where: { slug },
+				update: {},
+				create: {
+					title,
+					slug,
+					story,
+					target: faker.number.int({ min: 25_000_000, max: 500_000_000 }),
+					categoryId: category.id,
+					createdById: createdBy.id,
+					isEmergency: false,
+					status: CampaignStatus.ACTIVE,
+					start: new Date(),
+					end: new Date(Date.now() + faker.number.int({ min: 30, max: 120 }) * 24 * 60 * 60 * 1000),
+					verifiedAt: new Date(),
+					phone: faker.phone.number(),
+					media: {
+						create: [
+							{
+								type: CampaignMediaType.IMAGE,
+								url: `https://picsum.photos/800/600?random=${faker.number.int({ min: 1, max: 9999 })}`,
+								isThumbnail: true,
+							},
+						],
+					},
+				},
+			});
 
-        <p>Sekolah ini adalah satu-satunya harapan bagi 150 siswa di desa tersebut untuk menuntut ilmu. Jarak ke sekolah lain terdekat mencapai 10 kilometer dengan medan jalan yang sulit dilalui. Meski dengan kondisi fasilitas yang serba terbatas, semangat belajar anak-anak ini tak pernah surut. Mereka tetap datang setiap pagi dengan senyum merekah, membawa mimpi-mimpi besar mereka.</p>
+			// Create at least 50 donations per campaign
+			const donationsToCreate = 50;
+			const donationsData: {
+				donorName: string;
+				donorPhone?: string;
+				message?: string;
+				amount: number;
+				paymentMethod: PaymentMethod;
+				campaignId: string;
+				userId?: string | null;
+			}[] = [];
 
-        <h3>Mimpi Kami</h3>
-        <p>Kami, Karang Taruna Desa Mekar Jaya, berinisiatif untuk merenovasi sekolah ini agar layak dan aman digunakan. Kami ingin membangun:</p>
-        <ul>
-          <li>3 Ruang kelas baru yang permanen</li>
-          <li>1 Ruang guru dan perpustakaan</li>
-          <li>Fasilitas MCK yang bersih dan layak</li>
-        </ul>
+			for (let d = 0; d < donationsToCreate; d++) {
+				const amount = faker.number.int({ min: 10_000, max: 1_000_000 });
+				const pmValues = [PaymentMethod.EWALLET, PaymentMethod.VIRTUAL_ACCOUNT, PaymentMethod.TRANSFER, PaymentMethod.CARD];
+				const paymentMethod = pickRandom(pmValues);
+				const donorUser = Math.random() < 0.6 ? pickRandom(users) : null; // 60% donations linked to users
 
-        <p>Total biaya yang dibutuhkan diperkirakan mencapai Rp 250.000.000. Kami mengajak Sahabat Kebaikan semua untuk ikut ambil bagian dalam mencerdaskan kehidupan bangsa, dimulai dari Desa Mekar Jaya. Satu bata yang Anda sumbangkan adalah pondasi bagi masa depan mereka.</p>
+				donationsData.push({
+					donorName: donorUser?.name || faker.person.fullName(),
+					donorPhone: faker.phone.number(),
+					message: Math.random() < 0.5 ? faker.lorem.sentence() : undefined,
+					amount,
+					paymentMethod,
+					campaignId: campaign.id,
+					userId: donorUser?.id || null,
+				});
+			}
 
-        <p>Mari wujudkan sekolah impian mereka!</p>
-      `,
-      media: [
-        {
-          type: CampaignMediaType.IMAGE,
-          url: "https://picsum.photos/800/600?11",
-          isThumbnail: true,
-        },
-      ],
-    }),
-    ensureCampaign({
-      title: "Darurat Banjir Bandang: Ribuan Warga Kehilangan Tempat Tinggal",
-      categoryId: bencana.id,
-      createdById: adminId,
-      target: 150_000_000,
-      story: `
-        <p><strong>URGENT: Bantuan Kemanusiaan untuk Korban Banjir Bandang</strong></p>
-        <p>Hujan deras yang mengguyur wilayah Kabupaten X selama tiga hari berturut-turut telah menyebabkan sungai meluap dan memicu banjir bandang yang dahsyat. Ribuan rumah terendam lumpur, akses jalan terputus, dan listrik padam total. Data sementara mencatat 500 KK mengungsi di posko-posko darurat dengan kondisi yang sangat terbatas.</p>
+			await prisma.donation.createMany({
+				data: donationsData,
+				skipDuplicates: true,
+			});
 
-        <p>Para pengungsi saat ini sangat membutuhkan bantuan mendesak berupa:</p>
-        <ul>
-          <li>Makanan siap saji & air bersih</li>
-          <li>Selimut & pakaian layak pakai</li>
-          <li>Obat-obatan & vitamin</li>
-          <li>Perlengkapan bayi (popok, susu, bubur bayi)</li>
-          <li>Alat kebersihan untuk membersihkan lumpur pasca banjir</li>
-        </ul>
+			// Create one withdrawal per campaign (e.g., 10% of total donations)
+			const totalDonationsAmount = donationsData.reduce((sum, d) => sum + d.amount, 0);
+			const withdrawalAmount = Math.max(100_000, Math.floor(totalDonationsAmount * 0.1));
 
-        <p>Tim relawan kami sudah berada di lokasi untuk melakukan evakuasi dan mendirikan dapur umum. Namun, persediaan logistik semakin menipis. Kami mengetuk hati Anda untuk berbagi sedikit rezeki demi meringankan beban saudara-saudara kita yang sedang tertimpa musibah.</p>
-      `,
-    }),
-  ]);
+			await prisma.withdrawal.create({
+				data: {
+					amount: withdrawalAmount,
+					bankName: pickRandom(["BCA", "BRI", "BNI", "Mandiri"]),
+					bankAccount: faker.finance.accountNumber(),
+					accountHolder: createdBy.name || "Pemilik Rekening",
+					proofUrl: "https://picsum.photos/seed/proof/800/600",
+					notes: "Penarikan awal untuk kebutuhan operasional.",
+					campaignId: campaign.id,
+				},
+			});
+		}
+	}
+
+	console.log("Seeded campaigns with donations and withdrawals per category.");
 }

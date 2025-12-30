@@ -23,6 +23,7 @@ import DescriptionIcon from "@mui/icons-material/Description";
 import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
 import NotificationsIcon from "@mui/icons-material/Notifications";
 import VrpanoIcon from "@mui/icons-material/Vrpano";
+import PersonPinIcon from "@mui/icons-material/PersonPin";
 
 type MenuItem = {
   label: string;
@@ -108,6 +109,12 @@ const menus: { title: string; items: MenuItem[] }[] = [
 				href: "/admin/users",
 				icon: <PeopleIcon fontSize="small" />,
 				desc: "Akun, role, status",
+			},
+			{
+				label: "Informasi Users",
+				href: "/admin/infousers",
+				icon: <PersonPinIcon fontSize="small" />,
+				desc: "Informasi pengguna",
 			},
 			{
 				label: "Notifikasi",
