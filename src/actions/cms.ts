@@ -57,7 +57,7 @@ export async function getPageContent(key: string) {
   });
 }
 
-export async function updatePageContent(key: string, data: { title: string; content: string; data?: any }) {
+export async function updatePageContent(key: string, data: { title: string; content: string; data?: unknown }) {
   const session = await auth();
   if (session?.user?.role !== "ADMIN") return { error: "Unauthorized" };
 
@@ -71,6 +71,7 @@ export async function updatePageContent(key: string, data: { title: string; cont
   const publicPath = key === "about" ? "/profil/tentang" 
     : key === "terms" ? "/profil/syarat-ketentuan"
     : key === "accountability" ? "/profil/akuntabilitas"
+    : key === "fundraise_guide" ? "/galang-dana/panduan"
     : "";
     
   if (publicPath) revalidatePath(publicPath);
@@ -79,6 +80,7 @@ export async function updatePageContent(key: string, data: { title: string; cont
   const adminPath = key === "about" ? "/admin/tentang" 
     : key === "terms" ? "/admin/syarat-ketentuan"
     : key === "accountability" ? "/admin/akuntabilitas"
+    : key === "fundraise_guide" ? "/admin/panduan-galang-dana"
     : "";
 
   if (adminPath) revalidatePath(adminPath);

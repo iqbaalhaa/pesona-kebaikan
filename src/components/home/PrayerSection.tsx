@@ -219,8 +219,8 @@ export default function PrayersSection({
 						<Box
 							key={p.id}
 							sx={{
-								minWidth: 260,
-								maxWidth: 260,
+								minWidth: 240,
+								maxWidth: 240,
 								borderRadius: 1,
 								bgcolor: "#fff",
 								border: "1px solid rgba(15,23,42,0.08)",
@@ -229,7 +229,7 @@ export default function PrayersSection({
 								scrollSnapAlign: "start",
 							}}
 						>
-							<Box sx={{ p: 1.4 }}>
+							<Box sx={{ p: 1.3 }}>
 								<Box
 									sx={{ display: "flex", alignItems: "flex-start", gap: 1.1 }}
 								>

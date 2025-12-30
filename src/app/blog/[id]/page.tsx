@@ -13,6 +13,7 @@ import InstagramIcon from "@mui/icons-material/Instagram";
 import WhatsAppIcon from "@mui/icons-material/WhatsApp";
 import TwitterIcon from "@mui/icons-material/Twitter";
 import { blogService } from "@/services/blogService";
+import { CopyLinkButton } from "@/components/blog/CopyLinkButton";
 
 export default async function BlogDetailPage({
   params,
@@ -255,6 +256,7 @@ export default async function BlogDetailPage({
           >
             <WhatsAppIcon fontSize="small" />
           </IconButton>
+          <CopyLinkButton url={postUrl} />
         </Stack>
       </Box>
     </Box>

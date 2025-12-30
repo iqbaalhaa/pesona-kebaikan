@@ -7,7 +7,7 @@ const baseOptions = (): SMTPTransport.Options => {
   const explicitSecure = process.env.EMAIL_SERVER_SECURE === "true";
   const secure = explicitSecure || port === 465;
 
-  return {
+  const opts: any = {
     host,
     port,
     secure,
@@ -19,7 +19,6 @@ const baseOptions = (): SMTPTransport.Options => {
     pool: process.env.EMAIL_POOL === "true",
     maxConnections: Number(process.env.EMAIL_POOL_MAX_CONNECTIONS ?? 2),
     maxMessages: Number(process.env.EMAIL_POOL_MAX_MESSAGES ?? 100),
-    // Align with Nodemailer recommended defaults for better resilience
     connectionTimeout: 120000,
     greetingTimeout: 30000,
     socketTimeout: 600000,
@@ -32,6 +31,7 @@ const baseOptions = (): SMTPTransport.Options => {
       rejectUnauthorized: true,
     },
   };
+  return opts as SMTPTransport.Options;
 };
 
 const transporter = nodemailer.createTransport(baseOptions());
