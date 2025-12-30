@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useSession } from "next-auth/react";
 import Image from "next/image";
 import { formatDistanceToNow } from "date-fns";
 import { id } from "date-fns/locale";
@@ -290,6 +291,7 @@ import AlertTitle from "@mui/material/AlertTitle";
 
 export default function CampaignDetailView({ data }: { data: any }) {
 	const router = useRouter();
+	const { data: session } = useSession();
 	const searchParams = useSearchParams();
 	const [tabValue, setTabValue] = React.useState(0);
 	const [showFullStory, setShowFullStory] = React.useState(false);
@@ -372,6 +374,14 @@ export default function CampaignDetailView({ data }: { data: any }) {
 	const [donationSuccessOpen, setDonationSuccessOpen] = React.useState(false);
 	const [openReportModal, setOpenReportModal] = React.useState(false);
 	const [reportSuccessOpen, setReportSuccessOpen] = React.useState(false);
+
+	// Prefill report form with session data
+	React.useEffect(() => {
+		if (openReportModal && session?.user) {
+			if (session.user.name) setReporterName(session.user.name);
+			if (session.user.email) setReporterEmail(session.user.email);
+		}
+	}, [openReportModal, session]);
 
 	React.useEffect(() => {
 		if (searchParams.get("donation_success") === "true") {

@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useRouter } from "next/navigation";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import Autocomplete from "@mui/material/Autocomplete";
@@ -10,11 +11,16 @@ import RadioGroup from "@mui/material/RadioGroup";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import FormControl from "@mui/material/FormControl";
 import Paper from "@mui/material/Paper";
+import Button from "@mui/material/Button";
+import CircularProgress from "@mui/material/CircularProgress";
+import Snackbar from "@mui/material/Snackbar";
+import Alert from "@mui/material/Alert";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import QrCodeIcon from "@mui/icons-material/QrCode";
 import CreditCardIcon from "@mui/icons-material/CreditCard";
 
 import type { Campaign } from "@/types";
+import { createDonation } from "@/actions/donation";
 
 const PRIMARY = "#61ce70";
 
@@ -139,6 +145,7 @@ export default function QuickDonate({
 }: {
 	campaigns?: Campaign[];
 }) {
+	const router = useRouter();
 	console.log("QuickDonate campaigns:", campaigns.length, campaigns);
 
 	const [selectedAmount, setSelectedAmount] = React.useState<number>(
@@ -156,9 +163,11 @@ export default function QuickDonate({
 	const [donorName, setDonorName] = React.useState<string>("");
 	const [donorPhone, setDonorPhone] = React.useState<string>("");
 	const [message, setMessage] = React.useState<string>("");
+	const [loading, setLoading] = React.useState(false);
+	const [error, setError] = React.useState("");
 
 	const selectedCampaign = React.useMemo(
-		() => campaigns.find((c) => c.id === campaignId),
+		() => campaigns.find((c) => c.id === campaignId) ?? null,
 		[campaignId, campaigns]
 	);
 
@@ -182,17 +191,52 @@ export default function QuickDonate({
 		setOpen(true);
 	};
 
-	const onPay = () => {
-		if (!isValid) return;
+	const handleSubmit = async () => {
+		if (!selectedCampaign) {
+			setError("Pilih campaign terlebih dahulu");
+			return;
+		}
+		if (!finalAmount || Number(finalAmount) < 1000) {
+			setError("Minimal donasi Rp 1.000");
+			return;
+		}
+		// Wajib nomor HP
+		if (!donorPhone) {
+			setError("Nomor HP wajib diisi");
+			return;
+		}
+		// Nama wajib jika tidak anonim
+		if (!isAnonymous && !donorName) {
+			setError("Nama donatur wajib diisi");
+			return;
+		}
 
-		// nanti: route checkout / midtrans snap + include campaign_id + amount + method + donor_name + is_anonymous
-		alert(
-			`Checkout:\n- Campaign: ${selectedCampaign?.title}\n- Nominal: Rp${rupiah(
-				finalAmount
-			)}\n- Metode: ${methodLabel(method)}\n- Nama: ${displayName}\n- No HP: ${
-				donorPhone || "-"
-			}\n- Pesan: ${message || "-"}`
-		);
+		setLoading(true);
+		setError("");
+		try {
+			const res = await createDonation({
+				campaignId: selectedCampaign.id,
+				amount: Number(finalAmount),
+				donorName: isAnonymous
+					? "Hamba Allah"
+					: (donorName || "Tanpa Nama"),
+				donorPhone,
+				message,
+				isAnonymous,
+				paymentMethod: method,
+			});
+
+			if (res.success) {
+				const slug = selectedCampaign.slug || selectedCampaign.id;
+				router.push(`/donasi/${slug}?donation_success=true`);
+			} else {
+				setError(res.error || "Gagal membuat donasi");
+			}
+		} catch (err) {
+			setError("Terjadi kesalahan sistem");
+		} finally {
+			setLoading(false);
+		}
 	};
 
 	return (
@@ -505,6 +549,7 @@ export default function QuickDonate({
 									getOptionLabel={(option) => option.title}
 									isOptionEqualToValue={(option, value) => option.id === value.id}
 									value={selectedCampaign}
+									openOnFocus
 									onChange={(_, newValue) => {
 										setCampaignId(newValue ? newValue.id : "");
 									}}
@@ -633,7 +678,7 @@ export default function QuickDonate({
 											}}
 										/>
 									)}
-									disableClearable
+									disableClearable={false}
 								/>
 							</Box>
 
@@ -975,26 +1020,29 @@ export default function QuickDonate({
 
 						{/* Footer actions */}
 						<Box sx={{ px: 2.2, pb: 2, display: "grid", gap: 1 }}>
-							<Box
-								component="button"
-								type="button"
-								onClick={onPay}
+							<Button
+								variant="contained"
+								fullWidth
+								size="large"
+								onClick={handleSubmit}
+								disabled={loading}
 								sx={{
-									width: "100%",
 									borderRadius: 3,
 									py: 1.15,
-									border: "1px solid rgba(97,206,112,0.35)",
 									bgcolor: PRIMARY,
 									color: "#0b1220",
 									fontWeight: 1100,
 									fontSize: 13,
-									cursor: "pointer",
 									boxShadow: "0 16px 28px rgba(97,206,112,.22)",
-									"&:active": { transform: "scale(0.99)" },
+									"&:hover": { bgcolor: "#4bbf59" },
 								}}
 							>
-								Lanjut Bayar
-							</Box>
+								{loading ? (
+									<CircularProgress size={24} color="inherit" />
+								) : (
+									"Lanjut Bayar"
+								)}
+							</Button>
 
 							<Box
 								component="button"
@@ -1018,6 +1066,11 @@ export default function QuickDonate({
 					</Box>
 				</Box>
 			)}
+			<Snackbar open={!!error} autoHideDuration={6000} onClose={() => setError("")}>
+				<Alert onClose={() => setError("")} severity="error" sx={{ width: "100%" }}>
+					{error}
+				</Alert>
+			</Snackbar>
 		</Box>
 	);
 }

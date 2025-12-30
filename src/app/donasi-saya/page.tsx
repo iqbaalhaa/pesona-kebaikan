@@ -14,23 +14,32 @@ import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
 import DialogActions from "@mui/material/DialogActions";
 import IconButton from "@mui/material/IconButton";
-import Grid from "@mui/material/Grid";
 import Skeleton from "@mui/material/Skeleton";
 import Alert from "@mui/material/Alert";
+import TextField from "@mui/material/TextField";
+import Radio from "@mui/material/Radio";
+import RadioGroup from "@mui/material/RadioGroup";
+import FormControlLabel from "@mui/material/FormControlLabel";
+import FormControl from "@mui/material/FormControl";
+import InputAdornment from "@mui/material/InputAdornment";
+import CircularProgress from "@mui/material/CircularProgress";
+import Snackbar from "@mui/material/Snackbar";
 
 import CloseIcon from "@mui/icons-material/Close";
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import VolunteerActivismIcon from "@mui/icons-material/VolunteerActivism";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
-import EventAvailableIcon from "@mui/icons-material/EventAvailable";
-import CategoryIcon from "@mui/icons-material/Category";
-import CampaignIcon from "@mui/icons-material/Campaign";
 import StarsIcon from "@mui/icons-material/Stars";
 import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
 import SpaIcon from "@mui/icons-material/Spa";
 import HandshakeIcon from "@mui/icons-material/Handshake";
 import NavigateBeforeIcon from "@mui/icons-material/NavigateBefore";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
+import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
+import QrCodeIcon from "@mui/icons-material/QrCode";
+import CreditCardIcon from "@mui/icons-material/CreditCard";
+import { useRouter } from "next/navigation";
+import { createDonation } from "@/actions/donation";
 
 import { getMyDonations } from "@/actions/my-donations";
 
@@ -197,6 +206,7 @@ function KindnessCalendar({ donations, onDateClick }: KindnessCalendarProps) {
 }
 
 export default function MyDonationPage() {
+	const router = useRouter();
 	const [donations, setDonations] = React.useState<DonationItem[]>([]);
 	const [loading, setLoading] = React.useState(true);
 	const [error, setError] = React.useState("");
@@ -211,15 +221,97 @@ export default function MyDonationPage() {
 	const [dailyOpen, setDailyOpen] = React.useState(false);
 	const [selectedDate, setSelectedDate] = React.useState<string>("");
 
+	// Redonate sheet state
+	const amountPresets = [10000, 25000, 50000, 100000];
+	type Method = "EWALLET" | "VIRTUAL_ACCOUNT" | "TRANSFER";
+	const [reOpen, setReOpen] = React.useState(false);
+	const [reCampaignId, setReCampaignId] = React.useState<string>("");
+	const [reCampaignTitle, setReCampaignTitle] = React.useState<string>("");
+	const [selectedAmount, setSelectedAmount] = React.useState<number>(amountPresets[0]);
+	const [customAmount, setCustomAmount] = React.useState<string>("");
+	const [method, setMethod] = React.useState<Method>("EWALLET");
+	const [isAnonymous, setIsAnonymous] = React.useState<boolean>(false);
+	const [donorName, setDonorName] = React.useState<string>("");
+	const [donorPhone, setDonorPhone] = React.useState<string>("");
+	const [message, setMessage] = React.useState<string>("");
+	const [submitLoading, setSubmitLoading] = React.useState(false);
+	const [submitError, setSubmitError] = React.useState("");
+
+	const finalAmount = React.useMemo(() => {
+		const clean = customAmount.replace(/[^\d]/g, "");
+		const n = clean ? Number(clean) : 0;
+		if (customAmount.trim().length > 0) return isNaN(n) ? 0 : n;
+		return selectedAmount;
+	}, [customAmount, selectedAmount]);
+
+	const openReDonate = (item: DonationItem) => {
+		setReCampaignId(item.campaignId);
+		setReCampaignTitle(item.campaign);
+		setSelectedAmount(amountPresets[0]);
+		setCustomAmount("");
+		setMethod("EWALLET");
+		setIsAnonymous(false);
+		setDonorName("");
+		setDonorPhone("");
+		setMessage("");
+		setSubmitError("");
+		setReOpen(true);
+	};
+
+	const handleSubmitReDonate = async () => {
+		if (!reCampaignId) {
+			setSubmitError("Campaign tidak valid");
+			return;
+		}
+		if (!finalAmount || Number(finalAmount) < 1000) {
+			setSubmitError("Minimal donasi Rp 1.000");
+			return;
+		}
+		if (!donorPhone) {
+			setSubmitError("Nomor HP wajib diisi");
+			return;
+		}
+		if (!isAnonymous && !donorName) {
+			setSubmitError("Nama donatur wajib diisi");
+			return;
+		}
+		setSubmitLoading(true);
+		setSubmitError("");
+		try {
+			const res = await createDonation({
+				campaignId: reCampaignId,
+				amount: Number(finalAmount),
+				donorName: isAnonymous ? "Hamba Allah" : (donorName || "Tanpa Nama"),
+				donorPhone,
+				message,
+				isAnonymous,
+				paymentMethod: method,
+			});
+			if (res.success) {
+				setReOpen(false);
+				router.push(`/donasi/${reCampaignId}?donation_success=true`);
+			} else {
+				setSubmitError(res.error || "Gagal membuat donasi");
+			}
+		} catch (err) {
+			setSubmitError("Terjadi kesalahan sistem");
+		} finally {
+			setSubmitLoading(false);
+		}
+	};
+
 	React.useEffect(() => {
 		async function fetchData() {
 			try {
-				const res = await getMyDonations();
+				const res = (await getMyDonations()) as {
+					success: boolean;
+					data?: DonationItem[];
+					error?: string;
+					missingPhone?: boolean;
+				};
 				if (res.success && res.data) {
-					// @ts-ignore
 					setDonations(res.data);
-					// @ts-ignore
-					setMissingPhone(res.missingPhone);
+					setMissingPhone(!!res.missingPhone);
 				} else if (res.error) {
 					setError(res.error);
 				}
@@ -620,7 +712,7 @@ export default function MyDonationPage() {
 										<Button
 											variant="outlined"
 											size="small"
-											href={`/galang-dana/${item.campaignId}/donasi`}
+											onClick={() => openReDonate(item)}
 											sx={{
 												textTransform: "none",
 												borderRadius: 2,
@@ -804,7 +896,7 @@ export default function MyDonationPage() {
 											lineHeight: 1.5,
 										}}
 									>
-										"{selectedDonation.prayer}"
+										{selectedDonation.prayer}
 									</Typography>
 								</Box>
 							)}
@@ -828,7 +920,7 @@ export default function MyDonationPage() {
 								variant="outlined"
 								fullWidth
 								size="large"
-								href={`/galang-dana/${selectedDonation.campaignId}/donasi`}
+								onClick={() => openReDonate(selectedDonation)}
 								startIcon={<VolunteerActivismIcon />}
 								sx={{ borderRadius: 2, fontWeight: 700, textTransform: "none" }}
 							>
@@ -839,6 +931,212 @@ export default function MyDonationPage() {
 				)}
 			</Dialog>
 
+			{/* Redonate Bottom Sheet */}
+			<Dialog
+				open={reOpen}
+				onClose={() => setReOpen(false)}
+				PaperProps={{
+					sx: {
+						borderRadius: 3,
+						width: "100%",
+						maxWidth: 420,
+						m: 2,
+					},
+				}}
+			>
+				<DialogTitle
+					sx={{
+						p: 2,
+						display: "flex",
+						alignItems: "center",
+						justifyContent: "space-between",
+					}}
+				>
+					<Typography sx={{ fontWeight: 800, fontSize: 16 }}>
+						Donasi Lagi
+					</Typography>
+					<IconButton onClick={() => setReOpen(false)} size="small">
+						<CloseIcon />
+					</IconButton>
+				</DialogTitle>
+				<DialogContent dividers sx={{ p: 2.2 }}>
+					<Box sx={{ mb: 2 }}>
+						<Typography sx={{ fontSize: 12, color: "rgba(15,23,42,.6)", mb: 0.5 }}>
+							Campaign
+						</Typography>
+						<Typography sx={{ fontWeight: 800, fontSize: 14 }}>
+							{reCampaignTitle}
+						</Typography>
+					</Box>
+
+					<Box sx={{ mb: 2 }}>
+						<Typography sx={{ fontSize: 12, fontWeight: 900, color: "rgba(15,23,42,.80)" }}>
+							Nominal
+						</Typography>
+						<Box sx={{ mt: 1, display: "flex", gap: 1, flexWrap: "wrap" }}>
+							{amountPresets.map((a) => {
+								const active = customAmount.trim().length === 0 && selectedAmount === a;
+								return (
+									<Button
+										key={a}
+										variant={active ? "contained" : "outlined"}
+										onClick={() => {
+											setCustomAmount("");
+											setSelectedAmount(a);
+										}}
+										sx={{
+											borderRadius: 2,
+											fontWeight: 800,
+											fontSize: 12,
+										}}
+									>
+										Rp {a.toLocaleString("id-ID")}
+									</Button>
+								);
+							})}
+						</Box>
+						<TextField
+							fullWidth
+							placeholder="Nominal lainnya"
+							value={customAmount}
+							onChange={(e) => setCustomAmount(e.target.value.replace(/\D/g, ""))}
+							InputProps={{
+								startAdornment: <InputAdornment position="start">Rp</InputAdornment>,
+							}}
+							sx={{ mt: 1 }}
+							helperText="Minimal Rp 1.000"
+						/>
+					</Box>
+
+					<Box sx={{ mb: 2 }}>
+						<Typography sx={{ fontSize: 12, fontWeight: 900, color: "rgba(15,23,42,.80)" }}>
+							Data Donatur
+						</Typography>
+						<FormControlLabel
+							control={
+								<Radio
+									checked={isAnonymous}
+									onChange={() => setIsAnonymous(true)}
+								/>
+							}
+							label="Hamba Allah (Anonim)"
+							sx={{ mr: 2 }}
+						/>
+						<FormControlLabel
+							control={
+								<Radio
+									checked={!isAnonymous}
+									onChange={() => setIsAnonymous(false)}
+								/>
+							}
+							label="Tampilkan nama saya"
+						/>
+						{!isAnonymous && (
+							<TextField
+								fullWidth
+								label="Nama Lengkap"
+								value={donorName}
+								onChange={(e) => setDonorName(e.target.value)}
+								sx={{ mt: 1 }}
+							/>
+						)}
+						<TextField
+							fullWidth
+							label="Nomor WhatsApp / HP"
+							value={donorPhone}
+							onChange={(e) => setDonorPhone(e.target.value)}
+							sx={{ mt: 1 }}
+							type="tel"
+						/>
+						<TextField
+							fullWidth
+							label="Doa & Dukungan (opsional)"
+							multiline
+							rows={3}
+							value={message}
+							onChange={(e) => setMessage(e.target.value)}
+							sx={{ mt: 1 }}
+						/>
+					</Box>
+
+					<Box sx={{ mb: 1.5 }}>
+						<Typography sx={{ fontSize: 12, fontWeight: 900, color: "rgba(15,23,42,.80)" }}>
+							Metode Pembayaran
+						</Typography>
+						<FormControl component="fieldset" fullWidth sx={{ mt: 1 }}>
+							<RadioGroup value={method} onChange={(e) => setMethod(e.target.value as Method)}>
+								<FormControlLabel
+									value="EWALLET"
+									control={<Radio />}
+									label={
+										<Box sx={{ display: "flex", alignItems: "center", gap: 1.2 }}>
+											<QrCodeIcon color="action" />
+											<Typography sx={{ fontSize: 12, fontWeight: 700 }}>
+												E-Wallet / QRIS
+											</Typography>
+										</Box>
+									}
+									sx={{ m: 0, p: 0.5 }}
+								/>
+								<FormControlLabel
+									value="VIRTUAL_ACCOUNT"
+									control={<Radio />}
+									label={
+										<Box sx={{ display: "flex", alignItems: "center", gap: 1.2 }}>
+											<AccountBalanceWalletIcon color="action" />
+											<Typography sx={{ fontSize: 12, fontWeight: 700 }}>
+												Virtual Account
+											</Typography>
+										</Box>
+									}
+									sx={{ m: 0, p: 0.5 }}
+								/>
+								<FormControlLabel
+									value="TRANSFER"
+									control={<Radio />}
+									label={
+										<Box sx={{ display: "flex", alignItems: "center", gap: 1.2 }}>
+											<CreditCardIcon color="action" />
+											<Typography sx={{ fontSize: 12, fontWeight: 700 }}>
+												Transfer Bank
+											</Typography>
+										</Box>
+									}
+									sx={{ m: 0, p: 0.5 }}
+								/>
+							</RadioGroup>
+						</FormControl>
+					</Box>
+				</DialogContent>
+				<DialogActions sx={{ p: 2 }}>
+					<Button
+						variant="contained"
+						fullWidth
+						size="large"
+						onClick={handleSubmitReDonate}
+						disabled={submitLoading}
+						sx={{
+							borderRadius: 2,
+							fontWeight: 800,
+							textTransform: "none",
+							bgcolor: "#61ce70",
+							color: "#0b1220",
+							"&:hover": { bgcolor: "#4bbf59" },
+						}}
+					>
+						{submitLoading ? <CircularProgress size={24} color="inherit" /> : "Lanjut Bayar"}
+					</Button>
+				</DialogActions>
+			</Dialog>
+			<Snackbar
+				open={!!submitError}
+				autoHideDuration={6000}
+				onClose={() => setSubmitError("")}
+			>
+				<Alert onClose={() => setSubmitError("")} severity="error" sx={{ width: "100%" }}>
+					{submitError}
+				</Alert>
+			</Snackbar>
 			{/* Daily Donations Modal (Calendar List) */}
 			<Dialog
 				open={dailyOpen}
@@ -927,7 +1225,7 @@ export default function MyDonationPage() {
 												overflow: "hidden",
 											}}
 										>
-											"{donation.prayer}"
+											{donation.prayer}
 										</Typography>
 									)}
 									<Button

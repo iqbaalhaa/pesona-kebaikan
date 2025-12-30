@@ -5,7 +5,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import Drawer from "@mui/material/Drawer";
-import Box from "@mui/material/Box";
 
 // Icons
 import DashboardIcon from "@mui/icons-material/Dashboard";
@@ -24,12 +23,13 @@ import DescriptionIcon from "@mui/icons-material/Description";
 import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
 import NotificationsIcon from "@mui/icons-material/Notifications";
 import VrpanoIcon from "@mui/icons-material/Vrpano";
+import PersonPinIcon from "@mui/icons-material/PersonPin";
 
 type MenuItem = {
-	label: string;
-	href: string;
-	icon: React.ReactNode;
-	desc?: string;
+  label: string;
+  href: string;
+  icon: React.ReactElement;
+  desc?: string;
 };
 
 const menus: { title: string; items: MenuItem[] }[] = [
@@ -111,6 +111,12 @@ const menus: { title: string; items: MenuItem[] }[] = [
 				desc: "Akun, role, status",
 			},
 			{
+				label: "Informasi Users",
+				href: "/admin/infousers",
+				icon: <PersonPinIcon fontSize="small" />,
+				desc: "Informasi pengguna",
+			},
+			{
 				label: "Notifikasi",
 				href: "/admin/notifikasi",
 				icon: <NotificationsIcon fontSize="small" />,
@@ -151,6 +157,12 @@ const menus: { title: string; items: MenuItem[] }[] = [
 				icon: <VerifiedUserIcon fontSize="small" />,
 				desc: "Laporan transparansi",
 			},
+      {
+        label: "Panduan Galang Dana",
+        href: "/admin/panduan-galang-dana",
+        icon: <HelpOutlineIcon fontSize="small" />,
+        desc: "Tips & best practices",
+      },
 		],
 	},
 	{
@@ -248,12 +260,12 @@ export default function AdminSidebar({
 													? "0 4px 12px rgba(0,0,0,0.05)"
 													: "0 8px 20px rgba(15,23,42,0.05)",
 											}}
-										>
-											{React.cloneElement(m.icon as any, {
-												className: isActive
-													? "text-green-600 dark:text-green-400"
-													: "text-slate-500 dark:text-slate-400 group-hover:text-slate-700 dark:group-hover:text-slate-300",
-											})}
+                    >
+                      {React.cloneElement(m.icon, {
+                        className: isActive
+                          ? "text-green-600 dark:text-green-400"
+                          : "text-slate-500 dark:text-slate-400 group-hover:text-slate-700 dark:group-hover:text-slate-300",
+                      })}
 										</span>
 
 										<span className="min-w-0 flex-1">

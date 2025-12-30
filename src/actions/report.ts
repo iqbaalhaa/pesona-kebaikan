@@ -4,6 +4,8 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { ReportReason } from "@/generated/prisma";
 import { revalidatePath } from "next/cache";
+import { createNotification } from "@/actions/notification";
+import { NotificationType } from "@/generated/prisma";
 
 export type ReportData = {
 	campaignId: string;
@@ -93,6 +95,18 @@ export async function getReports(
 	}
 }
 
+const REASON_LABELS: Record<ReportReason, string> = {
+	FRAUD: "Penipuan/Penyalahgunaan dana",
+	COVERED: "Sudah di cover pihak lain (BPJS, Asuransi)",
+	FAKE_INFO: "Memberikan Informasi Palsu",
+	DECEASED: "Beneficiary sudah meninggal",
+	NO_PERMISSION: "Tidak izin kepada keluarga penerima manfaat",
+	IRRELEVANT: "Galang dana tidak relevan",
+	INAPPROPRIATE: "Konten tidak pantas",
+	SPAM: "Spamming",
+	OTHER: "Lainnya",
+};
+
 export async function updateReportStatus(
 	reportId: string,
 	status: "PENDING" | "REVIEWED" | "RESOLVED" | "REJECTED"
@@ -103,10 +117,64 @@ export async function updateReportStatus(
 	}
 
 	try {
-		await prisma.report.update({
+		const updated = await prisma.report.update({
 			where: { id: reportId },
 			data: { status },
 		});
+
+		if (status === "REVIEWED") {
+			const report = await prisma.report.findUnique({
+				where: { id: reportId },
+				include: {
+					campaign: {
+						select: {
+							id: true,
+							title: true,
+							createdById: true,
+						},
+					},
+				},
+			});
+
+			if (report?.campaign) {
+				const campaignTitle = report.campaign.title || "Tanpa judul";
+
+				// Cari user reporter dengan email case-insensitive
+				const reporterUser = report.reporterEmail
+					? await prisma.user.findFirst({
+							where: {
+								email: {
+									equals: report.reporterEmail,
+									mode: "insensitive",
+								},
+							},
+							select: { id: true },
+					  })
+					: null;
+
+				if (reporterUser?.id) {
+					await createNotification(
+						reporterUser.id,
+						"Terima kasih atas laporan Anda",
+						`Terima kasih atas laporan untuk campaign "${campaignTitle}". Laporan Anda akan segera ditinjau dan dipelajari oleh admin.`,
+						NotificationType.PESAN
+					);
+				}
+
+				if (report.campaign.createdById) {
+					const reasonLabel = REASON_LABELS[report.reason] || "Lainnya";
+					// Format pesan: Alasan (Label) - Detail
+					const reasonText = `${reasonLabel} - ${updated.details}`;
+
+					await createNotification(
+						report.campaign.createdById,
+						"Campaign sedang ditinjau",
+						`Campaign Anda "${campaignTitle}" sedang ditinjau oleh admin dikarenakan: ${reasonText}. Oleh karena itu untuk sementara waktu campaign Anda dinonaktifkan, mohon menunggu informasi kelanjutannya.`,
+						NotificationType.PESAN
+					);
+				}
+			}
+		}
 
 		revalidatePath("/admin/pengaduan");
 		return { success: true };

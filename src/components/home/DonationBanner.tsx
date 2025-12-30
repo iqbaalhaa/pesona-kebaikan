@@ -174,17 +174,17 @@ export default function DonationBanner() {
 					<Box>
 						<Typography
 							sx={{
-								fontSize: 13,
+								fontSize: 12.5,
 								fontWeight: 900,
-								color: "rgba(15,23,42,.70)",
+								color: "rgba(15,23,42,.65)",
 							}}
 						>
-							Donasi mulai
+							Minimum Donasi
 						</Typography>
 						<Typography
 							sx={{
-								fontSize: 18,
-								fontWeight: 1100,
+								fontSize: 20,
+								fontWeight: 1000,
 								color: "#0f172a",
 								lineHeight: 1.1,
 							}}
@@ -195,14 +195,14 @@ export default function DonationBanner() {
 
 					<Box
 						sx={{
-							width: 44,
-							height: 44,
+							width: 40,
+							height: 40,
 							borderRadius: 1,
 							display: "grid",
 							placeItems: "center",
-							bgcolor: "rgba(97,206,112,0.18)",
-							border: "1px solid rgba(97,206,112,0.26)",
-							boxShadow: "0 14px 26px rgba(97,206,112,.10)",
+							bgcolor: "rgba(97,206,112,0.14)",
+							border: "1px solid rgba(97,206,112,0.22)",
+							boxShadow: "0 12px 22px rgba(97,206,112,.10)",
 							flexShrink: 0,
 						}}
 					>
@@ -212,7 +212,7 @@ export default function DonationBanner() {
 
 				<Box sx={{ mt: 1.25, height: 1, bgcolor: "rgba(15,23,42,0.06)" }} />
 
-				{/* Payment header + powered by */}
+				{/* Payment header  */}
 				<Box
 					sx={{
 						mt: 1.25,
@@ -223,50 +223,10 @@ export default function DonationBanner() {
 					}}
 				>
 					<Typography
-						sx={{ fontSize: 12, fontWeight: 900, color: "rgba(15,23,42,.78)" }}
+						sx={{ fontSize: 12.5, fontWeight: 900, color: "rgba(15,23,42,.75)" }}
 					>
-						Metode pembayaran
+						Metode Pembayaran Tersedia
 					</Typography>
-
-					<Box
-						sx={{
-							flexShrink: 0,
-							display: "inline-flex",
-							alignItems: "center",
-							gap: 0.7,
-							px: 1,
-							py: "4px",
-							borderRadius: 999,
-							border: "1px solid rgba(44,123,229,0.18)",
-							bgcolor: "rgba(44,123,229,0.08)",
-						}}
-					>
-						<Box
-							sx={{
-								width: 18,
-								height: 18,
-								borderRadius: 999,
-								display: "grid",
-								placeItems: "center",
-								bgcolor: MIDTRANS_BLUE,
-								color: "#fff",
-								fontWeight: 1000,
-								fontSize: 11,
-								lineHeight: 1,
-							}}
-						>
-							M
-						</Box>
-						<Typography
-							sx={{
-								fontSize: 10.5,
-								fontWeight: 900,
-								color: "rgba(15,23,42,.65)",
-							}}
-						>
-							Powered by Midtrans
-						</Typography>
-					</Box>
 				</Box>
 
 				{/* Chips */}
@@ -274,7 +234,7 @@ export default function DonationBanner() {
 					sx={{
 						mt: 1,
 						display: "flex",
-						gap: 1,
+						gap: 0.9,
 						overflowX: "auto",
 						pb: 0.5,
 						WebkitOverflowScrolling: "touch",

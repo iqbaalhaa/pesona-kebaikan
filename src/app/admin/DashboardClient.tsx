@@ -14,7 +14,13 @@ import {
 	LinearProgress,
 	IconButton,
 	useTheme,
+	Drawer,
+	List,
+	ListItem,
+	ListItemText,
+	ListItemAvatar,
 } from "@mui/material";
+import ZoomInRoundedIcon from "@mui/icons-material/ZoomInRounded";
 import { alpha } from "@mui/material/styles";
 import * as echarts from "echarts";
 
@@ -46,6 +52,8 @@ import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded";
 import RefreshRoundedIcon from "@mui/icons-material/RefreshRounded";
 import MoreHorizRoundedIcon from "@mui/icons-material/MoreHorizRounded";
 import AccessTimeRoundedIcon from "@mui/icons-material/AccessTimeRounded";
+import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
+import PersonRoundedIcon from "@mui/icons-material/PersonRounded";
 
 function fmtIDR(n: number) {
 	const s = Math.round(n || 0).toString();
@@ -421,134 +429,504 @@ function MapIndonesia({
 	fmtIDR: (n: number) => string;
 }) {
 	const containerRef = React.useRef<HTMLDivElement>(null);
-	const [loaded, setLoaded] = React.useState(false);
-	const metricValues = provinceStats.map((p: ProvinceStat) =>
-		mapMetric === "users" ? p.users : p.donation
-	);
-	const min = Math.min(...metricValues);
-	const max = Math.max(...metricValues);
+	const chartRef = React.useRef<echarts.ECharts | null>(null);
+	const [mapLoaded, setMapLoaded] = React.useState(false);
+	const [selectedProvince, setSelectedProvince] =
+		React.useState<ProvinceStat | null>(null);
+	const [featureNames, setFeatureNames] = React.useState<string[]>([]);
+	const normalize = (s: string) =>
+		s
+			.toLowerCase()
+			.trim()
+			.replace("provinsi ", "")
+			.replace("propinsi ", "")
+			.replace("daerah khusus ibu kota", "dki jakarta")
+			.replace("yogyakarta", "di yogyakarta")
+			.replace("nanggroe aceh darussalam", "aceh");
+	const getVal = (name: string) => {
+		const n = normalize(name);
+		const found =
+			provinceStats.find((p) => {
+				const pn = normalize(p.name);
+				return pn === n || pn.includes(n) || n.includes(pn);
+			}) ?? null;
+		if (!found) return 0;
+		return mapMetric === "users" ? found.users : found.donation;
+	};
 
+	// 1. Init Map (Load GeoJSON & Register) - Run Once
 	React.useEffect(() => {
-		let chart: echarts.ECharts | null = null;
-		let disposed = false;
-		async function setup() {
+		async function initMap() {
+			if (!containerRef.current) return;
 			try {
-				const res = await fetch(
-					"https://raw.githubusercontent.com/superpikar/indonesia-geojson/master/indonesia-province.json"
-				);
+				const res = await fetch("/maps/indonesia.json");
+				if (!res.ok) throw new Error("Failed to load map");
 				const geojson = await res.json();
+
+				// Fix: Map 'Propinsi' to 'name' because the GeoJSON uses 'Propinsi'
+				geojson.features.forEach((feature: any) => {
+					feature.properties.name = feature.properties.Propinsi;
+				});
+
 				echarts.registerMap("Indonesia", geojson as any);
-				if (!containerRef.current) return;
-				chart = echarts.init(containerRef.current);
-				setLoaded(true);
+				setFeatureNames(
+					Array.isArray(geojson.features)
+						? geojson.features.map((f: any) => f.properties?.name ?? "")
+						: []
+				);
 
-				const data = provinceStats.map((p) => ({
-					name: p.name,
-					value: mapMetric === "users" ? p.users : p.donation,
-				}));
+				// Initialize chart
+				const chart = echarts.init(containerRef.current);
+				chartRef.current = chart;
 
-				const option: echarts.EChartsOption = {
-					backgroundColor: "transparent",
-					tooltip: {
-						trigger: "item",
-						formatter: (params: any) => {
-							const v = params.value || 0;
-							const valText =
-								mapMetric === "users"
-									? `${Number(v).toLocaleString("id-ID")} pengguna`
-									: fmtIDR(Number(v));
-							return `${params.name}<br/>${valText}`;
-						},
-						borderRadius: 8,
-						backgroundColor: theme.palette.background.paper,
-						borderColor: alpha(theme.palette.divider, 0.12),
-						textStyle: { color: theme.palette.text.primary, fontWeight: 800 },
-					},
-					visualMap: {
-						left: "left",
-						min,
-						max,
-						inRange: {
-							color: [
-								alpha(theme.palette.primary.main, 0.2),
-								alpha(theme.palette.primary.main, 0.5),
-								alpha(theme.palette.primary.main, 0.8),
-							],
-						},
-						text: ["Tinggi", "Rendah"],
-						textStyle: {
-							color: theme.palette.text.secondary,
-							fontWeight: 900,
-						},
-						calculable: true,
-					},
-					series: [
-						{
-							type: "map",
-							map: "Indonesia",
-							itemStyle: {
-								borderColor: alpha(theme.palette.background.paper, 0.9),
-								borderWidth: 0.6,
-							},
-							emphasis: {
-								itemStyle: {
-									areaColor: alpha(theme.palette.primary.main, 0.9),
-								},
-							},
-							data,
-						} as any,
-					],
-				};
-				chart.setOption(option);
+				// Do not set geo here to avoid double map layers
 
-				const handleResize = () => {
-					chart && chart.resize();
-				};
+				setMapLoaded(true);
+
+				const handleResize = () => chart.resize();
 				window.addEventListener("resize", handleResize);
+				return () => window.removeEventListener("resize", handleResize);
 			} catch (err) {
-				console.error(err);
+				console.error("Map init error:", err);
 			}
 		}
-		setup();
+
+		if (!chartRef.current) {
+			initMap();
+		}
+
 		return () => {
-			if (chart) {
-				chart.dispose();
+			if (chartRef.current) {
+				chartRef.current.dispose();
+				chartRef.current = null;
 			}
 		};
-	}, [mapMetric, provinceStats, theme, fmtIDR]);
+	}, []); // Empty dependency to run once
 
+	// 2. Update Data & Colors - Run when props change
 	React.useEffect(() => {
-		if (!loaded) return;
-		// update data only
-		const chart = containerRef.current
-			? echarts.getInstanceByDom(containerRef.current)
-			: null;
-		if (!chart) return;
-		const data = provinceStats.map((p) => ({
-			name: p.name,
-			value: mapMetric === "users" ? p.users : p.donation,
-		}));
-		const metricValuesNow = provinceStats.map((p) =>
-			mapMetric === "users" ? p.users : p.donation
-		);
-		chart.setOption({
-			visualMap: {
-				min: Math.min(...metricValuesNow),
-				max: Math.max(...metricValuesNow),
-			},
-			series: [{ data }] as any,
+		if (!mapLoaded || !chartRef.current) return;
+
+		const baseColor =
+			mapMetric === "users"
+				? theme.palette.success.main
+				: theme.palette.primary.main;
+
+		const gradientColors =
+			mapMetric === "users"
+				? [
+						theme.palette.grey[200],
+						theme.palette.success.main,
+						theme.palette.error.main,
+				  ]
+				: [
+						alpha(baseColor, 0.08),
+						alpha(baseColor, 0.25),
+						alpha(baseColor, 0.45),
+						alpha(baseColor, 0.65),
+						alpha(baseColor, 0.85),
+						baseColor,
+				  ];
+
+		const featureValues = featureNames.map((n) => getVal(n));
+		const min = featureValues.length ? Math.min(...featureValues) : 0;
+		const max = featureValues.length ? Math.max(...featureValues) : 0;
+
+		const data =
+			featureNames.length > 0
+				? featureNames.map((n) => ({
+						name: n,
+						value: getVal(n),
+				  }))
+				: provinceStats.map((p) => ({
+						name: p.name,
+						value: mapMetric === "users" ? p.users : p.donation,
+				  }));
+
+		// Handle Click Event
+		chartRef.current.off("click");
+		chartRef.current.on("click", (params: any) => {
+			if (params.componentType === "series") {
+				const pName = params.name;
+				const stat =
+					provinceStats.find((p) => p.name === pName) ||
+					({ name: pName, users: 0, donation: 0 } as ProvinceStat);
+				setSelectedProvince(stat);
+			}
 		});
-	}, [loaded, mapMetric, provinceStats]);
+
+		chartRef.current.clear();
+		chartRef.current.setOption({
+			tooltip: {
+				trigger: "item",
+				formatter: (params: any) => {
+					const v = params.value || 0;
+					const norm = (s: string) =>
+						s
+							.toLowerCase()
+							.trim()
+							.replace("provinsi ", "")
+							.replace("propinsi ", "")
+							.replace("daerah khusus ibu", "dki jakarta")
+							.replace("yogyakarta", "di yogyakarta")
+							.replace("nanggroe aceh", "aceh");
+					const stat =
+						provinceStats.find((p) => {
+							const pn = norm(p.name);
+							const nn = norm(params.name || "");
+							return pn === nn || pn.includes(nn) || nn.includes(pn);
+						}) ?? null;
+					const freq = stat?.donationCount ?? 0;
+					const valText =
+						mapMetric === "users"
+							? `${Number(v).toLocaleString("id-ID")} pengguna`
+							: fmtIDR(Number(v));
+
+					const textColor =
+						theme.palette.mode === "dark" ? "#ffffff" : "#000000";
+
+					return `<div style="font-size:13px; font-weight:800; margin-bottom:4px; color:${textColor}">${
+						params.name
+					}</div><div style="font-size:12px; color:${textColor}">${valText} • ${freq.toLocaleString(
+						"id-ID"
+					)} donasi</div>`;
+				},
+				borderRadius: 8,
+				backgroundColor: theme.palette.background.paper,
+				borderColor: alpha(theme.palette.divider, 0.12),
+				textStyle: {
+					color: theme.palette.mode === "dark" ? "#ffffff" : "#000000",
+				},
+				padding: [10, 14],
+			},
+			visualMap:
+				mapMetric === "users"
+					? {
+							left: "left",
+							bottom: "bottom",
+							type: "piecewise",
+							pieces: [
+								{
+									max: Math.max(min, Math.floor((min + max) * 0.25)),
+									color: theme.palette.success.light,
+									label: "Rendah",
+								},
+								{
+									min: Math.floor((min + max) * 0.25),
+									max: Math.floor((min + max) * 0.5),
+									color: theme.palette.success.main,
+									label: "Menengah",
+								},
+								{
+									min: Math.floor((min + max) * 0.5),
+									max: Math.floor((min + max) * 0.75),
+									color: theme.palette.warning.main,
+									label: "Tinggi",
+								},
+								{
+									min: Math.floor((min + max) * 0.75),
+									color: theme.palette.error.main,
+									label: "Sangat Tinggi",
+								},
+							],
+							outOfRange: { color: theme.palette.grey[300] },
+							textStyle: {
+								color: theme.palette.text.secondary,
+								fontWeight: 700,
+								fontSize: 11,
+							},
+					  }
+					: {
+							left: "left",
+							bottom: "bottom",
+							min,
+							max,
+							inRange: {
+								color: gradientColors,
+							},
+							textStyle: {
+								color: theme.palette.text.secondary,
+								fontWeight: 700,
+								fontSize: 11,
+							},
+							calculable: true,
+					  },
+			series: [
+				{
+					type: "map",
+					map: "Indonesia",
+					roam: true,
+					zoom: 1.25,
+					center: [118.0, -2.0],
+					itemStyle: {
+						borderColor: alpha(theme.palette.background.paper, 0.8),
+						borderWidth: 0.8,
+						areaColor: alpha(theme.palette.action.hover, 0.04),
+					},
+					label: { show: false },
+					emphasis: {
+						itemStyle: {
+							areaColor: baseColor,
+						},
+						label: {
+							show: true,
+							color: theme.palette.getContrastText(baseColor),
+							fontWeight: "bold",
+							fontSize: 14,
+							formatter: (p: any) => p.name,
+							textShadowColor: "transparent",
+						},
+					},
+					select: {
+						itemStyle: { areaColor: baseColor },
+					},
+					data,
+				},
+			],
+		});
+	}, [mapLoaded, mapMetric, provinceStats, theme, fmtIDR]);
 
 	return (
-		<Box
-			ref={containerRef}
-			sx={{
-				width: "100%",
-				height: "100%",
-				borderRadius: 2,
-			}}
-		/>
+		<>
+			<Box sx={{ position: "relative", mb: 1 }}>
+				<Box
+					ref={containerRef}
+					sx={{
+						width: "100%",
+						height: { xs: 360, sm: 420, md: 520 },
+						minHeight: 360,
+						borderRadius: 2,
+						overflow: "hidden",
+					}}
+				/>
+				<Box sx={{ position: "absolute", top: 8, right: 8 }}>
+					<IconButton
+						size="small"
+						onClick={() => {
+							if (!chartRef.current) return;
+							chartRef.current.setOption({
+								series: [{ zoom: 1.75, center: [118.0, -2.0] }],
+							});
+						}}
+					>
+						<ZoomInRoundedIcon fontSize="small" />
+					</IconButton>
+				</Box>
+			</Box>
+			<Drawer
+				anchor="right"
+				open={!!selectedProvince}
+				onClose={() => setSelectedProvince(null)}
+				PaperProps={{
+					sx: {
+						width: { xs: "100%", sm: 400 },
+						p: 0,
+						bgcolor: theme.palette.background.paper,
+						backgroundImage: "none",
+						boxShadow: "-8px 0 32px rgba(0,0,0,0.08)",
+					},
+				}}
+			>
+				{selectedProvince && (
+					<Box
+						sx={{ height: "100%", display: "flex", flexDirection: "column" }}
+					>
+						{/* Header */}
+						<Box
+							sx={{
+								p: 3,
+								pb: 2,
+								borderBottom: "1px solid",
+								borderColor: "divider",
+								display: "flex",
+								alignItems: "flex-start",
+								justifyContent: "space-between",
+							}}
+						>
+							<Box>
+								<Typography
+									variant="h5"
+									fontWeight={1000}
+									letterSpacing="-0.02em"
+								>
+									{selectedProvince.name}
+								</Typography>
+								<Typography
+									variant="body2"
+									color="text.secondary"
+									sx={{ mt: 0.5 }}
+								>
+									Detail statistik wilayah
+								</Typography>
+							</Box>
+							<IconButton
+								onClick={() => setSelectedProvince(null)}
+								size="small"
+							>
+								<CloseRoundedIcon />
+							</IconButton>
+						</Box>
+
+						<Box sx={{ p: 3, flex: 1, overflowY: "auto" }}>
+							{/* Summary Cards */}
+							<Grid container spacing={2} sx={{ mb: 4 }}>
+								<Grid size={6}>
+									<Paper
+										variant="outlined"
+										sx={{
+											p: 2,
+											borderRadius: 2.5,
+											bgcolor: alpha(theme.palette.primary.main, 0.04),
+											borderColor: alpha(theme.palette.primary.main, 0.15),
+										}}
+									>
+										<Stack spacing={1}>
+											<Box
+												sx={{
+													width: 32,
+													height: 32,
+													borderRadius: 99,
+													bgcolor: alpha(theme.palette.primary.main, 0.1),
+													color: theme.palette.primary.main,
+													display: "grid",
+													placeItems: "center",
+												}}
+											>
+												<PersonRoundedIcon fontSize="small" />
+											</Box>
+											<Box>
+												<Typography
+													variant="caption"
+													color="text.secondary"
+													fontWeight={700}
+												>
+													Total Pengguna
+												</Typography>
+												<Typography
+													variant="h6"
+													fontWeight={900}
+													color="primary"
+												>
+													{selectedProvince.users.toLocaleString("id-ID")}
+												</Typography>
+											</Box>
+										</Stack>
+									</Paper>
+								</Grid>
+								<Grid size={6}>
+									<Paper
+										variant="outlined"
+										sx={{
+											p: 2,
+											borderRadius: 2.5,
+											bgcolor: alpha(theme.palette.success.main, 0.04),
+											borderColor: alpha(theme.palette.success.main, 0.15),
+										}}
+									>
+										<Stack spacing={1}>
+											<Box
+												sx={{
+													width: 32,
+													height: 32,
+													borderRadius: 99,
+													bgcolor: alpha(theme.palette.success.main, 0.1),
+													color: theme.palette.success.main,
+													display: "grid",
+													placeItems: "center",
+												}}
+											>
+												<VolunteerActivismRoundedIcon fontSize="small" />
+											</Box>
+											<Box>
+												<Typography
+													variant="caption"
+													color="text.secondary"
+													fontWeight={700}
+												>
+													Total Donasi
+												</Typography>
+												<Typography
+													variant="h6"
+													fontWeight={900}
+													color="success.main"
+													sx={{ fontSize: 15 }}
+												>
+													{fmtIDR(selectedProvince.donation)}
+												</Typography>
+											</Box>
+										</Stack>
+									</Paper>
+								</Grid>
+							</Grid>
+
+							{/* Mock Data Lists */}
+							<Typography variant="subtitle2" fontWeight={800} sx={{ mb: 2 }}>
+								Donatur Teratas di {selectedProvince.name}
+							</Typography>
+							<Paper
+								variant="outlined"
+								sx={{ borderRadius: 2.5, overflow: "hidden" }}
+							>
+								<List disablePadding>
+									{[1, 2, 3, 4, 5].map((i) => (
+										<React.Fragment key={i}>
+											<ListItem
+												sx={{
+													py: 1.5,
+													"&:hover": {
+														bgcolor: alpha(theme.palette.action.hover, 0.04),
+													},
+												}}
+											>
+												<ListItemAvatar>
+													<Avatar
+														sx={{
+															width: 36,
+															height: 36,
+															bgcolor: alpha(theme.palette.primary.main, 0.1),
+															color: theme.palette.primary.main,
+															fontWeight: 800,
+															fontSize: 14,
+														}}
+													>
+														{String.fromCharCode(64 + i)}
+													</Avatar>
+												</ListItemAvatar>
+												<ListItemText
+													primary={
+														<Typography fontWeight={700} fontSize={14}>
+															Hamba Allah {i}
+														</Typography>
+													}
+													secondary={
+														<Typography
+															variant="caption"
+															color="text.secondary"
+														>
+															Baru saja berdonasi
+														</Typography>
+													}
+												/>
+												<Typography
+													fontWeight={800}
+													fontSize={14}
+													color="success.main"
+												>
+													{fmtIDR(
+														Math.floor(selectedProvince.donation * (0.1 / i))
+													)}
+												</Typography>
+											</ListItem>
+											{i < 5 && <Divider variant="inset" component="li" />}
+										</React.Fragment>
+									))}
+								</List>
+							</Paper>
+						</Box>
+					</Box>
+				)}
+			</Drawer>
+		</>
 	);
 }
 

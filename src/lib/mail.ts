@@ -31,7 +31,7 @@ const baseOptions = (config: { sender: string; password?: string }): SMTPTranspo
   const explicitSecure = process.env.EMAIL_SERVER_SECURE === "true";
   const secure = explicitSecure || port === 465;
 
-  return {
+  const opts: any = {
     host,
     port,
     secure,
@@ -55,6 +55,7 @@ const baseOptions = (config: { sender: string; password?: string }): SMTPTranspo
       rejectUnauthorized: true,
     },
   };
+  return opts as SMTPTransport.Options;
 };
 
 export const verifyTransport = async () => {

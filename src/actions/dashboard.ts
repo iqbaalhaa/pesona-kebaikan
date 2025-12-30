@@ -25,11 +25,14 @@ export async function getDashboardStats() {
 			donationMonthAgg,
 			payoutPending,
 			payoutMonthAgg,
-		] = await Promise.all([
-			prisma.campaign.count({ where: { status: "ACTIVE" } }),
-			prisma.user.count({ where: { role: "USER" } }),
-			prisma.campaign.count({ where: { status: "PENDING" } }),
-			prisma.campaign.count(),
+			provinces,
+			usersByProv,
+			donationsWithUser,
+ 		] = await Promise.all([
+ 			prisma.campaign.count({ where: { status: "ACTIVE" } }),
+ 			prisma.user.count({ where: { role: "USER" } }),
+ 			prisma.campaign.count({ where: { status: "PENDING" } }),
+ 			prisma.campaign.count(),
 			prisma.donation.aggregate({
 				_sum: { amount: true },
 				where: {
@@ -48,15 +51,58 @@ export async function getDashboardStats() {
 			prisma.withdrawal.aggregate({
 				_sum: { amount: true },
 				where: {
-					status: { in: ["COMPLETED", "APPROVED"] },
-					createdAt: { gte: firstDayOfMonth },
+					status: { in: ["PENDING"] },
 				},
 			}),
-		]);
+ 			prisma.province.findMany({ select: { id: true, name: true } }),
+ 			prisma.user.groupBy({
+ 				by: ["provinceId"],
+ 				_count: { id: true },
+ 				where: { role: "USER", provinceId: { not: null } },
+ 			}),
+ 			prisma.donation.findMany({
+ 				where: {
+ 					status: { in: ["PAID", "paid", "SETTLED", "COMPLETED"] },
+ 					user: { provinceId: { not: null } },
+ 				},
+ 				select: {
+ 					amount: true,
+ 					user: {
+ 						select: { provinceId: true },
+ 					},
+ 				},
+ 			}),
+ 		]);
 
 		const donationToday = Number(donationTodayAgg._sum.amount || 0);
 		const donationMonth = Number(donationMonthAgg._sum.amount || 0);
 		const payoutMonth = Number(payoutMonthAgg._sum.amount || 0);
+
+ 		// Aggregate donations by provinceId
+ 		const donationByProvMap: Record<string, number> = {};
+ 		const donationCountByProvMap: Record<string, number> = {};
+ 		donationsWithUser.forEach((d) => {
+ 			const pid = d.user?.provinceId;
+ 			if (pid) {
+ 				donationByProvMap[pid] = (donationByProvMap[pid] || 0) + Number(d.amount);
+ 				donationCountByProvMap[pid] = (donationCountByProvMap[pid] || 0) + 1;
+ 			}
+ 		});
+ 
+ 		// Create Map for User Counts
+ 		const userByProvMap: Record<string, number> = {};
+		usersByProv.forEach((u) => {
+			if (u.provinceId) {
+				userByProvMap[u.provinceId] = u._count.id;
+			}
+		});
+
+ 		const provinceStats = provinces.map((p) => ({
+ 			name: p.name,
+ 			users: userByProvMap[p.id] || 0,
+ 			donation: donationByProvMap[p.id] || 0,
+ 			donationCount: donationCountByProvMap[p.id] || 0,
+ 		}));
 
 		// 2. Donation Last 7 Days
 		const donation7dData = [];
@@ -189,6 +235,7 @@ export async function getDashboardStats() {
 				categoryDist,
 				payMethodDist,
 				campaignCreated14d,
+				provinceStats,
 			},
 			reviewSolvedRate,
 			recentQueue,
