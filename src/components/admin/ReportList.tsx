@@ -387,7 +387,7 @@ export default function ReportList() {
 				"Laporan akan ditandai Selesai. Pastikan Anda sudah mengambil tindakan yang diperlukan.",
 			action: executeResolveDirectly,
 			confirmText: "Selesaikan",
-			confirmColor: "success",
+			confirmColor: "primary",
 		});
 		setConfirmDialogOpen(true);
 	};
