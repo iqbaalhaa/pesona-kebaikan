@@ -85,7 +85,7 @@ export async function seedUsers() {
 					...addressData,
 				},
 			});
-		} catch (error) {
+		} catch {
 			// Ignore duplicates
 		}
 	}
