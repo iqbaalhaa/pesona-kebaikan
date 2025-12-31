@@ -227,7 +227,9 @@ export default function MyDonationPage() {
 	const [reOpen, setReOpen] = React.useState(false);
 	const [reCampaignId, setReCampaignId] = React.useState<string>("");
 	const [reCampaignTitle, setReCampaignTitle] = React.useState<string>("");
-	const [selectedAmount, setSelectedAmount] = React.useState<number>(amountPresets[0]);
+	const [selectedAmount, setSelectedAmount] = React.useState<number>(
+		amountPresets[0]
+	);
 	const [customAmount, setCustomAmount] = React.useState<string>("");
 	const [method, setMethod] = React.useState<Method>("EWALLET");
 	const [isAnonymous, setIsAnonymous] = React.useState<boolean>(false);
@@ -263,8 +265,11 @@ export default function MyDonationPage() {
 			setSubmitError("Campaign tidak valid");
 			return;
 		}
-		if (!finalAmount || Number(finalAmount) < 1000) {
-			setSubmitError("Minimal donasi Rp 1.000");
+		const MIN_DONATION = Number(process.env.NEXT_PUBLIC_MIN_DONATION ?? 1);
+		if (!finalAmount || Number(finalAmount) < MIN_DONATION) {
+			setSubmitError(
+				`Minimal donasi Rp ${MIN_DONATION.toLocaleString("id-ID")}`
+			);
 			return;
 		}
 		if (!donorPhone) {
@@ -281,7 +286,7 @@ export default function MyDonationPage() {
 			const res = await createDonation({
 				campaignId: reCampaignId,
 				amount: Number(finalAmount),
-				donorName: isAnonymous ? "Hamba Allah" : (donorName || "Tanpa Nama"),
+				donorName: isAnonymous ? "Hamba Allah" : donorName || "Tanpa Nama",
 				donorPhone,
 				message,
 				isAnonymous,
@@ -961,7 +966,9 @@ export default function MyDonationPage() {
 				</DialogTitle>
 				<DialogContent dividers sx={{ p: 2.2 }}>
 					<Box sx={{ mb: 2 }}>
-						<Typography sx={{ fontSize: 12, color: "rgba(15,23,42,.6)", mb: 0.5 }}>
+						<Typography
+							sx={{ fontSize: 12, color: "rgba(15,23,42,.6)", mb: 0.5 }}
+						>
 							Campaign
 						</Typography>
 						<Typography sx={{ fontWeight: 800, fontSize: 14 }}>
@@ -970,12 +977,19 @@ export default function MyDonationPage() {
 					</Box>
 
 					<Box sx={{ mb: 2 }}>
-						<Typography sx={{ fontSize: 12, fontWeight: 900, color: "rgba(15,23,42,.80)" }}>
+						<Typography
+							sx={{
+								fontSize: 12,
+								fontWeight: 900,
+								color: "rgba(15,23,42,.80)",
+							}}
+						>
 							Nominal
 						</Typography>
 						<Box sx={{ mt: 1, display: "flex", gap: 1, flexWrap: "wrap" }}>
 							{amountPresets.map((a) => {
-								const active = customAmount.trim().length === 0 && selectedAmount === a;
+								const active =
+									customAmount.trim().length === 0 && selectedAmount === a;
 								return (
 									<Button
 										key={a}
@@ -999,9 +1013,13 @@ export default function MyDonationPage() {
 							fullWidth
 							placeholder="Nominal lainnya"
 							value={customAmount}
-							onChange={(e) => setCustomAmount(e.target.value.replace(/\D/g, ""))}
+							onChange={(e) =>
+								setCustomAmount(e.target.value.replace(/\D/g, ""))
+							}
 							InputProps={{
-								startAdornment: <InputAdornment position="start">Rp</InputAdornment>,
+								startAdornment: (
+									<InputAdornment position="start">Rp</InputAdornment>
+								),
 							}}
 							sx={{ mt: 1 }}
 							helperText="Minimal Rp 1.000"
@@ -1009,7 +1027,13 @@ export default function MyDonationPage() {
 					</Box>
 
 					<Box sx={{ mb: 2 }}>
-						<Typography sx={{ fontSize: 12, fontWeight: 900, color: "rgba(15,23,42,.80)" }}>
+						<Typography
+							sx={{
+								fontSize: 12,
+								fontWeight: 900,
+								color: "rgba(15,23,42,.80)",
+							}}
+						>
 							Data Donatur
 						</Typography>
 						<FormControlLabel
@@ -1060,16 +1084,27 @@ export default function MyDonationPage() {
 					</Box>
 
 					<Box sx={{ mb: 1.5 }}>
-						<Typography sx={{ fontSize: 12, fontWeight: 900, color: "rgba(15,23,42,.80)" }}>
+						<Typography
+							sx={{
+								fontSize: 12,
+								fontWeight: 900,
+								color: "rgba(15,23,42,.80)",
+							}}
+						>
 							Metode Pembayaran
 						</Typography>
 						<FormControl component="fieldset" fullWidth sx={{ mt: 1 }}>
-							<RadioGroup value={method} onChange={(e) => setMethod(e.target.value as Method)}>
+							<RadioGroup
+								value={method}
+								onChange={(e) => setMethod(e.target.value as Method)}
+							>
 								<FormControlLabel
 									value="EWALLET"
 									control={<Radio />}
 									label={
-										<Box sx={{ display: "flex", alignItems: "center", gap: 1.2 }}>
+										<Box
+											sx={{ display: "flex", alignItems: "center", gap: 1.2 }}
+										>
 											<QrCodeIcon color="action" />
 											<Typography sx={{ fontSize: 12, fontWeight: 700 }}>
 												E-Wallet / QRIS
@@ -1082,7 +1117,9 @@ export default function MyDonationPage() {
 									value="VIRTUAL_ACCOUNT"
 									control={<Radio />}
 									label={
-										<Box sx={{ display: "flex", alignItems: "center", gap: 1.2 }}>
+										<Box
+											sx={{ display: "flex", alignItems: "center", gap: 1.2 }}
+										>
 											<AccountBalanceWalletIcon color="action" />
 											<Typography sx={{ fontSize: 12, fontWeight: 700 }}>
 												Virtual Account
@@ -1095,7 +1132,9 @@ export default function MyDonationPage() {
 									value="TRANSFER"
 									control={<Radio />}
 									label={
-										<Box sx={{ display: "flex", alignItems: "center", gap: 1.2 }}>
+										<Box
+											sx={{ display: "flex", alignItems: "center", gap: 1.2 }}
+										>
 											<CreditCardIcon color="action" />
 											<Typography sx={{ fontSize: 12, fontWeight: 700 }}>
 												Transfer Bank
@@ -1124,7 +1163,11 @@ export default function MyDonationPage() {
 							"&:hover": { bgcolor: "#4bbf59" },
 						}}
 					>
-						{submitLoading ? <CircularProgress size={24} color="inherit" /> : "Lanjut Bayar"}
+						{submitLoading ? (
+							<CircularProgress size={24} color="inherit" />
+						) : (
+							"Lanjut Bayar"
+						)}
 					</Button>
 				</DialogActions>
 			</Dialog>
@@ -1133,7 +1176,11 @@ export default function MyDonationPage() {
 				autoHideDuration={6000}
 				onClose={() => setSubmitError("")}
 			>
-				<Alert onClose={() => setSubmitError("")} severity="error" sx={{ width: "100%" }}>
+				<Alert
+					onClose={() => setSubmitError("")}
+					severity="error"
+					sx={{ width: "100%" }}
+				>
 					{submitError}
 				</Alert>
 			</Snackbar>

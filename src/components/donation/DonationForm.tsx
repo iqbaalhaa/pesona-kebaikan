@@ -10,24 +10,19 @@ import {
 	TextField,
 	Typography,
 	Paper,
-	Radio,
-	RadioGroup,
-	FormControlLabel,
-	FormControl,
-	FormLabel,
 	InputAdornment,
 	Switch,
 	CircularProgress,
 	Snackbar,
 	Alert,
+	FormControlLabel,
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
-import QrCodeIcon from "@mui/icons-material/QrCode";
-import CreditCardIcon from "@mui/icons-material/CreditCard";
 import { createDonation } from "@/actions/donation";
+import Script from "next/script";
 
 const PRESET_AMOUNTS = [10000, 20000, 50000, 100000, 200000, 500000];
+const MIN_DONATION = Number(process.env.NEXT_PUBLIC_MIN_DONATION ?? 1);
 
 type Props = {
 	campaignId: string;
@@ -47,7 +42,6 @@ export default function DonationForm({
 	const [donorPhone, setDonorPhone] = React.useState("");
 	const [message, setMessage] = React.useState("");
 	const [isAnonymous, setIsAnonymous] = React.useState(false);
-	const [paymentMethod, setPaymentMethod] = React.useState("EWALLET");
 	const [loading, setLoading] = React.useState(false);
 	const [error, setError] = React.useState("");
 
@@ -63,8 +57,8 @@ export default function DonationForm({
 	};
 
 	const handleSubmit = async () => {
-		if (!amount || Number(amount) < 1000) {
-			setError("Minimal donasi Rp 1.000");
+		if (!amount || Number(amount) < MIN_DONATION) {
+			setError(`Minimal donasi Rp ${MIN_DONATION.toLocaleString("id-ID")}`);
 			return;
 		}
 		if (!donorName) {
@@ -87,16 +81,52 @@ export default function DonationForm({
 				donorPhone,
 				message,
 				isAnonymous,
-				paymentMethod: paymentMethod as any,
+				paymentMethod: "EWALLET" as any,
 			});
 
 			if (res.success) {
-				// Redirect to campaign page with success flag
-				router.push(`/donasi/${campaignSlug}?donation_success=true`);
+				const donationId = (res as any).data?.id;
+				if ((window as any).snap?.show) {
+					(window as any).snap.show();
+				}
+				const r = await fetch("/api/midtrans/snap-token", {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({ donationId }),
+				});
+				const j = await r.json();
+				if (j.success && j.token && (window as any).snap) {
+					const isProd =
+						process.env.NEXT_PUBLIC_MIDTRANS_IS_PRODUCTION === "true";
+					(window as any).snap.pay(j.token, {
+						language: "id",
+						...(isProd ? { uiMode: "qr" } : {}),
+						onSuccess: () => {
+							router.push(`/donasi/${campaignSlug}?donation_success=true`);
+						},
+						onPending: () => {
+							router.push(`/donasi/${campaignSlug}?donation_success=true`);
+						},
+						onError: () => {
+							setError("Pembayaran gagal");
+						},
+						onClose: () => {
+							setError("Pembayaran belum selesai");
+						},
+					});
+				} else {
+					if ((window as any).snap?.hide) {
+						(window as any).snap.hide();
+					}
+					setError(j.error || "Gagal memulai pembayaran");
+				}
 			} else {
 				setError(res.error || "Gagal membuat donasi");
 			}
 		} catch (err) {
+			if ((window as any).snap?.hide) {
+				(window as any).snap.hide();
+			}
 			setError("Terjadi kesalahan sistem");
 		} finally {
 			setLoading(false);
@@ -105,6 +135,15 @@ export default function DonationForm({
 
 	return (
 		<Container maxWidth="sm" sx={{ py: 4, pb: 12, position: "relative" }}>
+			<Script
+				src={
+					process.env.NEXT_PUBLIC_MIDTRANS_IS_PRODUCTION === "true"
+						? "https://app.midtrans.com/snap/snap.js"
+						: "https://app.sandbox.midtrans.com/snap/snap.js"
+				}
+				data-client-key={process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY || ""}
+				strategy="afterInteractive"
+			/>
 			<Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
 				<Button
 					onClick={() => router.back()}
@@ -202,7 +241,7 @@ export default function DonationForm({
 							<InputAdornment position="start">Rp</InputAdornment>
 						),
 					}}
-					helperText="Minimal Rp 1.000"
+					helperText={`Minimal Rp ${MIN_DONATION.toLocaleString("id-ID")}`}
 					sx={{
 						"& .MuiInputBase-root": {
 							borderRadius: 2.5,
@@ -298,129 +337,6 @@ export default function DonationForm({
 						"& .MuiInputLabel-root": { fontSize: 14 },
 					}}
 				/>
-			</Box>
-
-			{/* Metode Pembayaran */}
-			<Box sx={{ mb: 4 }}>
-				<Typography variant="subtitle1" fontWeight={700} gutterBottom>
-					Metode Pembayaran
-				</Typography>
-				<FormControl component="fieldset" fullWidth>
-					<RadioGroup
-						value={paymentMethod}
-						onChange={(e) => setPaymentMethod(e.target.value)}
-					>
-						<Paper
-							variant="outlined"
-							sx={{
-								mb: 1,
-								border:
-									paymentMethod === "EWALLET"
-										? "2px solid #e11d48"
-										: "1px solid #e2e8f0",
-							}}
-						>
-							<FormControlLabel
-								value="EWALLET"
-								control={<Radio />}
-								label={
-									<Box
-										sx={{
-											display: "flex",
-											alignItems: "center",
-											gap: 1,
-											py: 1,
-										}}
-									>
-										<QrCodeIcon color="action" />
-										<Box>
-											<Typography variant="body2" fontWeight={600}>
-												E-Wallet / QRIS
-											</Typography>
-											<Typography variant="caption" color="text.secondary">
-												Gopay, OVO, Dana, ShopeePay
-											</Typography>
-										</Box>
-									</Box>
-								}
-								sx={{ width: "100%", m: 0, p: 1 }}
-							/>
-						</Paper>
-						<Paper
-							variant="outlined"
-							sx={{
-								mb: 1,
-								border:
-									paymentMethod === "VIRTUAL_ACCOUNT"
-										? "2px solid #e11d48"
-										: "1px solid #e2e8f0",
-							}}
-						>
-							<FormControlLabel
-								value="VIRTUAL_ACCOUNT"
-								control={<Radio />}
-								label={
-									<Box
-										sx={{
-											display: "flex",
-											alignItems: "center",
-											gap: 1,
-											py: 1,
-										}}
-									>
-										<AccountBalanceWalletIcon color="action" />
-										<Box>
-											<Typography variant="body2" fontWeight={600}>
-												Virtual Account
-											</Typography>
-											<Typography variant="caption" color="text.secondary">
-												BCA, Mandiri, BNI, BRI
-											</Typography>
-										</Box>
-									</Box>
-								}
-								sx={{ width: "100%", m: 0, p: 1 }}
-							/>
-						</Paper>
-
-						<Paper
-							variant="outlined"
-							sx={{
-								mb: 1,
-								border:
-									paymentMethod === "TRANSFER"
-										? "2px solid #e11d48"
-										: "1px solid #e2e8f0",
-							}}
-						>
-							<FormControlLabel
-								value="TRANSFER"
-								control={<Radio />}
-								label={
-									<Box
-										sx={{
-											display: "flex",
-											alignItems: "center",
-											gap: 1,
-											py: 1,
-										}}
-									>
-										<CreditCardIcon color="action" />
-										<Box>
-											<Typography variant="body2" fontWeight={600}>
-												Transfer Bank
-											</Typography>
-											<Typography variant="caption" color="text.secondary">
-												Transfer Manual (Verifikasi Manual)
-											</Typography>
-										</Box>
-									</Box>
-								}
-								sx={{ width: "100%", m: 0, p: 1 }}
-							/>
-						</Paper>
-					</RadioGroup>
-				</FormControl>
 			</Box>
 
 			{/* Submit Bar */}
