@@ -151,6 +151,7 @@ function PayChip({
 }
 
 export default function DonationBanner() {
+	const MIN_DONATION = Number(process.env.NEXT_PUBLIC_MIN_DONATION ?? 1);
 	return (
 		<Box sx={{ px: 2, mt: 2.5 }}>
 			<Box
@@ -189,7 +190,7 @@ export default function DonationBanner() {
 								lineHeight: 1.1,
 							}}
 						>
-							Rp10.000
+							Rp{MIN_DONATION.toLocaleString("id-ID")}
 						</Typography>
 					</Box>
 
@@ -223,7 +224,11 @@ export default function DonationBanner() {
 					}}
 				>
 					<Typography
-						sx={{ fontSize: 12.5, fontWeight: 900, color: "rgba(15,23,42,.75)" }}
+						sx={{
+							fontSize: 12.5,
+							fontWeight: 900,
+							color: "rgba(15,23,42,.75)",
+						}}
 					>
 						Metode Pembayaran Tersedia
 					</Typography>

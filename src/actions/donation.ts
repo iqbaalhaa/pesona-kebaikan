@@ -58,7 +58,7 @@ export async function createDonation(input: CreateDonationInput) {
 				message: input.message,
 				isAnonymous: input.isAnonymous || false,
 				paymentMethod: input.paymentMethod,
-				status: "PAID", // Initial status (Dev mode: auto-paid)
+				status: "PENDING",
 				userId: userId, // Link to user if logged in
 			},
 		});

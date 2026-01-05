@@ -23,6 +23,7 @@ import type { Campaign } from "@/types";
 import { createDonation } from "@/actions/donation";
 
 const PRIMARY = "#61ce70";
+const MIN_DONATION = Number(process.env.NEXT_PUBLIC_MIN_DONATION ?? 1);
 
 type Method = "EWALLET" | "VIRTUAL_ACCOUNT" | "TRANSFER";
 
@@ -90,7 +91,6 @@ function CheckIcon() {
 		</svg>
 	);
 }
-
 
 function Toggle({
 	checked,
@@ -178,7 +178,7 @@ export default function QuickDonate({
 		return selectedAmount;
 	}, [custom, selectedAmount]);
 
-	const isValid = finalAmount >= 10000;
+	const isValid = finalAmount >= MIN_DONATION;
 
 	const displayName = React.useMemo(() => {
 		if (isAnonymous) return "Anonim";
@@ -196,8 +196,8 @@ export default function QuickDonate({
 			setError("Pilih campaign terlebih dahulu");
 			return;
 		}
-		if (!finalAmount || Number(finalAmount) < 1000) {
-			setError("Minimal donasi Rp 1.000");
+		if (!finalAmount || Number(finalAmount) < MIN_DONATION) {
+			setError(`Minimal donasi Rp ${MIN_DONATION.toLocaleString("id-ID")}`);
 			return;
 		}
 		// Wajib nomor HP
@@ -217,9 +217,7 @@ export default function QuickDonate({
 			const res = await createDonation({
 				campaignId: selectedCampaign.id,
 				amount: Number(finalAmount),
-				donorName: isAnonymous
-					? "Hamba Allah"
-					: (donorName || "Tanpa Nama"),
+				donorName: isAnonymous ? "Hamba Allah" : donorName || "Tanpa Nama",
 				donorPhone,
 				message,
 				isAnonymous,
@@ -399,7 +397,7 @@ export default function QuickDonate({
 								fontWeight: 900,
 							}}
 						>
-							Minimal donasi Rp10.000
+							Minimal donasi Rp{MIN_DONATION.toLocaleString("id-ID")}
 						</Typography>
 					)}
 				</Box>
@@ -547,7 +545,9 @@ export default function QuickDonate({
 								<Autocomplete
 									options={campaigns}
 									getOptionLabel={(option) => option.title}
-									isOptionEqualToValue={(option, value) => option.id === value.id}
+									isOptionEqualToValue={(option, value) =>
+										option.id === value.id
+									}
 									value={selectedCampaign}
 									openOnFocus
 									onChange={(_, newValue) => {
@@ -558,113 +558,117 @@ export default function QuickDonate({
 										paper: { sx: { zIndex: 2600 } },
 									}}
 									renderOption={(props, option) => {
-                                        const { key, ...otherProps } = props;
-                                        return (
-										<Box
-											component="li"
-											key={key}
-                                            {...otherProps}
-											sx={{
-												display: "flex",
-												gap: 1.5,
-												alignItems: "center",
-												borderBottom: "1px solid rgba(0,0,0,0.04)",
-												p: "10px !important",
-											}}
-										>
+										const { key, ...otherProps } = props;
+										return (
 											<Box
-												component="img"
-												src={option.cover || "https://placehold.co/100x100?text=No+Image"}
-												alt={option.title}
+												component="li"
+												key={key}
+												{...otherProps}
 												sx={{
-													width: 48,
-													height: 48,
-													borderRadius: "8px",
-													objectFit: "cover",
-													flexShrink: 0,
-													bgcolor: "#eee",
+													display: "flex",
+													gap: 1.5,
+													alignItems: "center",
+													borderBottom: "1px solid rgba(0,0,0,0.04)",
+													p: "10px !important",
 												}}
-											/>
-											<Box sx={{ flex: 1, minWidth: 0 }}>
-												<Typography
-													sx={{
-														fontSize: 13,
-														fontWeight: 700,
-														color: "#0f172a",
-														whiteSpace: "nowrap",
-														overflow: "hidden",
-														textOverflow: "ellipsis",
-														mb: 0.5,
-													}}
-												>
-													{option.title}
-												</Typography>
+											>
 												<Box
+													component="img"
+													src={
+														option.cover ||
+														"https://placehold.co/100x100?text=No+Image"
+													}
+													alt={option.title}
 													sx={{
-														display: "flex",
-														alignItems: "center",
-														gap: 1,
-														flexWrap: "wrap",
+														width: 48,
+														height: 48,
+														borderRadius: "8px",
+														objectFit: "cover",
+														flexShrink: 0,
+														bgcolor: "#eee",
 													}}
-												>
-													{option.target ? (
-														<Typography
-															sx={{
-																fontSize: 11,
-																color: "rgba(15,23,42,0.6)",
-															}}
-														>
-															Target: Rp{rupiah(option.target)}
-														</Typography>
-													) : null}
+												/>
+												<Box sx={{ flex: 1, minWidth: 0 }}>
+													<Typography
+														sx={{
+															fontSize: 13,
+															fontWeight: 700,
+															color: "#0f172a",
+															whiteSpace: "nowrap",
+															overflow: "hidden",
+															textOverflow: "ellipsis",
+															mb: 0.5,
+														}}
+													>
+														{option.title}
+													</Typography>
+													<Box
+														sx={{
+															display: "flex",
+															alignItems: "center",
+															gap: 1,
+															flexWrap: "wrap",
+														}}
+													>
+														{option.target ? (
+															<Typography
+																sx={{
+																	fontSize: 11,
+																	color: "rgba(15,23,42,0.6)",
+																}}
+															>
+																Target: Rp{rupiah(option.target)}
+															</Typography>
+														) : null}
 
-													{option.isEmergency ? (
-														<Box
-															sx={{
-																px: 0.8,
-																py: 0.2,
-																borderRadius: "4px",
-																bgcolor: "rgba(239,68,68,0.1)",
-																color: "#ef4444",
-																fontSize: 10,
-																fontWeight: 700,
-															}}
-														>
-															Mendesak
-														</Box>
-													) : (option.donors || 0) > 50 ? (
-														<Box
-															sx={{
-																px: 0.8,
-																py: 0.2,
-																borderRadius: "4px",
-																bgcolor: "rgba(245,158,11,0.1)",
-																color: "#f59e0b",
-																fontSize: 10,
-																fontWeight: 700,
-															}}
-														>
-															Populer
-														</Box>
-													) : (
-														<Box
-															sx={{
-																px: 0.8,
-																py: 0.2,
-																borderRadius: "4px",
-																bgcolor: "rgba(97,206,112,0.1)",
-																color: PRIMARY,
-																fontSize: 10,
-																fontWeight: 700,
-															}}
-														>
-															Normal
-														</Box>
-													)}
+														{option.isEmergency ? (
+															<Box
+																sx={{
+																	px: 0.8,
+																	py: 0.2,
+																	borderRadius: "4px",
+																	bgcolor: "rgba(239,68,68,0.1)",
+																	color: "#ef4444",
+																	fontSize: 10,
+																	fontWeight: 700,
+																}}
+															>
+																Mendesak
+															</Box>
+														) : (option.donors || 0) > 50 ? (
+															<Box
+																sx={{
+																	px: 0.8,
+																	py: 0.2,
+																	borderRadius: "4px",
+																	bgcolor: "rgba(245,158,11,0.1)",
+																	color: "#f59e0b",
+																	fontSize: 10,
+																	fontWeight: 700,
+																}}
+															>
+																Populer
+															</Box>
+														) : (
+															<Box
+																sx={{
+																	px: 0.8,
+																	py: 0.2,
+																	borderRadius: "4px",
+																	bgcolor: "rgba(97,206,112,0.1)",
+																	color: PRIMARY,
+																	fontSize: 10,
+																	fontWeight: 700,
+																}}
+															>
+																Normal
+															</Box>
+														)}
+													</Box>
 												</Box>
 											</Box>
-										</Box>
-									)}}
+										);
+									}}
 									renderInput={(params) => (
 										<TextField
 											{...params}
@@ -887,7 +891,9 @@ export default function QuickDonate({
 															sx={{ color: "rgba(15,23,42,0.6)", fontSize: 20 }}
 														/>
 														<Box>
-															<Typography sx={{ fontSize: 13, fontWeight: 700 }}>
+															<Typography
+																sx={{ fontSize: 13, fontWeight: 700 }}
+															>
 																E-Wallet / QRIS
 															</Typography>
 															<Typography
@@ -943,7 +949,9 @@ export default function QuickDonate({
 															sx={{ color: "rgba(15,23,42,0.6)", fontSize: 20 }}
 														/>
 														<Box>
-															<Typography sx={{ fontSize: 13, fontWeight: 700 }}>
+															<Typography
+																sx={{ fontSize: 13, fontWeight: 700 }}
+															>
 																Virtual Account
 															</Typography>
 															<Typography
@@ -999,7 +1007,9 @@ export default function QuickDonate({
 															sx={{ color: "rgba(15,23,42,0.6)", fontSize: 20 }}
 														/>
 														<Box>
-															<Typography sx={{ fontSize: 13, fontWeight: 700 }}>
+															<Typography
+																sx={{ fontSize: 13, fontWeight: 700 }}
+															>
 																Transfer Bank
 															</Typography>
 															<Typography
@@ -1066,8 +1076,16 @@ export default function QuickDonate({
 					</Box>
 				</Box>
 			)}
-			<Snackbar open={!!error} autoHideDuration={6000} onClose={() => setError("")}>
-				<Alert onClose={() => setError("")} severity="error" sx={{ width: "100%" }}>
+			<Snackbar
+				open={!!error}
+				autoHideDuration={6000}
+				onClose={() => setError("")}
+			>
+				<Alert
+					onClose={() => setError("")}
+					severity="error"
+					sx={{ width: "100%" }}
+				>
 					{error}
 				</Alert>
 			</Snackbar>
