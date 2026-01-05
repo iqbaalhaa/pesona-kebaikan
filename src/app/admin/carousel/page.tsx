@@ -200,7 +200,7 @@ export default function AdminCarouselPage() {
 				mb={3}
 			>
 				<Typography variant="h5" fontWeight="bold">
-					Carousel Setting
+					Carousel 
 				</Typography>
 				<Button
 					variant="contained"
@@ -208,7 +208,7 @@ export default function AdminCarouselPage() {
 					onClick={() => handleOpen()}
 					sx={{ bgcolor: "#61ce70" }}
 				>
-					Add New
+					Baru
 				</Button>
 			</Stack>
 
@@ -216,10 +216,10 @@ export default function AdminCarouselPage() {
 				<Table>
 					<TableHead>
 						<TableRow>
-							<TableCell>Image</TableCell>
-							<TableCell>Title / Campaign</TableCell>
-							<TableCell>Type</TableCell>
-							<TableCell>Actions</TableCell>
+							<TableCell>Gambar</TableCell>
+							<TableCell>Judul / Campaign</TableCell>
+							<TableCell>Jenis</TableCell>
+							<TableCell>Aksi</TableCell>
 						</TableRow>
 					</TableHead>
 					<TableBody>

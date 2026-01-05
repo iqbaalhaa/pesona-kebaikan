@@ -43,10 +43,10 @@ const menus: { title: string; items: MenuItem[] }[] = [
 				desc: "Ringkasan data & status",
 			},
 			{
-				label: "Carousel Setting",
+				label: "Carousel",
 				href: "/admin/carousel",
 				icon: <VrpanoIcon fontSize="small" />,
-				desc: "Setting carousel",
+				desc: "Carousel",
 			},
 		],
 	},
@@ -102,7 +102,7 @@ const menus: { title: string; items: MenuItem[] }[] = [
 		],
 	},
 	{
-		title: "Pengguna",
+		title: "User",
 		items: [
 			{
 				label: "Users",
@@ -114,7 +114,7 @@ const menus: { title: string; items: MenuItem[] }[] = [
 				label: "Informasi Users",
 				href: "/admin/infousers",
 				icon: <PersonPinIcon fontSize="small" />,
-				desc: "Informasi pengguna",
+				desc: "Informasi User",
 			},
 			{
 				label: "Notifikasi",
@@ -169,17 +169,12 @@ const menus: { title: string; items: MenuItem[] }[] = [
 		title: "System",
 		items: [
 			{
-				label: "Settings",
+				label: "Pengaturan",
 				href: "/admin/settings",
 				icon: <SettingsOutlinedIcon fontSize="small" />,
 				desc: "Konfigurasi platform",
 			},
-			{
-				label: "Test WA",
-				href: "/admin/test-wa",
-				icon: <SettingsOutlinedIcon fontSize="small" />, // Using the same icon for now, or could use ChatIcon if available
-				desc: "Test WhatsApp Gateway",
-			},
+			
 		],
 	},
 ];

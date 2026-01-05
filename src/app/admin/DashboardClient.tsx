@@ -579,7 +579,7 @@ function MapIndonesia({
 					const freq = stat?.donationCount ?? 0;
 					const valText =
 						mapMetric === "users"
-							? `${Number(v).toLocaleString("id-ID")} pengguna`
+							? `${Number(v).toLocaleString("id-ID")} User`
 							: fmtIDR(Number(v));
 
 					const textColor =
@@ -800,7 +800,7 @@ function MapIndonesia({
 													color="text.secondary"
 													fontWeight={700}
 												>
-													Total Pengguna
+													Total User
 												</Typography>
 												<Typography
 													variant="h6"
@@ -1224,7 +1224,7 @@ export default function DashboardClient({
 
 					<Grid size={{ xs: 12, sm: 6, md: 3 }} sx={{ minWidth: 0 }}>
 						<KpiCard
-							title="Total Pengguna"
+							title="Total User"
 							value={(kpi?.usersTotal ?? 0).toLocaleString("id-ID")}
 							subtitle="Terdaftar di platform"
 							icon={<PeopleAltRoundedIcon />}
@@ -1375,12 +1375,12 @@ export default function DashboardClient({
 						<ChartCard
 							title="Peta Sebaran Provinsi"
 							subtitle={`Warna menunjukkan ${
-								mapMetric === "users" ? "jumlah pengguna" : "total donasi"
+								mapMetric === "users" ? "jumlah User" : "total donasi"
 							} per provinsi`}
 							right={
 								<Stack direction="row" spacing={1}>
 									<Chip
-										label="Pengguna"
+										label="User"
 										size="small"
 										onClick={() => setMapMetric("users")}
 										sx={{
@@ -1444,7 +1444,7 @@ export default function DashboardClient({
 									{mapMetric === "users"
 										? `${metricMin.toLocaleString(
 												"id-ID"
-										  )} → ${metricMax.toLocaleString("id-ID")} pengguna`
+										  )} → ${metricMax.toLocaleString("id-ID")} User`
 										: `${fmtIDR(metricMin)} → ${fmtIDR(metricMax)}`}
 								</Typography>
 							</Stack>
@@ -1789,7 +1789,7 @@ export default function DashboardClient({
 										href: "/admin/campaign/kategori",
 									},
 									{
-										label: "Manajemen Pengguna",
+										label: "Manajemen User",
 										icon: <PeopleAltRoundedIcon fontSize="small" />,
 										href: "/admin/users",
 									},

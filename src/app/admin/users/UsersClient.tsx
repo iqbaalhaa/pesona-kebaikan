@@ -131,7 +131,7 @@ export default function UsersClient({ initialUsers, initialTotal, stats }: Users
       setTotal(res.total);
     } catch (error) {
       console.error(error);
-      showToast('Failed to fetch users', 'error');
+      showToast('Gagal mengambil User', 'error');
     } finally {
       setLoading(false);
     }
@@ -166,11 +166,11 @@ export default function UsersClient({ initialUsers, initialTotal, stats }: Users
 
     const res = await deleteUser(userToDelete.id);
     if (res.success) {
-      showToast('User deleted successfully', 'success');
+      showToast('User berhasil dihapus', 'success');
       fetchUsers();
       router.refresh();
     } else {
-      showToast(res.error || 'Failed to delete user', 'error');
+      showToast(res.error || 'Gagal menghapus User', 'error');
     }
     setOpenDeleteDialog(false);
     setUserToDelete(null);
@@ -196,7 +196,7 @@ export default function UsersClient({ initialUsers, initialTotal, stats }: Users
           fetchUsers(); // Refresh list
           router.refresh();
       } else {
-          showToast(res.error || 'Failed to verify user', 'error');
+          showToast(res.error || 'Gagal memverifikasi User', 'error');
       }
   };
 
@@ -230,7 +230,7 @@ export default function UsersClient({ initialUsers, initialTotal, stats }: Users
     // Report Title
     doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
-    doc.text('Laporan Pengguna Pesona Kebaikan', pageWidth / 2, 35, { align: 'center' });
+    doc.text('Laporan User Pesona Kebaikan', pageWidth / 2, 35, { align: 'center' });
     
     // 2. Table
     const tableData = users.map(user => [
@@ -275,35 +275,35 @@ export default function UsersClient({ initialUsers, initialTotal, stats }: Users
     // Space for signature
     doc.text('( Admin Pesona Kebaikan )', rightMargin, signatureY + 35, { align: 'right' });
 
-    doc.save('laporan_pengguna_pesona_kebaikan.pdf');
+    doc.save('laporan_User_pesona_kebaikan.pdf');
     handleExportClose();
   };
 
   const handleExportExcel = () => {
     const workSheet = XLSX.utils.json_to_sheet(users.map(user => ({
-        Name: user.name || '-',
+        Nama: user.name || '-',
         Email: user.email,
-        Phone: user.phone || '-',
-        Role: user.role,
-        Status: user.emailVerified ? 'Verified' : 'Unverified',
-        Joined: new Date(user.createdAt).toLocaleDateString()
+        'No. Telepon': user.phone || '-',
+        Peran: user.role,
+        Status: user.emailVerified ? 'Terverifikasi' : 'Belum terverifikasi',
+        Bergabung: new Date(user.createdAt).toLocaleDateString('id-ID')
     })));
     
     const workBook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workBook, workSheet, "Users");
+    XLSX.utils.book_append_sheet(workBook, workSheet, "User");
     
-    XLSX.writeFile(workBook, "users_data.xlsx");
+    XLSX.writeFile(workBook, "data_User.xlsx");
     handleExportClose();
   };
 
   const handleSave = async () => {
     if (!currentUser.email) {
-      showToast('Email is required', 'error');
+      showToast('Email wajib diisi', 'error');
       return;
     }
 
     if (dialogMode === 'create' && !currentUser.password) {
-      showToast('Password is required for new users', 'error');
+      showToast('Kata sandi wajib untuk User baru', 'error');
       return;
     }
 
@@ -316,30 +316,30 @@ export default function UsersClient({ initialUsers, initialTotal, stats }: Users
       }
 
       if (res.success) {
-        showToast(`User ${dialogMode === 'create' ? 'created' : 'updated'} successfully`, 'success');
+        showToast(dialogMode === 'create' ? 'User berhasil dibuat' : 'User berhasil diperbarui', 'success');
         setOpenDialog(false);
         fetchUsers();
         router.refresh();
       } else {
-        showToast(res.error || `Failed to ${dialogMode} user`, 'error');
+        showToast(res.error || (dialogMode === 'create' ? 'Gagal membuat User' : 'Gagal memperbarui User'), 'error');
       }
     } catch (error) {
-        showToast('An error occurred', 'error');
+        showToast('Terjadi kesalahan', 'error');
     }
   };
 
   const handleResetPasswordSubmit = async () => {
       if (!newPassword) {
-          showToast('New password is required', 'error');
+          showToast('Kata sandi baru wajib diisi', 'error');
           return;
       }
       
       const res = await resetPassword(currentUser.id!, newPassword);
       if (res.success) {
-          showToast('Password reset successfully', 'success');
+          showToast('Kata sandi berhasil diatur ulang', 'success');
           setOpenResetDialog(false);
       } else {
-          showToast(res.error || 'Failed to reset password', 'error');
+          showToast(res.error || 'Gagal mengatur ulang kata sandi', 'error');
       }
   };
 
@@ -410,10 +410,10 @@ export default function UsersClient({ initialUsers, initialTotal, stats }: Users
       {/* Header Section */}
       <Box sx={{ mb: 5 }}>
           <Typography variant="h4" fontWeight={800} sx={{ color: '#1e293b', mb: 1 }}>
-              User Management
+              Manajemen User
           </Typography>
           <Typography variant="body1" color="text.secondary">
-              Manage system access, roles, and user accounts.
+              Kelola akses sistem, peran, dan akun User.
           </Typography>
       </Box>
 
@@ -428,7 +428,7 @@ export default function UsersClient({ initialUsers, initialTotal, stats }: Users
       >
         <Box>
           <StatCard
-            title="Total Users"
+            title="Total User"
             value={stats.total}
             icon={<GroupIcon fontSize="large" />}
             color="#3b82f6"
@@ -437,7 +437,7 @@ export default function UsersClient({ initialUsers, initialTotal, stats }: Users
         </Box>
         <Box>
           <StatCard
-            title="Administrators"
+            title="Administrator"
             value={stats.admins}
             icon={<AdminIcon fontSize="large" />}
             color="#10b981"
@@ -446,7 +446,7 @@ export default function UsersClient({ initialUsers, initialTotal, stats }: Users
         </Box>
         <Box>
           <StatCard
-            title="Standard Users"
+            title="User Standar"
             value={stats.users}
             icon={<PersonIcon fontSize="large" />}
             color="#8b5cf6"
@@ -486,9 +486,9 @@ export default function UsersClient({ initialUsers, initialTotal, stats }: Users
                     '& .MuiTabs-indicator': { display: 'none' }
                 }}
             >
-                <Tab label="All Users" value="all" />
-                <Tab label="Admins" value="admin" />
-                <Tab label="Users" value="user" />
+                <Tab label="Semua User" value="all" />
+                <Tab label="Admin" value="admin" />
+                <Tab label="User" value="user" />
             </Tabs>
 
             <Stack direction="row" spacing={2} sx={{ width: { xs: '100%', md: 'auto' } }}>
@@ -496,7 +496,7 @@ export default function UsersClient({ initialUsers, initialTotal, stats }: Users
                     <TextField
                         id="search-users-input-unique"
                         name="search_query_users_v1"
-                        placeholder="Search users..."
+                        placeholder="Cari User..."
                         size="small"
                         value={search}
                         onChange={(e) => { setSearch(e.target.value); setPage(1); }}
@@ -529,7 +529,7 @@ export default function UsersClient({ initialUsers, initialTotal, stats }: Users
                         px: 3
                     }}
                 >
-                    Add User
+                    Tambah User
                 </Button>
                 <Button
                     variant="outlined"
@@ -537,7 +537,7 @@ export default function UsersClient({ initialUsers, initialTotal, stats }: Users
                     onClick={handleExportClick}
                     sx={{ borderRadius: 3, textTransform: 'none', fontWeight: 700, px: 3 }}
                 >
-                    Export
+                    Ekspor
                 </Button>
                 <Menu
                     anchorEl={anchorElExport}
@@ -547,11 +547,11 @@ export default function UsersClient({ initialUsers, initialTotal, stats }: Users
                 >
                     <MenuItem onClick={handleExportPDF} sx={{ gap: 1.5, py: 1.5 }}>
                         <PdfIcon color="error" fontSize="small" />
-                        <Typography variant="body2" fontWeight={500}>Export as PDF</Typography>
+                        <Typography variant="body2" fontWeight={500}>Ekspor sebagai PDF</Typography>
                     </MenuItem>
                     <MenuItem onClick={handleExportExcel} sx={{ gap: 1.5, py: 1.5 }}>
                         <ExcelIcon color="success" fontSize="small" />
-                        <Typography variant="body2" fontWeight={500}>Export as Excel</Typography>
+                        <Typography variant="body2" fontWeight={500}>Ekspor sebagai Excel</Typography>
                     </MenuItem>
                 </Menu>
             </Stack>
@@ -564,18 +564,18 @@ export default function UsersClient({ initialUsers, initialTotal, stats }: Users
                     <TableRow>
                         <TableCell sx={{ py: 2, pl: 3, width: 60 }}></TableCell>
                         <TableCell sx={{ py: 2, fontWeight: 600, color: 'text.secondary' }}>User</TableCell>
-                        <TableCell sx={{ py: 2, fontWeight: 600, color: 'text.secondary' }}>Role</TableCell>
+                        <TableCell sx={{ py: 2, fontWeight: 600, color: 'text.secondary' }}>Peran</TableCell>
                         <TableCell sx={{ py: 2, fontWeight: 600, color: 'text.secondary' }}>Status</TableCell>
-                        <TableCell sx={{ py: 2, fontWeight: 600, color: 'text.secondary' }}>Contact</TableCell>
-                        <TableCell sx={{ py: 2, fontWeight: 600, color: 'text.secondary' }}>Joined Date</TableCell>
-                        <TableCell align="right" sx={{ py: 2, pr: 3, fontWeight: 600, color: 'text.secondary' }}>Actions</TableCell>
+                        <TableCell sx={{ py: 2, fontWeight: 600, color: 'text.secondary' }}>Kontak</TableCell>
+                        <TableCell sx={{ py: 2, fontWeight: 600, color: 'text.secondary' }}>Tanggal Bergabung</TableCell>
+                        <TableCell align="right" sx={{ py: 2, pr: 3, fontWeight: 600, color: 'text.secondary' }}>Tindakan</TableCell>
                     </TableRow>
                 </TableHead>
                 <TableBody>
                     {loading ? (
                         <TableRow>
                             <TableCell colSpan={6} align="center" sx={{ py: 10 }}>
-                                <Typography color="text.secondary">Loading users...</Typography>
+                                <Typography color="text.secondary">Memuat User...</Typography>
                             </TableCell>
                         </TableRow>
                     ) : users.length > 0 ? (
@@ -618,11 +618,11 @@ export default function UsersClient({ initialUsers, initialTotal, stats }: Users
                                 </TableCell>
                                 <TableCell>
                                     {user.emailVerified ? (
-                                        <Tooltip title={`Verified on ${new Date(user.emailVerified).toLocaleDateString()}`}>
+                                        <Tooltip title={`Terverifikasi pada ${new Date(user.emailVerified).toLocaleDateString('id-ID')}`}>
                                             <Chip
                                                 onClick={(e) => { e.stopPropagation(); handleOpenVerification(user); }}
                                                 icon={<CheckCircleIcon sx={{ fontSize: '16px !important' }} />}
-                                                label="Verified"
+                                                label="Terverifikasi"
                                                 size="small"
                                                 color="success"
                                                 variant="outlined"
@@ -638,11 +638,11 @@ export default function UsersClient({ initialUsers, initialTotal, stats }: Users
                                             />
                                         </Tooltip>
                                     ) : (
-                                        <Tooltip title="Click to verify">
+                                        <Tooltip title="Klik untuk verifikasi">
                                             <Chip
                                                 onClick={(e) => { e.stopPropagation(); handleOpenVerification(user); }}
                                                 icon={<CancelIcon sx={{ fontSize: '16px !important' }} />}
-                                                label="Unverified"
+                                                label="Belum terverifikasi"
                                                 size="small"
                                                 color="default"
                                                 variant="outlined"
@@ -668,7 +668,7 @@ export default function UsersClient({ initialUsers, initialTotal, stats }: Users
                                 </TableCell>
                                 <TableCell align="right" sx={{ pr: 3 }}>
                                     <Stack direction="row" spacing={1} justifyContent="flex-end">
-                                        <Tooltip title="Reset Password">
+                                        <Tooltip title="Atur Ulang Kata Sandi">
                                             <IconButton 
                                                 size="small" 
                                                 onClick={() => handleOpenResetPassword(user)}
@@ -686,7 +686,7 @@ export default function UsersClient({ initialUsers, initialTotal, stats }: Users
                                                 <EditIcon fontSize="small" />
                                             </IconButton>
                                         </Tooltip>
-                                        <Tooltip title="Delete">
+                                        <Tooltip title="Hapus">
                                             <IconButton 
                                                 size="small" 
                                                 onClick={() => handleOpenDelete(user)}
@@ -704,7 +704,7 @@ export default function UsersClient({ initialUsers, initialTotal, stats }: Users
                             <TableCell colSpan={6} align="center" sx={{ py: 8 }}>
                                 <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', opacity: 0.5 }}>
                                     <GroupIcon sx={{ fontSize: 48, mb: 1 }} />
-                                    <Typography>No users found</Typography>
+                                    <Typography>Tidak ada User</Typography>
                                 </Box>
                             </TableCell>
                         </TableRow>
@@ -734,13 +734,13 @@ export default function UsersClient({ initialUsers, initialTotal, stats }: Users
         PaperProps={{ sx: { borderRadius: 4 } }}
       >
         <DialogTitle sx={{ fontWeight: 800, borderBottom: '1px solid', borderColor: 'divider' }}>
-          {dialogMode === 'create' ? 'Add New User' : 'Edit User'}
+          {dialogMode === 'create' ? 'Tambah User Baru' : 'Edit User'}
         </DialogTitle>
         <DialogContent sx={{ pt: 4 }}>
           <Box component="form" autoComplete="off">
             <Stack spacing={3} sx={{ mt: 2 }}>
             <TextField
-                label="Full Name"
+                label="Nama Lengkap"
                 fullWidth
                 value={currentUser.name || ''}
                 onChange={(e) => setCurrentUser({ ...currentUser, name: e.target.value })}
@@ -748,7 +748,7 @@ export default function UsersClient({ initialUsers, initialTotal, stats }: Users
                 InputProps={{ sx: { borderRadius: 3 } }}
             />
             <TextField
-                label="Email Address"
+                label="Alamat Email"
                 fullWidth
                 type="email"
                 value={currentUser.email || ''}
@@ -758,7 +758,7 @@ export default function UsersClient({ initialUsers, initialTotal, stats }: Users
             />
              {dialogMode === 'create' && (
                 <TextField
-                    label="Password"
+                    label="Kata Sandi"
                     fullWidth
                     type="password"
                     value={currentUser.password || ''}
@@ -768,7 +768,7 @@ export default function UsersClient({ initialUsers, initialTotal, stats }: Users
                 />
             )}
             <TextField
-                label="Phone Number"
+                label="Nomor Telepon"
                 fullWidth
                 value={currentUser.phone || ''}
                 onChange={(e) => setCurrentUser({ ...currentUser, phone: e.target.value })}
@@ -777,7 +777,7 @@ export default function UsersClient({ initialUsers, initialTotal, stats }: Users
             />
             <TextField
                 select
-                label="Role"
+                label="Peran"
                 fullWidth
                 value={currentUser.role || 'USER'}
                 onChange={(e) => setCurrentUser({ ...currentUser, role: e.target.value })}
@@ -792,10 +792,10 @@ export default function UsersClient({ initialUsers, initialTotal, stats }: Users
         </DialogContent>
         <DialogActions sx={{ p: 3, borderTop: '1px solid', borderColor: 'divider' }}>
           <Button onClick={() => setOpenDialog(false)} sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600, color: 'text.secondary' }}>
-            Cancel
+            Batal
           </Button>
           <Button variant="contained" onClick={handleSave} sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 700, px: 4, boxShadow: 'none' }}>
-            {dialogMode === 'create' ? 'Create User' : 'Save Changes'}
+            {dialogMode === 'create' ? 'Buat User' : 'Simpan Perubahan'}
           </Button>
         </DialogActions>
       </Dialog>
@@ -809,15 +809,15 @@ export default function UsersClient({ initialUsers, initialTotal, stats }: Users
         PaperProps={{ sx: { borderRadius: 4 } }}
       >
         <DialogTitle sx={{ fontWeight: 800 }}>
-          Reset Password
+          Atur Ulang Kata Sandi
         </DialogTitle>
         <DialogContent>
              <Box component="form" autoComplete="off">
                 <Alert severity="warning" icon={<WarningIcon />} sx={{ mb: 3, borderRadius: 2 }}>
-                    This will immediately change the password for <strong>{currentUser.name}</strong>.
+                    Ini akan segera mengubah kata sandi untuk <strong>{currentUser.name}</strong>.
                 </Alert>
                 <TextField
-                    label="New Password"
+                    label="Kata Sandi Baru"
                     fullWidth
                     type="password"
                     value={newPassword}
@@ -830,10 +830,10 @@ export default function UsersClient({ initialUsers, initialTotal, stats }: Users
         </DialogContent>
         <DialogActions sx={{ p: 3 }}>
           <Button onClick={() => setOpenResetDialog(false)} sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600 }}>
-            Cancel
+            Batal
           </Button>
           <Button variant="contained" color="warning" onClick={handleResetPasswordSubmit} sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 700, boxShadow: 'none' }}>
-            Reset Password
+            Atur Ulang Kata Sandi
           </Button>
         </DialogActions>
       </Dialog>
@@ -847,7 +847,7 @@ export default function UsersClient({ initialUsers, initialTotal, stats }: Users
         PaperProps={{ sx: { borderRadius: 4 } }}
       >
         <DialogTitle sx={{ fontWeight: 800, borderBottom: '1px solid', borderColor: 'divider' }}>
-          Verification Status
+          Status Verifikasi
         </DialogTitle>
         <DialogContent sx={{ pt: 4 }}>
              {selectedUserForVerification && (
@@ -859,11 +859,11 @@ export default function UsersClient({ initialUsers, initialTotal, stats }: Users
                                 <AdminIcon />
                             </Box>
                             <Box>
-                                <Typography variant="subtitle1" fontWeight={700}>Identity Verification (KTP)</Typography>
-                                <Typography variant="caption" color="text.secondary">Upload KTP & NIK Verification</Typography>
+                                <Typography variant="subtitle1" fontWeight={700}>Verifikasi Identitas (KTP)</Typography>
+                                <Typography variant="caption" color="text.secondary">Unggah KTP & Verifikasi NIK</Typography>
                             </Box>
                             <Chip 
-                                label="Not Uploaded" 
+                                label="Belum Diunggah" 
                                 size="small" 
                                 color="default" 
                                 sx={{ ml: 'auto !important', borderRadius: 2, fontWeight: 600 }} 
@@ -871,7 +871,7 @@ export default function UsersClient({ initialUsers, initialTotal, stats }: Users
                         </Stack>
                         <Stack spacing={1}>
                             <Typography variant="body2" color="text.secondary"><strong>NIK:</strong> -</Typography>
-                            <Typography variant="body2" color="text.secondary"><strong>KTP Photo:</strong> -</Typography>
+                            <Typography variant="body2" color="text.secondary"><strong>Foto KTP:</strong> -</Typography>
                         </Stack>
                     </Paper>
 
@@ -882,11 +882,11 @@ export default function UsersClient({ initialUsers, initialTotal, stats }: Users
                                 <EmailIcon />
                             </Box>
                             <Box>
-                                <Typography variant="subtitle1" fontWeight={700}>Email Verification</Typography>
+                                <Typography variant="subtitle1" fontWeight={700}>Verifikasi Email</Typography>
                                 <Typography variant="caption" color="text.secondary">{selectedUserForVerification.email}</Typography>
                             </Box>
                             <Chip 
-                                label={selectedUserForVerification.emailVerified ? "Verified" : "Unverified"} 
+                                label={selectedUserForVerification.emailVerified ? "Terverifikasi" : "Belum terverifikasi"} 
                                 size="small" 
                                 color={selectedUserForVerification.emailVerified ? "success" : "warning"}
                                 sx={{ ml: 'auto !important', borderRadius: 2, fontWeight: 600 }} 
@@ -901,7 +901,7 @@ export default function UsersClient({ initialUsers, initialTotal, stats }: Users
                                 <PhoneIcon />
                             </Box>
                             <Box>
-                                <Typography variant="subtitle1" fontWeight={700}>WhatsApp Verification</Typography>
+                                <Typography variant="subtitle1" fontWeight={700}>Verifikasi WhatsApp</Typography>
                                 <Typography variant="caption" color="text.secondary">{selectedUserForVerification.phone || '-'}</Typography>
                             </Box>
                             <Chip 
@@ -917,7 +917,7 @@ export default function UsersClient({ initialUsers, initialTotal, stats }: Users
         </DialogContent>
         <DialogActions sx={{ p: 3, borderTop: '1px solid', borderColor: 'divider', justifyContent: 'space-between' }}>
           <Button onClick={() => setOpenVerificationDialog(false)} sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600 }}>
-            Close
+            Tutup
           </Button>
           {!selectedUserForVerification?.emailVerified && (
             <Button 
@@ -926,7 +926,7 @@ export default function UsersClient({ initialUsers, initialTotal, stats }: Users
                 onClick={handleOpenConfirmVerify}
                 sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600 }}
             >
-                Verify User
+                Verifikasi User
             </Button>
           )}
         </DialogActions>
@@ -940,7 +940,7 @@ export default function UsersClient({ initialUsers, initialTotal, stats }: Users
         fullWidth
         PaperProps={{ sx: { borderRadius: 3 } }}
       >
-         <DialogTitle sx={{ fontWeight: 700 }}>Confirm Verification</DialogTitle>
+         <DialogTitle sx={{ fontWeight: 700 }}>Konfirmasi Verifikasi</DialogTitle>
          <DialogContent>
              {selectedUserForVerification && (
                  <>
@@ -954,36 +954,36 @@ export default function UsersClient({ initialUsers, initialTotal, stats }: Users
                                   Identity (KTP): <strong>Not Uploaded</strong>
                               </li>
                               <li>
-                                  Email Verification: {selectedUserForVerification.emailVerified ? <strong style={{color: 'green'}}>Verified</strong> : <strong>Pending</strong>}
+                                  Verifikasi Email: {selectedUserForVerification.emailVerified ? <strong style={{color: 'green'}}>Terverifikasi</strong> : <strong>Menunggu</strong>}
                               </li>
                               <li>
-                                  WhatsApp Verification: {selectedUserForVerification.phone ? <strong style={{color: 'green'}}>Verified</strong> : <strong>Not Verified</strong>}
+                                  Verifikasi WhatsApp: {selectedUserForVerification.phone ? <strong style={{color: 'green'}}>Terverifikasi</strong> : <strong>Belum Terverifikasi</strong>}
                               </li>
                           </ul>
                           {(!selectedUserForVerification.phone || !selectedUserForVerification.emailVerified) && (
-                              <Typography variant="caption" sx={{ mt: 1, display: 'block', fontWeight: 600 }}>
-                                  Warning: User has incomplete verification steps.
+                          <Typography variant="caption" sx={{ mt: 1, display: 'block', fontWeight: 600 }}>
+                                  Peringatan: User memiliki langkah verifikasi yang belum lengkap.
                               </Typography>
                           )}
                       </Alert>
                       
                       <Typography>
-                         Are you sure you want to verify <strong>{selectedUserForVerification.name}</strong>?
-                         This will mark the user as fully verified in the system.
+                         Anda yakin ingin memverifikasi <strong>{selectedUserForVerification.name}</strong>?
+                         Ini akan menandai User sebagai terverifikasi penuh di sistem.
                       </Typography>
                  </>
              )}
           </DialogContent>
          <DialogActions sx={{ p: 2 }}>
-             <Button onClick={() => setOpenConfirmVerifyDialog(false)} sx={{ textTransform: 'none', fontWeight: 600 }}>Cancel</Button>
+             <Button onClick={() => setOpenConfirmVerifyDialog(false)} sx={{ textTransform: 'none', fontWeight: 600 }}>Batal</Button>
              <Button 
                 onClick={handleConfirmVerify} 
                 variant="contained" 
                 color="success"
                 sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600 }}
             >
-                 Confirm Verify
-             </Button>
+                 Konfirmasi Verifikasi
+            </Button>
          </DialogActions>
       </Dialog>
 
@@ -999,11 +999,11 @@ export default function UsersClient({ initialUsers, initialTotal, stats }: Users
             <Box sx={{ p: 2, bgcolor: alpha(theme.palette.error.main, 0.1), borderRadius: '50%', color: 'error.main' }}>
                 <DeleteIcon fontSize="large" />
             </Box>
-            <Typography variant="h6" fontWeight={800}>Delete User?</Typography>
+            <Typography variant="h6" fontWeight={800}>Hapus User?</Typography>
         </DialogTitle>
         <DialogContent>
             <Typography align="center" color="text.secondary">
-                Are you sure you want to delete <strong>{userToDelete?.name}</strong>? This action cannot be undone.
+                Anda yakin ingin menghapus <strong>{userToDelete?.name}</strong>? Tindakan ini tidak dapat dibatalkan.
             </Typography>
         </DialogContent>
         <DialogActions sx={{ p: 3, justifyContent: 'center', gap: 2 }}>
@@ -1012,7 +1012,7 @@ export default function UsersClient({ initialUsers, initialTotal, stats }: Users
                 variant="outlined"
                 sx={{ borderRadius: 3, textTransform: 'none', fontWeight: 600, px: 3, borderColor: 'divider', color: 'text.primary' }}
             >
-                Cancel
+                Batal
             </Button>
             <Button 
                 onClick={handleDeleteConfirm}
@@ -1020,7 +1020,7 @@ export default function UsersClient({ initialUsers, initialTotal, stats }: Users
                 color="error"
                 sx={{ borderRadius: 3, textTransform: 'none', fontWeight: 600, px: 3, boxShadow: 'none' }}
             >
-                Yes, Delete
+                Ya, Hapus
             </Button>
         </DialogActions>
       </Dialog>

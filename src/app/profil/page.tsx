@@ -21,6 +21,7 @@ import ProfileMenu from "@/components/profile/ProfileMenu";
 import ProfileCard from "@/components/profile/ProfileCard";
 import VerificationBanner from "@/components/profile/VerificationBanner";
 import VerificationDialog from "@/components/profile/VerificationDialog";
+import { getMyProfile } from "@/actions/user";
 
 function ProfilePageContent() {
 	const router = useRouter();
@@ -36,6 +37,42 @@ function ProfilePageContent() {
 	const handleOpenVerification = () => setOpenVerification(true);
 
 	// Step handling now lives inside VerificationDialog component
+
+	// Load full profile for verifiedAs/verifiedAt
+	const [myProfile, setMyProfile] = React.useState<{
+		id: string;
+		name: string | null;
+		email: string;
+		image: string | null;
+		verifiedAs: "personal" | "organization" | null;
+		verifiedAt: string | Date | null;
+	} | null>(null);
+	React.useEffect(() => {
+		let mounted = true;
+		const load = async () => {
+			const p = await getMyProfile();
+			if (mounted) {
+				if (p) {
+					setMyProfile({
+						id: p.id,
+						name: p.name ?? null,
+						email: p.email,
+						image: p.image ?? null,
+						verifiedAs: (p.verifiedAs as "personal" | "organization" | null) ?? null,
+						verifiedAt: p.verifiedAt ?? null,
+					});
+				} else {
+					setMyProfile(null);
+				}
+			}
+		};
+		if (status === "authenticated") {
+			load();
+		}
+		return () => {
+			mounted = false;
+		};
+	}, [status]);
 
 	// Mock Stats Data
 	const userStats = [
@@ -129,10 +166,12 @@ function ProfilePageContent() {
 				// Logged In View
 				<>
 					{/* Profile Card */}
-					<ProfileCard user={user} />
+					<ProfileCard user={myProfile || user} />
 
 					{/* Verification Banner */}
-					<VerificationBanner onClick={handleOpenVerification} />
+					{!myProfile?.verifiedAt && (
+						<VerificationBanner onClick={handleOpenVerification} />
+					)}
 
 					{/* Account Menus */}
 					<Box sx={{ mb: 3 }}>

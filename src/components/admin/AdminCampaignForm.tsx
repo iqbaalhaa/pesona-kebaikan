@@ -193,7 +193,7 @@ export default function AdminCampaignForm({
 						<RichTextEditor
 							value={story}
 							onChange={setStory}
-							placeholder="Tulis latar belakang, kondisi, kebutuhan biaya, rencana penggunaan dana, dan ajakan..."
+							placeholder="Tulis latar belakang, kondisi, kebutuhan biaya, rencana Useran dana, dan ajakan..."
 							minHeight={260}
 						/>
 					</Box>

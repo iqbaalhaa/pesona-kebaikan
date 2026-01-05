@@ -163,7 +163,7 @@ export async function resetPassword(userId: string, newPassword: string) {
     revalidatePath('/admin/users');
     return { success: true };
   } catch (error) {
-    console.error('Error resetting password:', error);
+    console.error('eeror memperbarui password:', error);
     return { success: false, error: 'Failed to reset password' };
   }
 }
@@ -197,6 +197,8 @@ export async function getMyProfile() {
       phone: true,
       image: true,
       createdAt: true,
+      verifiedAs: true,
+      verifiedAt: true,
     },
   });
   if (!user) return null;

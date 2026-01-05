@@ -50,7 +50,12 @@ export default function AccountInfoPage() {
 				year: "numeric",
 			});
 			const initial = (profile.name?.[0] || profile.email?.[0] || "A").toUpperCase();
-			const memberStatus = "Member Basic";
+			const memberStatus =
+				profile.verifiedAt
+					? profile.verifiedAs === "organization"
+						? "Organisasi Terverifikasi"
+						: "Individu Terverifikasi"
+					: "Belum Terverifikasi";
 			setUser({
 				id: profile.id,
 				name: profile.name,
@@ -92,7 +97,12 @@ export default function AccountInfoPage() {
 						year: "numeric",
 					});
 					const initial = (profile.name?.[0] || profile.email?.[0] || "A").toUpperCase();
-					const memberStatus = "Member Basic";
+					const memberStatus =
+						profile.verifiedAt
+							? profile.verifiedAs === "organization"
+								? "Organisasi Terverifikasi"
+								: "Individu Terverifikasi"
+							: "Belum Terverifikasi";
 					setUser({
 						id: profile.id,
 						name: profile.name,
@@ -174,7 +184,7 @@ export default function AccountInfoPage() {
 				</Box>
 				<Box sx={{ flex: 1 }}>
 					<Typography sx={{ fontSize: 16, fontWeight: 900, color: "#0f172a" }}>
-						{user?.name || "Pengguna"}
+						{user?.name || "User"}
 					</Typography>
 					<Typography sx={{ fontSize: 13, color: "rgba(15,23,42,0.6)" }}>
 						{user?.email}

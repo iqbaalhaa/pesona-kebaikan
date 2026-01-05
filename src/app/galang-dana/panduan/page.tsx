@@ -47,8 +47,8 @@ export default async function FundraiseGuidePage() {
     },
     {
       icon: <SecurityOutlinedIcon />,
-      title: "Transparansi penggunaan dana",
-      desc: "Jelaskan rencana penggunaan dana dan bukti penyaluran.",
+      title: "Transparansi Useran dana",
+      desc: "Jelaskan rencana Useran dana dan bukti penyaluran.",
       color: "#8b5cf6",
     },
   ];

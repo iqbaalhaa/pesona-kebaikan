@@ -9,11 +9,24 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
+import Chip from "@mui/material/Chip";
 import EditIcon from "@mui/icons-material/Edit";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 
-export default function ProfileCard({ user }: { user: any }) {
+type UserCardData = {
+  name?: string | null;
+  email?: string | null;
+  image?: string | null;
+  verifiedAt?: string | Date | null;
+  verifiedAs?: "personal" | "organization" | null;
+};
+
+export default function ProfileCard({ user }: { user: UserCardData }) {
   const router = useRouter();
+  const isVerified = Boolean(user?.verifiedAt);
+  const statusLabel = isVerified
+    ? `Terverifikasi: ${user?.verifiedAs === "organization" ? "organization" : "personal"}`
+    : "Belum Terverifikasi";
   return (
     <Paper
       elevation={0}
@@ -48,18 +61,38 @@ export default function ProfileCard({ user }: { user: any }) {
       <Box sx={{ flex: 1, cursor: "pointer" }} onClick={() => router.push("/profil/akun")}>
         <Stack direction="row" alignItems="center" gap={0.5}>
           <Typography sx={{ fontSize: 18, fontWeight: 900, color: "#0f172a" }}>
-            {user?.name || "Pengguna"}
+            {user?.name || "User"}
           </Typography>
-          <Tooltip title="Verified User">
-            <CheckCircleIcon sx={{ fontSize: 18, color: "#61ce70" }} />
-          </Tooltip>
+          {isVerified ? (
+            <Tooltip title="Terverifikasi">
+              <CheckCircleIcon sx={{ fontSize: 18, color: "#61ce70" }} />
+            </Tooltip>
+          ) : null}
+          {isVerified && user?.verifiedAs === "organization" ? (
+            <Chip
+              label="ORG"
+              size="small"
+              sx={{
+                height: 20,
+                fontSize: 10,
+                fontWeight: 800,
+                borderRadius: 1,
+                ml: 0.5,
+                bgcolor: "#eff6ff",
+                color: "#1d4ed8",
+                border: "1px solid #bfdbfe",
+              }}
+            />
+          ) : null}
         </Stack>
         <Typography sx={{ fontSize: 14, color: "rgba(15,23,42,0.6)" }}>
           {user?.email}
         </Typography>
         <Box sx={{ mt: 0.5, display: "flex", alignItems: "center", gap: 0.5 }}>
-          <Box sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: "#61ce70" }} />
-          <Typography sx={{ fontSize: 12, fontWeight: 700, color: "#61ce70" }}>Member Basic</Typography>
+          <Box sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: isVerified ? "#61ce70" : "#e2e8f0" }} />
+          <Typography sx={{ fontSize: 12, fontWeight: 700, color: isVerified ? "#61ce70" : "#64748b" }}>
+            {statusLabel}
+          </Typography>
         </Box>
       </Box>
       <IconButton
@@ -78,4 +111,3 @@ export default function ProfileCard({ user }: { user: any }) {
     </Paper>
   );
 }
-

@@ -275,7 +275,7 @@ export default function AdminTransaksiPage() {
 							boxShadow: "none",
 						}}
 					>
-						Ke Pencairan Dana
+						Pencairan
 					</Button>
 				</Stack>
 			</Stack>

@@ -71,13 +71,13 @@ export default function AdminHeader({
             className="text-gray-500 dark:text-gray-400"
           />
           <input
-            placeholder="Search"
+            placeholder="Cari"
             className="w-full bg-transparent text-base outline-none text-gray-800 dark:text-gray-100 placeholder:text-gray-500 dark:placeholder:text-gray-400"
           />
         </div>
 
         {/* Theme Toggle */}
-        <Tooltip title="Toggle Theme">
+        <Tooltip title="Ubah Tema">
           <IconButton
             onClick={colorMode.toggleColorMode}
             size="small"
@@ -95,7 +95,7 @@ export default function AdminHeader({
         </Tooltip>
 
         {/* Notifications */}
-        <Tooltip title="Notifications">
+        <Tooltip title="Notifikasi">
           <IconButton
             onClick={handleNotifClick}
             size="small"
@@ -131,11 +131,11 @@ export default function AdminHeader({
           transformOrigin={{ horizontal: "right", vertical: "top" }}
           anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
         >
-          <MenuItem onClick={handleNotifClose}>No new notifications</MenuItem>
+          <MenuItem onClick={handleNotifClose}>Tidak ada notifikasi baru</MenuItem>
         </Menu>
 
         {/* Profile */}
-        <Tooltip title="Account settings">
+        <Tooltip title="Pengaturan akun">
           <IconButton
             onClick={handleProfileClick}
             size="small"
@@ -185,23 +185,23 @@ export default function AdminHeader({
           anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
         >
           <MenuItem onClick={handleProfileClose}>
-            <Avatar /> Profile
+            <Avatar /> Profil
           </MenuItem>
           <MenuItem onClick={handleProfileClose}>
-            <Avatar /> My account
+            <Avatar /> Akun saya
           </MenuItem>
           <Divider />
           <MenuItem onClick={handleProfileClose}>
             <ListItemIcon>
               <PersonIcon fontSize="small" />
             </ListItemIcon>
-            Add another account
+            Tambah akun lain
           </MenuItem>
           <MenuItem onClick={handleProfileClose}>
             <ListItemIcon>
               <SettingsIcon fontSize="small" />
             </ListItemIcon>
-            Settings
+            Pengaturan
           </MenuItem>
           <MenuItem
             onClick={() => {
@@ -212,7 +212,7 @@ export default function AdminHeader({
             <ListItemIcon>
               <LogoutIcon fontSize="small" />
             </ListItemIcon>
-            Logout
+            Keluar
           </MenuItem>
         </Menu>
       </div>

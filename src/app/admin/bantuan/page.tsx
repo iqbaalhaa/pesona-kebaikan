@@ -56,7 +56,7 @@ const DEFAULT_FAQS = [
   },
   {
     question: "Bagaimana prosedur pencairan dana oleh penggalang dana?",
-    answer: "Pencairan dana dilakukan secara transparan dan akuntabel. Penggalang dana harus mengajukan permohonan pencairan dengan melampirkan rencana penggunaan dana dan bukti pendukung. Tim verifikasi kami akan mereview dalam 1-3 hari kerja sebelum dana disalurkan.",
+    answer: "Pencairan dana dilakukan secara transparan dan akuntabel. Penggalang dana harus mengajukan permohonan pencairan dengan melampirkan rencana Useran dana dan bukti pendukung. Tim verifikasi kami akan mereview dalam 1-3 hari kerja sebelum dana disalurkan.",
     category: "Pencairan"
   }
 ];

@@ -231,7 +231,7 @@ export default function VerificationDialog({
                 </Box>
                 <Box>
                   <Typography sx={{ fontWeight: 800, fontSize: 16, mb: 0.5 }}>Individu</Typography>
-                  <Typography variant="caption" color="text.secondary">Untuk penggunaan pribadi dan donasi perorangan</Typography>
+                  <Typography variant="caption" color="text.secondary">Untuk Useran pribadi dan donasi perorangan</Typography>
                 </Box>
               </Box>
             </Grid>

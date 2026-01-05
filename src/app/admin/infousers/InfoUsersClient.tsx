@@ -182,7 +182,7 @@ function MapIndonesia({
 						theme.palette.text.primary
 					}">${params.name}</div><div style="font-size:12px">${Number(
 						v
-					).toLocaleString("id-ID")} pengguna • ${freq.toLocaleString(
+					).toLocaleString("id-ID")} User • ${freq.toLocaleString(
 						"id-ID"
 					)} donasi</div>`;
 				},
@@ -467,7 +467,7 @@ export default function InfoUsersClient({
 					justifyContent="space-between"
 				>
 					<Typography sx={{ fontWeight: 1000 }}>Informasi Users</Typography>
-					<Chip label={`Total pengguna: ${users.length}`} />
+					<Chip label={`Total User: ${users.length}`} />
 				</Stack>
 				<Paper variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
 					<MapIndonesia theme={theme} provinceStats={provinceStats} />

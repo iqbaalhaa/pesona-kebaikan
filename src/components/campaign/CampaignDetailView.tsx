@@ -896,7 +896,7 @@ export default function CampaignDetailView({ data }: { data: any }) {
 									<Typography
 										sx={{ fontSize: 14, fontWeight: 600, color: "#334155" }}
 									>
-										Rincian penggunaan dana
+										Rincian Useran dana
 									</Typography>
 								</Box>
 								<NavigateNextIcon sx={{ color: "#94a3b8" }} />
@@ -1490,7 +1490,7 @@ export default function CampaignDetailView({ data }: { data: any }) {
 				}}
 			>
 				<DialogTitle sx={{ fontWeight: 700, fontSize: 18 }}>
-					Rincian Penggunaan Dana
+					Rincian Useran Dana
 				</DialogTitle>
 				<DialogContent dividers>
 					{/* Header Status */}

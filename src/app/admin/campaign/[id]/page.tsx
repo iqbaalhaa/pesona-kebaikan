@@ -1277,7 +1277,7 @@ export default function AdminCampaignDetailPage() {
 									label="Cerita memadai & meyakinkan"
 									checked={check.storyOk}
 									onChange={(v) => setCheck((c) => ({ ...c, storyOk: v }))}
-									hint="Kronologi, kebutuhan biaya, penggunaan dana jelas."
+									hint="Kronologi, kebutuhan biaya, Useran dana jelas."
 								/>
 								<VerifyItem
 									label="Target biaya wajar & terisi"

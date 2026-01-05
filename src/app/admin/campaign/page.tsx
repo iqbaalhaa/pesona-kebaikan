@@ -818,7 +818,7 @@ function CampaignCard({
 
 				<Box sx={{ mt: 1.25 }}>
 					<Typography sx={{ fontSize: 12.5, color: "rgba(15,23,42,.62)" }}>
-						By <b style={{ color: "rgba(15,23,42,.86)" }}>{row.ownerName}</b> •
+						Oleh <b style={{ color: "rgba(15,23,42,.86)" }}>{row.ownerName}</b> •
 						ID:{" "}
 						<span style={{ fontWeight: 1000, color: "rgba(15,23,42,.78)" }}>
 							{row.id}

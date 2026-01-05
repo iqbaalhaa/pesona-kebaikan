@@ -442,7 +442,7 @@ export default function ReportList() {
 						Pusat Pengaduan
 					</Typography>
 					<Typography variant="body2" color="text.secondary">
-						Laporan campaign bermasalah dari pengguna
+						Laporan campaign bermasalah dari User
 					</Typography>
 				</Box>
 

@@ -533,7 +533,7 @@ export default function WithdrawalList({
 							fullWidth
 							multiline
 							rows={6}
-							placeholder="Ceritakan perkembangan terbaru atau penggunaan dana..."
+							placeholder="Ceritakan perkembangan terbaru atau Useran dana..."
 							value={updateForm.content}
 							onChange={(e) =>
 								setUpdateForm({ ...updateForm, content: e.target.value })

@@ -118,7 +118,7 @@ export default function TrustStrip() {
 					/>
 					<TrustItem
 						icon="📄"
-						title="Pelaporan penggunaan dana"
+						title="Pelaporan Useran dana"
 						desc="Ringkasan penyaluran dana bisa dipantau."
 					/>
 				</Box>

@@ -1040,7 +1040,7 @@ function BuatGalangDanaPageContent() {
 
 								<Box sx={{ mt: 2 }}>
 									<Typography sx={{ fontWeight: 600, fontSize: 14, mb: 0.75 }}>
-										Isi rincian penggunaan dana
+										Isi rincian Useran dana
 									</Typography>
 									<TextField
 										size="small"
@@ -1238,7 +1238,7 @@ function BuatGalangDanaPageContent() {
 										<RichTextEditor
 											value={story}
 											onChange={setStory}
-											placeholder="Tulis kronologi, kondisi pasien, kebutuhan biaya, rencana penggunaan dana, dan ajakan..."
+											placeholder="Tulis kronologi, kondisi pasien, kebutuhan biaya, rencana Useran dana, dan ajakan..."
 											minHeight={240}
 										/>
 									</Box>
@@ -1398,7 +1398,7 @@ function BuatGalangDanaPageContent() {
 															onChange={(e) => setAgreeA(e.target.checked)}
 														/>
 													}
-													label="Pemilik rekening bertanggung jawab atas penggunaan dana yang diterima dari galang dana ini."
+													label="Pemilik rekening bertanggung jawab atas Useran dana yang diterima dari galang dana ini."
 												/>
 												<Divider sx={{ my: 1 }} />
 												<FormControlLabel
@@ -1408,7 +1408,7 @@ function BuatGalangDanaPageContent() {
 															onChange={(e) => setAgreeB(e.target.checked)}
 														/>
 													}
-													label="Kamu sebagai penggalang dana bertanggung jawab atas permintaan pencairan dan pelaporan penggunaan dana."
+													label="Kamu sebagai penggalang dana bertanggung jawab atas permintaan pencairan dan pelaporan Useran dana."
 												/>
 											</Paper>
 										</Box>
@@ -1684,7 +1684,7 @@ function BuatGalangDanaPageContent() {
 
 								<Box sx={{ mt: 2 }}>
 									<Typography sx={{ fontWeight: 600, fontSize: 14, mb: 0.75 }}>
-										Isi rincian penggunaan dana
+										Isi rincian Useran dana
 									</Typography>
 									<TextField
 										size="small"
@@ -1884,7 +1884,7 @@ function BuatGalangDanaPageContent() {
 										<RichTextEditor
 											value={storyOther}
 											onChange={setStoryOther}
-											placeholder="Tulis latar belakang, kondisi, kebutuhan biaya, rencana penggunaan dana, dan ajakan..."
+											placeholder="Tulis latar belakang, kondisi, kebutuhan biaya, rencana Useran dana, dan ajakan..."
 											minHeight={240}
 										/>
 									</Box>
@@ -2022,7 +2022,7 @@ function BuatGalangDanaPageContent() {
 									onChange={(e) => setT1(e.target.checked)}
 								/>
 							}
-							label="Pemilik rekening bertanggung jawab atas penggunaan dana yang diterima dari galang dana ini."
+							label="Pemilik rekening bertanggung jawab atas Useran dana yang diterima dari galang dana ini."
 						/>
 						<FormControlLabel
 							control={
@@ -2031,7 +2031,7 @@ function BuatGalangDanaPageContent() {
 									onChange={(e) => setT2(e.target.checked)}
 								/>
 							}
-							label="Kamu sebagai penggalang dana bertanggung jawab atas permintaan pencairan dan pelaporan penggunaan dana."
+							label="Kamu sebagai penggalang dana bertanggung jawab atas permintaan pencairan dan pelaporan Useran dana."
 						/>
 						<FormControlLabel
 							control={

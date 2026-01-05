@@ -98,7 +98,7 @@ export default function NotificationClient({
 		if (!title || !message) {
 			setSnackbar({
 				open: true,
-				message: "Please fill in all fields",
+				message: "Harap isi semua bidang",
 				severity: "error",
 			});
 			return;
@@ -107,7 +107,7 @@ export default function NotificationClient({
 		if (targetMode === "SINGLE" && !selectedUser) {
 			setSnackbar({
 				open: true,
-				message: "Please select a user",
+				message: "Harap pilih User",
 				severity: "error",
 			});
 			return;
@@ -130,7 +130,7 @@ export default function NotificationClient({
 			if (result.success) {
 				setSnackbar({
 					open: true,
-					message: "Notification sent successfully",
+					message: "Notifikasi berhasil dikirim",
 					severity: "success",
 				});
 				setOpenDialog(false);
@@ -141,14 +141,14 @@ export default function NotificationClient({
 			} else {
 				setSnackbar({
 					open: true,
-					message: result.error || "Failed to send",
+					message: result.error || "Gagal mengirim",
 					severity: "error",
 				});
 			}
 		} catch (error) {
 			setSnackbar({
 				open: true,
-				message: "An error occurred",
+				message: "Terjadi kesalahan",
 				severity: "error",
 			});
 		} finally {
@@ -157,7 +157,7 @@ export default function NotificationClient({
 	};
 
 	const handleDelete = async (id: string) => {
-		if (!confirm("Are you sure you want to delete this notification?")) return;
+		if (!confirm("Anda yakin ingin menghapus notifikasi ini?")) return;
 
 		setDeleteLoading(id);
 		try {
@@ -165,21 +165,21 @@ export default function NotificationClient({
 			if (result.success) {
 				setSnackbar({
 					open: true,
-					message: "Notification deleted",
+					message: "Notifikasi dihapus",
 					severity: "success",
 				});
 				router.refresh();
 			} else {
 				setSnackbar({
 					open: true,
-					message: "Failed to delete",
+					message: "Gagal menghapus",
 					severity: "error",
 				});
 			}
 		} catch (error) {
 			setSnackbar({
 				open: true,
-				message: "An error occurred",
+				message: "Terjadi kesalahan",
 				severity: "error",
 			});
 		} finally {
@@ -196,7 +196,7 @@ export default function NotificationClient({
 				sx={{ mb: 3 }}
 			>
 				<Typography variant="h5" fontWeight={700}>
-					Notification Manager
+					Manajer Notifikasi
 				</Typography>
 				<Button
 					variant="contained"
@@ -204,7 +204,7 @@ export default function NotificationClient({
 					onClick={() => setOpenDialog(true)}
 					sx={{ borderRadius: 2, textTransform: "none" }}
 				>
-					New Notification
+					Notifikasi Baru
 				</Button>
 			</Stack>
 
@@ -216,14 +216,14 @@ export default function NotificationClient({
 				<Table>
 					<TableHead>
 						<TableRow sx={{ bgcolor: "grey.50" }}>
-							<TableCell sx={{ fontWeight: 600 }}>Title</TableCell>
-							<TableCell sx={{ fontWeight: 600 }}>Message</TableCell>
-							<TableCell sx={{ fontWeight: 600 }}>Type</TableCell>
-							<TableCell sx={{ fontWeight: 600 }}>Recipient</TableCell>
-							<TableCell sx={{ fontWeight: 600 }}>Sent At</TableCell>
+							<TableCell sx={{ fontWeight: 600 }}>Judul</TableCell>
+							<TableCell sx={{ fontWeight: 600 }}>Pesan</TableCell>
+							<TableCell sx={{ fontWeight: 600 }}>Tipe</TableCell>
+							<TableCell sx={{ fontWeight: 600 }}>Penerima</TableCell>
+							<TableCell sx={{ fontWeight: 600 }}>Dikirim</TableCell>
 							<TableCell sx={{ fontWeight: 600 }}>Status</TableCell>
 							<TableCell align="right" sx={{ fontWeight: 600 }}>
-								Actions
+								Tindakan
 							</TableCell>
 						</TableRow>
 					</TableHead>
@@ -232,7 +232,7 @@ export default function NotificationClient({
 							<TableRow>
 								<TableCell colSpan={7} align="center" sx={{ py: 3 }}>
 									<Typography color="text.secondary">
-										No notifications found
+										Tidak ada notifikasi
 									</Typography>
 								</TableCell>
 							</TableRow>
@@ -261,7 +261,7 @@ export default function NotificationClient({
 									<TableCell>
 										{notif.user
 											? notif.user.name || notif.user.email
-											: "Unknown"}
+											: "Tidak diketahui"}
 									</TableCell>
 									<TableCell>
 										{new Date(notif.createdAt).toLocaleDateString("id-ID", {
@@ -273,7 +273,7 @@ export default function NotificationClient({
 									</TableCell>
 									<TableCell>
 										<Chip
-											label={notif.isRead ? "Read" : "Unread"}
+											label={notif.isRead ? "Terbaca" : "Belum terbaca"}
 											size="small"
 											color={notif.isRead ? "success" : "default"}
 										/>
@@ -315,18 +315,18 @@ export default function NotificationClient({
 				maxWidth="sm"
 				fullWidth
 			>
-				<DialogTitle>Send New Notification</DialogTitle>
+				<DialogTitle>Kirim Notifikasi Baru</DialogTitle>
 				<DialogContent dividers>
 					<Stack spacing={3} sx={{ pt: 1 }}>
 						<TextField
-							label="Title"
+							label="Judul"
 							fullWidth
 							value={title}
 							onChange={(e) => setTitle(e.target.value)}
 						/>
 
 						<TextField
-							label="Message"
+							label="Pesan"
 							fullWidth
 							multiline
 							rows={3}
@@ -335,26 +335,26 @@ export default function NotificationClient({
 						/>
 
 						<FormControl fullWidth>
-							<InputLabel>Type</InputLabel>
+							<InputLabel>Tipe</InputLabel>
 							<Select
 								value={type}
-								label="Type"
+								label="Tipe"
 								onChange={(e) => setType(e.target.value as NotificationType)}
 							>
-								<MenuItem value="KABAR">Kabar (General Update)</MenuItem>
-								<MenuItem value="PESAN">Pesan (Direct Message)</MenuItem>
+								<MenuItem value="KABAR">Kabar (Pembaharuan Umum)</MenuItem>
+								<MenuItem value="PESAN">Pesan (Pesan Langsung)</MenuItem>
 							</Select>
 						</FormControl>
 
 						<FormControl fullWidth>
-							<InputLabel>Target Audience</InputLabel>
+							<InputLabel>Audiens Target</InputLabel>
 							<Select
 								value={targetMode}
-								label="Target Audience"
+								label="Audiens Target"
 								onChange={(e) => setTargetMode(e.target.value as any)}
 							>
-								<MenuItem value="BROADCAST">Broadcast (All Users)</MenuItem>
-								<MenuItem value="SINGLE">Specific User</MenuItem>
+								<MenuItem value="BROADCAST">Siarkan (Semua User)</MenuItem>
+								<MenuItem value="SINGLE">User Tertentu</MenuItem>
 							</Select>
 						</FormControl>
 
@@ -370,8 +370,8 @@ export default function NotificationClient({
 								renderInput={(params) => (
 									<TextField
 										{...params}
-										label="Search User"
-										placeholder="Type name or email..."
+										label="Cari User"
+										placeholder="Ketik nama atau email..."
 										InputProps={{
 											...params.InputProps,
 											endAdornment: (
@@ -390,14 +390,13 @@ export default function NotificationClient({
 
 						{targetMode === "BROADCAST" && (
 							<Alert severity="info">
-								This notification will be sent to ALL registered users. Use with
-								caution.
+								Notifikasi ini akan dikirim ke SEMUA User terdaftar. Gunakan dengan hati-hati.
 							</Alert>
 						)}
 					</Stack>
 				</DialogContent>
 				<DialogActions sx={{ p: 2 }}>
-					<Button onClick={() => setOpenDialog(false)}>Cancel</Button>
+					<Button onClick={() => setOpenDialog(false)}>Batal</Button>
 					<Button
 						variant="contained"
 						onClick={handleSubmit}
@@ -410,7 +409,7 @@ export default function NotificationClient({
 							)
 						}
 					>
-						Send Notification
+						Kirim Notifikasi
 					</Button>
 				</DialogActions>
 			</Dialog>
