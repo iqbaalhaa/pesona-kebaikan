@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import IconButton from "@mui/material/IconButton";
@@ -14,7 +13,6 @@ import Container from "@mui/material/Container";
 import Button from "@mui/material/Button";
 
 // Icons
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import FacebookIcon from "@mui/icons-material/Facebook";
 import InstagramIcon from "@mui/icons-material/Instagram";
@@ -26,6 +24,7 @@ import ArticleIcon from "@mui/icons-material/Article";
 import DownloadIcon from "@mui/icons-material/Download";
 
 import { getPageContent } from "@/actions/cms";
+import ProfileHeader from "@/components/profile/ProfileHeader";
 
 interface OrgMember {
   name: string;
@@ -58,7 +57,6 @@ interface AboutData {
 }
 
 export default function AboutPage() {
-  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [title, setTitle] = useState("Tentang Kami");
   const [content, setContent] = useState("");
@@ -124,17 +122,7 @@ export default function AboutPage() {
 
   return (
     <Box sx={{ pb: 8 }}>
-      {/* Header */}
-      <Container maxWidth="md" sx={{ pt: 2.5, pb: 2 }}>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          <IconButton onClick={() => router.back()} edge="start" sx={{ color: "#0f172a" }}>
-            <ArrowBackIcon />
-          </IconButton>
-          <Typography sx={{ fontSize: 20, fontWeight: 900, color: "#0f172a" }}>
-            {title}
-          </Typography>
-        </Box>
-      </Container>
+      <ProfileHeader title={title} container maxWidth="md" />
 
       {/* Banner */}
       {aboutData?.banner ? (

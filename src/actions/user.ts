@@ -1,12 +1,13 @@
-'use server';
+"use server";
 
-import { prisma } from '@/lib/prisma';
-import { revalidatePath } from 'next/cache';
-import bcrypt from 'bcryptjs';
-import { Role } from '@/generated/prisma';
+import { prisma } from "@/lib/prisma";
+import { revalidatePath } from "next/cache";
+import bcrypt from "bcryptjs";
+import { Role } from "@/generated/prisma";
+import { auth } from "@/auth";
 
 export async function getUsers(query?: string, role?: string, page: number = 1, limit: number = 10) {
-  const where: any = {};
+  const where: Record<string, unknown> = {};
 
   if (query) {
     where.OR = [
@@ -48,7 +49,15 @@ export async function getUsers(query?: string, role?: string, page: number = 1, 
   }
 }
 
-export async function createUser(data: any) {
+type CreateUserInput = {
+  name: string;
+  email: string;
+  phone?: string;
+  role: Role;
+  password: string;
+};
+
+export async function createUser(data: CreateUserInput) {
   try {
     const hashedPassword = await bcrypt.hash(data.password, 10);
 
@@ -57,29 +66,37 @@ export async function createUser(data: any) {
         name: data.name,
         email: data.email,
         phone: data.phone || null,
-        role: data.role as Role,
+        role: data.role,
         password: hashedPassword,
       },
     });
 
     revalidatePath('/admin/users');
     return { success: true };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error creating user:', error);
-    if (error.code === 'P2002') {
+    if ((error as { code?: string })?.code === 'P2002') {
       return { success: false, error: 'Email or phone already exists' };
     }
     return { success: false, error: 'Failed to create user' };
   }
 }
 
-export async function updateUser(id: string, data: any) {
+type UpdateUserInput = {
+  name?: string;
+  email?: string;
+  phone?: string;
+  role?: Role;
+  password?: string;
+};
+
+export async function updateUser(id: string, data: UpdateUserInput) {
   try {
-    const updateData: any = {
+    const updateData: Record<string, unknown> = {
       name: data.name,
       email: data.email,
       phone: data.phone || null,
-      role: data.role as Role,
+      role: data.role,
     };
 
     // Only update password if provided
@@ -94,9 +111,9 @@ export async function updateUser(id: string, data: any) {
 
     revalidatePath('/admin/users');
     return { success: true };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error updating user:', error);
-    if (error.code === 'P2002') {
+    if ((error as { code?: string })?.code === 'P2002') {
       return { success: false, error: 'Email or phone already exists' };
     }
     return { success: false, error: 'Failed to update user' };
@@ -166,4 +183,43 @@ export async function getUserStats() {
     } catch (error) {
         return { total: 0, admins: 0, users: 0 };
     }
+}
+
+export async function getMyProfile() {
+  const session = await auth();
+  if (!session?.user?.email) return null;
+  const user = await prisma.user.findUnique({
+    where: { email: session.user.email },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      phone: true,
+      image: true,
+      createdAt: true,
+    },
+  });
+  if (!user) return null;
+  return user;
+}
+
+export async function updateMyProfile(data: { name?: string; email?: string; phone?: string; image?: string | null }) {
+  const session = await auth();
+  if (!session?.user?.email) return { success: false, error: "Unauthorized" };
+  const existing = await prisma.user.findUnique({
+    where: { email: session.user.email },
+    select: { id: true },
+  });
+  if (!existing) return { success: false, error: "User not found" };
+  await prisma.user.update({
+    where: { id: existing.id },
+    data: {
+      name: data.name,
+      email: data.email,
+      phone: data.phone ?? null,
+      image: data.image ?? undefined,
+    },
+  });
+  revalidatePath("/profil/akun");
+  return { success: true };
 }

@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import { useRouter } from "next/navigation";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import IconButton from "@mui/material/IconButton";
@@ -14,16 +13,16 @@ import InputAdornment from "@mui/material/InputAdornment";
 import Skeleton from "@mui/material/Skeleton";
 
 // Icons
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import SearchIcon from "@mui/icons-material/Search";
 import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
 
 // Actions
 import { getFaqs } from "@/actions/cms";
+import ProfileHeader from "@/components/profile/ProfileHeader";
+import PageContainer from "@/components/profile/PageContainer";
 
 export default function HelpCenterPage() {
-  const router = useRouter();
   const [expanded, setExpanded] = React.useState<string | false>(false);
   const [faqs, setFaqs] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(true);
@@ -55,20 +54,8 @@ export default function HelpCenterPage() {
   );
 
   return (
-    <Box sx={{ px: 2, pt: 2.5, pb: 6 }}>
-      {/* Header */}
-      <Box sx={{ mb: 3, display: "flex", alignItems: "center", gap: 1 }}>
-        <IconButton
-          onClick={() => router.back()}
-          edge="start"
-          sx={{ color: "#0f172a" }}
-        >
-          <ArrowBackIcon />
-        </IconButton>
-        <Typography sx={{ fontSize: 20, fontWeight: 900, color: "#0f172a" }}>
-          Pusat Bantuan
-        </Typography>
-      </Box>
+    <PageContainer>
+      <ProfileHeader title="Pusat Bantuan" />
 
       {/* Search */}
       <Paper
@@ -182,6 +169,6 @@ export default function HelpCenterPage() {
           </Typography>
         )}
       </Box>
-    </Box>
+    </PageContainer>
   );
 }

@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import { useRouter } from "next/navigation";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import Paper from "@mui/material/Paper";
@@ -22,7 +21,6 @@ import Stack from "@mui/material/Stack";
 import Alert from "@mui/material/Alert";
 
 // Icons
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import LockIcon from "@mui/icons-material/Lock";
 import SmartphoneIcon from "@mui/icons-material/Smartphone";
 import HistoryIcon from "@mui/icons-material/History";
@@ -35,9 +33,10 @@ import { changePassword, getLoginActivities } from "@/actions/security";
 import Snackbar from "@mui/material/Snackbar";
 import CircularProgress from "@mui/material/CircularProgress";
 import LaptopIcon from "@mui/icons-material/Laptop";
+import ProfileHeader from "@/components/profile/ProfileHeader";
+import PageContainer from "@/components/profile/PageContainer";
 
 export default function SecurityPage() {
-	const router = useRouter();
 
 	// State for Change Password Modal
 	const [openPassword, setOpenPassword] = React.useState(false);
@@ -140,7 +139,7 @@ export default function SecurityPage() {
 	};
 
 	return (
-		<Box sx={{ px: 2, pt: 2.5, pb: 6 }}>
+		<PageContainer>
 			<Snackbar
 				open={snackbar.open}
 				autoHideDuration={6000}
@@ -155,19 +154,7 @@ export default function SecurityPage() {
 					{snackbar.message}
 				</Alert>
 			</Snackbar>
-			{/* Header */}
-			<Box sx={{ mb: 3, display: "flex", alignItems: "center", gap: 1 }}>
-				<IconButton
-					onClick={() => router.back()}
-					edge="start"
-					sx={{ color: "#0f172a" }}
-				>
-					<ArrowBackIcon />
-				</IconButton>
-				<Typography sx={{ fontSize: 20, fontWeight: 900, color: "#0f172a" }}>
-					Keamanan & Password
-				</Typography>
-			</Box>
+			<ProfileHeader title="Keamanan & Password" />
 
 			{/* Security Status Banner */}
 			<Paper
@@ -448,6 +435,6 @@ export default function SecurityPage() {
 					</DialogActions>
 				</form>
 			</Dialog>
-		</Box>
+		</PageContainer>
 	);
 }

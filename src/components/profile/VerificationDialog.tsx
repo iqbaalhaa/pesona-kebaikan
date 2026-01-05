@@ -27,6 +27,7 @@ import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import { requestEmailVerification } from "@/actions/email";
 import { requestVerificationOtp, verifyOtp } from "@/actions/otp";
 import { newVerification } from "@/actions/new-verification";
+import { markPhoneVerified, submitVerificationRequest, updateMyAddress } from "@/actions/verification";
 
 interface Province {
   id: string;
@@ -65,6 +66,7 @@ export default function VerificationDialog({
 
   const [waCooldown, setWaCooldown] = React.useState<number>(0);
   const [showResend, setShowResend] = React.useState<boolean>(false);
+  const [docNumber, setDocNumber] = React.useState<string>("");
 
   React.useEffect(() => {
     let timer: NodeJS.Timeout;
@@ -382,6 +384,7 @@ export default function VerificationDialog({
                   setWaLoading(true);
                   const res = await verifyOtp(phone, waOtp);
                   if (res.success) {
+                    await markPhoneVerified(phone);
                     setActiveStep((s) => s + 1);
                   } else {
                     alert(res.error || "Verifikasi OTP gagal");
@@ -530,9 +533,26 @@ export default function VerificationDialog({
                     placeholder={verificationType === "individu" ? "16 digit NIK" : "Masukkan nomor SK"}
                     sx={{ mt: 2 }}
                     InputProps={{ sx: { borderRadius: 1 } }}
+                    value={docNumber}
+                    onChange={(e) => setDocNumber(e.target.value)}
                   />
                   <Box sx={{ mb: 2, mt: 2 }}>
-                    <Button variant="contained" onClick={handleNext} sx={{ bgcolor: "#61ce70", textTransform: "none", fontWeight: 700, borderRadius: 1, boxShadow: "none" }}>
+                    <Button variant="contained" onClick={async () => {
+                      if (!docNumber) {
+                        alert("Nomor dokumen wajib diisi");
+                        return;
+                      }
+                      const res = await submitVerificationRequest({
+                        type: verificationType === "organisasi" ? "organisasi" : "individu",
+                        ktpNumber: verificationType === "individu" ? docNumber : undefined,
+                        organizationNumber: verificationType === "organisasi" ? docNumber : undefined,
+                      });
+                      if (res.success) {
+                        handleNext();
+                      } else {
+                        alert(res.error || "Gagal menyimpan data verifikasi");
+                      }
+                    }} sx={{ bgcolor: "#61ce70", textTransform: "none", fontWeight: 700, borderRadius: 1, boxShadow: "none" }}>
                       Lanjut
                     </Button>
                     <Button onClick={handleBack} sx={{ mt: 1, mr: 1, color: "text.secondary", textTransform: "none" }}>
@@ -574,7 +594,15 @@ export default function VerificationDialog({
                   <Box sx={{ mb: 2 }}>
                     <Button
                       variant="contained"
-                      onClick={handleNext}
+                      onClick={async () => {
+                        if (!selectedProvince || !selectedRegency) return;
+                        const res = await updateMyAddress(selectedProvince.id, selectedRegency.id);
+                        if (res.success) {
+                          handleNext();
+                        } else {
+                          alert(res.error || "Gagal menyimpan alamat");
+                        }
+                      }}
                       disabled={!selectedProvince || !selectedRegency}
                       sx={{
                         bgcolor: "#61ce70",

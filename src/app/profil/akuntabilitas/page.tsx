@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import { useRouter } from "next/navigation";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import IconButton from "@mui/material/IconButton";
@@ -10,13 +9,14 @@ import Grid from "@mui/material/Grid";
 import CircularProgress from "@mui/material/CircularProgress";
 
 // Icons
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
 import AssessmentIcon from "@mui/icons-material/Assessment";
 import AccountBalanceIcon from "@mui/icons-material/AccountBalance";
 import DownloadIcon from "@mui/icons-material/Download";
 
 import { getPageContent } from "@/actions/cms";
+import ProfileHeader from "@/components/profile/ProfileHeader";
+import PageContainer from "@/components/profile/PageContainer";
 
 interface AccountabilityData {
   hero: {
@@ -37,7 +37,6 @@ interface AccountabilityData {
 }
 
 export default function AccountabilityPage() {
-  const router = useRouter();
   const [loading, setLoading] = React.useState(true);
   const [data, setData] = React.useState<AccountabilityData | null>(null);
 
@@ -68,20 +67,8 @@ export default function AccountabilityPage() {
   if (!data) return null;
 
   return (
-    <Box sx={{ px: 2, pt: 2.5, pb: 6 }}>
-      {/* Header */}
-      <Box sx={{ mb: 3, display: "flex", alignItems: "center", gap: 1 }}>
-        <IconButton
-          onClick={() => router.back()}
-          edge="start"
-          sx={{ color: "#0f172a" }}
-        >
-          <ArrowBackIcon />
-        </IconButton>
-        <Typography sx={{ fontSize: 20, fontWeight: 900, color: "#0f172a" }}>
-          Akuntabilitas
-        </Typography>
-      </Box>
+    <PageContainer>
+      <ProfileHeader title="Akuntabilitas" />
 
       {/* Trust Badge */}
       <Paper
@@ -180,6 +167,6 @@ export default function AccountabilityPage() {
           </Paper>
         ))}
       </Box>
-    </Box>
+    </PageContainer>
   );
 }

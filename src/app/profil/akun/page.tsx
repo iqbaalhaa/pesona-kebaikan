@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import { useRouter } from "next/navigation";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import Avatar from "@mui/material/Avatar";
@@ -19,34 +18,95 @@ import TextField from "@mui/material/TextField";
 import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
 import PhotoCamera from "@mui/icons-material/PhotoCamera";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import ProfileHeader from "@/components/profile/ProfileHeader";
+import PageContainer from "@/components/profile/PageContainer";
+import { getMyProfile, updateMyProfile } from "@/actions/user";
 
 export default function AccountInfoPage() {
-	const router = useRouter();
-	const [user, setUser] = React.useState({
-		name: "Ahmad Fulan",
-		email: "ahmad@example.com",
-		phone: "+62 812-3456-7890",
-		memberStatus: "Member Basic",
-		joined: "Jan 2024",
-		initial: "A",
-	});
+	const [user, setUser] = React.useState<{
+		id: string;
+		name: string | null;
+		email: string;
+		phone: string | null;
+		memberStatus: string;
+		joined: string;
+		initial: string;
+		image: string | null;
+	} | null>(null);
 	const [avatarUrl, setAvatarUrl] = React.useState<string | null>(null);
 	const [openEdit, setOpenEdit] = React.useState(false);
-	const [editForm, setEditForm] = React.useState({
-		name: user.name,
-		email: user.email,
-		phone: user.phone,
+	const [editForm, setEditForm] = React.useState<{ name: string; email: string; phone: string }>({
+		name: "",
+		email: "",
+		phone: "",
 	});
 
+	React.useEffect(() => {
+		const load = async () => {
+			const profile = await getMyProfile();
+			if (!profile) return;
+			const joined = new Date(profile.createdAt).toLocaleDateString("id-ID", {
+				month: "short",
+				year: "numeric",
+			});
+			const initial = (profile.name?.[0] || profile.email?.[0] || "A").toUpperCase();
+			const memberStatus = "Member Basic";
+			setUser({
+				id: profile.id,
+				name: profile.name,
+				email: profile.email,
+				phone: profile.phone,
+				memberStatus,
+				joined,
+				initial,
+				image: profile.image,
+			});
+			setAvatarUrl(profile.image ?? null);
+			setEditForm({
+				name: profile.name || "",
+				email: profile.email,
+				phone: profile.phone || "",
+			});
+		};
+		load();
+	}, []);
+
 	const handleOpenEdit = () => {
-		setEditForm({ name: user.name, email: user.email, phone: user.phone });
+		if (!user) return;
+		setEditForm({ name: user.name || "", email: user.email, phone: user.phone || "" });
 		setOpenEdit(true);
 	};
 
 	const handleSaveEdit = () => {
-		setUser((u) => ({ ...u, ...editForm }));
-		setOpenEdit(false);
+		updateMyProfile({
+			name: editForm.name,
+			email: editForm.email,
+			phone: editForm.phone,
+			image: avatarUrl,
+		}).then(async (res) => {
+			if (res?.success) {
+				const profile = await getMyProfile();
+				if (profile) {
+					const joined = new Date(profile.createdAt).toLocaleDateString("id-ID", {
+						month: "short",
+						year: "numeric",
+					});
+					const initial = (profile.name?.[0] || profile.email?.[0] || "A").toUpperCase();
+					const memberStatus = "Member Basic";
+					setUser({
+						id: profile.id,
+						name: profile.name,
+						email: profile.email,
+						phone: profile.phone,
+						memberStatus,
+						joined,
+						initial,
+						image: profile.image,
+					});
+				}
+				setOpenEdit(false);
+			}
+		});
 	};
 
 	const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -57,19 +117,8 @@ export default function AccountInfoPage() {
 	};
 
 	return (
-		<Box sx={{ px: 2, pt: 2.5, pb: 6 }}>
-			<Box sx={{ mb: 3, display: "flex", alignItems: "center", gap: 1 }}>
-				<IconButton
-					onClick={() => router.back()}
-					edge="start"
-					sx={{ color: "#0f172a" }}
-				>
-					<ArrowBackIcon />
-				</IconButton>
-				<Typography sx={{ fontSize: 20, fontWeight: 900, color: "#0f172a" }}>
-					Informasi Akun
-				</Typography>
-			</Box>
+		<PageContainer>
+			<ProfileHeader title="Informasi Akun" />
 
 			<Paper
 				elevation={0}
@@ -96,7 +145,7 @@ export default function AccountInfoPage() {
 							fontWeight: 800,
 						}}
 					>
-						{user.initial}
+						{user?.initial || "A"}
 					</Avatar>
 					<input
 						id="avatar-upload"
@@ -125,10 +174,10 @@ export default function AccountInfoPage() {
 				</Box>
 				<Box sx={{ flex: 1 }}>
 					<Typography sx={{ fontSize: 16, fontWeight: 900, color: "#0f172a" }}>
-						{user.name}
+						{user?.name || "Pengguna"}
 					</Typography>
 					<Typography sx={{ fontSize: 13, color: "rgba(15,23,42,0.6)" }}>
-						{user.email}
+						{user?.email}
 					</Typography>
 					<Box
 						sx={{ mt: 0.5, display: "flex", alignItems: "center", gap: 0.5 }}
@@ -144,7 +193,7 @@ export default function AccountInfoPage() {
 						<Typography
 							sx={{ fontSize: 11, fontWeight: 700, color: "#61ce70" }}
 						>
-							{user.memberStatus}
+							{user?.memberStatus || "Member"}
 						</Typography>
 					</Box>
 				</Box>
@@ -158,7 +207,7 @@ export default function AccountInfoPage() {
 					<ListItem sx={{ px: 1.5 }}>
 						<ListItemText
 							primary="Nama Lengkap"
-							secondary={user.name}
+							secondary={user?.name || "-"}
 							primaryTypographyProps={{
 								fontSize: 12,
 								color: "rgba(15,23,42,0.6)",
@@ -174,7 +223,7 @@ export default function AccountInfoPage() {
 					<ListItem sx={{ px: 1.5 }}>
 						<ListItemText
 							primary="Email"
-							secondary={user.email}
+							secondary={user?.email || "-"}
 							primaryTypographyProps={{
 								fontSize: 12,
 								color: "rgba(15,23,42,0.6)",
@@ -190,7 +239,7 @@ export default function AccountInfoPage() {
 					<ListItem sx={{ px: 1.5 }}>
 						<ListItemText
 							primary="Nomor HP"
-							secondary={user.phone}
+							secondary={user?.phone || "-"}
 							primaryTypographyProps={{
 								fontSize: 12,
 								color: "rgba(15,23,42,0.6)",
@@ -206,7 +255,7 @@ export default function AccountInfoPage() {
 					<ListItem sx={{ px: 1.5 }}>
 						<ListItemText
 							primary="Status Member"
-							secondary={user.memberStatus}
+							secondary={user?.memberStatus || "Member"}
 							primaryTypographyProps={{
 								fontSize: 12,
 								color: "rgba(15,23,42,0.6)",
@@ -222,7 +271,7 @@ export default function AccountInfoPage() {
 					<ListItem sx={{ px: 1.5 }}>
 						<ListItemText
 							primary="Bergabung Sejak"
-							secondary={user.joined}
+							secondary={user?.joined || "-"}
 							primaryTypographyProps={{
 								fontSize: 12,
 								color: "rgba(15,23,42,0.6)",
@@ -275,6 +324,6 @@ export default function AccountInfoPage() {
 					</Button>
 				</DialogActions>
 			</Dialog>
-		</Box>
+		</PageContainer>
 	);
 }

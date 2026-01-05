@@ -12,24 +12,39 @@ enum Role {
   ADMIN
 }
 
+enum VerifiedAs {
+  personal
+  organization
+}
+
+enum VerificationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 model User {
-  id            String    @id @default(cuid())
+  id            String      @id @default(cuid())
   name          String?
-  email         String    @unique
+  email         String      @unique
   emailVerified DateTime?
   image         String?
-  role          Role      @default(USER)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  role          Role        @default(USER)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
   password      String?
-  phone         String?   @unique
+  phone         String?     @unique
   phoneVerified DateTime?
+  verifiedAs    VerifiedAs?
+  verifiedAt    DateTime?
 
-  accounts        Account[]
-  sessions        Session[]
-  posts           Post[]
-  Authenticator   Authenticator[]
-  loginActivities LoginActivity[]
+  accounts              Account[]
+  sessions              Session[]
+  posts                 Post[]
+  Authenticator         Authenticator[]
+  loginActivities       LoginActivity[]
+  verificationRequests  VerificationRequest[] @relation("VerificationUser")
+  reviewedVerifications VerificationRequest[] @relation("VerificationReviewedBy")
 
   // untuk Blog.createdById relation("UserBlogs")
   blogs         Blog[]         @relation("UserBlogs")
@@ -456,6 +471,7 @@ model Regency {
   province   Province   @relation(fields: [provinceId], references: [id])
   districts  District[]
   users      User[]
+
   @@index([provinceId])
 }
 
@@ -467,6 +483,7 @@ model District {
   regency   Regency   @relation(fields: [regencyId], references: [id])
   villages  Village[]
   users     User[]
+
   @@index([regencyId])
 }
 
@@ -492,4 +509,28 @@ model OtpRequest {
   updatedAt DateTime @updatedAt
 
   @@index([phone, createdAt(sort: Desc)], name: "idx_otp_phone_created")
+}
+
+model VerificationRequest {
+  id                 String             @id @default(cuid())
+  userId             String
+  type               VerifiedAs
+  status             VerificationStatus @default(PENDING)
+  ktpNumber          String?
+  ktpName            String?
+  ktpPhotoUrl        String?
+  selfieUrl          String?
+  organizationName   String?
+  organizationDocUrl String?
+  notes              String?            @db.Text
+  reviewedById       String?
+  reviewedBy         User?              @relation("VerificationReviewedBy", fields: [reviewedById], references: [id])
+  reviewedAt         DateTime?
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  user User @relation("VerificationUser", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
 }

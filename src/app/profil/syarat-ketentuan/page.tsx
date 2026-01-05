@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import { useRouter } from "next/navigation";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import IconButton from "@mui/material/IconButton";
@@ -9,13 +8,13 @@ import Paper from "@mui/material/Paper";
 import CircularProgress from "@mui/material/CircularProgress";
 
 // Icons
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import GavelIcon from "@mui/icons-material/Gavel";
 
 import { getPageContent } from "@/actions/cms";
+import ProfileHeader from "@/components/profile/ProfileHeader";
+import PageContainer from "@/components/profile/PageContainer";
 
 export default function TermsPage() {
-  const router = useRouter();
   const [content, setContent] = React.useState<string>("");
   const [loading, setLoading] = React.useState(true);
 
@@ -36,20 +35,8 @@ export default function TermsPage() {
   }, []);
 
   return (
-    <Box sx={{ px: 2, pt: 2.5, pb: 6 }}>
-      {/* Header */}
-      <Box sx={{ mb: 3, display: "flex", alignItems: "center", gap: 1 }}>
-        <IconButton
-          onClick={() => router.back()}
-          edge="start"
-          sx={{ color: "#0f172a" }}
-        >
-          <ArrowBackIcon />
-        </IconButton>
-        <Typography sx={{ fontSize: 20, fontWeight: 900, color: "#0f172a" }}>
-          Syarat & Ketentuan
-        </Typography>
-      </Box>
+    <PageContainer>
+      <ProfileHeader title="Syarat & Ketentuan" />
 
       {/* Intro Banner */}
       <Paper
@@ -98,6 +85,6 @@ export default function TermsPage() {
           Terakhir diperbarui: {new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}
         </Typography>
       </Box>
-    </Box>
+    </PageContainer>
   );
 }
