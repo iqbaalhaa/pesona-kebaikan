@@ -62,6 +62,8 @@ model User {
   villageId  String?
   village    Village?  @relation(fields: [villageId], references: [id])
   address    String?   @db.Text
+
+  amiins Amiin[] @relation("UserAmiins")
 }
 
 model LoginActivity {
@@ -372,8 +374,24 @@ model Donation {
 
   @@index([campaignId])
   @@index([userId])
+
+  amiins Amiin[] @relation("DonationAmiins")
 }
 
+model Amiin {
+  id         String    @id @default(cuid())
+  donationId String
+  donation   Donation  @relation("DonationAmiins", fields: [donationId], references: [id], onDelete: Cascade)
+  userId     String?
+  user       User?     @relation("UserAmiins", fields: [userId], references: [id], onDelete: SetNull)
+  sessionId  String?
+  ipAddress  String?
+  createdAt  DateTime  @default(now())
+
+  @@index([donationId])
+  @@unique([userId, donationId])
+  @@unique([sessionId, donationId])
+}
 enum NotificationType {
   KABAR
   PESAN

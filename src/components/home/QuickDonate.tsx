@@ -2,22 +2,15 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
+import Script from "next/script";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import Autocomplete from "@mui/material/Autocomplete";
 import TextField from "@mui/material/TextField";
-import Radio from "@mui/material/Radio";
-import RadioGroup from "@mui/material/RadioGroup";
-import FormControlLabel from "@mui/material/FormControlLabel";
-import FormControl from "@mui/material/FormControl";
-import Paper from "@mui/material/Paper";
 import Button from "@mui/material/Button";
 import CircularProgress from "@mui/material/CircularProgress";
 import Snackbar from "@mui/material/Snackbar";
 import Alert from "@mui/material/Alert";
-import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
-import QrCodeIcon from "@mui/icons-material/QrCode";
-import CreditCardIcon from "@mui/icons-material/CreditCard";
 
 import type { Campaign } from "@/types";
 import { createDonation } from "@/actions/donation";
@@ -25,34 +18,10 @@ import { createDonation } from "@/actions/donation";
 const PRIMARY = "#61ce70";
 const MIN_DONATION = Number(process.env.NEXT_PUBLIC_MIN_DONATION ?? 1);
 
-type Method = "EWALLET" | "VIRTUAL_ACCOUNT" | "TRANSFER";
-
 const amountPresets = [10000, 25000, 50000, 100000];
 
 function rupiah(n: number) {
 	return new Intl.NumberFormat("id-ID").format(n);
-}
-
-function methodLabel(m: Method) {
-	switch (m) {
-		case "EWALLET":
-			return "E-Wallet / QRIS";
-		case "VIRTUAL_ACCOUNT":
-			return "Virtual Account";
-		case "TRANSFER":
-			return "Transfer Bank";
-	}
-}
-
-function methodSub(m: Method) {
-	switch (m) {
-		case "EWALLET":
-			return "GoPay • OVO • DANA • ShopeePay";
-		case "VIRTUAL_ACCOUNT":
-			return "BCA • BRI • BNI • Mandiri";
-		case "TRANSFER":
-			return "Transfer Manual (Verifikasi Manual)";
-	}
 }
 
 function CloseIcon() {
@@ -152,7 +121,6 @@ export default function QuickDonate({
 		amountPresets[0]
 	);
 	const [custom, setCustom] = React.useState<string>("");
-	const [method, setMethod] = React.useState<Method>("EWALLET");
 
 	// bottom sheet state
 	const [open, setOpen] = React.useState(false);
@@ -221,16 +189,54 @@ export default function QuickDonate({
 				donorPhone,
 				message,
 				isAnonymous,
-				paymentMethod: method,
+				paymentMethod: "EWALLET" as any,
 			});
 
 			if (res.success) {
+				const donationId = (res as any).data?.id;
 				const slug = selectedCampaign.slug || selectedCampaign.id;
-				router.push(`/donasi/${slug}?donation_success=true`);
+
+				if ((window as any).snap?.show) {
+					(window as any).snap.show();
+				}
+				const r = await fetch("/api/midtrans/snap-token", {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({ donationId }),
+				});
+				const j = await r.json();
+				if (j.success && j.token && (window as any).snap) {
+					const isProd =
+						process.env.NEXT_PUBLIC_MIDTRANS_IS_PRODUCTION === "true";
+					(window as any).snap.pay(j.token, {
+						language: "id",
+						...(isProd ? { uiMode: "qr" } : {}),
+						onSuccess: () => {
+							router.push(`/donasi/${slug}?donation_success=true`);
+						},
+						onPending: () => {
+							router.push(`/donasi/${slug}?donation_success=true`);
+						},
+						onError: () => {
+							setError("Pembayaran gagal");
+						},
+						onClose: () => {
+							setError("Pembayaran belum selesai");
+						},
+					});
+				} else {
+					if ((window as any).snap?.hide) {
+						(window as any).snap.hide();
+					}
+					setError(j.error || "Gagal memulai pembayaran");
+				}
 			} else {
 				setError(res.error || "Gagal membuat donasi");
 			}
 		} catch (err) {
+			if ((window as any).snap?.hide) {
+				(window as any).snap.hide();
+			}
 			setError("Terjadi kesalahan sistem");
 		} finally {
 			setLoading(false);
@@ -239,6 +245,15 @@ export default function QuickDonate({
 
 	return (
 		<Box sx={{ px: 2, mt: 2, position: "relative" }}>
+			<Script
+				src={
+					process.env.NEXT_PUBLIC_MIDTRANS_IS_PRODUCTION === "true"
+						? "https://app.midtrans.com/snap/snap.js"
+						: "https://app.sandbox.midtrans.com/snap/snap.js"
+				}
+				data-client-key={process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY || ""}
+				strategy="afterInteractive"
+			/>
 			<Box
 				sx={{
 					borderRadius: 1,
@@ -833,199 +848,7 @@ export default function QuickDonate({
 								/>
 							</Box>
 
-							{/* Payment Method */}
-							<Box sx={{ mb: 2 }}>
-								<Typography
-									sx={{
-										fontSize: 12,
-										fontWeight: 1000,
-										color: "rgba(15,23,42,.80)",
-										mb: 1,
-									}}
-								>
-									Metode Pembayaran
-								</Typography>
-								<FormControl component="fieldset" fullWidth>
-									<RadioGroup
-										value={method}
-										onChange={(e) => setMethod(e.target.value as Method)}
-									>
-										{/* E-Wallet */}
-										<Paper
-											variant="outlined"
-											sx={{
-												mb: 1,
-												borderRadius: "12px",
-												border:
-													method === "EWALLET"
-														? `1px solid ${PRIMARY}`
-														: "1px solid rgba(15,23,42,0.10)",
-												bgcolor:
-													method === "EWALLET"
-														? "rgba(97,206,112,0.05)"
-														: "transparent",
-												overflow: "hidden",
-											}}
-										>
-											<FormControlLabel
-												value="EWALLET"
-												control={
-													<Radio
-														size="small"
-														sx={{
-															color: PRIMARY,
-															"&.Mui-checked": { color: PRIMARY },
-														}}
-													/>
-												}
-												label={
-													<Box
-														sx={{
-															display: "flex",
-															alignItems: "center",
-															gap: 1.5,
-															py: 1,
-														}}
-													>
-														<QrCodeIcon
-															sx={{ color: "rgba(15,23,42,0.6)", fontSize: 20 }}
-														/>
-														<Box>
-															<Typography
-																sx={{ fontSize: 13, fontWeight: 700 }}
-															>
-																E-Wallet / QRIS
-															</Typography>
-															<Typography
-																sx={{ fontSize: 11, color: "text.secondary" }}
-															>
-																GoPay, OVO, DANA, ShopeePay
-															</Typography>
-														</Box>
-													</Box>
-												}
-												sx={{ width: "100%", m: 0, px: 1 }}
-											/>
-										</Paper>
-
-										{/* Virtual Account */}
-										<Paper
-											variant="outlined"
-											sx={{
-												mb: 1,
-												borderRadius: "12px",
-												border:
-													method === "VIRTUAL_ACCOUNT"
-														? `1px solid ${PRIMARY}`
-														: "1px solid rgba(15,23,42,0.10)",
-												bgcolor:
-													method === "VIRTUAL_ACCOUNT"
-														? "rgba(97,206,112,0.05)"
-														: "transparent",
-												overflow: "hidden",
-											}}
-										>
-											<FormControlLabel
-												value="VIRTUAL_ACCOUNT"
-												control={
-													<Radio
-														size="small"
-														sx={{
-															color: PRIMARY,
-															"&.Mui-checked": { color: PRIMARY },
-														}}
-													/>
-												}
-												label={
-													<Box
-														sx={{
-															display: "flex",
-															alignItems: "center",
-															gap: 1.5,
-															py: 1,
-														}}
-													>
-														<AccountBalanceWalletIcon
-															sx={{ color: "rgba(15,23,42,0.6)", fontSize: 20 }}
-														/>
-														<Box>
-															<Typography
-																sx={{ fontSize: 13, fontWeight: 700 }}
-															>
-																Virtual Account
-															</Typography>
-															<Typography
-																sx={{ fontSize: 11, color: "text.secondary" }}
-															>
-																BCA, Mandiri, BNI, BRI
-															</Typography>
-														</Box>
-													</Box>
-												}
-												sx={{ width: "100%", m: 0, px: 1 }}
-											/>
-										</Paper>
-
-										{/* Transfer */}
-										<Paper
-											variant="outlined"
-											sx={{
-												mb: 1,
-												borderRadius: "12px",
-												border:
-													method === "TRANSFER"
-														? `1px solid ${PRIMARY}`
-														: "1px solid rgba(15,23,42,0.10)",
-												bgcolor:
-													method === "TRANSFER"
-														? "rgba(97,206,112,0.05)"
-														: "transparent",
-												overflow: "hidden",
-											}}
-										>
-											<FormControlLabel
-												value="TRANSFER"
-												control={
-													<Radio
-														size="small"
-														sx={{
-															color: PRIMARY,
-															"&.Mui-checked": { color: PRIMARY },
-														}}
-													/>
-												}
-												label={
-													<Box
-														sx={{
-															display: "flex",
-															alignItems: "center",
-															gap: 1.5,
-															py: 1,
-														}}
-													>
-														<CreditCardIcon
-															sx={{ color: "rgba(15,23,42,0.6)", fontSize: 20 }}
-														/>
-														<Box>
-															<Typography
-																sx={{ fontSize: 13, fontWeight: 700 }}
-															>
-																Transfer Bank
-															</Typography>
-															<Typography
-																sx={{ fontSize: 11, color: "text.secondary" }}
-															>
-																Verifikasi Manual
-															</Typography>
-														</Box>
-													</Box>
-												}
-												sx={{ width: "100%", m: 0, px: 1 }}
-											/>
-										</Paper>
-									</RadioGroup>
-								</FormControl>
-							</Box>
+							{/* Payment Method removed as requested */}
 						</Box>
 
 						{/* Footer actions */}
