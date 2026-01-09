@@ -3,13 +3,13 @@
 import * as React from "react";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
+import Link from "next/link";
 
-function LinkBtn({ label, onClick }: { label: string; onClick: () => void }) {
+function LinkBtn({ label, href }: { label: string; href: string }) {
 	return (
 		<Box
-			component="button"
-			type="button"
-			onClick={onClick}
+			component={Link}
+			href={href}
 			sx={{
 				border: "none",
 				background: "transparent",
@@ -45,10 +45,7 @@ export default function MiniFooter() {
 					gap: 1.5,
 				}}
 			>
-				<LinkBtn
-					label="Tentang"
-					onClick={() => alert("Route Tentang menyusul")}
-				/>
+				<LinkBtn label="Tentang" href="/profil/tentang" />
 				<Box
 					sx={{
 						width: 4,
@@ -57,10 +54,7 @@ export default function MiniFooter() {
 						bgcolor: "rgba(15,23,42,.22)",
 					}}
 				/>
-				<LinkBtn
-					label="Bantuan"
-					onClick={() => alert("Route Bantuan menyusul")}
-				/>
+				<LinkBtn label="Bantuan" href="/profil/bantuan" />
 				<Box
 					sx={{
 						width: 4,
@@ -69,7 +63,7 @@ export default function MiniFooter() {
 						bgcolor: "rgba(15,23,42,.22)",
 					}}
 				/>
-				<LinkBtn label="S&K" onClick={() => alert("Route S&K menyusul")} />
+				<LinkBtn label="S&K" href="/profil/syarat-ketentuan" />
 			</Box>
 
 			<Typography
