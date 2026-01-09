@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 
 export async function POST(req: Request) {
 	try {
+		const origin = new URL(req.url).origin;
 		const body = await req.json();
 		const donationId = body?.donationId as string | undefined;
 
@@ -48,6 +49,11 @@ export async function POST(req: Request) {
 			50
 		);
 
+		const finishUrl = `${origin}/donasi/${
+			donation.campaign?.slug || donation.campaignId
+		}?donation_success=true`;
+		const notificationUrl = `${origin}/api/midtrans/notification`;
+
 		const payload: any = {
 			transaction_details: {
 				order_id: donation.id,
@@ -65,6 +71,10 @@ export async function POST(req: Request) {
 				first_name: donation.donorName || "Donatur",
 				phone: donation.donorPhone || "",
 			},
+			callbacks: {
+				finish: finishUrl,
+			},
+			notification_url: notificationUrl,
 		};
 
 		const authHeader =

@@ -26,10 +26,10 @@ import VrpanoIcon from "@mui/icons-material/Vrpano";
 import PersonPinIcon from "@mui/icons-material/PersonPin";
 
 type MenuItem = {
-  label: string;
-  href: string;
-  icon: React.ReactElement;
-  desc?: string;
+	label: string;
+	href: string;
+	icon: React.ReactElement;
+	desc?: string;
 };
 
 const menus: { title: string; items: MenuItem[] }[] = [
@@ -157,12 +157,12 @@ const menus: { title: string; items: MenuItem[] }[] = [
 				icon: <VerifiedUserIcon fontSize="small" />,
 				desc: "Laporan transparansi",
 			},
-      {
-        label: "Panduan Galang Dana",
-        href: "/admin/panduan-galang-dana",
-        icon: <HelpOutlineIcon fontSize="small" />,
-        desc: "Tips & best practices",
-      },
+			{
+				label: "Panduan Galang Dana",
+				href: "/admin/panduan-galang-dana",
+				icon: <HelpOutlineIcon fontSize="small" />,
+				desc: "Tips & best practices",
+			},
 		],
 	},
 	{
@@ -174,7 +174,6 @@ const menus: { title: string; items: MenuItem[] }[] = [
 				icon: <SettingsOutlinedIcon fontSize="small" />,
 				desc: "Konfigurasi platform",
 			},
-			
 		],
 	},
 ];
@@ -255,12 +254,12 @@ export default function AdminSidebar({
 													? "0 4px 12px rgba(0,0,0,0.05)"
 													: "0 8px 20px rgba(15,23,42,0.05)",
 											}}
-                    >
-                      {React.cloneElement(m.icon, {
-                        className: isActive
-                          ? "text-green-600 dark:text-green-400"
-                          : "text-slate-500 dark:text-slate-400 group-hover:text-slate-700 dark:group-hover:text-slate-300",
-                      })}
+										>
+											{React.cloneElement(m.icon as React.ReactElement<any>, {
+												className: isActive
+													? "text-green-600 dark:text-green-400"
+													: "text-slate-500 dark:text-slate-400 group-hover:text-slate-700 dark:group-hover:text-slate-300",
+											})}
 										</span>
 
 										<span className="min-w-0 flex-1">

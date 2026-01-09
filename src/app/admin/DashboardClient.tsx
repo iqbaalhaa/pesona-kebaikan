@@ -557,7 +557,12 @@ function MapIndonesia({
 				const pName = params.name;
 				const stat =
 					provinceStats.find((p) => p.name === pName) ||
-					({ name: pName, users: 0, donation: 0 } as ProvinceStat);
+					({
+						name: pName,
+						users: 0,
+						donation: 0,
+						donationCount: 0,
+					} as ProvinceStat);
 				setSelectedProvince(stat);
 			}
 		});
@@ -583,7 +588,7 @@ function MapIndonesia({
 							const nn = norm(params.name || "");
 							return pn === nn || pn.includes(nn) || nn.includes(pn);
 						}) ?? null;
-					const freq = stat?.donationCount ?? 0;
+					const freq = (stat as any)?.donationCount ?? 0;
 					const valText =
 						mapMetric === "users"
 							? `${Number(v).toLocaleString("id-ID")} User`
@@ -973,7 +978,12 @@ interface DashboardClientProps {
 	recentQueue: any[];
 }
 
-type ProvinceStat = { name: string; users: number; donation: number };
+type ProvinceStat = {
+	name: string;
+	users: number;
+	donation: number;
+	donationCount?: number;
+};
 
 export default function DashboardClient({
 	session,

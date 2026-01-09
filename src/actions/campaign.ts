@@ -249,11 +249,14 @@ export async function getCampaigns(
 		// Map to simplified structure if needed, or return as is.
 		// UI expects: id, title, category, type, ownerName, target, collected, donors, status, updatedAt
 		const rows = campaigns.map((c) => {
-			const collected = c.donations.reduce(
+			const validDonations = c.donations.filter((d) =>
+				["PAID", "paid", "SETTLED", "COMPLETED"].includes(d.status)
+			);
+			const collected = validDonations.reduce(
 				(acc, d) => acc + Number(d.amount),
 				0
 			);
-			const donors = c.donations.length;
+			const donors = validDonations.length;
 			const thumbnail =
 				c.media.find((m) => m.isThumbnail)?.url || c.media[0]?.url || "";
 			const daysLeft = c.end
@@ -328,11 +331,15 @@ export async function getCampaignBySlug(slug: string) {
 			return getCampaignById(slug);
 		}
 
-		const collected = campaign.donations.reduce(
+		const validDonations = campaign.donations.filter((d) =>
+			["PAID", "paid", "SETTLED", "COMPLETED"].includes(d.status)
+		);
+
+		const collected = validDonations.reduce(
 			(acc, d) => acc + Number(d.amount),
 			0
 		);
-		const donors = campaign.donations.length;
+		const donors = validDonations.length;
 		const thumbnail =
 			campaign.media.find((m) => m.isThumbnail)?.url ||
 			campaign.media[0]?.url ||
@@ -395,7 +402,7 @@ export async function getCampaignBySlug(slug: string) {
 			updatedAt: campaign.updatedAt,
 			thumbnail,
 			images: campaign.media.map((m) => m.url),
-			donations: campaign.donations.map((d) => ({
+			donations: validDonations.map((d) => ({
 				id: d.id,
 				name: d.donorName || "Hamba Allah",
 				amount: Number(d.amount),
@@ -438,11 +445,15 @@ export async function getCampaignById(id: string) {
 			return { success: false, error: "Campaign not found" };
 		}
 
-		const collected = campaign.donations.reduce(
+		const validDonations = campaign.donations.filter((d) =>
+			["PAID", "paid", "SETTLED", "COMPLETED"].includes(d.status)
+		);
+
+		const collected = validDonations.reduce(
 			(acc, d) => acc + Number(d.amount),
 			0
 		);
-		const donors = campaign.donations.length;
+		const donors = validDonations.length;
 		const thumbnail =
 			campaign.media.find((m) => m.isThumbnail)?.url ||
 			campaign.media[0]?.url ||
@@ -504,7 +515,7 @@ export async function getCampaignById(id: string) {
 			updatedAt: campaign.updatedAt,
 			thumbnail,
 			images: campaign.media.map((m) => m.url),
-			donations: campaign.donations.map((d) => ({
+			donations: validDonations.map((d) => ({
 				id: d.id,
 				name: d.donorName || "Hamba Allah",
 				amount: Number(d.amount),
@@ -892,6 +903,11 @@ export async function addCampaignMedia(campaignId: string, formData: FormData) {
 export async function getLatestDonations(limit: number = 10) {
 	try {
 		const donations = await prisma.donation.findMany({
+			where: {
+				status: {
+					in: ["PAID", "paid", "SETTLED", "COMPLETED"],
+				},
+			},
 			take: limit,
 			orderBy: { createdAt: "desc" },
 			include: {
@@ -970,7 +986,13 @@ export async function getPopularCampaigns(limit: number = 10) {
 		// Calculate popularity (e.g. number of donations)
 		const sorted = campaigns
 			.sort((a, b) => {
-				return b.donations.length - a.donations.length;
+				const validA = a.donations.filter((d) =>
+					["PAID", "paid", "SETTLED", "COMPLETED"].includes(d.status)
+				).length;
+				const validB = b.donations.filter((d) =>
+					["PAID", "paid", "SETTLED", "COMPLETED"].includes(d.status)
+				).length;
+				return validB - validA;
 			})
 			.slice(0, limit);
 
@@ -1024,7 +1046,13 @@ type CampaignWithRelations = Prisma.CampaignGetPayload<{
 
 function mapCampaignsToTypes(campaigns: CampaignWithRelations[]) {
 	return campaigns.map((c) => {
-		const collected = c.donations.reduce((acc, d) => acc + Number(d.amount), 0);
+		const validDonations = c.donations.filter((d) =>
+			["PAID", "paid", "SETTLED", "COMPLETED"].includes(d.status)
+		);
+		const collected = validDonations.reduce(
+			(acc, d) => acc + Number(d.amount),
+			0
+		);
 		const daysLeft = c.end
 			? Math.ceil(
 					(new Date(c.end).getTime() - new Date().getTime()) /
@@ -1046,7 +1074,7 @@ function mapCampaignsToTypes(campaigns: CampaignWithRelations[]) {
 			cover: c.media.find((m) => m.isThumbnail)?.url || "",
 			target: Number(c.target),
 			collected,
-			donors: c.donations.length,
+			donors: validDonations.length,
 			daysLeft: daysLeft > 0 ? daysLeft : 0,
 			tag: c.category.name === "Bantuan Medis & Kesehatan" ? "VERIFIED" : "ORG",
 			slug: c.slug || c.id,

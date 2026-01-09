@@ -158,23 +158,24 @@ export default function AdminTransaksiPage() {
 
 	const [page, setPage] = React.useState(1);
 
-	React.useEffect(() => {
-		async function fetch() {
-			setLoading(true);
-			try {
-				const res = await getAdminTransactions();
-				if (res.success && res.data) {
-					// @ts-ignore
-					setRows(res.data);
-				}
-			} catch (e) {
-				console.error(e);
-			} finally {
-				setLoading(false);
+	const onRefresh = React.useCallback(async () => {
+		setLoading(true);
+		try {
+			const res = await getAdminTransactions();
+			if (res.success && res.data) {
+				// @ts-ignore
+				setRows(res.data);
 			}
+		} catch (e) {
+			console.error(e);
+		} finally {
+			setLoading(false);
 		}
-		fetch();
 	}, []);
+
+	React.useEffect(() => {
+		onRefresh();
+	}, [onRefresh]);
 
 	const filtered = React.useMemo(() => {
 		let base = rows.filter((r) => matchQuery(q, r));
@@ -213,21 +214,6 @@ export default function AdminTransaksiPage() {
 			pending,
 		};
 	}, [rows]);
-
-	const onRefresh = async () => {
-		setLoading(true);
-		try {
-			const res = await getAdminTransactions();
-			if (res.success && res.data) {
-				// @ts-ignore
-				setRows(res.data);
-			}
-		} catch (e) {
-			console.error(e);
-		} finally {
-			setLoading(false);
-		}
-	};
 
 	return (
 		<Box sx={{ py: 2 }}>

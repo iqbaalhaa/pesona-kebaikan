@@ -142,6 +142,7 @@ export default function AdminCampaignKategoriPage() {
       const data: Array<{
         id: string;
         name: string;
+        slug?: string;
         icon?: string;
         isActive: boolean;
         updatedAt: string;

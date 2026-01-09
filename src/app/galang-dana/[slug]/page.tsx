@@ -86,8 +86,8 @@ export default async function CampaignDetailPage({
 	}
 
 	const donations = campaign.donations;
-	const successfulDonations = donations.filter(
-		(d: any) => d.status === "PAID" || d.status === "Berhasil"
+	const successfulDonations = donations.filter((d: any) =>
+		["PAID", "paid", "SETTLED", "COMPLETED"].includes(d.status)
 	);
 	const totalCollected = successfulDonations.reduce(
 		(acc, d) => acc + Number(d.amount),

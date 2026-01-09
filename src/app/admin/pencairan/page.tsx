@@ -20,6 +20,8 @@ import {
 	DialogTitle,
 	DialogContent,
 	DialogActions,
+	Alert,
+	Snackbar,
 	SxProps,
 	Theme,
 } from "@mui/material";
@@ -108,6 +110,16 @@ export default function PencairanPage() {
 	const [otpDialogOpen, setOtpDialogOpen] = React.useState(false);
 	const [selectedWithdrawalForApproval, setSelectedWithdrawalForApproval] =
 		React.useState<WithdrawalRow | null>(null);
+	// Reject State
+	const [rejectDialogOpen, setRejectDialogOpen] = React.useState(false);
+	const [selectedWithdrawalForRejection, setSelectedWithdrawalForRejection] =
+		React.useState<WithdrawalRow | null>(null);
+	// Confirm Dialog State
+	const [confirmDialogOpen, setConfirmDialogOpen] = React.useState(false);
+	const [confirmTarget, setConfirmTarget] = React.useState<{
+		id: string;
+		status: Exclude<WithdrawalStatus, "PENDING">;
+	} | null>(null);
 
 	// Form state
 	const [selectedCampaign, setSelectedCampaign] = React.useState<string>("");
@@ -117,6 +129,16 @@ export default function PencairanPage() {
 	const [accountHolder, setAccountHolder] = React.useState("");
 	const [notes, setNotes] = React.useState("");
 	const [submitting, setSubmitting] = React.useState(false);
+	const [snack, setSnack] = React.useState<{
+		open: boolean;
+		message: string;
+		severity: "success" | "error" | "info";
+	}>({ open: false, message: "", severity: "success" });
+
+	const showSnack = (
+		message: string,
+		severity: "success" | "error" | "info" = "success"
+	) => setSnack({ open: true, message, severity });
 
 	const fetchData = React.useCallback(async () => {
 		setLoading(true);
@@ -159,6 +181,7 @@ export default function PencairanPage() {
 				notes,
 			});
 			setDialogOpen(false);
+			showSnack("Pencairan berhasil dibuat", "success");
 			// Reset form
 			setSelectedCampaign("");
 			setAmount("");
@@ -170,7 +193,7 @@ export default function PencairanPage() {
 			fetchData();
 		} catch (e) {
 			console.error(e);
-			alert("Gagal membuat pencairan");
+			showSnack("Gagal membuat pencairan", "error");
 		} finally {
 			setSubmitting(false);
 		}
@@ -180,13 +203,18 @@ export default function PencairanPage() {
 		id: string,
 		status: Exclude<WithdrawalStatus, "PENDING">
 	) => {
-		if (!confirm(`Ubah status menjadi ${status}?`)) return;
 		try {
-			await updateWithdrawalStatus(id, status);
-			fetchData();
+			if (status === "REJECTED") {
+				const row = withdrawals.find((w) => w.id === id) || null;
+				setSelectedWithdrawalForRejection(row);
+				setRejectDialogOpen(true);
+				return;
+			}
+			setConfirmTarget({ id, status });
+			setConfirmDialogOpen(true);
 		} catch (e) {
 			console.error(e);
-			alert("Gagal update status");
+			showSnack("Gagal update status", "error");
 		}
 	};
 
@@ -195,18 +223,24 @@ export default function PencairanPage() {
 		setOtpDialogOpen(true);
 	};
 
-	const handleOtpVerified = async () => {
+	const handleOtpVerified = async (otp: string) => {
 		if (!selectedWithdrawalForApproval) return;
 		try {
-			await updateWithdrawalStatus(
+			const res = await updateWithdrawalStatus(
 				selectedWithdrawalForApproval.id,
-				"APPROVED"
+				"APPROVED",
+				undefined,
+				otp
 			);
+			if (!res?.success) {
+				showSnack(res?.error || "Gagal menyetujui pencairan", "error");
+				return;
+			}
 			fetchData();
-			alert("Pencairan berhasil disetujui!");
+			showSnack("Pencairan berhasil disetujui", "success");
 		} catch (e) {
 			console.error(e);
-			alert("Gagal menyetujui pencairan");
+			showSnack("Gagal menyetujui pencairan", "error");
 		} finally {
 			setSelectedWithdrawalForApproval(null);
 		}
@@ -515,6 +549,111 @@ export default function PencairanPage() {
 				onVerified={handleOtpVerified}
 				adminPhone={adminPhone}
 			/>
+			{/* Reject Dialog */}
+			<Dialog
+				open={rejectDialogOpen}
+				onClose={() => setRejectDialogOpen(false)}
+				maxWidth="sm"
+				fullWidth
+				PaperProps={{ sx: { borderRadius: 3 } }}
+			>
+				<DialogTitle>Tolak Pencairan</DialogTitle>
+				<DialogContent dividers>
+					<Typography variant="body2" sx={{ pt: 1 }}>
+						Yakin ingin menolak pencairan ini?
+					</Typography>
+				</DialogContent>
+				<DialogActions sx={{ p: 2.5 }}>
+					<Button onClick={() => setRejectDialogOpen(false)}>Batal</Button>
+					<Button
+						variant="contained"
+						color="error"
+						onClick={async () => {
+							if (!selectedWithdrawalForRejection) return;
+							try {
+								const res = await updateWithdrawalStatus(
+									selectedWithdrawalForRejection.id,
+									"REJECTED",
+									undefined,
+									undefined
+								);
+								if (!res?.success) {
+									showSnack(res?.error || "Gagal menolak pencairan", "error");
+									return;
+								}
+								setRejectDialogOpen(false);
+								setSelectedWithdrawalForRejection(null);
+								fetchData();
+								showSnack("Pencairan berhasil ditolak", "success");
+							} catch (e) {
+								console.error(e);
+								showSnack("Gagal menolak pencairan", "error");
+							}
+						}}
+						sx={{ borderRadius: 999 }}
+					>
+						Tolak Pencairan
+					</Button>
+				</DialogActions>
+			</Dialog>
+			<Snackbar
+				open={snack.open}
+				autoHideDuration={5000}
+				onClose={() => setSnack((s) => ({ ...s, open: false }))}
+				anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+			>
+				<Alert
+					onClose={() => setSnack((s) => ({ ...s, open: false }))}
+					severity={snack.severity}
+					variant="filled"
+					sx={{ width: "100%" }}
+				>
+					{snack.message}
+				</Alert>
+			</Snackbar>
+			{/* Confirm Dialog */}
+			<Dialog
+				open={confirmDialogOpen}
+				onClose={() => setConfirmDialogOpen(false)}
+				maxWidth="xs"
+				fullWidth
+				PaperProps={{ sx: { borderRadius: 3 } }}
+			>
+				<DialogTitle>Konfirmasi Aksi</DialogTitle>
+				<DialogContent>
+					<Typography variant="body2">
+						Ubah status menjadi {confirmTarget?.status}?
+					</Typography>
+				</DialogContent>
+				<DialogActions sx={{ p: 2.5 }}>
+					<Button onClick={() => setConfirmDialogOpen(false)}>Batal</Button>
+					<Button
+						variant="contained"
+						onClick={async () => {
+							if (!confirmTarget) return;
+							try {
+								const res = await updateWithdrawalStatus(
+									confirmTarget.id,
+									confirmTarget.status
+								);
+								if (!res?.success) {
+									showSnack(res?.error || "Gagal update status", "error");
+									return;
+								}
+								setConfirmDialogOpen(false);
+								fetchData();
+								showSnack("Status pencairan berhasil diperbarui", "success");
+							} catch (e) {
+								console.error(e);
+								showSnack("Gagal update status", "error");
+							}
+						}}
+						sx={{ borderRadius: 999 }}
+					>
+						OK
+					</Button>
+				</DialogActions>
+			</Dialog>
 		</Box>
 	);
 }

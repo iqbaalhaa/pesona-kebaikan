@@ -22,7 +22,7 @@ interface OtpVerificationDialogProps {
   open: boolean;
   onClose: () => void;
   withdrawal: WithdrawalRow | null;
-  onVerified: () => void;
+  onVerified: (otp: string) => void;
   adminPhone: string;
 }
 
@@ -123,7 +123,7 @@ export default function OtpVerificationDialog({
       const res = await verifyOtp(adminPhone, otpString);
 
       if (res.success) {
-        onVerified();
+        onVerified(otpString);
         onClose();
         // The parent might show a success message, but we can also show one here before closing?
         // Usually dialog closes immediately.

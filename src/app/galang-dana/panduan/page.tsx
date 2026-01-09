@@ -12,6 +12,7 @@ import CampaignOutlinedIcon from "@mui/icons-material/CampaignOutlined";
 import FavoriteBorderOutlinedIcon from "@mui/icons-material/FavoriteBorderOutlined";
 import SecurityOutlinedIcon from "@mui/icons-material/SecurityOutlined";
 import { getPageContent } from "@/actions/cms";
+import type { ReactElement } from "react";
 
 export default async function FundraiseGuidePage() {
   const content = await getPageContent("fundraise_guide");
@@ -26,7 +27,7 @@ export default async function FundraiseGuidePage() {
     <p>Bagikan campaign ke WhatsApp, media sosial, dan komunitas untuk menjangkau lebih banyak orang baik.</p>
   `;
 
-  const tips: { icon: JSX.Element; title: string; desc: string; color: string }[] = [
+  const tips: { icon: ReactElement; title: string; desc: string; color: string }[] = [
     {
       icon: <LightbulbOutlinedIcon />,
       title: "Tulis judul yang spesifik",

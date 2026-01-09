@@ -3,6 +3,65 @@
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 
+function mapTxStatus(raw: string) {
+	const s = (raw || "").toUpperCase();
+	if (s === "PENDING") return "pending";
+	if (s === "FAILED" || s === "GAGAL" || s === "DENY" || s === "CANCEL")
+		return "failed";
+	if (s === "REFUNDED" || s === "REFUND" || s === "CHARGEBACK")
+		return "refunded";
+	return "paid";
+}
+
+// Helper function to check status with Midtrans
+async function checkMidtransStatus(orderId: string) {
+	try {
+		const serverKey = process.env.MIDTRANS_SERVER_KEY;
+		const isProd = process.env.MIDTRANS_IS_PRODUCTION === "true";
+		const baseUrl = isProd
+			? "https://api.midtrans.com/v2"
+			: "https://api.sandbox.midtrans.com/v2";
+
+		const authHeader =
+			"Basic " + Buffer.from(`${serverKey}:`).toString("base64");
+
+		const res = await fetch(`${baseUrl}/${orderId}/status`, {
+			headers: {
+				Authorization: authHeader,
+				Accept: "application/json",
+				"Content-Type": "application/json",
+			},
+			cache: "no-store",
+		});
+
+		if (!res.ok) return null;
+
+		const data = await res.json();
+		return data; // returns full midtrans status object
+	} catch (error) {
+		console.error(`Failed to check Midtrans status for ${orderId}:`, error);
+		return null;
+	}
+}
+
+// Helper to map Midtrans status to our internal status
+function mapMidtransToInternal(status: string, fraud: string = "") {
+	const s = (status || "").toLowerCase();
+	const f = (fraud || "").toLowerCase();
+
+	if (s === "settlement" || s === "capture") {
+		if (s === "capture" && f === "challenge") return "PENDING";
+		return "PAID";
+	}
+	if (s === "pending") return "PENDING";
+	if (s === "deny" || s === "cancel" || s === "expire" || s === "failure")
+		return "FAILED";
+	if (s === "refund" || s === "partial_refund" || s === "chargeback")
+		return "REFUNDED";
+
+	return "PENDING";
+}
+
 export async function getAdminTransactions() {
 	try {
 		const session = await auth();
@@ -11,7 +70,7 @@ export async function getAdminTransactions() {
 			// return { success: false, error: "Unauthorized" };
 		}
 
-		const donations = await prisma.donation.findMany({
+		let donations = await prisma.donation.findMany({
 			include: {
 				campaign: {
 					select: {
@@ -31,6 +90,47 @@ export async function getAdminTransactions() {
 			},
 		});
 
+		// Check for stale PENDING transactions (older than 30 seconds)
+		// We limit this to recent 20 pending transactions to avoid performance issues
+		const pendingDonations = donations
+			.filter((d) => d.status === "PENDING")
+			.slice(0, 10); // Check up to 10 latest pending transactions
+
+		if (pendingDonations.length > 0) {
+			const updates = await Promise.all(
+				pendingDonations.map(async (d) => {
+					const midtransData = await checkMidtransStatus(d.id);
+					if (midtransData && midtransData.transaction_status) {
+						const newStatus = mapMidtransToInternal(
+							midtransData.transaction_status,
+							midtransData.fraud_status
+						);
+
+						if (newStatus !== "PENDING" && newStatus !== d.status) {
+							// Update DB
+							await prisma.donation.update({
+								where: { id: d.id },
+								data: { status: newStatus },
+							});
+							return { id: d.id, status: newStatus };
+						}
+					}
+					return null;
+				})
+			);
+
+			// Refresh donations list if any updates occurred
+			if (updates.some((u) => u !== null)) {
+				donations = await prisma.donation.findMany({
+					include: {
+						campaign: { select: { title: true } },
+						user: { select: { name: true, email: true, phone: true } },
+					},
+					orderBy: { createdAt: "desc" },
+				});
+			}
+		}
+
 		const mappedDonations = donations.map((d) => {
 			let method = "manual";
 			if (d.paymentMethod === "EWALLET") method = "gopay"; // Default mapping
@@ -38,10 +138,7 @@ export async function getAdminTransactions() {
 			else if (d.paymentMethod === "TRANSFER") method = "manual";
 			else if (d.paymentMethod === "CARD") method = "qris"; // Approx mapping
 
-			let status = "paid";
-			if (d.status === "FAILED" || d.status === "Gagal") status = "failed";
-			else if (d.status === "REFUNDED") status = "refunded";
-			// Dev mode: Treat PENDING as PAID
+			const status = mapTxStatus(d.status);
 
 			return {
 				id: d.id,
@@ -116,9 +213,7 @@ export async function getCampaignTransactions(campaignId: string) {
 			else if (d.paymentMethod === "TRANSFER") method = "manual";
 			else if (d.paymentMethod === "CARD") method = "qris";
 
-			let status = "paid";
-			if (d.status === "FAILED" || d.status === "Gagal") status = "failed";
-			else if (d.status === "REFUNDED") status = "refunded";
+			const status = mapTxStatus(d.status);
 
 			return {
 				id: d.id,

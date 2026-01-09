@@ -118,10 +118,18 @@ export async function createWithdrawal(data: {
 export async function updateWithdrawalStatus(
 	id: string,
 	status: "APPROVED" | "REJECTED" | "COMPLETED",
-	proofUrl?: string
+	proofUrl?: string,
+	otp?: string,
+	rejectReason?: string
 ) {
 	// If approving, trigger Midtrans Iris Payout
 	if (status === "APPROVED") {
+		if (!otp) {
+			return {
+				success: false,
+				error: "OTP Midtrans diperlukan untuk menyetujui pencairan",
+			};
+		}
 		const withdrawal = await prisma.withdrawal.findUnique({
 			where: { id },
 			include: {
@@ -133,11 +141,14 @@ export async function updateWithdrawalStatus(
 			},
 		});
 
-		if (!withdrawal) throw new Error("Withdrawal not found");
+		if (!withdrawal) return { success: false, error: "Withdrawal not found" };
 
 		// Skip if already has referenceNo (means already processed)
 		if (withdrawal.referenceNo) {
-			throw new Error("Pencairan ini sudah diproses sebelumnya");
+			return {
+				success: false,
+				error: "Pencairan ini sudah diproses sebelumnya",
+			};
 		}
 
 		try {
@@ -159,11 +170,14 @@ export async function updateWithdrawalStatus(
 			const referenceNo = createRes.payouts?.[0]?.reference_no;
 
 			if (!referenceNo) {
-				throw new Error("Gagal mendapatkan reference_no dari Midtrans Iris");
+				return {
+					success: false,
+					error: "Gagal mendapatkan reference_no dari Midtrans Iris",
+				};
 			}
 
 			// 2. Approve Payout
-			await approvePayout([referenceNo]);
+			await approvePayout([referenceNo], otp);
 
 			// 3. Update DB
 			await prisma.withdrawal.update({
@@ -176,9 +190,10 @@ export async function updateWithdrawalStatus(
 			});
 		} catch (error: any) {
 			console.error("Midtrans Payout Error:", error);
-			throw new Error(
-				error.message || "Gagal memproses pencairan ke Midtrans Iris"
-			);
+			return {
+				success: false,
+				error: error.message || "Gagal memproses pencairan ke Midtrans Iris",
+			};
 		}
 	} else {
 		// Normal update for other statuses
@@ -187,9 +202,12 @@ export async function updateWithdrawalStatus(
 			data: {
 				status,
 				proofUrl,
+				notes: status === "REJECTED" ? rejectReason : undefined,
 			},
 		});
 	}
 
 	revalidatePath("/admin/pencairan");
+
+	return { success: true };
 }

@@ -34,31 +34,38 @@ export async function createPayout(payload: PayoutPayload) {
 	try {
 		const response = await irisClient.post("/payouts", payload);
 		return response.data;
-	} catch (error: any) {
-		console.error(
-			"Iris Create Payout Error:",
-			error.response?.data || error.message
-		);
-		throw new Error(
-			error.response?.data?.message || "Failed to create payout via Iris"
-		);
+	} catch (err: unknown) {
+		if (axios.isAxiosError(err)) {
+			console.error(
+				"Iris Create Payout Error:",
+				err.response?.data || err.message
+			);
+			throw new Error(
+				err.response?.data?.message || "Failed to create payout via Iris"
+			);
+		}
+		throw new Error("Failed to create payout via Iris");
 	}
 }
 
-export async function approvePayout(reference_nos: string[]) {
+export async function approvePayout(reference_nos: string[], otp: string) {
 	try {
 		const response = await irisClient.post("/payouts/approve", {
 			reference_nos,
+			otp,
 		});
 		return response.data;
-	} catch (error: any) {
-		console.error(
-			"Iris Approve Payout Error:",
-			error.response?.data || error.message
-		);
-		throw new Error(
-			error.response?.data?.message || "Failed to approve payout via Iris"
-		);
+	} catch (err: unknown) {
+		if (axios.isAxiosError(err)) {
+			console.error(
+				"Iris Approve Payout Error:",
+				err.response?.data || err.message
+			);
+			throw new Error(
+				err.response?.data?.message || "Failed to approve payout via Iris"
+			);
+		}
+		throw new Error("Failed to approve payout via Iris");
 	}
 }
 
@@ -66,13 +73,16 @@ export async function getPayoutDetails(reference_no: string) {
 	try {
 		const response = await irisClient.get(`/payouts/${reference_no}`);
 		return response.data;
-	} catch (error: any) {
-		console.error(
-			"Iris Get Payout Details Error:",
-			error.response?.data || error.message
-		);
-		throw new Error(
-			error.response?.data?.message || "Failed to get payout details via Iris"
-		);
+	} catch (err: unknown) {
+		if (axios.isAxiosError(err)) {
+			console.error(
+				"Iris Get Payout Details Error:",
+				err.response?.data || err.message
+			);
+			throw new Error(
+				err.response?.data?.message || "Failed to get payout details via Iris"
+			);
+		}
+		throw new Error("Failed to get payout details via Iris");
 	}
 }

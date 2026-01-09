@@ -297,6 +297,10 @@ export default function UsersClient({ initialUsers, initialTotal, stats }: Users
   };
 
   const handleSave = async () => {
+    if (!currentUser.name) {
+      showToast('Nama wajib diisi', 'error');
+      return;
+    }
     if (!currentUser.email) {
       showToast('Email wajib diisi', 'error');
       return;
@@ -310,9 +314,21 @@ export default function UsersClient({ initialUsers, initialTotal, stats }: Users
     try {
       let res;
       if (dialogMode === 'create') {
-        res = await createUser(currentUser);
+        res = await createUser({
+          name: String(currentUser.name).trim(),
+          email: String(currentUser.email).trim(),
+          phone: currentUser.phone ? String(currentUser.phone).trim() : undefined,
+          role: (currentUser.role as any) || 'USER',
+          password: String(currentUser.password),
+        });
       } else {
-        res = await updateUser(currentUser.id!, currentUser);
+        res = await updateUser(currentUser.id!, {
+          name: currentUser.name ? String(currentUser.name).trim() : undefined,
+          email: currentUser.email ? String(currentUser.email).trim() : undefined,
+          phone: currentUser.phone ? String(currentUser.phone).trim() : undefined,
+          role: currentUser.role as any,
+          password: currentUser.password ? String(currentUser.password) : undefined,
+        });
       }
 
       if (res.success) {
