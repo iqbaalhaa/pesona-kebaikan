@@ -30,6 +30,12 @@ type Props = {
 	campaignSlug: string;
 };
 
+function formatIDR(numStr: string) {
+	const n = numStr.replace(/\D/g, "");
+	if (!n) return "";
+	return n.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+}
+
 export default function DonationForm({
 	campaignId,
 	campaignTitle,
@@ -47,13 +53,14 @@ export default function DonationForm({
 
 	const handleAmountSelect = (val: number) => {
 		setAmount(val);
-		setCustomAmount(val.toString());
+		setCustomAmount(formatIDR(val.toString()));
 	};
 
 	const handleCustomAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-		const val = e.target.value.replace(/\D/g, "");
-		setCustomAmount(val);
-		setAmount(val ? parseInt(val) : "");
+		const formatted = formatIDR(e.target.value);
+		const digits = e.target.value.replace(/\D/g, "");
+		setCustomAmount(formatted);
+		setAmount(digits ? parseInt(digits) : "");
 	};
 
 	const handleSubmit = async () => {

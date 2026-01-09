@@ -531,6 +531,13 @@ function MapIndonesia({
 		const featureValues = featureNames.map((n) => getVal(n));
 		const min = featureValues.length ? Math.min(...featureValues) : 0;
 		const max = featureValues.length ? Math.max(...featureValues) : 0;
+		const positives = featureValues.filter((v) => v > 0);
+		const sorted = positives.slice().sort((a, b) => a - b);
+		const pick = (p: number) =>
+			sorted.length ? sorted[Math.floor((sorted.length - 1) * p)] : 0;
+		const q1 = pick(0.25);
+		const q2 = pick(0.5);
+		const q3 = pick(0.75);
 
 		const data =
 			featureNames.length > 0
@@ -601,41 +608,62 @@ function MapIndonesia({
 			},
 			visualMap:
 				mapMetric === "users"
-					? {
-							left: "left",
-							bottom: "bottom",
-							type: "piecewise",
-							pieces: [
-								{
-									max: Math.max(min, Math.floor((min + max) * 0.25)),
-									color: theme.palette.success.light,
-									label: "Rendah",
+					? positives.length >= 4
+						? {
+								left: "left",
+								bottom: "bottom",
+								type: "piecewise",
+								pieces: [
+									{
+										max: q1,
+										color: theme.palette.success.light,
+										label: "Rendah",
+									},
+									{
+										min: q1,
+										max: q2,
+										color: theme.palette.success.main,
+										label: "Menengah",
+									},
+									{
+										min: q2,
+										max: q3,
+										color: theme.palette.warning.main,
+										label: "Tinggi",
+									},
+									{
+										min: q3,
+										color: theme.palette.error.main,
+										label: "Sangat Tinggi",
+									},
+								],
+								outOfRange: { color: theme.palette.grey[300] },
+								textStyle: {
+									color: theme.palette.text.secondary,
+									fontWeight: 700,
+									fontSize: 11,
 								},
-								{
-									min: Math.floor((min + max) * 0.25),
-									max: Math.floor((min + max) * 0.5),
-									color: theme.palette.success.main,
-									label: "Menengah",
+						  }
+						: {
+								left: "left",
+								bottom: "bottom",
+								min,
+								max,
+								inRange: {
+									color: [
+										theme.palette.grey[200],
+										theme.palette.success.main,
+										theme.palette.error.main,
+									],
 								},
-								{
-									min: Math.floor((min + max) * 0.5),
-									max: Math.floor((min + max) * 0.75),
-									color: theme.palette.warning.main,
-									label: "Tinggi",
+								outOfRange: { color: theme.palette.grey[300] },
+								textStyle: {
+									color: theme.palette.text.secondary,
+									fontWeight: 700,
+									fontSize: 11,
 								},
-								{
-									min: Math.floor((min + max) * 0.75),
-									color: theme.palette.error.main,
-									label: "Sangat Tinggi",
-								},
-							],
-							outOfRange: { color: theme.palette.grey[300] },
-							textStyle: {
-								color: theme.palette.text.secondary,
-								fontWeight: 700,
-								fontSize: 11,
-							},
-					  }
+								calculable: true,
+						  }
 					: {
 							left: "left",
 							bottom: "bottom",
@@ -666,11 +694,11 @@ function MapIndonesia({
 					label: { show: false },
 					emphasis: {
 						itemStyle: {
-							areaColor: baseColor,
+							areaColor: theme.palette.primary.main,
 						},
 						label: {
 							show: true,
-							color: theme.palette.getContrastText(baseColor),
+							color: theme.palette.getContrastText(theme.palette.primary.main),
 							fontWeight: "bold",
 							fontSize: 14,
 							formatter: (p: any) => p.name,
@@ -678,7 +706,15 @@ function MapIndonesia({
 						},
 					},
 					select: {
-						itemStyle: { areaColor: baseColor },
+						itemStyle: { areaColor: theme.palette.primary.main },
+						label: {
+							show: true,
+							color: theme.palette.getContrastText(theme.palette.primary.main),
+							fontWeight: "bold",
+							fontSize: 14,
+							formatter: (p: any) => p.name,
+							textShadowColor: "transparent",
+						},
 					},
 					data,
 				},

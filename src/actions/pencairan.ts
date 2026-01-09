@@ -2,6 +2,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { createPayout, approvePayout } from "@/lib/midtrans-iris";
 
 export async function getCampaignsWithFunds() {
 	const campaigns = await prisma.campaign.findMany({
@@ -12,7 +13,7 @@ export async function getCampaignsWithFunds() {
 			donations: {
 				where: {
 					status: {
-						in: ["PAID", "paid", "SETTLED", "COMPLETED", "ACTIVE"], // Added COMPLETED as it is used in seed
+						in: ["PAID", "paid", "SETTLED", "COMPLETED", "ACTIVE"],
 					},
 				},
 				select: {
@@ -87,6 +88,7 @@ export async function getWithdrawals() {
 		campaignSlug: w.campaign.slug,
 		campaignId: w.campaignId,
 		proofUrl: w.proofUrl,
+		referenceNo: w.referenceNo,
 	}));
 }
 
@@ -118,13 +120,76 @@ export async function updateWithdrawalStatus(
 	status: "APPROVED" | "REJECTED" | "COMPLETED",
 	proofUrl?: string
 ) {
-	await prisma.withdrawal.update({
-		where: { id },
-		data: {
-			status,
-			proofUrl,
-		},
-	});
+	// If approving, trigger Midtrans Iris Payout
+	if (status === "APPROVED") {
+		const withdrawal = await prisma.withdrawal.findUnique({
+			where: { id },
+			include: {
+				campaign: {
+					include: {
+						createdBy: true,
+					},
+				},
+			},
+		});
+
+		if (!withdrawal) throw new Error("Withdrawal not found");
+
+		// Skip if already has referenceNo (means already processed)
+		if (withdrawal.referenceNo) {
+			throw new Error("Pencairan ini sudah diproses sebelumnya");
+		}
+
+		try {
+			// 1. Create Payout
+			const payoutPayload = {
+				payouts: [
+					{
+						beneficiary_name: withdrawal.accountHolder,
+						beneficiary_account: withdrawal.bankAccount,
+						beneficiary_bank: withdrawal.bankName,
+						beneficiary_email: withdrawal.campaign.createdBy.email,
+						amount: String(withdrawal.amount),
+						notes: `Pencairan ${withdrawal.campaign.title.substring(0, 20)}`,
+					},
+				],
+			};
+
+			const createRes = await createPayout(payoutPayload);
+			const referenceNo = createRes.payouts?.[0]?.reference_no;
+
+			if (!referenceNo) {
+				throw new Error("Gagal mendapatkan reference_no dari Midtrans Iris");
+			}
+
+			// 2. Approve Payout
+			await approvePayout([referenceNo]);
+
+			// 3. Update DB
+			await prisma.withdrawal.update({
+				where: { id },
+				data: {
+					status,
+					proofUrl,
+					referenceNo,
+				},
+			});
+		} catch (error: any) {
+			console.error("Midtrans Payout Error:", error);
+			throw new Error(
+				error.message || "Gagal memproses pencairan ke Midtrans Iris"
+			);
+		}
+	} else {
+		// Normal update for other statuses
+		await prisma.withdrawal.update({
+			where: { id },
+			data: {
+				status,
+				proofUrl,
+			},
+		});
+	}
 
 	revalidatePath("/admin/pencairan");
 }

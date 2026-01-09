@@ -17,11 +17,18 @@ import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import ArrowBackIosNewRoundedIcon from "@mui/icons-material/ArrowBackIosNewRounded";
 import { createCampaign } from "@/actions/campaign";
 
+function formatIDR(numStr: string) {
+	const n = numStr.replace(/\D/g, "");
+	if (!n) return "";
+	return n.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+}
+
 export default function AdminCreateCampaignPage() {
 	const router = useRouter();
 	const [categories, setCategories] = React.useState<any[]>([]);
 	const [submitting, setSubmitting] = React.useState(false);
 	const [coverPreview, setCoverPreview] = React.useState<string>("");
+	const [target, setTarget] = React.useState<string>("");
 
 	React.useEffect(() => {
 		fetch("/api/campaigns/categories")
@@ -48,7 +55,8 @@ export default function AdminCreateCampaignPage() {
 		const formData = new FormData(e.currentTarget);
 
 		// category Select will send the value (slug)
-		
+
+		formData.set("target", target.replace(/\D/g, ""));
 		const res = await createCampaign(formData);
 		if (res.success) {
 			router.push("/admin/campaign");
@@ -111,7 +119,8 @@ export default function AdminCreateCampaignPage() {
 						label="Target Donasi (Rp)"
 						required
 						fullWidth
-						type="number"
+						value={target}
+						onChange={(e) => setTarget(formatIDR(e.target.value))}
 						InputProps={{
 							startAdornment: (
 								<InputAdornment position="start">Rp</InputAdornment>
@@ -127,8 +136,8 @@ export default function AdminCreateCampaignPage() {
 						type="number"
 						defaultValue={30}
 					/>
-                    
-                    <TextField
+
+					<TextField
 						name="phone"
 						label="Nomor Telepon Penggalang"
 						required

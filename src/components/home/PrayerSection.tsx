@@ -105,6 +105,7 @@ export default function PrayersSection({
 	const [liked, setLiked] = React.useState<Record<string, boolean>>({});
 	const [particles, setParticles] = React.useState<Particle[]>([]);
 	const [pulsing, setPulsing] = React.useState<Record<string, boolean>>({});
+	const [counts, setCounts] = React.useState<Record<string, number>>({});
 
 	const idRef = React.useRef(0);
 	const nextId = React.useCallback(() => {
@@ -163,14 +164,20 @@ export default function PrayersSection({
 
 	const toggleAmiin = async (id: string) => {
 		if (liked[id]) return;
-		spawnFX(id);
-		pulseCount(id);
 		try {
-			await fetch("/api/prayers/amiin", {
+			const res = await fetch("/api/prayers/amiin", {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({ donationId: id }),
 			});
+			const data = await res.json();
+			if (data && typeof data.count === "number") {
+				setCounts((prev) => ({ ...prev, [id]: data.count }));
+			}
+			if (!data?.already) {
+				spawnFX(id);
+				pulseCount(id);
+			}
 			setLiked((prev) => ({ ...prev, [id]: true }));
 		} catch {
 			setLiked((prev) => ({ ...prev, [id]: true }));
@@ -343,7 +350,7 @@ export default function PrayersSection({
 										animation: isPulse ? `${pop} 260ms ease` : "none",
 									}}
 								>
-									{p.amiinCount + (isLiked ? 1 : 0)} orang mengaminkan doa ini
+									{counts[p.id] ?? p.amiinCount} orang mengaminkan doa ini
 								</Typography>
 							</Box>
 

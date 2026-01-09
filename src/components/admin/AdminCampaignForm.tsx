@@ -22,8 +22,14 @@ import {
 import PhotoCameraRoundedIcon from "@mui/icons-material/PhotoCameraRounded";
 import SaveRoundedIcon from "@mui/icons-material/SaveRounded";
 
-import { CATEGORY_TITLE } from "@/lib/constants";
-import RichTextEditor from "@/components/admin/RichTextEditor";
+	import { CATEGORY_TITLE } from "@/lib/constants";
+	import RichTextEditor from "@/components/admin/RichTextEditor";
+	
+	function formatIDR(numStr: string) {
+		const n = numStr.replace(/\D/g, "");
+		if (!n) return "";
+		return n.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+	}
 
 type AdminCampaignFormProps = {
 	mode: "create" | "edit";
@@ -51,7 +57,7 @@ export default function AdminCampaignForm({
 			: "lainnya"
 	);
 	const [target, setTarget] = React.useState(
-		initialData?.target?.toString() || ""
+		formatIDR(initialData?.target?.toString() || "")
 	);
 	const [duration, setDuration] = React.useState("30"); // Default 30
 	const [phone, setPhone] = React.useState(initialData?.phone || "");
@@ -157,7 +163,7 @@ export default function AdminCampaignForm({
 						<TextField
 							label="Target Donasi (Rp)"
 							value={target}
-							onChange={(e) => setTarget(e.target.value)}
+							onChange={(e) => setTarget(formatIDR(e.target.value))}
 							required
 							fullWidth
 							InputProps={{

@@ -27,6 +27,7 @@ import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
 import { LinkIconButton } from "@/components/ui/LinkButton";
 import { requestWithdrawal, createCampaignUpdate } from "@/actions/campaign";
 import { useRouter } from "next/navigation";
+import { getBankName } from "@/lib/banks";
 
 function idr(n: number) {
 	return new Intl.NumberFormat("id-ID", {
@@ -34,6 +35,12 @@ function idr(n: number) {
 		currency: "IDR",
 		maximumFractionDigits: 0,
 	}).format(n);
+}
+
+function formatIDR(numStr: string) {
+	const n = numStr.replace(/\D/g, "");
+	if (!n) return "";
+	return n.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 }
 
 export default function WithdrawalList({
@@ -319,7 +326,8 @@ export default function WithdrawalList({
 														month: "long",
 														year: "numeric",
 													})}{" "}
-													• {w.bankName} - {w.bankAccount} ({w.accountHolder})
+													• {getBankName(w.bankName)} - {w.bankAccount} (
+													{w.accountHolder})
 												</Typography>
 												{w.notes && (
 													<Typography
@@ -442,10 +450,12 @@ export default function WithdrawalList({
 						<TextField
 							label="Jumlah Penarikan (Rp)"
 							fullWidth
-							type="number"
 							value={withdrawalForm.amount}
 							onChange={(e) =>
-								setWithdrawalForm({ ...withdrawalForm, amount: e.target.value })
+								setWithdrawalForm({
+									...withdrawalForm,
+									amount: formatIDR(e.target.value),
+								})
 							}
 							helperText={`Maksimal: ${idr(available)}`}
 						/>
@@ -542,10 +552,12 @@ export default function WithdrawalList({
 						<TextField
 							label="Jumlah Dana Disalurkan (Opsional)"
 							fullWidth
-							type="number"
 							value={updateForm.amount}
 							onChange={(e) =>
-								setUpdateForm({ ...updateForm, amount: e.target.value })
+								setUpdateForm({
+									...updateForm,
+									amount: formatIDR(e.target.value),
+								})
 							}
 							helperText="Isi jika update ini berkaitan dengan penyaluran dana tertentu."
 						/>

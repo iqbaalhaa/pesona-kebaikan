@@ -11,6 +11,12 @@ import InputLabel from "@mui/material/InputLabel";
 import Select from "@mui/material/Select";
 import MenuItem from "@mui/material/MenuItem";
 
+function formatIDR(numStr: string) {
+  const n = numStr.replace(/\D/g, "");
+  if (!n) return "";
+  return n.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+}
+
 type Status = "Verified" | "Pending" | "Ended";
 
 export type Campaign = {
@@ -48,8 +54,8 @@ export default function CampaignFormDialog({
         <TextField label="Judul" fullWidth value={data.title} onChange={(e) => onChange("title", e.target.value)} />
         <TextField label="Penggalang" fullWidth value={data.creator} onChange={(e) => onChange("creator", e.target.value)} />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <TextField label="Target" fullWidth value={data.target} onChange={(e) => onChange("target", e.target.value)} />
-          <TextField label="Terkumpul" fullWidth value={data.collected} onChange={(e) => onChange("collected", e.target.value)} />
+          <TextField label="Target" fullWidth value={data.target} onChange={(e) => onChange("target", formatIDR(e.target.value))} />
+          <TextField label="Terkumpul" fullWidth value={data.collected} onChange={(e) => onChange("collected", formatIDR(e.target.value))} />
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <FormControl fullWidth>
