@@ -378,9 +378,11 @@ export async function getCampaignBySlug(slug: string) {
 				campaign.category.name === "Bantuan Medis & Kesehatan"
 					? "sakit"
 					: "lainnya",
+			ownerId: campaign.createdById,
 			ownerName: campaign.createdBy.name || "Unknown",
 			ownerEmail: campaign.createdBy.email || "-",
 			ownerPhone: campaign.createdBy.phone || "-",
+			ownerAvatar: campaign.createdBy.image || "",
 			phone: campaign.phone || "-",
 			target: Number(campaign.target),
 			collected,
@@ -488,9 +490,11 @@ export async function getCampaignById(id: string) {
 				campaign.category.name === "Bantuan Medis & Kesehatan"
 					? "sakit"
 					: "lainnya",
+			ownerId: campaign.createdById,
 			ownerName: campaign.createdBy.name || "Unknown",
 			ownerEmail: campaign.createdBy.email || "-",
 			ownerPhone: campaign.createdBy.phone || "-",
+			ownerAvatar: campaign.createdBy.image || "",
 			phone: campaign.phone || "-",
 			target: Number(campaign.target),
 			collected,
