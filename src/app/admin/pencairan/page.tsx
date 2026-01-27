@@ -30,12 +30,14 @@ import { alpha, useTheme } from "@mui/material/styles";
 import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
 import RefreshRoundedIcon from "@mui/icons-material/RefreshRounded";
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
+import SettingsRoundedIcon from "@mui/icons-material/SettingsRounded";
 
 import {
 	getWithdrawals,
 	getCampaignsWithFunds,
 	createWithdrawal,
 	updateWithdrawalStatus,
+	getPayoutsCapability,
 } from "@/actions/pencairan";
 
 import WithdrawalCard, {
@@ -43,6 +45,7 @@ import WithdrawalCard, {
 	WithdrawalStatus,
 } from "@/components/admin/pencairan/WithdrawalCard";
 import OtpVerificationDialog from "@/components/admin/pencairan/OtpVerificationDialog";
+import AdminPhoneDialog from "@/components/admin/pencairan/AdminPhoneDialog";
 import { useSession } from "next-auth/react";
 import { SUPPORTED_BANKS } from "@/lib/banks";
 
@@ -82,7 +85,7 @@ function Surface({
 		borderColor: alpha(theme.palette.divider, 0.6),
 		bgcolor: alpha(
 			theme.palette.background.default,
-			theme.palette.mode === "dark" ? 0.4 : 0.8
+			theme.palette.mode === "dark" ? 0.4 : 0.8,
 		),
 		backdropFilter: "blur(12px)",
 		boxShadow: theme.shadows[1],
@@ -98,9 +101,15 @@ function Surface({
 }
 
 export default function PencairanPage() {
-	const { data: session } = useSession();
+	const { data: session, update: updateSession } = useSession();
+	const payoutsEnabled =
+		process.env.NEXT_PUBLIC_MIDTRANS_PAYOUTS_ENABLED === "true";
 	const [withdrawals, setWithdrawals] = React.useState<WithdrawalRow[]>([]);
 	const [campaigns, setCampaigns] = React.useState<CampaignFund[]>([]);
+	const [payoutsCapability, setPayoutsCapability] = React.useState<{
+		available: boolean;
+		message: string;
+	} | null>(null);
 	const [loading, setLoading] = React.useState(true);
 	const [query, setQuery] = React.useState("");
 	const [page, setPage] = React.useState(1);
@@ -135,20 +144,33 @@ export default function PencairanPage() {
 		severity: "success" | "error" | "info";
 	}>({ open: false, message: "", severity: "success" });
 
+	// Admin Phone State
+	const [adminPhoneDialogOpen, setAdminPhoneDialogOpen] = React.useState(false);
+	const [localAdminPhone, setLocalAdminPhone] = React.useState("");
+
+	React.useEffect(() => {
+		if (session?.user) {
+			const phone = (session.user as { phone?: string })?.phone;
+			if (phone) setLocalAdminPhone(phone);
+		}
+	}, [session]);
+
 	const showSnack = (
 		message: string,
-		severity: "success" | "error" | "info" = "success"
+		severity: "success" | "error" | "info" = "success",
 	) => setSnack({ open: true, message, severity });
 
 	const fetchData = React.useCallback(async () => {
 		setLoading(true);
 		try {
-			const [w, c] = await Promise.all([
+			const [w, c, cap] = await Promise.all([
 				getWithdrawals(),
 				getCampaignsWithFunds(),
+				getPayoutsCapability(),
 			]);
 			setWithdrawals(w as unknown as WithdrawalRow[]);
 			setCampaigns(c);
+			setPayoutsCapability(cap);
 		} catch (e) {
 			console.error(e);
 		} finally {
@@ -201,7 +223,7 @@ export default function PencairanPage() {
 
 	const handleUpdateStatus = async (
 		id: string,
-		status: Exclude<WithdrawalStatus, "PENDING">
+		status: Exclude<WithdrawalStatus, "PENDING">,
 	) => {
 		try {
 			if (status === "REJECTED") {
@@ -226,18 +248,27 @@ export default function PencairanPage() {
 	const handleOtpVerified = async (otp: string) => {
 		if (!selectedWithdrawalForApproval) return;
 		try {
+			// Always send OTP for approval, regardless of payout mode
 			const res = await updateWithdrawalStatus(
 				selectedWithdrawalForApproval.id,
 				"APPROVED",
 				undefined,
-				otp
+				otp,
+				undefined,
+				adminPhone,
 			);
+
 			if (!res?.success) {
 				showSnack(res?.error || "Gagal menyetujui pencairan", "error");
 				return;
 			}
 			fetchData();
-			showSnack("Pencairan berhasil disetujui", "success");
+			showSnack(
+				res.payoutMode === "IRIS"
+					? "Pencairan berhasil disetujui (Midtrans Iris)"
+					: "Pencairan disetujui (mode manual). Lakukan transfer, lalu klik Selesai Transfer.",
+				"success",
+			);
 		} catch (e) {
 			console.error(e);
 			showSnack("Gagal menyetujui pencairan", "error");
@@ -263,8 +294,7 @@ export default function PencairanPage() {
 
 	// Use session user phone or a default/fallback
 	// Note: user.phone might not be in the default session type unless extended
-	const adminPhone =
-		(session?.user as { phone?: string })?.phone || "085382055598";
+	const adminPhone = localAdminPhone || "085382055598";
 
 	return (
 		<Box sx={{ maxWidth: 1000, mx: "auto", p: { xs: 2, md: 4 } }}>
@@ -293,6 +323,14 @@ export default function PencairanPage() {
 				</Button>
 			</Stack>
 
+			{(!payoutsEnabled || payoutsCapability?.available === false) && (
+				<Alert severity="info" sx={{ mb: 2 }}>
+					{payoutsCapability?.message ||
+						"Mode manual aktif: fitur Iris/Payouts belum tersedia di akun Midtrans."}{" "}
+					Setujui = admin melakukan transfer manual, lalu klik Selesai Transfer.
+				</Alert>
+			)}
+
 			<Stack direction="row" spacing={2} sx={{ mb: 3 }}>
 				<TextField
 					placeholder="Cari pencairan..."
@@ -309,6 +347,14 @@ export default function PencairanPage() {
 					}}
 					sx={{ flex: 1 }}
 				/>
+				<Button
+					variant="outlined"
+					startIcon={<SettingsRoundedIcon />}
+					onClick={() => setAdminPhoneDialogOpen(true)}
+					sx={{ borderRadius: 3 }}
+				>
+					Atur WA OTP
+				</Button>
 				<Button
 					variant="outlined"
 					startIcon={<RefreshRoundedIcon />}
@@ -442,7 +488,7 @@ export default function PencairanPage() {
 							error={
 								selectedCampaignData
 									? Number(amount.replace(/\D/g, "")) >
-									  selectedCampaignData.available
+										selectedCampaignData.available
 									: false
 							}
 							helperText={
@@ -531,7 +577,7 @@ export default function PencairanPage() {
 							!accountHolder ||
 							(selectedCampaignData
 								? Number(amount.replace(/\D/g, "")) >
-								  selectedCampaignData.available
+									selectedCampaignData.available
 								: false)
 						}
 						sx={{ borderRadius: 999, px: 3 }}
@@ -549,6 +595,18 @@ export default function PencairanPage() {
 				onVerified={handleOtpVerified}
 				adminPhone={adminPhone}
 			/>
+
+			<AdminPhoneDialog
+				open={adminPhoneDialogOpen}
+				onClose={() => setAdminPhoneDialogOpen(false)}
+				currentPhone={localAdminPhone}
+				onSuccess={async (newPhone) => {
+					setLocalAdminPhone(newPhone);
+					await updateSession({ user: { ...session?.user, phone: newPhone } });
+					showSnack("Nomor WhatsApp berhasil diperbarui", "success");
+				}}
+			/>
+
 			{/* Reject Dialog */}
 			<Dialog
 				open={rejectDialogOpen}
@@ -575,7 +633,7 @@ export default function PencairanPage() {
 									selectedWithdrawalForRejection.id,
 									"REJECTED",
 									undefined,
-									undefined
+									undefined,
 								);
 								if (!res?.success) {
 									showSnack(res?.error || "Gagal menolak pencairan", "error");
@@ -634,7 +692,7 @@ export default function PencairanPage() {
 							try {
 								const res = await updateWithdrawalStatus(
 									confirmTarget.id,
-									confirmTarget.status
+									confirmTarget.status,
 								);
 								if (!res?.success) {
 									showSnack(res?.error || "Gagal update status", "error");

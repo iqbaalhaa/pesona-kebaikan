@@ -3,6 +3,14 @@
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { createPayout, approvePayout } from "@/lib/midtrans-iris";
+import { auth } from "@/auth";
+import { verifyOtp } from "@/actions/otp";
+
+const MIDTRANS_PAYOUTS_ENABLED =
+	process.env.MIDTRANS_PAYOUTS_ENABLED === "true";
+const MIDTRANS_PAYOUTS_REVIEW_MESSAGE =
+	process.env.MIDTRANS_PAYOUTS_REVIEW_MESSAGE ||
+	"Integrasi Midtrans Payouts belum aktif atau masih dalam proses review.";
 
 export async function getCampaignsWithFunds() {
 	const campaigns = await prisma.campaign.findMany({
@@ -39,11 +47,11 @@ export async function getCampaignsWithFunds() {
 	return campaigns.map((c) => {
 		const collected = c.donations.reduce(
 			(acc, curr) => acc + Number(curr.amount),
-			0
+			0,
 		);
 		const withdrawn = c.withdrawals.reduce(
 			(acc, curr) => acc + Number(curr.amount),
-			0
+			0,
 		);
 		return {
 			id: c.id,
@@ -53,6 +61,14 @@ export async function getCampaignsWithFunds() {
 			available: collected - withdrawn,
 		};
 	});
+}
+
+export async function getPayoutsCapability() {
+	const available = MIDTRANS_PAYOUTS_ENABLED;
+	return {
+		available,
+		message: available ? "" : MIDTRANS_PAYOUTS_REVIEW_MESSAGE,
+	};
 }
 
 export async function getWithdrawals() {
@@ -120,16 +136,49 @@ export async function updateWithdrawalStatus(
 	status: "APPROVED" | "REJECTED" | "COMPLETED",
 	proofUrl?: string,
 	otp?: string,
-	rejectReason?: string
+	rejectReason?: string,
+	adminPhone?: string,
 ) {
-	// If approving, trigger Midtrans Iris Payout
+	// 0. Verify OTP (Application Level Security)
+	// We require OTP for ALL approvals, regardless of Midtrans/Manual mode
 	if (status === "APPROVED") {
 		if (!otp) {
 			return {
 				success: false,
-				error: "OTP Midtrans diperlukan untuk menyetujui pencairan",
+				error: "OTP diperlukan untuk menyetujui pencairan",
 			};
 		}
+
+		const session = await auth();
+		// Use provided adminPhone or fallback to session or default
+		const phoneToVerify = adminPhone || session?.user?.phone || "085382055598";
+
+		const verifyRes = await verifyOtp(phoneToVerify, otp);
+		if (!verifyRes.success) {
+			return {
+				success: false,
+				error: verifyRes.error || "Verifikasi OTP gagal",
+			};
+		}
+	}
+
+	// If approving, trigger Midtrans Iris Payout
+	if (status === "APPROVED") {
+		if (!MIDTRANS_PAYOUTS_ENABLED) {
+			await prisma.withdrawal.update({
+				where: { id },
+				data: {
+					status,
+					proofUrl,
+				},
+			});
+
+			revalidatePath("/admin/pencairan");
+			return { success: true, payoutMode: "MANUAL" as const };
+		}
+
+		// OTP already verified above
+
 		const withdrawal = await prisma.withdrawal.findUnique({
 			where: { id },
 			include: {
@@ -159,8 +208,8 @@ export async function updateWithdrawalStatus(
 						beneficiary_name: withdrawal.accountHolder,
 						beneficiary_account: withdrawal.bankAccount,
 						beneficiary_bank: withdrawal.bankName,
-						beneficiary_email: withdrawal.campaign.createdBy.email,
-						amount: String(withdrawal.amount),
+						beneficiary_email: withdrawal.campaign.createdBy.email || undefined,
+						amount: String(Math.floor(Number(withdrawal.amount))),
 						notes: `Pencairan ${withdrawal.campaign.title.substring(0, 20)}`,
 					},
 				],
@@ -195,6 +244,9 @@ export async function updateWithdrawalStatus(
 				error: error.message || "Gagal memproses pencairan ke Midtrans Iris",
 			};
 		}
+
+		revalidatePath("/admin/pencairan");
+		return { success: true, payoutMode: "IRIS" as const };
 	} else {
 		// Normal update for other statuses
 		await prisma.withdrawal.update({

@@ -8,11 +8,6 @@ import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
 import HourglassBottomRoundedIcon from "@mui/icons-material/HourglassBottomRounded";
 import ErrorRoundedIcon from "@mui/icons-material/ErrorRounded";
 
-// Types need to be imported or defined.
-// For now, I'll redefine them here or import if I can find a common types file.
-// Ideally, types should be in `src/types/index.ts`.
-// I'll stick to the previous page's type definition for consistency but export it if needed.
-
 export type WithdrawalStatus =
 	| "PENDING"
 	| "APPROVED"

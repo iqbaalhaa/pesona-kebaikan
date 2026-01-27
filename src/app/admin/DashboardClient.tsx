@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { useRouter } from "next/navigation";
 import {
 	Box,
 	Grid,
@@ -991,6 +992,8 @@ export default function DashboardClient({
 	reviewSolvedRate,
 	recentQueue,
 }: DashboardClientProps) {
+	const router = useRouter();
+	const [isRefreshing, startRefresh] = React.useTransition();
 	const theme = useTheme();
 
 	// --- SAMPLE DATA (ganti dari backend nanti kalau sudah ada) ---
@@ -1214,6 +1217,12 @@ export default function DashboardClient({
 							</Button>
 
 							<IconButton
+								onClick={() => {
+									startRefresh(() => {
+										router.refresh();
+									});
+								}}
+								disabled={isRefreshing}
 								size="small"
 								sx={{
 									width: 34,
@@ -1223,6 +1232,9 @@ export default function DashboardClient({
 									"&:hover": {
 										bgcolor: alpha(theme.palette.action.hover, 0.12),
 									},
+									transition: "all .3s ease",
+									transform: isRefreshing ? "rotate(180deg)" : "none",
+									opacity: isRefreshing ? 0.6 : 1,
 								}}
 							>
 								<RefreshRoundedIcon fontSize="small" />

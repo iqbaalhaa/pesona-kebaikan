@@ -55,7 +55,6 @@ export default function LoginPage() {
 
 			if (!result?.ok) {
 				setError("Email atau password salah");
-				setLoading(false);
 				return;
 			}
 
@@ -70,6 +69,7 @@ export default function LoginPage() {
 			}
 		} catch (err) {
 			setError("Terjadi kesalahan saat login");
+		} finally {
 			setLoading(false);
 		}
 	};

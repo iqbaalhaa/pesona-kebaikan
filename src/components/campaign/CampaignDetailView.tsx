@@ -20,6 +20,7 @@ import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import Typography from "@mui/material/Typography";
 
 import { createReport } from "@/actions/report";
+import { checkPendingDonations } from "@/actions/donation";
 import { ReportReason } from "@/generated/prisma";
 
 // New Components
@@ -153,11 +154,25 @@ export default function CampaignDetailView({ data }: { data: any }) {
 	}, [openReportModal, session]);
 
 	React.useEffect(() => {
-		if (searchParams.get("donation_success") === "true") {
-			setDonationSuccessOpen(true);
-			// Clean up URL
-			router.replace(`/donasi/${data.slug || data.id}`, { scroll: false });
-		}
+		const checkStatus = async () => {
+			if (searchParams.get("donation_success") === "true") {
+				setDonationSuccessOpen(true);
+
+				// Clean up URL first
+				router.replace(`/donasi/${data.slug || data.id}`, { scroll: false });
+
+				// Check payment status actively (useful for localhost/when webhook is delayed)
+				try {
+					const res = await checkPendingDonations(data.id);
+					if (res.success && res.updated && res.updated > 0) {
+						router.refresh();
+					}
+				} catch (e) {
+					console.error("Failed to check donation status", e);
+				}
+			}
+		};
+		checkStatus();
 	}, [searchParams, data.slug, data.id, router]);
 
 	const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
