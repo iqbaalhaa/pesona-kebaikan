@@ -6,6 +6,8 @@ import bcrypt from "bcryptjs";
 import { Role } from "@/generated/prisma";
 import { headers } from "next/headers";
 
+console.log("Initializing NextAuth...");
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
 	adapter: PrismaAdapter(prisma) as any,
 	session: { strategy: "jwt" },
