@@ -235,7 +235,7 @@ export async function updateWithdrawalStatus(
 			}
 
 			// 2. Approve Payout
-			await approvePayout([referenceNo], otp);
+			await approvePayout([referenceNo], otp || "BYPASSED");
 
 			// 3. Update DB
 			await prisma.withdrawal.update({

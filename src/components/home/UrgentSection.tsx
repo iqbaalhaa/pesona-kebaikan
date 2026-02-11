@@ -38,8 +38,8 @@ function ArrowButton({
 				userSelect: "none",
 				bgcolor: "rgba(255,255,255,0.92)",
 				backdropFilter: "blur(10px)",
-				border: "1px solid rgba(15,23,42,0.10)",
-				boxShadow: "0 14px 26px rgba(15,23,42,.14)",
+				border: "none",
+				boxShadow: "none",
 				"&:active": { transform: "scale(0.98)" },
 				transition: "all 0.2s ease",
 				"&:hover": { bgcolor: "#fff", transform: "scale(1.05)" },
@@ -67,23 +67,23 @@ function ProgressBarDual({
 }) {
 	const pct = Math.max(
 		0,
-		Math.min(100, Math.round((collected / target) * 100))
+		Math.min(100, Math.round((collected / target) * 100)),
 	);
 
 	return (
-		<Box className="h-1.5 rounded-full overflow-hidden flex bg-white">
+		<Box className="h-1.5 rounded-full overflow-hidden flex bg-gray-100">
 			<Box
 				className="transition-all duration-300 ease-out"
 				sx={{
 					width: `${pct}%`,
-					bgcolor: "primary.main",
+					bgcolor: pct > 0 ? "primary.main" : "transparent",
 				}}
 			/>
 			<Box
 				className="transition-all duration-300 ease-out"
 				sx={{
 					width: `${100 - pct}%`,
-					bgcolor: "#e11d48", // rose-600 for urgency gap
+					bgcolor: "transparent",
 				}}
 			/>
 		</Box>
@@ -93,6 +93,8 @@ function ProgressBarDual({
 function UrgentCard({ item }: { item: Campaign }) {
 	const router = useRouter();
 	const [imgSrc, setImgSrc] = React.useState(item.cover || "/defaultimg.webp");
+
+	const isQuickDonate = item.slug === "donasi-cepat";
 
 	const handleCardClick = () => {
 		router.push(`/donasi/${item.slug || item.id}`);
@@ -105,13 +107,13 @@ function UrgentCard({ item }: { item: Campaign }) {
 				cursor: "pointer",
 				minWidth: 200,
 				maxWidth: 200,
-				borderRadius: 1,
+				borderRadius: 0,
 				overflow: "hidden",
 				scrollSnapAlign: "start",
 				position: "relative",
 				bgcolor: "#fff",
-				border: "1px solid rgba(15,23,42,0.08)",
-				boxShadow: "0 14px 26px rgba(15,23,42,.06)",
+				border: "none",
+				boxShadow: "none",
 				transition: "transform 0.2s ease",
 				"&:hover": { transform: "translateY(-4px)" },
 			}}
@@ -120,8 +122,7 @@ function UrgentCard({ item }: { item: Campaign }) {
 			<Box
 				className="relative h-[140px] overflow-hidden bg-gray-100"
 				sx={{
-					borderTopLeftRadius: { md: 1 },
-					borderTopRightRadius: { md: 1 },
+					borderRadius: 0,
 				}}
 			>
 				<Image
@@ -142,7 +143,7 @@ function UrgentCard({ item }: { item: Campaign }) {
 						label={item.tag === "ORG" ? "ORGANISASI" : "TERVERIFIKASI"}
 						component={Link}
 						href="/galang-dana"
-						className="h-5 text-[9px] font-bold bg-white/95 backdrop-blur-sm shadow-sm"
+						className="h-5 text-[9px] font-bold bg-white/95 backdrop-blur-sm shadow-none"
 						sx={{
 							color: item.tag === "ORG" ? "primary.main" : "info.main",
 							border: "1px solid",
@@ -153,7 +154,7 @@ function UrgentCard({ item }: { item: Campaign }) {
 				</Box>
 				{/* Days Left Badge */}
 				<Box className="absolute bottom-2 left-2 bg-black/60 backdrop-blur-md text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
-					{item.daysLeft} hari lagi
+					{isQuickDonate ? "∞" : `${item.daysLeft} hari lagi`}
 				</Box>
 			</Box>
 
@@ -172,6 +173,7 @@ function UrgentCard({ item }: { item: Campaign }) {
 							src="/brand/logo.png"
 							alt={item.organizer}
 							fill
+							sizes="16px"
 							style={{ objectFit: "cover" }}
 						/>
 					</Box>
@@ -195,7 +197,12 @@ function UrgentCard({ item }: { item: Campaign }) {
 				</Box>
 
 				{/* Progress Bar Dual */}
-				<ProgressBarDual collected={item.collected} target={item.target || 0} />
+				{!isQuickDonate && (
+					<ProgressBarDual
+						collected={item.collected}
+						target={item.target || 0}
+					/>
+				)}
 
 				<Box className="flex items-center justify-between mt-2 text-[10px]">
 					<Box>
@@ -325,10 +332,13 @@ export default function UrgentSection({
 
 			<Box
 				ref={scrollRef}
-				className="flex gap-3 overflow-x-auto no-scrollbar snap-x snap-mandatory pb-4"
+				className="flex gap-3 overflow-x-auto no-scrollbar snap-x snap-mandatory pb-0"
 				sx={{
 					scrollPaddingLeft: 20,
 					scrollPaddingRight: 20,
+					"&::-webkit-scrollbar": { display: "none" },
+					msOverflowStyle: "none",
+					scrollbarWidth: "none",
 				}}
 			>
 				{campaigns.map((item) => (

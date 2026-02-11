@@ -593,7 +593,7 @@ export default function InfoUsersClient({
 						<TableContainer
 							sx={{
 								borderRadius: 2,
-								overflow: "hidden",
+								overflowX: "auto",
 								border: "1px solid",
 								borderColor: alpha(theme.palette.divider, 0.14),
 								boxShadow: "0 12px 32px rgba(0,0,0,0.06)",

@@ -258,7 +258,7 @@ export default function AdminAkuntabilitasPage() {
           onClick={handleSave}
           disabled={saving}
           sx={{
-            bgcolor: "#61ce70",
+            bgcolor: "#0ba976",
             fontWeight: 700,
             textTransform: "none",
             borderRadius: 2,

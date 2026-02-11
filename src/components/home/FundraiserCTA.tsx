@@ -4,7 +4,7 @@ import * as React from "react";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 
-const PRIMARY = "#61ce70";
+const PRIMARY = "#0ba976";
 
 type Campaign = {
 	id: string;
@@ -94,13 +94,13 @@ function LinkIcon() {
 export default function FundraiserCTA() {
 	const [open, setOpen] = React.useState(false);
 	const [selectedId, setSelectedId] = React.useState<string>(
-		campaigns[0]?.id ?? ""
+		campaigns[0]?.id ?? "",
 	);
 	const [generated, setGenerated] = React.useState<string>("");
 
 	const selected = React.useMemo(
 		() => campaigns.find((c) => c.id === selectedId) ?? campaigns[0],
-		[selectedId]
+		[selectedId],
 	);
 
 	const fundraiserLink = React.useMemo(() => {
@@ -131,11 +131,11 @@ export default function FundraiserCTA() {
 			{/* CTA card */}
 			<Box
 				sx={{
-					borderRadius: 1,
+					borderRadius: 0,
 					p: 1.6,
-					border: "1px solid rgba(15,23,42,0.08)",
+					border: "none",
 					background:
-						"linear-gradient(135deg, rgba(97,206,112,0.18) 0%, rgba(255,255,255,0.96) 55%, rgba(15,23,42,0.02) 100%)",
+						"linear-gradient(135deg, rgba(11,169,118,0.18) 0%, rgba(255,255,255,0.96) 55%, rgba(15,23,42,0.02) 100%)",
 					boxShadow: "0 18px 34px rgba(15,23,42,.06)",
 					position: "relative",
 					overflow: "hidden",
@@ -149,7 +149,7 @@ export default function FundraiserCTA() {
 						width: 140,
 						height: 140,
 						borderRadius: 999,
-						bgcolor: "rgba(97,206,112,0.18)",
+						bgcolor: "rgba(11,169,118,0.18)",
 						pointerEvents: "none",
 					}}
 				/>
@@ -166,12 +166,12 @@ export default function FundraiserCTA() {
 						sx={{
 							width: 44,
 							height: 44,
-							borderRadius: 1,
+							borderRadius: 0,
 							display: "grid",
 							placeItems: "center",
-							bgcolor: "rgba(97,206,112,0.16)",
-							border: "1px solid rgba(97,206,112,0.26)",
-							boxShadow: "0 14px 26px rgba(97,206,112,.10)",
+							bgcolor: "rgba(11,169,118,0.16)",
+							border: "none",
+							boxShadow: "0 14px 26px rgba(11,169,118,.10)",
 							flexShrink: 0,
 						}}
 					>
@@ -208,16 +208,16 @@ export default function FundraiserCTA() {
 						onClick={() => setOpen(true)}
 						sx={{
 							flexShrink: 0,
-							borderRadius: 999,
+							borderRadius: 0,
 							px: 2.1,
 							py: 1.05,
-							border: "1px solid rgba(97,206,112,0.35)",
+							border: "none",
 							bgcolor: PRIMARY,
 							color: "#0b1220",
 							fontWeight: 1100,
 							fontSize: 12.5,
 							cursor: "pointer",
-							boxShadow: "0 16px 28px rgba(97,206,112,.22)",
+							boxShadow: "0 16px 28px rgba(11,169,118,.22)",
 							transition: "transform 120ms ease, filter 120ms ease",
 							"&:hover": { filter: "brightness(0.98)" },
 							"&:active": { transform: "scale(0.99)" },
@@ -237,7 +237,7 @@ export default function FundraiserCTA() {
 					}}
 				>
 					<Box
-						sx={{ width: 8, height: 8, borderRadius: 999, bgcolor: PRIMARY }}
+						sx={{ width: 8, height: 8, borderRadius: 0, bgcolor: PRIMARY }}
 					/>
 					<Typography sx={{ fontSize: 11, color: "rgba(15,23,42,.55)" }}>
 						Cocok buat relawan, komunitas, atau siapa saja yang mau bantu
@@ -373,13 +373,13 @@ export default function FundraiserCTA() {
 												p: 1.2,
 												cursor: "pointer",
 												border: active
-													? "1px solid rgba(97,206,112,0.45)"
+													? "1px solid rgba(11,169,118,0.45)"
 													: "1px solid rgba(15,23,42,0.10)",
 												bgcolor: active
-													? "rgba(97,206,112,0.10)"
+													? "rgba(11,169,118,0.10)"
 													: "rgba(15,23,42,0.02)",
 												boxShadow: active
-													? "0 16px 28px rgba(97,206,112,.10)"
+													? "0 16px 28px rgba(11,169,118,.10)"
 													: "none",
 												transition: "transform 120ms ease",
 												"&:active": { transform: "scale(0.995)" },
@@ -473,13 +473,13 @@ export default function FundraiserCTA() {
 									width: "100%",
 									borderRadius: 3,
 									py: 1.15,
-									border: "1px solid rgba(97,206,112,0.35)",
+									border: "1px solid rgba(11,169,118,0.35)",
 									bgcolor: PRIMARY,
 									color: "#0b1220",
 									fontWeight: 1100,
 									fontSize: 13,
 									cursor: "pointer",
-									boxShadow: "0 16px 28px rgba(97,206,112,.22)",
+									boxShadow: "0 16px 28px rgba(11,169,118,.22)",
 									"&:active": { transform: "scale(0.99)" },
 								}}
 							>

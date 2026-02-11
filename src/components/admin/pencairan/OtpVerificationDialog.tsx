@@ -19,6 +19,8 @@ import { requestOtp } from "@/actions/otp";
 import { WithdrawalRow } from "./WithdrawalCard";
 
 interface OtpVerificationDialogProps {
+	open: boolean;
+	onClose: () => void;
 	withdrawal: WithdrawalRow | null;
 	onVerified: (otp: string) => Promise<void>;
 	adminPhone: string;

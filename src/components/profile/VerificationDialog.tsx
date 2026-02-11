@@ -218,7 +218,7 @@ export default function VerificationDialog({
                   borderRadius: 2,
                   cursor: "pointer",
                   transition: "all 0.2s",
-                  "&:hover": { borderColor: "#61ce70", bgcolor: "#f0fdf4", transform: "translateY(-2px)" },
+                  "&:hover": { borderColor: "#0ba976", bgcolor: "#f0fdf4", transform: "translateY(-2px)" },
                   display: "flex",
                   flexDirection: "column",
                   alignItems: "center",
@@ -226,7 +226,7 @@ export default function VerificationDialog({
                   gap: 1.5,
                 }}
               >
-                <Box sx={{ width: 48, height: 48, borderRadius: "50%", bgcolor: "rgba(97,206,112,0.1)", display: "grid", placeItems: "center", color: "#61ce70" }}>
+                <Box sx={{ width: 48, height: 48, borderRadius: "50%", bgcolor: "rgba(11,169,118,0.1)", display: "grid", placeItems: "center", color: "#0ba976" }}>
                   <PersonIcon sx={{ fontSize: 24 }} />
                 </Box>
                 <Box>
@@ -245,7 +245,7 @@ export default function VerificationDialog({
                   borderRadius: 2,
                   cursor: "pointer",
                   transition: "all 0.2s",
-                  "&:hover": { borderColor: "#61ce70", bgcolor: "#f0fdf4", transform: "translateY(-2px)" },
+                  "&:hover": { borderColor: "#0ba976", bgcolor: "#f0fdf4", transform: "translateY(-2px)" },
                   display: "flex",
                   flexDirection: "column",
                   alignItems: "center",
@@ -253,7 +253,7 @@ export default function VerificationDialog({
                   gap: 1.5,
                 }}
               >
-                <Box sx={{ width: 48, height: 48, borderRadius: "50%", bgcolor: "rgba(97,206,112,0.1)", display: "grid", placeItems: "center", color: "#61ce70" }}>
+                <Box sx={{ width: 48, height: 48, borderRadius: "50%", bgcolor: "rgba(11,169,118,0.1)", display: "grid", placeItems: "center", color: "#0ba976" }}>
                   <BusinessIcon sx={{ fontSize: 24 }} />
                 </Box>
                 <Box>
@@ -266,7 +266,7 @@ export default function VerificationDialog({
         </Box>
       ) : (
         <>
-          <Box sx={{ p: 3, bgcolor: "#61ce70", color: "white", position: "relative" }}>
+          <Box sx={{ p: 3, bgcolor: "#0ba976", color: "white", position: "relative" }}>
             <Typography variant="h6" sx={{ fontWeight: 900 }}>
               Verifikasi {verificationType === "individu" ? "Individu" : "Organisasi"}
             </Typography>
@@ -311,7 +311,7 @@ export default function VerificationDialog({
                     textTransform: "none", 
                     whiteSpace: "nowrap",
                     minWidth: 100,
-                    bgcolor: waCooldown > 0 ? "#e2e8f0" : "#61ce70",
+                    bgcolor: waCooldown > 0 ? "#e2e8f0" : "#0ba976",
                     color: waCooldown > 0 ? "#94a3b8" : "white",
                     boxShadow: "none",
                     "&:hover": {
@@ -361,7 +361,7 @@ export default function VerificationDialog({
                       "& .MuiOutlinedInput-root": {
                         borderRadius: 1.5,
                         "&.Mui-focused fieldset": {
-                          borderColor: "#61ce70",
+                          borderColor: "#0ba976",
                           borderWidth: 2,
                         },
                       },
@@ -396,7 +396,7 @@ export default function VerificationDialog({
               disabled={waLoading || !phone || waOtp.length < 6}
               fullWidth
               sx={{ 
-                bgcolor: "#61ce70", 
+                bgcolor: "#0ba976", 
                 textTransform: "none", 
                 fontWeight: 700, 
                 borderRadius: 2, 
@@ -441,7 +441,7 @@ export default function VerificationDialog({
                             width: "48px",
                             "& .MuiOutlinedInput-root": {
                               borderRadius: 1.5,
-                              "&.Mui-focused fieldset": { borderColor: "#61ce70", borderWidth: 2 },
+                              "&.Mui-focused fieldset": { borderColor: "#0ba976", borderWidth: 2 },
                             },
                           }}
                         />
@@ -488,7 +488,7 @@ export default function VerificationDialog({
                          }
                       }} 
                       disabled={emailLoading || emailOtp.length < 6}
-                      sx={{ bgcolor: "#61ce70", textTransform: "none", fontWeight: 700, borderRadius: 1, boxShadow: "none" }}
+                      sx={{ bgcolor: "#0ba976", textTransform: "none", fontWeight: 700, borderRadius: 1, boxShadow: "none" }}
                     >
                       Verifikasi & Lanjut
                     </Button>
@@ -517,7 +517,7 @@ export default function VerificationDialog({
                       textAlign: "center",
                       bgcolor: "#f8fafc",
                       cursor: "pointer",
-                      "&:hover": { borderColor: "#61ce70", bgcolor: "#f0fdf4" },
+                      "&:hover": { borderColor: "#0ba976", bgcolor: "#f0fdf4" },
                     }}
                   >
                     <UploadFileIcon sx={{ fontSize: 40, color: "#94a3b8", mb: 1 }} />
@@ -552,7 +552,7 @@ export default function VerificationDialog({
                       } else {
                         alert(res.error || "Gagal menyimpan data verifikasi");
                       }
-                    }} sx={{ bgcolor: "#61ce70", textTransform: "none", fontWeight: 700, borderRadius: 1, boxShadow: "none" }}>
+                    }} sx={{ bgcolor: "#0ba976", textTransform: "none", fontWeight: 700, borderRadius: 1, boxShadow: "none" }}>
                       Lanjut
                     </Button>
                     <Button onClick={handleBack} sx={{ mt: 1, mr: 1, color: "text.secondary", textTransform: "none" }}>
@@ -605,7 +605,7 @@ export default function VerificationDialog({
                       }}
                       disabled={!selectedProvince || !selectedRegency}
                       sx={{
-                        bgcolor: "#61ce70",
+                        bgcolor: "#0ba976",
                         textTransform: "none",
                         fontWeight: 700,
                         borderRadius: 1,
@@ -628,7 +628,7 @@ export default function VerificationDialog({
                 </StepLabel>
                 <StepContent>
                   <Box sx={{ textAlign: "center", py: 2 }}>
-                    <CheckCircleIcon sx={{ fontSize: 48, color: "#61ce70", mb: 2 }} />
+                    <CheckCircleIcon sx={{ fontSize: 48, color: "#0ba976", mb: 2 }} />
                     <Typography variant="h6" sx={{ fontWeight: 800 }}>Terima Kasih!</Typography>
                     <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                       Data Anda telah kami terima dan sedang dalam proses verifikasi 1x24 jam.

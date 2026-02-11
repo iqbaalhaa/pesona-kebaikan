@@ -86,7 +86,7 @@ export default function DonorsModal({
 												sx={{
 													display: "inline",
 													fontWeight: 600,
-													color: "#61ce70",
+													color: "#0ba976",
 												}}
 												component="span"
 												variant="body2"

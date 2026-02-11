@@ -33,7 +33,7 @@ export default function MiniFooter() {
 			sx={{
 				px: 2,
 				py: 2,
-				borderTop: "1px solid rgba(15,23,42,0.06)",
+				borderTop: "none",
 				bgcolor: "#fff",
 			}}
 		>

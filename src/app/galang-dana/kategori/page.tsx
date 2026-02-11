@@ -44,7 +44,7 @@ type Cat = {
 	examples: Example[];
 };
 
-const BRAND = "#61ce70";
+const BRAND = "#0ba976";
 
 const CATEGORIES: Cat[] = [
 	{

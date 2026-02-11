@@ -14,7 +14,7 @@ import { getCategoryIcon } from "@/lib/categoryIcons";
 // Icons
 import GridViewIcon from "@mui/icons-material/GridView";
 
-const PRIMARY = "#61ce70";
+const PRIMARY = "#0ba976";
 
 function buildDefaultCategories(): Category[] {
 	const pick = ["medis", "pendidikan", "bencana"];
@@ -57,26 +57,23 @@ function CategoryButton({
 			tabIndex={0}
 			onClick={onClick}
 			onKeyDown={(e) => e.key === "Enter" && onClick()}
-			className="w-full p-3 cursor-pointer select-none transition-all duration-150 ease-out active:scale-95"
+			className="w-full p-2 cursor-pointer select-none transition-all duration-150 ease-out active:scale-95"
 			sx={{
 				borderRadius: 1,
-				border: selected
-					? `1px solid ${alpha(primaryMain, 0.45)}`
-					: `1px solid ${alpha(theme.palette.text.primary, 0.1)}`,
-				bgcolor: selected ? alpha(primaryMain, 0.14) : "background.paper",
-				boxShadow: selected
-					? `0 16px 26px ${alpha(primaryMain, 0.14)}`
-					: `0 14px 24px ${alpha(theme.palette.text.primary, 0.06)}`,
+				border: "none",
+				bgcolor: "transparent",
+				boxShadow: "none",
 			}}
 		>
 			<Box
-				className="w-11 h-11 rounded-full mx-auto grid place-items-center"
+				className="w-14 h-14 rounded-full mx-auto grid place-items-center"
 				sx={{
 					bgcolor: selected ? alpha(primaryMain, 0.22) : "action.hover",
 					border: selected
 						? `1px solid ${alpha(primaryMain, 0.3)}`
 						: `1px solid ${alpha(theme.palette.text.primary, 0.08)}`,
 					color: selected ? primaryMain : "text.secondary",
+					"& .MuiSvgIcon-root": { fontSize: 32 },
 				}}
 			>
 				{c.icon}
@@ -100,7 +97,7 @@ function ProgressMini({ pct }: { pct: number }) {
 			sx={{
 				height: 6,
 				borderRadius: 999,
-				bgcolor: "#e11d48",
+				bgcolor: "rgba(15,23,42,0.08)",
 				overflow: "hidden",
 			}}
 		>
@@ -108,7 +105,7 @@ function ProgressMini({ pct }: { pct: number }) {
 				sx={{
 					height: "100%",
 					width: `${Math.min(100, Math.max(0, pct))}%`,
-					bgcolor: PRIMARY,
+					bgcolor: pct > 0 ? PRIMARY : "transparent",
 					borderRadius: 999,
 					transition: "width 250ms ease",
 				}}
@@ -134,9 +131,9 @@ function CampaignRowCard({ item }: { item: Campaign }) {
 			sx={{
 				minWidth: 200,
 				maxWidth: 200,
-				borderRadius: "10px",
-				border: "1px solid rgba(15,23,42,0.08)",
-				bgcolor: "#fff",
+								borderRadius: 0,
+								border: "none",
+								bgcolor: "#fff",
 				boxShadow: "0 14px 26px rgba(15,23,42,.06)",
 				overflow: "hidden",
 				position: "relative",
@@ -150,7 +147,7 @@ function CampaignRowCard({ item }: { item: Campaign }) {
 			<Box sx={{ position: "relative", height: 120 }}>
 				<Box
 					className="relative w-full h-full flex-shrink-0 overflow-hidden bg-gray-100"
-					sx={{ borderRadius: 1 }}
+					sx={{ borderRadius: 0 }}
 				>
 					<Image
 						src={imgSrc}
@@ -238,7 +235,7 @@ function CampaignRowCard({ item }: { item: Campaign }) {
 						size="small"
 						sx={{
 							height: 18,
-							bgcolor: "rgba(97,206,112,0.14)",
+							bgcolor: "rgba(11,169,118,0.14)",
 							color: PRIMARY,
 							fontWeight: 900,
 							"& .MuiChip-label": { px: 0.8, fontSize: 9 },
@@ -394,18 +391,12 @@ export default function CategoryChips({
 							display: "flex",
 							gap: 1.5,
 							overflowX: "auto",
-							pb: 1,
+							pb: 0,
 							scrollSnapType: "x mandatory",
 							WebkitOverflowScrolling: "touch",
-							"&::-webkit-scrollbar": { height: 6 },
-							"&::-webkit-scrollbar-thumb": {
-								background: "rgba(15,23,42,0.18)",
-								borderRadius: 999,
-							},
-							"&::-webkit-scrollbar-track": {
-								background: "rgba(15,23,42,0.06)",
-								borderRadius: 999,
-							},
+							"&::-webkit-scrollbar": { display: "none" },
+							msOverflowStyle: "none",
+							scrollbarWidth: "none",
 						}}
 					>
 						{filtered.map((item) => (

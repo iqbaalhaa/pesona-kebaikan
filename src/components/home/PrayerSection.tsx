@@ -7,7 +7,7 @@ import Button from "@mui/material/Button";
 import Link from "next/link";
 import { keyframes } from "@mui/system";
 
-const PRIMARY = "#61ce70";
+const PRIMARY = "#0ba976";
 
 type Prayer = {
 	id: string;
@@ -46,7 +46,7 @@ function AvatarIcon() {
 				display: "grid",
 				placeItems: "center",
 				bgcolor: "rgba(15,23,42,0.06)",
-				border: "1px solid rgba(15,23,42,0.08)",
+				border: "none",
 				flexShrink: 0,
 			}}
 		>
@@ -136,7 +136,7 @@ export default function PrayersSection({
 		const confetti: Particle[] = Array.from({ length: 8 }).map((_, i) => {
 			const size = 4 + (i % 4);
 			const color =
-				i % 2 === 0 ? "rgba(97,206,112,0.95)" : "rgba(15,23,42,0.18)";
+				i % 2 === 0 ? "rgba(11,169,118,0.95)" : "rgba(15,23,42,0.18)";
 			const dx = ((i * 9) % 56) - 28;
 			const rot = ((i * 37) % 260) - 130;
 			return {
@@ -156,9 +156,12 @@ export default function PrayersSection({
 
 		next.forEach((p) => {
 			const dur = p.kind === "heart" ? 900 : 800;
-			window.setTimeout(() => {
-				setParticles((prev) => prev.filter((x) => x.id !== p.id));
-			}, dur + p.delayMs + 80);
+			window.setTimeout(
+				() => {
+					setParticles((prev) => prev.filter((x) => x.id !== p.id));
+				},
+				dur + p.delayMs + 80,
+			);
 		});
 	};
 
@@ -221,10 +224,12 @@ export default function PrayersSection({
 					display: "flex",
 					gap: 1.25,
 					overflowX: "auto",
-					pb: 1,
+					pb: 0,
 					scrollSnapType: "x mandatory",
 					WebkitOverflowScrolling: "touch",
-					"&::-webkit-scrollbar": { height: 0 },
+					"&::-webkit-scrollbar": { display: "none" },
+					msOverflowStyle: "none",
+					scrollbarWidth: "none",
 				}}
 			>
 				{prayers.map((p) => {
@@ -238,10 +243,10 @@ export default function PrayersSection({
 							sx={{
 								minWidth: 240,
 								maxWidth: 240,
-								borderRadius: 1,
+								borderRadius: 0,
 								bgcolor: "#fff",
-								border: "1px solid rgba(15,23,42,0.08)",
-								boxShadow: "0 14px 26px rgba(15,23,42,.06)",
+								border: "none",
+								boxShadow: "none",
 								overflow: "hidden",
 								scrollSnapAlign: "start",
 							}}
@@ -294,8 +299,8 @@ export default function PrayersSection({
 												px: 1,
 												py: "3px",
 												borderRadius: 999,
-												border: "1px solid rgba(97,206,112,0.22)",
-												bgcolor: "rgba(97,206,112,0.10)",
+												border: "1px solid rgba(11,169,118,0.22)",
+												bgcolor: "rgba(11,169,118,0.10)",
 											}}
 										>
 											<Typography

@@ -49,7 +49,7 @@ export default function ProfileCard({ user }: { user: UserCardData }) {
         sx={{
           width: 72,
           height: 72,
-          bgcolor: "#61ce70",
+          bgcolor: "#0ba976",
           fontSize: 28,
           fontWeight: 800,
           border: "3px solid #fff",
@@ -65,7 +65,7 @@ export default function ProfileCard({ user }: { user: UserCardData }) {
           </Typography>
           {isVerified ? (
             <Tooltip title="Terverifikasi">
-              <CheckCircleIcon sx={{ fontSize: 18, color: "#61ce70" }} />
+              <CheckCircleIcon sx={{ fontSize: 18, color: "#0ba976" }} />
             </Tooltip>
           ) : null}
           {isVerified && user?.verifiedAs === "organization" ? (
@@ -89,8 +89,8 @@ export default function ProfileCard({ user }: { user: UserCardData }) {
           {user?.email}
         </Typography>
         <Box sx={{ mt: 0.5, display: "flex", alignItems: "center", gap: 0.5 }}>
-          <Box sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: isVerified ? "#61ce70" : "#e2e8f0" }} />
-          <Typography sx={{ fontSize: 12, fontWeight: 700, color: isVerified ? "#61ce70" : "#64748b" }}>
+          <Box sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: isVerified ? "#0ba976" : "#e2e8f0" }} />
+          <Typography sx={{ fontSize: 12, fontWeight: 700, color: isVerified ? "#0ba976" : "#64748b" }}>
             {statusLabel}
           </Typography>
         </Box>

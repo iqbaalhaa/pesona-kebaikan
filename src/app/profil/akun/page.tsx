@@ -150,7 +150,7 @@ export default function AccountInfoPage() {
 						sx={{
 							width: 64,
 							height: 64,
-							bgcolor: "#61ce70",
+							bgcolor: "#0ba976",
 							fontSize: 24,
 							fontWeight: 800,
 						}}
@@ -197,11 +197,11 @@ export default function AccountInfoPage() {
 								width: 8,
 								height: 8,
 								borderRadius: "50%",
-								bgcolor: "#61ce70",
+								bgcolor: "#0ba976",
 							}}
 						/>
 						<Typography
-							sx={{ fontSize: 11, fontWeight: 700, color: "#61ce70" }}
+							sx={{ fontSize: 11, fontWeight: 700, color: "#0ba976" }}
 						>
 							{user?.memberStatus || "Member"}
 						</Typography>

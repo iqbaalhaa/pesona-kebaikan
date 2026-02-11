@@ -28,7 +28,7 @@ export default async function SettingsPage() {
       <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
         <h2>Kode Verifikasi Email</h2>
         <p>Terima kasih telah mendaftar di Pesona Kebaikan. Berikut adalah kode OTP verifikasi Anda:</p>
-        <div style="padding: 15px; background-color: #f0fdf4; border: 1px solid #61ce70; border-radius: 8px; font-size: 24px; font-weight: bold; text-align: center; letter-spacing: 5px; color: #166534; margin: 20px 0;">
+        <div style="padding: 15px; background-color: #f0fdf4; border: 1px solid #0ba976; border-radius: 8px; font-size: 24px; font-weight: bold; text-align: center; letter-spacing: 5px; color: #166534; margin: 20px 0;">
           {{token}}
         </div>
         <p>Kode ini akan kedaluwarsa dalam 1 jam.</p>

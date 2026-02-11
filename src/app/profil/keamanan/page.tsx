@@ -212,7 +212,7 @@ export default function SecurityPage() {
 						onClick={() => setOpenPassword(true)}
 						sx={{ py: 2 }}
 					>
-						<ListItemIcon sx={{ minWidth: 40, color: "#61ce70" }}>
+						<ListItemIcon sx={{ minWidth: 40, color: "#0ba976" }}>
 							<KeyIcon />
 						</ListItemIcon>
 						<ListItemText
@@ -233,7 +233,7 @@ export default function SecurityPage() {
 
 					{/* 2FA */}
 					{/* <ListItemButton sx={{ py: 2 }}>
-						<ListItemIcon sx={{ minWidth: 40, color: "#61ce70" }}>
+						<ListItemIcon sx={{ minWidth: 40, color: "#0ba976" }}>
 							<SmartphoneIcon />
 						</ListItemIcon>
 						<ListItemText
@@ -282,7 +282,7 @@ export default function SecurityPage() {
 			>
 				{loadingActivities ? (
 					<Box sx={{ p: 3, textAlign: "center" }}>
-						<CircularProgress size={24} sx={{ color: "#61ce70" }} />
+						<CircularProgress size={24} sx={{ color: "#0ba976" }} />
 					</Box>
 				) : activities.length === 0 ? (
 					<Box sx={{ p: 3, textAlign: "center" }}>
@@ -423,7 +423,7 @@ export default function SecurityPage() {
 							variant="contained"
 							disabled={isSubmitting}
 							sx={{
-								bgcolor: "#61ce70",
+								bgcolor: "#0ba976",
 								color: "white",
 								fontWeight: 700,
 								boxShadow: "none",

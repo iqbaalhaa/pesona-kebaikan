@@ -77,16 +77,16 @@ export default async function Home() {
 	// Category chips will handle its own category icons and defaults
 
 	return (
-		<Box>
+		<Box sx={{ pb: 2 }}>
 			<HeroCarousel items={heroItems} />
-			<QuickDonate campaigns={allCampaigns} />
+			<QuickDonate />
 			<QuickMenu />
 			<UrgentSection campaigns={urgentCampaigns} />
 			<CategoryChips campaigns={allCampaigns} />
 			<PopularSection campaigns={popularCampaigns} />
+			<PrayerSection prayers={latestDonations} />
 			<TrustStrip />
 			<DonationBanner />
-			<PrayerSection prayers={latestDonations} />
 			<FundraiserCTA />
 			<MiniFooter />
 		</Box>

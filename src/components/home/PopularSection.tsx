@@ -11,7 +11,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Campaign } from "@/types";
 
-const PRIMARY = "#61ce70";
+const PRIMARY = "#0ba976";
 
 function rupiah(n: number) {
 	return new Intl.NumberFormat("id-ID").format(n);
@@ -41,7 +41,8 @@ function ArrowButton({
 				userSelect: "none",
 				bgcolor: "rgba(255,255,255,0.92)",
 				backdropFilter: "blur(10px)",
-				border: "1px solid rgba(15,23,42,0.10)",
+				border: "none",
+				boxShadow: "none",
 				"&:active": { transform: "scale(0.98)" },
 			}}
 		>
@@ -64,7 +65,7 @@ function ProgressMini({ pct }: { pct: number }) {
 			sx={{
 				height: 6,
 				borderRadius: 999,
-				bgcolor: "#e11d48",
+				bgcolor: "rgba(15,23,42,0.08)",
 				overflow: "hidden",
 			}}
 		>
@@ -72,7 +73,7 @@ function ProgressMini({ pct }: { pct: number }) {
 				sx={{
 					height: "100%",
 					width: `${Math.min(100, Math.max(0, pct))}%`,
-					bgcolor: PRIMARY,
+					bgcolor: pct > 0 ? PRIMARY : "transparent",
 					borderRadius: 999,
 					transition: "width 250ms ease",
 				}}
@@ -88,6 +89,8 @@ function PopularCard({ c }: { c: Campaign }) {
 	const pct = Math.min(100, Math.max(0, rawPct));
 	const displayPct = Math.min(100, Math.max(0, rawPct));
 
+	const isQuickDonate = c.slug === "donasi-cepat";
+
 	const handleCardClick = () => {
 		router.push(`/donasi/${c.slug || c.id}`);
 	};
@@ -98,10 +101,10 @@ function PopularCard({ c }: { c: Campaign }) {
 			sx={{
 				minWidth: 200,
 				maxWidth: 200,
-				borderRadius: 1,
-				border: "1px solid rgba(15,23,42,0.08)",
+				borderRadius: 0,
+				border: "none",
 				bgcolor: "#fff",
-				boxShadow: "0 14px 26px rgba(15,23,42,.06)",
+				boxShadow: "none",
 				overflow: "hidden",
 				scrollSnapAlign: "start",
 				position: "relative",
@@ -160,7 +163,7 @@ function PopularCard({ c }: { c: Campaign }) {
 						backdropFilter: "blur(10px)",
 					}}
 				>
-					{c.daysLeft} hari
+					{isQuickDonate ? "∞" : `${c.daysLeft} hari`}
 				</Box>
 			</Box>
 
@@ -198,7 +201,7 @@ function PopularCard({ c }: { c: Campaign }) {
 						size="small"
 						sx={{
 							height: 18,
-							bgcolor: "rgba(97,206,112,0.14)",
+							bgcolor: "rgba(11,169,118,0.14)",
 							color: PRIMARY,
 							fontWeight: 900,
 							"& .MuiChip-label": { px: 0.8, fontSize: 9 },
@@ -231,10 +234,10 @@ function PopularCard({ c }: { c: Campaign }) {
 								color: PRIMARY,
 							}}
 						>
-							{pct}%
+							{isQuickDonate ? "∞" : `${pct}%`}
 						</Typography>
 					</Box>
-					<ProgressMini pct={pct} />
+					{!isQuickDonate && <ProgressMini pct={pct} />}
 					<Box
 						sx={{
 							display: "flex",
@@ -398,18 +401,12 @@ export default function PopularSection({
 						display: "flex",
 						gap: 1.5,
 						overflowX: "auto",
-						pb: 1,
+						pb: 0,
 						scrollSnapType: "x mandatory",
 						WebkitOverflowScrolling: "touch",
-						"&::-webkit-scrollbar": { height: 6 },
-						"&::-webkit-scrollbar-thumb": {
-							background: "rgba(15,23,42,0.18)",
-							borderRadius: 999,
-						},
-						"&::-webkit-scrollbar-track": {
-							background: "rgba(15,23,42,0.06)",
-							borderRadius: 999,
-						},
+						"&::-webkit-scrollbar": { display: "none" },
+						msOverflowStyle: "none",
+						scrollbarWidth: "none",
 					}}
 				>
 					{campaigns.map((c) => (
@@ -417,8 +414,6 @@ export default function PopularSection({
 					))}
 				</Box>
 			</Box>
-
-			<Box sx={{ mt: 1.5, height: 1, bgcolor: "rgba(15,23,42,0.06)" }} />
 		</Box>
 	);
 }

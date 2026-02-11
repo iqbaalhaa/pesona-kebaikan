@@ -14,11 +14,12 @@ import Alert from "@mui/material/Alert";
 
 import type { Campaign } from "@/types";
 import { createDonation } from "@/actions/donation";
+import { getQuickDonationCampaignId } from "@/actions/campaign";
 
-const PRIMARY = "#61ce70";
+const PRIMARY = "#0ba976";
 const MIN_DONATION = Number(process.env.NEXT_PUBLIC_MIN_DONATION ?? 1);
 
-const amountPresets = [10000, 25000, 50000, 100000];
+const amountPresets = [10000, 25000, 50000, 75000, 100000];
 
 function rupiah(n: number) {
 	return new Intl.NumberFormat("id-ID").format(n);
@@ -84,9 +85,9 @@ function Toggle({
 				height: 28,
 				borderRadius: 999,
 				border: checked
-					? "1px solid rgba(97,206,112,0.40)"
+					? "1px solid rgba(11,169,118,0.40)"
 					: "1px solid rgba(15,23,42,0.12)",
-				bgcolor: checked ? "rgba(97,206,112,0.35)" : "rgba(15,23,42,0.06)",
+				bgcolor: checked ? "rgba(11,169,118,0.35)" : "rgba(15,23,42,0.06)",
 				position: "relative",
 				cursor: "pointer",
 				transition: "all 140ms ease",
@@ -115,16 +116,11 @@ function Toggle({
 	);
 }
 
-export default function QuickDonate({
-	campaigns = [],
-}: {
-	campaigns?: Campaign[];
-}) {
+export default function QuickDonate() {
 	const router = useRouter();
-	console.log("QuickDonate campaigns:", campaigns.length, campaigns);
 
 	const [selectedAmount, setSelectedAmount] = React.useState<number>(
-		amountPresets[0]
+		amountPresets[0],
 	);
 	const [custom, setCustom] = React.useState<string>("");
 
@@ -139,11 +135,18 @@ export default function QuickDonate({
 	const [message, setMessage] = React.useState<string>("");
 	const [loading, setLoading] = React.useState(false);
 	const [error, setError] = React.useState("");
+	const [success, setSuccess] = React.useState(false);
 
-	const selectedCampaign = React.useMemo(
-		() => campaigns.find((c) => c.id === campaignId) ?? null,
-		[campaignId, campaigns]
-	);
+	// Fetch quick donation campaign ID on mount
+	React.useEffect(() => {
+		const fetchId = async () => {
+			const id = await getQuickDonationCampaignId();
+			if (id) {
+				setCampaignId(id);
+			}
+		};
+		fetchId();
+	}, []);
 
 	const finalAmount = React.useMemo(() => {
 		const clean = custom.replace(/[^\d]/g, "");
@@ -166,10 +169,11 @@ export default function QuickDonate({
 	};
 
 	const handleSubmit = async () => {
-		if (!selectedCampaign) {
-			setError("Pilih campaign terlebih dahulu");
+		if (!campaignId) {
+			setError("Gagal memuat sistem donasi");
 			return;
 		}
+
 		if (!finalAmount || Number(finalAmount) < MIN_DONATION) {
 			setError(`Minimal donasi Rp ${MIN_DONATION.toLocaleString("id-ID")}`);
 			return;
@@ -189,7 +193,7 @@ export default function QuickDonate({
 		setError("");
 		try {
 			const res = await createDonation({
-				campaignId: selectedCampaign.id,
+				campaignId: campaignId,
 				amount: Number(finalAmount),
 				donorName: isAnonymous ? "Hamba Allah" : donorName || "Tanpa Nama",
 				donorPhone,
@@ -200,7 +204,7 @@ export default function QuickDonate({
 
 			if (res.success) {
 				const donationId = (res as any).data?.id;
-				const slug = selectedCampaign.slug || selectedCampaign.id;
+				const slug = "donasi-cepat"; // Fixed slug for quick donation
 
 				if ((window as any).snap?.show) {
 					(window as any).snap.show();
@@ -218,10 +222,12 @@ export default function QuickDonate({
 						language: "id",
 						...(isProd ? { uiMode: "qr" } : {}),
 						onSuccess: () => {
-							router.push(`/donasi/${slug}?donation_success=true`);
+							setSuccess(true);
+							setOpen(false);
 						},
 						onPending: () => {
-							router.push(`/donasi/${slug}?donation_success=true`);
+							setSuccess(true);
+							setOpen(false);
 						},
 						onError: () => {
 							setError("Pembayaran gagal");
@@ -249,8 +255,90 @@ export default function QuickDonate({
 		}
 	};
 
+	if (success) {
+		return (
+			<Box
+				sx={{
+					px: 0,
+					mt: 2,
+					position: "relative",
+				}}
+			>
+				<Box
+					sx={{
+						borderRadius: 0,
+						bgcolor: "#fff",
+						boxShadow: "none",
+						p: 3,
+						position: "relative",
+						overflow: "hidden",
+						textAlign: "center",
+						display: "flex",
+						flexDirection: "column",
+						alignItems: "center",
+						gap: 2,
+					}}
+				>
+					<Box
+						sx={{
+							width: 60,
+							height: 60,
+							borderRadius: "50%",
+							bgcolor: "rgba(11,169,118,0.1)",
+							color: PRIMARY,
+							display: "grid",
+							placeItems: "center",
+						}}
+					>
+						<CheckIcon />
+					</Box>
+					<Box>
+						<Typography sx={{ fontSize: 16, fontWeight: 900, mb: 0.5 }}>
+							Terima Kasih!
+						</Typography>
+						<Typography sx={{ fontSize: 13, color: "text.secondary" }}>
+							Donasi Anda telah kami terima. Semoga menjadi amal jariyah yang
+							tak terputus pahalanya.
+						</Typography>
+					</Box>
+					<Button
+						variant="outlined"
+						onClick={() => {
+							setSuccess(false);
+							setCustom("");
+							setSelectedAmount(amountPresets[0]);
+							setDonorName("");
+							setDonorPhone("");
+							setMessage("");
+							setIsAnonymous(true);
+						}}
+						sx={{
+							borderRadius: "12px",
+							textTransform: "none",
+							fontWeight: 700,
+							borderColor: PRIMARY,
+							color: PRIMARY,
+							"&:hover": {
+								borderColor: PRIMARY,
+								bgcolor: "rgba(11,169,118,0.05)",
+							},
+						}}
+					>
+						Donasi Lagi
+					</Button>
+				</Box>
+			</Box>
+		);
+	}
+
 	return (
-		<Box sx={{ px: 2, mt: 2, position: "relative" }}>
+		<Box
+			sx={{
+				px: 0,
+				mt: 2,
+				position: "relative",
+			}}
+		>
 			<Script
 				src={
 					process.env.NEXT_PUBLIC_MIDTRANS_IS_PRODUCTION === "true"
@@ -262,11 +350,10 @@ export default function QuickDonate({
 			/>
 			<Box
 				sx={{
-					borderRadius: 1,
+					borderRadius: 0,
 					bgcolor: "#fff",
-					boxShadow: "0 20px 40px -4px rgba(0,0,0,0.12)",
+					boxShadow: "none",
 					p: 2,
-					border: "1px solid rgba(15,23,42,0.08)",
 					position: "relative",
 					overflow: "hidden",
 				}}
@@ -279,7 +366,7 @@ export default function QuickDonate({
 						width: 160,
 						height: 160,
 						borderRadius: 999,
-						bgcolor: "rgba(97,206,112,0.14)",
+						bgcolor: "rgba(11,169,118,0.14)",
 						pointerEvents: "none",
 					}}
 				/>
@@ -298,7 +385,7 @@ export default function QuickDonate({
 						<Typography
 							sx={{
 								fontSize: 14.5,
-								fontWeight: 1100,
+								fontWeight: 900,
 								color: "#0f172a",
 								lineHeight: 1.15,
 							}}
@@ -319,11 +406,9 @@ export default function QuickDonate({
 					<Box
 						sx={{
 							mt: 1,
-							display: "flex",
+							display: "grid",
+							gridTemplateColumns: "repeat(3, 1fr)",
 							gap: 1,
-							overflowX: "auto",
-							pb: 0.5,
-							"&::-webkit-scrollbar": { height: 0 },
 						}}
 					>
 						{amountPresets.map((a) => {
@@ -338,23 +423,21 @@ export default function QuickDonate({
 										setSelectedAmount(a);
 									}}
 									sx={{
-										flexShrink: 0,
+										width: "100%",
 										borderRadius: "12px",
-										px: 1.5,
+										px: 1,
 										py: 0.85,
 										cursor: "pointer",
 										fontWeight: 1100,
 										fontSize: 12.5,
 										border: active
-											? "1px solid rgba(97,206,112,0.45)"
+											? "1px solid rgba(11,169,118,0.45)"
 											: "1px solid rgba(15,23,42,0.10)",
 										bgcolor: active
-											? "rgba(97,206,112,0.12)"
+											? "rgba(11,169,118,0.12)"
 											: "rgba(255,255,255,0.92)",
 										color: "rgba(15,23,42,.82)",
-										boxShadow: active
-											? "0 16px 28px rgba(97,206,112,.10)"
-											: "0 14px 22px rgba(15,23,42,.05)",
+										boxShadow: "none",
 										"&:active": { transform: "scale(0.99)" },
 									}}
 								>
@@ -366,19 +449,19 @@ export default function QuickDonate({
 						{/* Custom */}
 						<Box
 							sx={{
-								flexShrink: 0,
+								gridColumn: "span 1",
 								display: "flex",
 								alignItems: "center",
-								gap: 0.8,
+								gap: 0.5,
 								borderRadius: "12px",
 								px: 1.2,
 								py: 0.55,
 								border:
 									custom.trim().length > 0
-										? "1px solid rgba(97,206,112,0.45)"
+										? "1px solid rgba(11,169,118,0.45)"
 										: "1px solid rgba(15,23,42,0.10)",
 								bgcolor: "rgba(255,255,255,0.92)",
-								boxShadow: "0 14px 22px rgba(15,23,42,.05)",
+								boxShadow: "none",
 							}}
 						>
 							<Typography
@@ -397,7 +480,7 @@ export default function QuickDonate({
 								value={custom}
 								onChange={(e) => setCustom(formatIDR(e.target.value))}
 								style={{
-									width: 86,
+									width: "100%",
 									outline: "none",
 									border: "none",
 									background: "transparent",
@@ -434,13 +517,13 @@ export default function QuickDonate({
 							width: "100%",
 							borderRadius: "16px",
 							py: 1.2,
-							border: "1px solid rgba(97,206,112,0.35)",
+							border: "1px solid rgba(11,169,118,0.35)",
 							bgcolor: isValid ? PRIMARY : "rgba(15,23,42,0.08)",
 							color: isValid ? "#0b1220" : "rgba(15,23,42,.40)",
-							fontWeight: 1100,
+							fontWeight: 900,
 							fontSize: 13.5,
 							cursor: isValid ? "pointer" : "not-allowed",
-							boxShadow: isValid ? "0 16px 28px rgba(97,206,112,.22)" : "none",
+							boxShadow: "none",
 							transition: "transform 120ms ease, filter 120ms ease",
 							"&:active": { transform: isValid ? "scale(0.99)" : "none" },
 						}}
@@ -551,162 +634,6 @@ export default function QuickDonate({
 
 						{/* Content */}
 						<Box sx={{ px: 2.2, py: 1.4, flex: 1, overflowY: "auto" }}>
-							{/* Campaign Selection */}
-							<Box sx={{ mb: 3 }}>
-								<Typography
-									sx={{
-										fontSize: 12,
-										fontWeight: 1000,
-										color: "rgba(15,23,42,.80)",
-										mb: 1,
-									}}
-								>
-									Pilih Campaign
-								</Typography>
-								<Autocomplete
-									options={campaigns}
-									getOptionLabel={(option) => option.title}
-									isOptionEqualToValue={(option, value) =>
-										option.id === value.id
-									}
-									value={selectedCampaign}
-									openOnFocus
-									onChange={(_, newValue) => {
-										setCampaignId(newValue ? newValue.id : "");
-									}}
-									slotProps={{
-										popper: { sx: { zIndex: 2600 } }, // > 2500
-										paper: { sx: { zIndex: 2600 } },
-									}}
-									renderOption={(props, option) => {
-										const { key, ...otherProps } = props;
-										return (
-											<Box
-												component="li"
-												key={key}
-												{...otherProps}
-												sx={{
-													display: "flex",
-													gap: 1.5,
-													alignItems: "center",
-													borderBottom: "1px solid rgba(0,0,0,0.04)",
-													p: "10px !important",
-												}}
-											>
-												<Box
-													component="img"
-													src={
-														option.cover ||
-														"https://placehold.co/100x100?text=No+Image"
-													}
-													alt={option.title}
-													sx={{
-														width: 48,
-														height: 48,
-														borderRadius: "8px",
-														objectFit: "cover",
-														flexShrink: 0,
-														bgcolor: "#eee",
-													}}
-												/>
-												<Box sx={{ flex: 1, minWidth: 0 }}>
-													<Typography
-														sx={{
-															fontSize: 13,
-															fontWeight: 700,
-															color: "#0f172a",
-															whiteSpace: "nowrap",
-															overflow: "hidden",
-															textOverflow: "ellipsis",
-															mb: 0.5,
-														}}
-													>
-														{option.title}
-													</Typography>
-													<Box
-														sx={{
-															display: "flex",
-															alignItems: "center",
-															gap: 1,
-															flexWrap: "wrap",
-														}}
-													>
-														{option.target ? (
-															<Typography
-																sx={{
-																	fontSize: 11,
-																	color: "rgba(15,23,42,0.6)",
-																}}
-															>
-																Target: Rp{rupiah(option.target)}
-															</Typography>
-														) : null}
-
-														{option.isEmergency ? (
-															<Box
-																sx={{
-																	px: 0.8,
-																	py: 0.2,
-																	borderRadius: "4px",
-																	bgcolor: "rgba(239,68,68,0.1)",
-																	color: "#ef4444",
-																	fontSize: 10,
-																	fontWeight: 700,
-																}}
-															>
-																Mendesak
-															</Box>
-														) : (option.donors || 0) > 50 ? (
-															<Box
-																sx={{
-																	px: 0.8,
-																	py: 0.2,
-																	borderRadius: "4px",
-																	bgcolor: "rgba(245,158,11,0.1)",
-																	color: "#f59e0b",
-																	fontSize: 10,
-																	fontWeight: 700,
-																}}
-															>
-																Populer
-															</Box>
-														) : (
-															<Box
-																sx={{
-																	px: 0.8,
-																	py: 0.2,
-																	borderRadius: "4px",
-																	bgcolor: "rgba(97,206,112,0.1)",
-																	color: PRIMARY,
-																	fontSize: 10,
-																	fontWeight: 700,
-																}}
-															>
-																Normal
-															</Box>
-														)}
-													</Box>
-												</Box>
-											</Box>
-										);
-									}}
-									renderInput={(params) => (
-										<TextField
-											{...params}
-											placeholder="Cari campaign..."
-											sx={{
-												"& .MuiOutlinedInput-root": {
-													borderRadius: "12px",
-													fontSize: "13px",
-													padding: "4px !important",
-												},
-											}}
-										/>
-									)}
-									disableClearable={false}
-								/>
-							</Box>
-
 							{/* Summary Nominal */}
 							<Box
 								sx={{
@@ -826,33 +753,7 @@ export default function QuickDonate({
 								</Box>
 							</Box>
 
-							{/* Message */}
-							<Box sx={{ mb: 3 }}>
-								<Typography
-									sx={{
-										fontSize: 12,
-										fontWeight: 1000,
-										color: "rgba(15,23,42,.80)",
-										mb: 1,
-									}}
-								>
-									Doa & Dukungan (Opsional)
-								</Typography>
-								<TextField
-									fullWidth
-									multiline
-									rows={2}
-									placeholder="Tulis doa atau dukungan..."
-									value={message}
-									onChange={(e) => setMessage(e.target.value)}
-									sx={{
-										"& .MuiOutlinedInput-root": {
-											borderRadius: "12px",
-											fontSize: "13px",
-										},
-									}}
-								/>
-							</Box>
+							{/* Message removed as requested */}
 
 							{/* Payment Method removed as requested */}
 						</Box>
@@ -872,7 +773,7 @@ export default function QuickDonate({
 									color: "#0b1220",
 									fontWeight: 1100,
 									fontSize: 13,
-									boxShadow: "0 16px 28px rgba(97,206,112,.22)",
+									boxShadow: "0 16px 28px rgba(11,169,118,.22)",
 									"&:hover": { bgcolor: "#4bbf59" },
 								}}
 							>

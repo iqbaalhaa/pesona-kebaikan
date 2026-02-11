@@ -129,7 +129,7 @@ export default function ReportList() {
 	// drawer detail (per campaign)
 	const [drawerOpen, setDrawerOpen] = useState(false);
 	const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(
-		null
+		null,
 	);
 
 	const [bulkUpdating, setBulkUpdating] = useState(false);
@@ -269,8 +269,8 @@ export default function ReportList() {
 		try {
 			await Promise.all(
 				selectedCampaign.reports.map((r) =>
-					updateReportStatus(r.id, "REJECTED")
-				)
+					updateReportStatus(r.id, "REJECTED"),
+				),
 			);
 			await fetchReports();
 		} finally {
@@ -285,8 +285,8 @@ export default function ReportList() {
 			// Update reports to REVIEWED
 			await Promise.all(
 				selectedCampaign.reports.map((r) =>
-					updateReportStatus(r.id, "REVIEWED")
-				)
+					updateReportStatus(r.id, "REVIEWED"),
+				),
 			);
 			// Pause Campaign
 			await updateCampaignStatus(selectedCampaign.campaignId, "PAUSED");
@@ -302,8 +302,8 @@ export default function ReportList() {
 		try {
 			await Promise.all(
 				selectedCampaign.reports.map((r) =>
-					updateReportStatus(r.id, "RESOLVED")
-				)
+					updateReportStatus(r.id, "RESOLVED"),
+				),
 			);
 			await fetchReports();
 		} finally {
@@ -319,8 +319,8 @@ export default function ReportList() {
 			// Reports -> RESOLVED
 			await Promise.all(
 				selectedCampaign.reports.map((r) =>
-					updateReportStatus(r.id, "RESOLVED")
-				)
+					updateReportStatus(r.id, "RESOLVED"),
+				),
 			);
 			// Campaign -> ACTIVE
 			await updateCampaignStatus(selectedCampaign.campaignId, "ACTIVE");
@@ -338,8 +338,8 @@ export default function ReportList() {
 			// Reports -> RESOLVED
 			await Promise.all(
 				selectedCampaign.reports.map((r) =>
-					updateReportStatus(r.id, "RESOLVED")
-				)
+					updateReportStatus(r.id, "RESOLVED"),
+				),
 			);
 			// Campaign -> COMPLETED (Stops it)
 			await updateCampaignStatus(selectedCampaign.campaignId, "COMPLETED");
@@ -584,7 +584,7 @@ export default function ReportList() {
 				sx={{
 					border: "1px solid #e2e8f0",
 					borderRadius: 1,
-					overflow: "hidden",
+					overflowX: "auto",
 				}}
 			>
 				<Table>
@@ -796,7 +796,7 @@ export default function ReportList() {
 										variant="outlined"
 										sx={{ borderRadius: "10px", fontWeight: 800 }}
 									/>
-								)
+								),
 							)}
 						</Stack>
 
@@ -899,7 +899,11 @@ export default function ReportList() {
 							<TableContainer
 								component={Paper}
 								variant="outlined"
-								sx={{ borderRadius: 3, borderColor: "#e2e8f0" }}
+								sx={{
+									borderRadius: 3,
+									borderColor: "#e2e8f0",
+									overflowX: "auto",
+								}}
 							>
 								<Table size="small">
 									<TableHead sx={{ bgcolor: "#f8fafc" }}>
@@ -920,7 +924,7 @@ export default function ReportList() {
 											.sort(
 												(a, b) =>
 													new Date(b.createdAt).getTime() -
-													new Date(a.createdAt).getTime()
+													new Date(a.createdAt).getTime(),
 											)
 											.map((r) => (
 												<TableRow key={r.id} hover>

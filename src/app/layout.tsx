@@ -15,6 +15,9 @@ const pjs = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
+	metadataBase: new URL(
+		process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
+	),
 	title: "Pesona Kebaikan",
 	description: "Created by Depati Digital",
 };
@@ -33,7 +36,7 @@ export default async function RootLayout({
 					<AppRouterCacheProvider options={{ enableCssLayer: true }}>
 						<ThemeWrapper>
 							{/* Background luar handled by Global CSS / Body now, but we keep wrapper for layout centering if needed */}
-							<div className="flex min-h-dvh items-center justify-center bg-gray-100 dark:bg-[#0b1220] px-0 sm:px-3 py-0 sm:py-[3px] transition-colors duration-300">
+							<div className="min-h-dvh bg-[#F1F5F9] dark:bg-[#0b1220] px-0 sm:px-3 py-0 sm:py-[3px] transition-colors duration-300">
 								{/* Semua logika header overlay + scroll + bottomnav ada di AppShell */}
 								<AppShell>{children}</AppShell>
 							</div>

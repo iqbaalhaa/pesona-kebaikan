@@ -58,7 +58,7 @@ export default function CampaignStory({
 			<Button
 				onClick={() => setShowFullStory(!showFullStory)}
 				fullWidth
-				sx={{ mt: 2, textTransform: "none", color: "#61ce70" }}
+				sx={{ mt: 2, textTransform: "none", color: "#0ba976" }}
 			>
 				{showFullStory ? "Tutup Cerita" : "Baca Selengkapnya"}
 			</Button>

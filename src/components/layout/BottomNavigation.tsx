@@ -68,11 +68,11 @@ export default function SimpleBottomNavigation() {
 			sx={{
 				// ✅ jangan 1300 biar gak tabrakan sama modal MUI (modal default 1300)
 				zIndex: 1100,
-				borderTop: "1px solid rgba(0,0,0,0.12)",
-				borderTopLeftRadius: 16,
-				borderTopRightRadius: 16,
+				borderTop: "none",
+				borderTopLeftRadius: 0,
+				borderTopRightRadius: 0,
 				bgcolor: "#ffffff",
-				boxShadow: "0 -5px 20px rgba(0,0,0,0.1)",
+				boxShadow: "none",
 			}}
 		>
 			<BottomNavigation

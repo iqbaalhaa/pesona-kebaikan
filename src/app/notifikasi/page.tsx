@@ -144,8 +144,8 @@ export default function NotificationPage() {
 							fontSize: 14,
 							minHeight: 48,
 						},
-						"& .Mui-selected": { color: "#61ce70" },
-						"& .MuiTabs-indicator": { bgcolor: "#61ce70" },
+						"& .Mui-selected": { color: "#0ba976" },
+						"& .MuiTabs-indicator": { bgcolor: "#0ba976" },
 					}}
 				>
 					<Tab label="Kabar" />

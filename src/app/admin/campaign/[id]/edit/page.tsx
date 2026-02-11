@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import {
 	Box,
 	Paper,
@@ -15,32 +15,52 @@ import {
 } from "@mui/material";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import ArrowBackIosNewRoundedIcon from "@mui/icons-material/ArrowBackIosNewRounded";
-import { createCampaign } from "@/actions/campaign";
+import { updateCampaign, getCampaignById } from "@/actions/campaign";
 
 function formatIDR(numStr: string) {
-	const n = numStr.replace(/\D/g, "");
+	const n = numStr.toString().replace(/\D/g, "");
 	if (!n) return "";
 	return n.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 }
 
-export default function AdminCreateCampaignPage() {
+export default function AdminEditCampaignPage() {
 	const router = useRouter();
+	const params = useParams();
+	const id = params.id as string;
+
 	const [categories, setCategories] = React.useState<any[]>([]);
 	const [submitting, setSubmitting] = React.useState(false);
+	const [loading, setLoading] = React.useState(true);
 	const [coverPreview, setCoverPreview] = React.useState<string>("");
 	const [target, setTarget] = React.useState<string>("");
+	const [campaign, setCampaign] = React.useState<any>(null);
 
 	React.useEffect(() => {
+		// Fetch categories
 		fetch("/api/campaigns/categories")
 			.then((res) => res.json())
 			.then((data) => {
 				if (Array.isArray(data)) {
-					// Filter active categories
-					setCategories(data.filter((c) => c.isActive));
+					setCategories(data);
 				}
 			})
 			.catch((err) => console.error(err));
-	}, []);
+
+		// Fetch campaign
+		if (id) {
+			getCampaignById(id).then((res) => {
+				if (res.success && res.data) {
+					setCampaign(res.data);
+					setTarget(formatIDR(res.data.target.toString()));
+					setCoverPreview(res.data.thumbnail);
+				} else {
+					alert("Campaign tidak ditemukan");
+					router.push("/admin/campaign");
+				}
+				setLoading(false);
+			});
+		}
+	}, [id, router]);
 
 	const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const file = e.target.files?.[0];
@@ -53,18 +73,24 @@ export default function AdminCreateCampaignPage() {
 		e.preventDefault();
 		setSubmitting(true);
 		const formData = new FormData(e.currentTarget);
-
-		// category Select will send the value (slug)
-
 		formData.set("target", target.replace(/\D/g, ""));
-		const res = await createCampaign(formData);
+
+		const res = await updateCampaign(id, formData);
 		if (res.success) {
 			router.push("/admin/campaign");
 		} else {
-			alert(res.error || "Gagal membuat campaign");
+			alert(res.error || "Gagal mengupdate campaign");
 		}
 		setSubmitting(false);
 	}
+
+	if (loading)
+		return (
+			<Box sx={{ p: 4, display: "flex", justifyContent: "center" }}>
+				<CircularProgress />
+			</Box>
+		);
+	if (!campaign) return null;
 
 	return (
 		<Box>
@@ -87,7 +113,7 @@ export default function AdminCreateCampaignPage() {
 				}}
 			>
 				<Typography variant="h5" fontWeight={700} sx={{ mb: 3 }}>
-					Buat Campaign Baru
+					Edit Campaign
 				</Typography>
 
 				<Stack spacing={3}>
@@ -96,7 +122,16 @@ export default function AdminCreateCampaignPage() {
 						label="Judul Campaign"
 						required
 						fullWidth
-						placeholder="Contoh: Bantuan untuk Korban Banjir"
+						defaultValue={campaign.title}
+					/>
+
+					<TextField
+						name="slug"
+						label="Slug (URL)"
+						required
+						fullWidth
+						defaultValue={campaign.slug}
+						helperText="Hati-hati mengubah slug, link lama akan tidak bisa diakses"
 					/>
 
 					<TextField
@@ -105,7 +140,7 @@ export default function AdminCreateCampaignPage() {
 						label="Kategori"
 						required
 						fullWidth
-						defaultValue=""
+						defaultValue={campaign.categorySlug || campaign.category}
 					>
 						{categories.map((c) => (
 							<MenuItem key={c.id} value={c.slug || c.name}>
@@ -129,20 +164,11 @@ export default function AdminCreateCampaignPage() {
 					/>
 
 					<TextField
-						name="duration"
-						label="Durasi (Hari)"
-						required
-						fullWidth
-						type="number"
-						defaultValue={30}
-					/>
-
-					<TextField
 						name="phone"
 						label="Nomor Telepon Penggalang"
 						required
 						fullWidth
-						placeholder="0812..."
+						defaultValue={campaign.phone}
 					/>
 
 					<TextField
@@ -152,7 +178,7 @@ export default function AdminCreateCampaignPage() {
 						fullWidth
 						multiline
 						rows={6}
-						placeholder="Ceritakan detail campaign..."
+						defaultValue={campaign.description}
 					/>
 
 					<Box>
@@ -163,14 +189,13 @@ export default function AdminCreateCampaignPage() {
 							startIcon={<CloudUploadIcon />}
 							sx={{ width: "100%", height: 100, borderStyle: "dashed" }}
 						>
-							Upload Foto
+							Ganti Foto (Opsional)
 							<input
 								type="file"
 								name="cover"
 								hidden
 								accept="image/*"
 								onChange={handleFileChange}
-								required
 							/>
 						</Button>
 						{coverPreview && (
@@ -200,7 +225,7 @@ export default function AdminCreateCampaignPage() {
 							fontWeight: 700,
 						}}
 					>
-						{submitting ? <CircularProgress size={24} /> : "Buat Campaign"}
+						{submitting ? "Menyimpan..." : "Simpan Perubahan"}
 					</Button>
 				</Stack>
 			</Paper>

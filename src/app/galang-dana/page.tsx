@@ -560,23 +560,28 @@ export default function GalangDanaSayaPage() {
 							<Stack spacing={2}>
 								{filtered.map((x) => {
 									const isDraft = x.status === "draft";
+									const isQuickDonate = x.slug === "donasi-cepat";
 									const pct = isDraft
 										? Math.min(
 												100,
-												Math.round((x.stepsDone / x.stepsTotal) * 100)
-										  )
+												Math.round((x.stepsDone / x.stepsTotal) * 100),
+											)
 										: Math.min(
 												100,
-												Math.round(((x.collected || 0) / (x.target || 1)) * 100)
-										  );
+												Math.round(
+													((x.collected || 0) / (x.target || 1)) * 100,
+												),
+											);
 
 									const hint = isDraft
-										? x.lastStep ?? stepHint(x.stepsDone, x.stepsTotal)
-										: `${new Intl.NumberFormat("id-ID", {
-												style: "currency",
-												currency: "IDR",
-												maximumFractionDigits: 0,
-										  }).format(x.collected || 0)} terkumpul`;
+										? (x.lastStep ?? stepHint(x.stepsDone, x.stepsTotal))
+										: isQuickDonate
+											? "Tanpa batas waktu & target"
+											: `${new Intl.NumberFormat("id-ID", {
+													style: "currency",
+													currency: "IDR",
+													maximumFractionDigits: 0,
+												}).format(x.collected || 0)} terkumpul`;
 
 									return (
 										<Paper
@@ -695,7 +700,11 @@ export default function GalangDanaSayaPage() {
 																color: "text.secondary",
 															}}
 														>
-															{isDraft ? "Kelengkapan Data" : "Dana Terkumpul"}
+															{isDraft
+																? "Kelengkapan Data"
+																: isQuickDonate
+																	? "Total Donasi"
+																	: "Dana Terkumpul"}
 														</Typography>
 														<Typography
 															sx={{
@@ -704,21 +713,23 @@ export default function GalangDanaSayaPage() {
 																color: "primary.main",
 															}}
 														>
-															{pct}%
+															{isQuickDonate ? "∞" : `${pct}%`}
 														</Typography>
 													</Stack>
-													<LinearProgress
-														variant="determinate"
-														value={pct}
-														sx={{
-															height: 6,
-															borderRadius: 99,
-															bgcolor: alpha(theme.palette.primary.main, 0.1),
-															"& .MuiLinearProgress-bar": {
+													{!isQuickDonate && (
+														<LinearProgress
+															variant="determinate"
+															value={pct}
+															sx={{
+																height: 6,
 																borderRadius: 99,
-															},
-														}}
-													/>
+																bgcolor: alpha(theme.palette.primary.main, 0.1),
+																"& .MuiLinearProgress-bar": {
+																	borderRadius: 99,
+																},
+															}}
+														/>
+													)}
 													<Typography
 														sx={{
 															mt: 1,

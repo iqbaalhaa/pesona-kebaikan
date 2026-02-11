@@ -144,7 +144,7 @@ export default function AboutPage() {
               p: 4,
               mb: 4,
               borderRadius: 4,
-              background: "linear-gradient(135deg, #61ce70 0%, #16a34a 100%)",
+              background: "linear-gradient(135deg, #0ba976 0%, #16a34a 100%)",
               color: "white",
               textAlign: "center",
               display: "flex",

@@ -92,7 +92,7 @@ export default function ContentEditor({ contentKey, title, subtitle, icon }: Con
           onClick={handleSave}
           disabled={saving || loading}
           sx={{
-            bgcolor: "#61ce70",
+            bgcolor: "#0ba976",
             fontWeight: 700,
             textTransform: "none",
             borderRadius: 2,

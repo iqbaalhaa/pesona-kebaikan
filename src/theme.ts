@@ -2,7 +2,7 @@
 
 import { createTheme, alpha } from "@mui/material/styles";
 
-const PRIMARY_COLOR = "#61ce70";
+const PRIMARY_COLOR = "#0ba976";
 
 const baseTheme = {
   typography: {

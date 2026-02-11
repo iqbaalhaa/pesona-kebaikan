@@ -574,7 +574,7 @@ export default function UsersClient({ initialUsers, initialTotal, stats }: Users
         </Box>
 
         {/* Table */}
-        <TableContainer>
+        <TableContainer sx={{ overflowX: 'auto' }}>
             <Table>
                 <TableHead sx={{ bgcolor: 'grey.50' }}>
                     <TableRow>

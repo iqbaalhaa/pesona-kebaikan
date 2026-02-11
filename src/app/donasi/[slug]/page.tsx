@@ -1,27 +1,28 @@
 import { getCampaignBySlug } from "@/actions/campaign";
 import CampaignDetailView from "@/components/campaign/CampaignDetailView";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { Metadata } from "next";
+import { auth } from "@/auth";
 
 type Props = {
 	params: Promise<{ slug: string }>;
 };
 
-	export async function generateMetadata({ params }: Props): Promise<Metadata> {
-		const { slug } = await params;
-		const res = await getCampaignBySlug(slug);
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+	const { slug } = await params;
+	const res = await getCampaignBySlug(slug);
 
-		if (
-			!res.success ||
-			!res.data ||
-			res.data.status === "paused" ||
-			res.data.status === "ended" ||
-			res.data.status === "rejected"
-		) {
-			return {
-				title: "Campaign Not Found",
-			};
-		}
+	if (
+		!res.success ||
+		!res.data ||
+		res.data.status === "paused" ||
+		res.data.status === "ended" ||
+		res.data.status === "rejected"
+	) {
+		return {
+			title: "Campaign Not Found",
+		};
+	}
 
 	return {
 		title: `${res.data.title} | Pesona Kebaikan`,
@@ -32,21 +33,30 @@ type Props = {
 	};
 }
 
-	export default async function CampaignDetailPage({ params }: Props) {
-		const { slug } = await params;
-		const res = await getCampaignBySlug(slug);
+export default async function CampaignDetailPage({ params }: Props) {
+	const { slug } = await params;
 
-		if (!res.success || !res.data) {
-			notFound();
+	// Restrict access to quick donation campaign
+	if (slug === "donasi-cepat") {
+		const session = await auth();
+		if (session?.user?.role !== "ADMIN") {
+			redirect("/");
 		}
-
-		if (
-			res.data.status === "paused" ||
-			res.data.status === "ended" ||
-			res.data.status === "rejected"
-		) {
-			notFound();
-		}
-
-		return <CampaignDetailView data={res.data} />;
 	}
+
+	const res = await getCampaignBySlug(slug);
+
+	if (!res.success || !res.data) {
+		notFound();
+	}
+
+	if (
+		res.data.status === "paused" ||
+		res.data.status === "ended" ||
+		res.data.status === "rejected"
+	) {
+		notFound();
+	}
+
+	return <CampaignDetailView data={res.data} />;
+}

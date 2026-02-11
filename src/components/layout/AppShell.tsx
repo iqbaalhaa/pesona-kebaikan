@@ -18,20 +18,15 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
 	const shouldHideNav = isAuth || isDonasiDetail;
 
-	const scrollRef = React.useRef<HTMLDivElement | null>(null);
 	const [scrolled, setScrolled] = React.useState(false);
 
 	React.useEffect(() => {
-		const el = scrollRef.current;
-		if (!el) return;
-
 		const onScroll = () => {
-			setScrolled(el.scrollTop > 280);
+			setScrolled(window.scrollY > 100);
 		};
 
-		onScroll();
-		el.addEventListener("scroll", onScroll, { passive: true });
-		return () => el.removeEventListener("scroll", onScroll);
+		window.addEventListener("scroll", onScroll, { passive: true });
+		return () => window.removeEventListener("scroll", onScroll);
 	}, []);
 
 	const appBarVariant = isHome ? (scrolled ? "solid" : "overlay") : "solid";
@@ -42,32 +37,28 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
 	return (
 		<Paper
-			elevation={5}
+			elevation={0}
 			sx={{
 				position: "relative",
 				width: "100%",
 				maxWidth: { xs: "100%", sm: 480 }, // Full width on mobile, capped on desktop
-				height: "100vh",
-				maxHeight: { xs: "100vh", sm: "calc(100vh - 6px)" }, // Full screen on mobile, windowed on desktop (minus padding top/bottom)
-				borderRadius: { xs: 0, sm: 1 },
-				overflow: "hidden",
+				minHeight: "100dvh",
+				borderRadius: { xs: 0, sm: 0 },
 				display: "flex",
 				flexDirection: "column",
 				bgcolor: "background.default",
 				mx: "auto",
-				border: { xs: "none", sm: "1px solid rgba(0,0,0,0.08)" },
+				border: "none",
 			}}
 		>
 			{!shouldHideNav && <SimpleAppBar variant={appBarVariant} />}
 
 			<Box
-				ref={scrollRef}
 				className="no-scrollbar"
 				sx={{
 					flex: 1,
-					overflowY: "auto",
-					backgroundColor: isHome ? "#EFF6FF" : undefined,
-					pb: shouldHideNav ? 0 : 7, // Space for bottom nav
+					backgroundColor: "#F8FAFC",
+					pb: shouldHideNav ? 0 : 12, // Space for bottom nav (increased to avoid cutoff)
 					pt: isHome || shouldHideNav ? 0 : 8, // Add space under AppBar for solid variant (Toolbar ~64px)
 				}}
 			>

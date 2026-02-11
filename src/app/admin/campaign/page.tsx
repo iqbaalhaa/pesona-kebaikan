@@ -184,7 +184,7 @@ export default function AdminCampaignPage() {
 	const fetchCampaigns = React.useCallback(async () => {
 		setLoading(true);
 		try {
-			const res = await getCampaigns(page, PAGE_SIZE, filter, q);
+			const res = await getCampaigns(page, PAGE_SIZE, filter, q, undefined, undefined, undefined, undefined, "newest", true);
 			if (res.success && res.data) {
 				setRows(res.data as any);
 				setTotalPages(res.totalPages || 1);
@@ -254,7 +254,7 @@ export default function AdminCampaignPage() {
 					sx={{
 						p: 2,
 						background:
-							"radial-gradient(900px 380px at 0% 0%, rgba(97,206,112,.18), transparent 55%), radial-gradient(900px 380px at 100% 0%, rgba(59,130,246,.12), transparent 55%)",
+							"radial-gradient(900px 380px at 0% 0%, rgba(11,169,118,.18), transparent 55%), radial-gradient(900px 380px at 100% 0%, rgba(59,130,246,.12), transparent 55%)",
 					}}
 				>
 					<Stack
@@ -361,8 +361,8 @@ export default function AdminCampaignPage() {
 									fontWeight: 1000,
 									textTransform: "none",
 									px: 2,
-									boxShadow: "0 14px 34px rgba(97,206,112,.22)",
-									bgcolor: "#61ce70",
+									boxShadow: "0 14px 34px rgba(11,169,118,.22)",
+									bgcolor: "#0ba976",
 									"&:hover": { bgcolor: "#55bf64" },
 								}}
 							>
@@ -435,12 +435,12 @@ export default function AdminCampaignPage() {
 										borderRadius: 999,
 										fontWeight: 900,
 										borderColor: selected
-											? "rgba(97,206,112,.60)"
+											? "rgba(11,169,118,.60)"
 											: "rgba(15,23,42,.12)",
-										bgcolor: selected ? "#61ce70" : "rgba(255,255,255,.55)",
+										bgcolor: selected ? "#0ba976" : "rgba(255,255,255,.55)",
 										color: selected ? "#fff" : "rgba(15,23,42,.70)",
 										boxShadow: selected
-											? "0 14px 28px rgba(97,206,112,.20)"
+											? "0 14px 28px rgba(11,169,118,.20)"
 											: "none",
 										"&:hover": {
 											bgcolor: selected ? "#55bf64" : "rgba(255,255,255,.72)",
@@ -512,9 +512,9 @@ export default function AdminCampaignPage() {
 							color: "rgba(15,23,42,.70)",
 						},
 						"& .Mui-selected": {
-							bgcolor: "rgba(97,206,112,.20) !important",
+							bgcolor: "rgba(11,169,118,.20) !important",
 							color: "rgba(15,23,42,.90) !important",
-							border: "1px solid rgba(97,206,112,.45)",
+							border: "1px solid rgba(11,169,118,.45)",
 						},
 					}}
 				/>
@@ -648,10 +648,10 @@ function CampaignCard({
 			: {
 					icon: <CategoryRoundedIcon fontSize="small" />,
 					label: "Lainnya",
-					pillBg: "rgba(97,206,112,.14)",
-					pillBorder: "rgba(97,206,112,.26)",
+					pillBg: "rgba(11,169,118,.14)",
+					pillBorder: "rgba(11,169,118,.26)",
 					pillText: "rgba(22,101,52,.95)",
-					glow: "rgba(97,206,112,.18)",
+					glow: "rgba(11,169,118,.18)",
 			  };
 
 	const initials = (name: string) => {
@@ -676,7 +676,7 @@ function CampaignCard({
 				"&:hover": {
 					transform: "translateY(-2px)",
 					boxShadow: "0 24px 70px rgba(15,23,42,.12)",
-					borderColor: "rgba(97,206,112,.45)",
+					borderColor: "rgba(11,169,118,.45)",
 				},
 				"&::before": {
 					content: '""',
@@ -865,8 +865,8 @@ function CampaignCard({
 							"& .MuiLinearProgress-bar": {
 								borderRadius: 999,
 								background:
-									"linear-gradient(90deg, #61ce70, rgba(97,206,112,.55))",
-								boxShadow: "0 14px 30px rgba(97,206,112,.18)",
+									"linear-gradient(90deg, #0ba976, rgba(11,169,118,.55))",
+								boxShadow: "0 14px 30px rgba(11,169,118,.18)",
 							},
 						}}
 					/>
@@ -911,8 +911,8 @@ function CampaignCard({
 							textTransform: "none",
 							px: 2,
 							py: 0.8,
-							bgcolor: "#61ce70",
-							boxShadow: "0 16px 34px rgba(97,206,112,.22)",
+							bgcolor: "#0ba976",
+							boxShadow: "0 16px 34px rgba(11,169,118,.22)",
 							"&:hover": { bgcolor: "#55bf64" },
 						}}
 					>

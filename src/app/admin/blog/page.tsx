@@ -165,7 +165,7 @@ export default function AdminBlogPage() {
           sx={{
             p: 2,
             background:
-              "radial-gradient(900px 380px at 0% 0%, rgba(97,206,112,.18), transparent 55%), radial-gradient(900px 380px at 100% 0%, rgba(59,130,246,.12), transparent 55%)",
+              "radial-gradient(900px 380px at 0% 0%, rgba(11,169,118,.18), transparent 55%), radial-gradient(900px 380px at 100% 0%, rgba(59,130,246,.12), transparent 55%)",
           }}
         >
           <Stack
@@ -270,7 +270,7 @@ export default function AdminBlogPage() {
                   fontWeight: 1000,
                   textTransform: "none",
                   px: 2,
-                  bgcolor: "#61ce70",
+                  bgcolor: "#0ba976",
                   "&:hover": { bgcolor: "#55bf64" },
                 }}
               >

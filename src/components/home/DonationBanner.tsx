@@ -84,11 +84,11 @@ function IconWrap({ children }: { children: React.ReactNode }) {
 			sx={{
 				width: 28,
 				height: 28,
-				borderRadius: 999,
+				borderRadius: 0,
 				display: "grid",
 				placeItems: "center",
-				bgcolor: "rgba(97,206,112,0.14)",
-				border: "1px solid rgba(97,206,112,0.22)",
+				bgcolor: "transparent",
+				border: "none",
 				flexShrink: 0,
 			}}
 		>
@@ -116,10 +116,10 @@ function PayChip({
 				gap: 0.8,
 				px: 1.1,
 				py: 0.85,
-				borderRadius: 999,
-				border: "1px solid rgba(15,23,42,0.08)",
-				bgcolor: "rgba(255,255,255,0.92)",
-				boxShadow: "0 14px 22px rgba(15,23,42,.05)",
+				borderRadius: 0,
+				border: "none",
+				bgcolor: "transparent",
+				boxShadow: "none",
 			}}
 		>
 			<IconWrap>{icon}</IconWrap>
@@ -156,11 +156,11 @@ export default function DonationBanner() {
 		<Box sx={{ px: 2, mt: 2.5 }}>
 			<Box
 				sx={{
-					borderRadius: 1,
+					borderRadius: 0,
 					p: 2,
-					border: "1px solid rgba(15,23,42,0.08)",
-					background: "#fff",
-					boxShadow: "0 18px 34px rgba(15,23,42,.06)",
+					border: "none",
+					background: "transparent",
+					boxShadow: "none",
 				}}
 			>
 				{/* Top row */}
@@ -198,12 +198,12 @@ export default function DonationBanner() {
 						sx={{
 							width: 40,
 							height: 40,
-							borderRadius: 1,
+							borderRadius: 0,
 							display: "grid",
 							placeItems: "center",
-							bgcolor: "rgba(97,206,112,0.14)",
-							border: "1px solid rgba(97,206,112,0.22)",
-							boxShadow: "0 12px 22px rgba(97,206,112,.10)",
+							bgcolor: "transparent",
+							border: "none",
+							boxShadow: "none",
 							flexShrink: 0,
 						}}
 					>

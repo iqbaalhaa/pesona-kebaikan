@@ -1,14 +1,7 @@
 "use client";
 
 import * as React from "react";
-import {
-	Box,
-	Typography,
-	Chip,
-	Stack,
-	Paper,
-	Avatar,
-} from "@mui/material";
+import { Box, Typography, Chip, Stack, Paper, Avatar } from "@mui/material";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import { formatDistanceToNow } from "date-fns";
 import { id } from "date-fns/locale";
@@ -87,7 +80,6 @@ export default function CampaignDonors({
 									color: "#64748b",
 									fontWeight: 700,
 								}}
-								src="/images/avatar-placeholder.png"
 							>
 								{d.name.charAt(0)}
 							</Avatar>
@@ -123,7 +115,7 @@ export default function CampaignDonors({
 								</Box>
 								<Typography sx={{ fontSize: 13, color: "#334155", mt: 0.5 }}>
 									Berdonasi sebesar{" "}
-									<span style={{ fontWeight: 700, color: "#61ce70" }}>
+									<span style={{ fontWeight: 700, color: "#0ba976" }}>
 										{formatIDR(d.amount)}
 									</span>
 								</Typography>
@@ -191,7 +183,6 @@ export default function CampaignDonors({
 									color: "#64748b",
 									fontWeight: 700,
 								}}
-								src="/images/avatar-placeholder.png"
 							>
 								{d.name.charAt(0)}
 							</Avatar>

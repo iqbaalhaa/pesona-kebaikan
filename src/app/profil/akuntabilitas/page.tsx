@@ -85,7 +85,7 @@ export default function AccountabilityPage() {
           textAlign: "center",
         }}
       >
-        <VerifiedUserIcon sx={{ fontSize: 48, mb: 2, color: "#61ce70" }} />
+        <VerifiedUserIcon sx={{ fontSize: 48, mb: 2, color: "#0ba976" }} />
         <Typography sx={{ fontWeight: 800, fontSize: 20, mb: 1 }}>
           {data.hero.title}
         </Typography>
@@ -112,9 +112,9 @@ export default function AccountabilityPage() {
               }}
             >
               {card.icon === "audit" ? (
-                <AssessmentIcon sx={{ fontSize: 32, color: "#61ce70", mb: 1 }} />
+                <AssessmentIcon sx={{ fontSize: 32, color: "#0ba976", mb: 1 }} />
               ) : (
-                <AccountBalanceIcon sx={{ fontSize: 32, color: "#61ce70", mb: 1 }} />
+                <AccountBalanceIcon sx={{ fontSize: 32, color: "#0ba976", mb: 1 }} />
               )}
               <Typography sx={{ fontWeight: 700, fontSize: 14, mb: 0.5 }}>
                 {card.title}
@@ -161,7 +161,7 @@ export default function AccountabilityPage() {
                 PDF • {report.size}
               </Typography>
             </Box>
-            <IconButton sx={{ color: "#61ce70" }} component="a" href={report.url} target="_blank">
+            <IconButton sx={{ color: "#0ba976" }} component="a" href={report.url} target="_blank">
               <DownloadIcon />
             </IconButton>
           </Paper>

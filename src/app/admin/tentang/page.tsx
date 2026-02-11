@@ -310,7 +310,7 @@ export default function AdminTentangPage() {
           onClick={handleSave}
           disabled={saving || loading}
           sx={{
-            bgcolor: "#61ce70", fontWeight: 700, textTransform: "none", borderRadius: 2,
+            bgcolor: "#0ba976", fontWeight: 700, textTransform: "none", borderRadius: 2,
             "&:hover": { bgcolor: "#16a34a" },
           }}
         >

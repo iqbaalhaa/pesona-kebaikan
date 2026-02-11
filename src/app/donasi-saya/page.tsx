@@ -123,7 +123,7 @@ function KindnessCalendar({ donations, onDateClick }: KindnessCalendarProps) {
 						right: -10,
 						top: -10,
 						fontSize: 60,
-						color: "rgba(97,206,112,0.1)",
+						color: "rgba(11,169,118,0.1)",
 						transform: "rotate(-15deg)",
 					}}
 				/>
@@ -222,7 +222,7 @@ export default function MyDonationPage() {
 	const [selectedDate, setSelectedDate] = React.useState<string>("");
 
 	// Redonate sheet state
-	const amountPresets = [10000, 25000, 50000, 100000];
+	const amountPresets = [10000, 25000, 50000, 75000, 100000];
 	type Method = "EWALLET" | "VIRTUAL_ACCOUNT" | "TRANSFER";
 	const [reOpen, setReOpen] = React.useState(false);
 	const [reCampaignId, setReCampaignId] = React.useState<string>("");
@@ -708,7 +708,7 @@ export default function MyDonationPage() {
 											Jumlah Donasi
 										</Typography>
 										<Typography
-											sx={{ fontSize: 15, fontWeight: 900, color: "#61ce70" }}
+											sx={{ fontSize: 15, fontWeight: 900, color: "#0ba976" }}
 										>
 											Rp {item.amount.toLocaleString("id-ID")}
 										</Typography>
@@ -825,7 +825,7 @@ export default function MyDonationPage() {
 										Nominal
 									</Typography>
 									<Typography
-										sx={{ fontWeight: 800, fontSize: 16, color: "#61ce70" }}
+										sx={{ fontWeight: 800, fontSize: 16, color: "#0ba976" }}
 									>
 										Rp {selectedDonation.amount.toLocaleString("id-ID")}
 									</Typography>
@@ -1158,7 +1158,7 @@ export default function MyDonationPage() {
 							borderRadius: 2,
 							fontWeight: 800,
 							textTransform: "none",
-							bgcolor: "#61ce70",
+							bgcolor: "#0ba976",
 							color: "#0b1220",
 							"&:hover": { bgcolor: "#4bbf59" },
 						}}
@@ -1254,7 +1254,7 @@ export default function MyDonationPage() {
 											}}
 										/>
 										<Typography
-											sx={{ fontWeight: 800, fontSize: 13, color: "#61ce70" }}
+											sx={{ fontWeight: 800, fontSize: 13, color: "#0ba976" }}
 										>
 											Rp {donation.amount.toLocaleString("id-ID")}
 										</Typography>

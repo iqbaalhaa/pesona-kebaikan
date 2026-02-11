@@ -282,7 +282,7 @@ export default function AdminSidebar({
 										{isActive && (
 											<span
 												className="mt-1.5 h-2 w-2 flex-shrink-0 rounded-full"
-												style={{ background: "#61ce70" }}
+												style={{ background: "#0ba976" }}
 											/>
 										)}
 									</Link>
@@ -324,7 +324,7 @@ export default function AdminSidebar({
 							</span>
 							<span
 								className="h-2 w-2 rounded-full"
-								style={{ background: "#61ce70" }}
+								style={{ background: "#0ba976" }}
 							/>
 						</Link>
 

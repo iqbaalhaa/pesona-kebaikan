@@ -124,7 +124,7 @@ export default function RegisterPage() {
 					right: 0,
 					height: "30%",
 					background:
-						"linear-gradient(180deg, rgba(97, 206, 112, 0.1) 0%, rgba(248, 250, 252, 0) 100%)",
+						"linear-gradient(180deg, rgba(11, 169, 118, 0.1) 0%, rgba(248, 250, 252, 0) 100%)",
 					zIndex: 0,
 				}}
 			/>
@@ -168,7 +168,7 @@ export default function RegisterPage() {
 								justifyContent: "center",
 								mx: "auto",
 								mb: 2,
-								boxShadow: "0 8px 16px -4px rgba(97, 206, 112, 0.4)",
+								boxShadow: "0 8px 16px -4px rgba(11, 169, 118, 0.4)",
 							}}
 						>
 							<HowToRegOutlined sx={{ color: "white", fontSize: 20 }} />
@@ -460,10 +460,10 @@ export default function RegisterPage() {
 								borderRadius: 2,
 								fontSize: 14,
 								fontWeight: 700,
-								boxShadow: "0 4px 12px rgba(97, 206, 112, 0.25)",
-								background: "linear-gradient(to right, #61ce70, #4caf50)",
+								boxShadow: "0 4px 12px rgba(11, 169, 118, 0.25)",
+								background: "linear-gradient(to right, #0ba976, #4caf50)",
 								"&:hover": {
-									boxShadow: "0 6px 16px rgba(97, 206, 112, 0.35)",
+									boxShadow: "0 6px 16px rgba(11, 169, 118, 0.35)",
 								},
 							}}
 						>

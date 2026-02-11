@@ -26,6 +26,7 @@ export default function CampaignHeader({
 	setTabValue,
 }: CampaignHeaderProps) {
 	const isMedis = data.category === "Bantuan Medis & Kesehatan";
+	const isQuickDonate = data.slug === "donasi-cepat";
 
 	return (
 		<Box>
@@ -69,40 +70,44 @@ export default function CampaignHeader({
 				>
 					<Box>
 						<Typography
-							sx={{ fontSize: 20, fontWeight: 800, color: "#61ce70" }}
+							sx={{ fontSize: 20, fontWeight: 800, color: "#0ba976" }}
 						>
 							{formatIDR(data.collected)}
 						</Typography>
 						<Typography
 							sx={{ fontSize: 12, color: "#64748b", fontWeight: 500 }}
 						>
-							terkumpul dari {formatIDR(data.target)}
+							{isQuickDonate
+								? "terkumpul"
+								: `terkumpul dari ${formatIDR(data.target)}`}
 						</Typography>
 					</Box>
 					<Box sx={{ textAlign: "right" }}>
 						<Typography
 							sx={{ fontSize: 14, fontWeight: 700, color: "#0f172a" }}
 						>
-							{data.daysLeft}
+							{isQuickDonate ? "∞" : data.daysLeft}
 						</Typography>
 						<Typography sx={{ fontSize: 12, color: "#64748b" }}>
-							hari lagi
+							{isQuickDonate ? "Tanpa Batas" : "hari lagi"}
 						</Typography>
 					</Box>
 				</Box>
-				<LinearProgress
-					variant="determinate"
-					value={progress}
-					sx={{
-						height: 8,
-						borderRadius: 4,
-						bgcolor: "#f1f5f9",
-						"& .MuiLinearProgress-bar": {
-							bgcolor: "#61ce70",
+				{!isQuickDonate && (
+					<LinearProgress
+						variant="determinate"
+						value={progress}
+						sx={{
+							height: 8,
 							borderRadius: 4,
-						},
-					}}
-				/>
+							bgcolor: "#f1f5f9",
+							"& .MuiLinearProgress-bar": {
+								bgcolor: "#0ba976",
+								borderRadius: 4,
+							},
+						}}
+					/>
+				)}
 				<Box
 					sx={{
 						display: "grid",

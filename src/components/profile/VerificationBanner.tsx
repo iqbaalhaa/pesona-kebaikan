@@ -41,7 +41,7 @@ export default function VerificationBanner({ onClick }: { onClick: () => void })
             boxShadow: "0 2px 4px rgba(0,0,0,0.05)",
           }}
         >
-          <VerifiedUserIcon sx={{ color: "#61ce70" }} />
+          <VerifiedUserIcon sx={{ color: "#0ba976" }} />
         </Box>
         <Box>
           <Typography sx={{ fontWeight: 800, fontSize: 14, color: "#166534" }}>

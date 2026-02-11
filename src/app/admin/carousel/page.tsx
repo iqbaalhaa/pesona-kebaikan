@@ -206,13 +206,13 @@ export default function AdminCarouselPage() {
 					variant="contained"
 					startIcon={<AddIcon />}
 					onClick={() => handleOpen()}
-					sx={{ bgcolor: "#61ce70" }}
+					sx={{ bgcolor: "#0ba976" }}
 				>
 					Baru
 				</Button>
 			</Stack>
 
-			<TableContainer component={Paper}>
+			<TableContainer component={Paper} sx={{ overflowX: 'auto' }}>
 				<Table>
 					<TableHead>
 						<TableRow>

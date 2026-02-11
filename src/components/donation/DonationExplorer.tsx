@@ -63,10 +63,26 @@ export default function DonationExplorer({
 
 	// Local state for search input
 	const [searchVal, setSearchVal] = React.useState(q);
+	const inputRef = React.useRef<HTMLInputElement>(null);
 
+	// Sync from URL to local state (handle back/forward navigation)
 	React.useEffect(() => {
-		setSearchVal(q);
+		// Only sync if the input is NOT focused to avoid overwriting user typing
+		if (document.activeElement !== inputRef.current) {
+			setSearchVal(q);
+		}
 	}, [q]);
+
+	// Debounce search update
+	React.useEffect(() => {
+		const timer = setTimeout(() => {
+			if (searchVal !== q) {
+				updateParam("q", searchVal || null);
+			}
+		}, 500);
+
+		return () => clearTimeout(timer);
+	}, [searchVal]);
 
 	const updateParam = (key: string, value: string | null) => {
 		const params = new URLSearchParams(searchParams.toString());
@@ -115,6 +131,7 @@ export default function DonationExplorer({
 				>
 					<TextField
 						fullWidth
+						inputRef={inputRef}
 						placeholder="Cari donasi..."
 						value={searchVal}
 						onChange={(e) => setSearchVal(e.target.value)}
@@ -191,8 +208,9 @@ export default function DonationExplorer({
 				{initialData.map((x) => {
 					const progress = Math.min(
 						100,
-						Math.round((x.collected / x.target) * 100)
+						Math.round((x.collected / x.target) * 100),
 					);
+					const isQuickDonate = x.slug === "donasi-cepat";
 					return (
 						<Link
 							key={x.id}
@@ -308,16 +326,18 @@ export default function DonationExplorer({
 
 									{/* progress */}
 									<Box sx={{ mt: 1.5 }}>
-										<LinearProgress
-											variant="determinate"
-											value={progress}
-											sx={{
-												height: 5, // ✅ lebih tipis (sebelumnya 6)
-												borderRadius: 3,
-												bgcolor: alpha(theme.palette.primary.main, 0.1),
-												"& .MuiLinearProgress-bar": { borderRadius: 3 },
-											}}
-										/>
+										{!isQuickDonate && (
+											<LinearProgress
+												variant="determinate"
+												value={progress}
+												sx={{
+													height: 5, // ✅ lebih tipis (sebelumnya 6)
+													borderRadius: 3,
+													bgcolor: alpha(theme.palette.primary.main, 0.1),
+													"& .MuiLinearProgress-bar": { borderRadius: 3 },
+												}}
+											/>
+										)}
 
 										<Box
 											sx={{
@@ -356,7 +376,7 @@ export default function DonationExplorer({
 														fontWeight: 500,
 													}}
 												>
-													Sisa Hari
+													{isQuickDonate ? "Tanpa Batas" : "Sisa Hari"}
 												</Typography>
 												<Stack
 													direction="row"
@@ -374,7 +394,7 @@ export default function DonationExplorer({
 															color: "text.primary",
 														}}
 													>
-														{x.daysLeft}
+														{isQuickDonate ? "∞" : x.daysLeft}
 													</Typography>
 												</Stack>
 											</Box>

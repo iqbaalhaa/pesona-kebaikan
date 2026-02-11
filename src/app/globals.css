@@ -5,7 +5,7 @@
 :root {
 	--background: #f8fafc; /* Matches MUI Light background.default */
 	--foreground: #0f172a; /* Matches MUI Light text.primary */
-	--brand: #61ce70;
+	--brand: #0ba976;
 	--mui-font-family: var(--font-pjs), "Plus Jakarta Sans", system-ui,
 		-apple-system, Segoe UI, Roboto, Arial, sans-serif;
 }
@@ -99,12 +99,12 @@ body {
 
 /* Active State */
 .bottom-nav .Mui-selected {
-	color: #61ce70 !important; /* Force primary brand color */
+	color: #0ba976 !important; /* Force primary brand color */
 	opacity: 1 !important;
 }
 
 .bottom-nav .MuiBottomNavigationAction-label.Mui-selected {
-	color: #61ce70 !important;
+	color: #0ba976 !important;
 	font-weight: 700 !important;
 }
 

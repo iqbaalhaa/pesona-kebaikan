@@ -150,13 +150,13 @@ function ProfilePageContent() {
 						fontWeight: 900,
 						color: "#fff",
 						mb: 3,
-						background: "linear-gradient(to right, #61ce70, #4caf50)",
-						boxShadow: "0 10px 20px rgba(97,206,112,0.3)",
+						background: "linear-gradient(to right, #0ba976, #4caf50)",
+						boxShadow: "0 10px 20px rgba(11,169,118,0.3)",
 						textTransform: "none",
 						transition: "all 0.3s ease",
 						"&:hover": {
 							transform: "translateY(-2px)",
-							boxShadow: "0 15px 30px rgba(97,206,112,0.4)",
+							boxShadow: "0 15px 30px rgba(11,169,118,0.4)",
 						},
 					}}
 				>

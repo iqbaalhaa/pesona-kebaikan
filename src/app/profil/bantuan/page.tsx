@@ -64,7 +64,7 @@ export default function HelpCenterPage() {
           p: 2,
           mb: 4,
           borderRadius: 4,
-          bgcolor: "#61ce70",
+          bgcolor: "#0ba976",
           color: "white",
           textAlign: "center",
         }}

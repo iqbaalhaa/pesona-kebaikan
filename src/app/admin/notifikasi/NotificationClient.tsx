@@ -211,7 +211,7 @@ export default function NotificationClient({
 			<TableContainer
 				component={Paper}
 				elevation={0}
-				sx={{ borderRadius: 2, border: "1px solid", borderColor: "divider" }}
+				sx={{ borderRadius: 2, border: "1px solid", borderColor: "divider", overflowX: "auto" }}
 			>
 				<Table>
 					<TableHead>

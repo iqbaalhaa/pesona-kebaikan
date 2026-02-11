@@ -24,7 +24,7 @@ export function CopyLinkButton({ url }: { url: string }) {
       sx={{
         border: "1px solid rgba(0,0,0,0.12)",
         borderRadius: 2,
-        color: copied ? "#61ce70" : "rgba(15,23,42,.7)",
+        color: copied ? "#0ba976" : "rgba(15,23,42,.7)",
         "&:hover": { bgcolor: "rgba(15,23,42,.05)" },
       }}
     >

@@ -209,8 +209,8 @@ export default function SahabatBaikPage({
 							fontWeight: 600,
 							fontSize: 14,
 						},
-						"& .Mui-selected": { color: "#61ce70" },
-						"& .MuiTabs-indicator": { bgcolor: "#61ce70" },
+						"& .Mui-selected": { color: "#0ba976" },
+						"& .MuiTabs-indicator": { bgcolor: "#0ba976" },
 					}}
 				>
 					<Tab label="Tentang" />
@@ -281,7 +281,7 @@ export default function SahabatBaikPage({
 														borderRadius: 3,
 														bgcolor: "#f1f5f9",
 														"& .MuiLinearProgress-bar": {
-															bgcolor: "#61ce70",
+															bgcolor: "#0ba976",
 															borderRadius: 3,
 														},
 													}}
@@ -304,7 +304,7 @@ export default function SahabatBaikPage({
 														sx={{
 															fontSize: 12,
 															fontWeight: 700,
-															color: "#61ce70",
+															color: "#0ba976",
 														}}
 													>
 														{formatIDR(campaign.collected)}

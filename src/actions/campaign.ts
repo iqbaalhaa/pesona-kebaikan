@@ -7,6 +7,8 @@ import { CampaignStatus, Prisma } from "@/generated/prisma";
 import { revalidatePath } from "next/cache";
 import { CATEGORY_TITLE } from "@/lib/constants";
 
+const QUICK_DONATION_SLUG = "donasi-cepat";
+
 export async function createCampaign(formData: FormData) {
 	const session = await auth();
 	if (!session?.user?.id) {
@@ -126,7 +128,7 @@ export async function createCampaign(formData: FormData) {
 								url: coverUrl,
 								isThumbnail: true,
 							},
-					  }
+						}
 					: undefined,
 			},
 		});
@@ -148,7 +150,7 @@ export async function getMyCampaigns(
 	page: number = 1,
 	limit: number = 9,
 	filter: string = "all",
-	search: string = ""
+	search: string = "",
 ) {
 	const session = await auth();
 	if (!session?.user?.id) {
@@ -166,7 +168,8 @@ export async function getCampaigns(
 	categoryName?: string,
 	isEmergency?: boolean,
 	isVerified?: boolean,
-	sortBy: string = "newest"
+	sortBy: string = "newest",
+	includeQuickDonation: boolean = false,
 ) {
 	const skip = (page - 1) * limit;
 
@@ -179,16 +182,13 @@ export async function getCampaigns(
 		} else {
 			where.status = filter.toUpperCase() as CampaignStatus;
 		}
-	} else {
-		// Default: Show ACTIVE and COMPLETED (but maybe only ACTIVE?)
-		// Usually list shows ACTIVE.
-		// Let's stick to existing logic or default to ACTIVE if filter is 'all' but we want public list.
-		// If filter is explicitly 'all', maybe we show all?
-		// But typically we only show ACTIVE campaigns in public list.
-		// Let's check where `getCampaigns` is used.
-		// It's used in `getMyCampaigns` (admin/user dashboard) where 'all' might mean everything.
-		// For public donation page, we likely want `status: "ACTIVE"`.
-		// I will leave it as is for now to avoid breaking `getMyCampaigns`.
+	}
+
+	// Exclude quick donation campaign from public listing unless requested
+	if (!includeQuickDonation) {
+		where.NOT = {
+			slug: QUICK_DONATION_SLUG,
+		};
 	}
 
 	if (search) {
@@ -250,11 +250,11 @@ export async function getCampaigns(
 		// UI expects: id, title, category, type, ownerName, target, collected, donors, status, updatedAt
 		const rows = campaigns.map((c) => {
 			const validDonations = c.donations.filter((d) =>
-				["PAID", "paid", "SETTLED", "COMPLETED"].includes(d.status)
+				["PAID", "paid", "SETTLED", "COMPLETED"].includes(d.status),
 			);
 			const collected = validDonations.reduce(
 				(acc, d) => acc + Number(d.amount),
-				0
+				0,
 			);
 			const donors = validDonations.length;
 			const thumbnail =
@@ -262,8 +262,8 @@ export async function getCampaigns(
 			const daysLeft = c.end
 				? Math.ceil(
 						(new Date(c.end).getTime() - new Date().getTime()) /
-							(1000 * 60 * 60 * 24)
-				  )
+							(1000 * 60 * 60 * 24),
+					)
 				: 0;
 
 			return {
@@ -332,12 +332,12 @@ export async function getCampaignBySlug(slug: string) {
 		}
 
 		const validDonations = campaign.donations.filter((d) =>
-			["PAID", "paid", "SETTLED", "COMPLETED"].includes(d.status)
+			["PAID", "paid", "SETTLED", "COMPLETED"].includes(d.status),
 		);
 
 		const collected = validDonations.reduce(
 			(acc, d) => acc + Number(d.amount),
-			0
+			0,
 		);
 		const donors = validDonations.length;
 		const thumbnail =
@@ -347,8 +347,8 @@ export async function getCampaignBySlug(slug: string) {
 		const daysLeft = campaign.end
 			? Math.ceil(
 					(new Date(campaign.end).getTime() - new Date().getTime()) /
-						(1000 * 60 * 60 * 24)
-			  )
+						(1000 * 60 * 60 * 24),
+				)
 			: 0;
 
 		const timeline = [
@@ -381,6 +381,7 @@ export async function getCampaignBySlug(slug: string) {
 			slug: campaign.slug,
 			title: campaign.title,
 			category: campaign.category.name,
+			categorySlug: campaign.category.slug,
 			type:
 				campaign.category.name === "Bantuan Medis & Kesehatan"
 					? "sakit"
@@ -448,12 +449,12 @@ export async function getCampaignById(id: string) {
 		}
 
 		const validDonations = campaign.donations.filter((d) =>
-			["PAID", "paid", "SETTLED", "COMPLETED"].includes(d.status)
+			["PAID", "paid", "SETTLED", "COMPLETED"].includes(d.status),
 		);
 
 		const collected = validDonations.reduce(
 			(acc, d) => acc + Number(d.amount),
-			0
+			0,
 		);
 		const donors = validDonations.length;
 		const thumbnail =
@@ -463,8 +464,8 @@ export async function getCampaignById(id: string) {
 		const daysLeft = campaign.end
 			? Math.ceil(
 					(new Date(campaign.end).getTime() - new Date().getTime()) /
-						(1000 * 60 * 60 * 24)
-			  )
+						(1000 * 60 * 60 * 24),
+				)
 			: 0;
 
 		const timeline = [
@@ -581,7 +582,7 @@ export async function finishCampaign(campaignId: string) {
 
 export async function updateCampaignStatus(
 	campaignId: string,
-	status: "ACTIVE" | "REJECTED" | "COMPLETED" | "PAUSED"
+	status: "ACTIVE" | "REJECTED" | "COMPLETED" | "PAUSED",
 ) {
 	try {
 		const session = await auth();
@@ -625,9 +626,22 @@ export async function updateCampaign(id: string, formData: FormData) {
 
 		const target = parseFloat(targetStr?.replace(/[^\d]/g, "") || "0") || 0;
 
-		const category = await prisma.campaignCategory.findFirst({
-			where: { name: CATEGORY_TITLE[categoryKey] || "Lainnya" },
+		let category = await prisma.campaignCategory.findUnique({
+			where: { slug: categoryKey },
 		});
+
+		if (!category) {
+			category = await prisma.campaignCategory.findFirst({
+				where: { name: CATEGORY_TITLE[categoryKey] || categoryKey },
+			});
+		}
+
+		if (!category) {
+			// Fallback to "Lainnya" if still not found
+			category = await prisma.campaignCategory.findFirst({
+				where: { name: "Lainnya" },
+			});
+		}
 
 		if (!category) {
 			return { success: false, error: "Invalid category" };
@@ -690,7 +704,7 @@ export async function updateCampaign(id: string, formData: FormData) {
 export async function updateCampaignStory(
 	id: string,
 	title: string,
-	story: string
+	story: string,
 ) {
 	try {
 		const session = await auth();
@@ -826,7 +840,7 @@ export async function createCampaignUpdate(data: {
 					data.images && data.images.length > 0
 						? {
 								create: data.images.map((url) => ({ url, type: "IMAGE" })),
-						  }
+							}
 						: undefined,
 			},
 		});
@@ -945,6 +959,9 @@ export async function getUrgentCampaigns(limit: number = 10) {
 				end: {
 					gte: new Date(),
 				},
+				slug: {
+					not: QUICK_DONATION_SLUG,
+				},
 			},
 			orderBy: {
 				end: "asc",
@@ -974,6 +991,9 @@ export async function getPopularCampaigns(limit: number = 10) {
 		const campaigns = await prisma.campaign.findMany({
 			where: {
 				status: "ACTIVE",
+				slug: {
+					not: QUICK_DONATION_SLUG,
+				},
 			},
 			orderBy: {
 				createdAt: "desc", // Default order if not sorted by donations
@@ -991,10 +1011,10 @@ export async function getPopularCampaigns(limit: number = 10) {
 		const sorted = campaigns
 			.sort((a, b) => {
 				const validA = a.donations.filter((d) =>
-					["PAID", "paid", "SETTLED", "COMPLETED"].includes(d.status)
+					["PAID", "paid", "SETTLED", "COMPLETED"].includes(d.status),
 				).length;
 				const validB = b.donations.filter((d) =>
-					["PAID", "paid", "SETTLED", "COMPLETED"].includes(d.status)
+					["PAID", "paid", "SETTLED", "COMPLETED"].includes(d.status),
 				).length;
 				return validB - validA;
 			})
@@ -1016,6 +1036,9 @@ export async function getAllActiveCampaigns(limit: number = 50) {
 		const campaigns = await prisma.campaign.findMany({
 			where: {
 				status: "ACTIVE",
+				slug: {
+					not: QUICK_DONATION_SLUG,
+				},
 			},
 			orderBy: {
 				createdAt: "desc",
@@ -1051,22 +1074,22 @@ type CampaignWithRelations = Prisma.CampaignGetPayload<{
 function mapCampaignsToTypes(campaigns: CampaignWithRelations[]) {
 	return campaigns.map((c) => {
 		const validDonations = c.donations.filter((d) =>
-			["PAID", "paid", "SETTLED", "COMPLETED"].includes(d.status)
+			["PAID", "paid", "SETTLED", "COMPLETED"].includes(d.status),
 		);
 		const collected = validDonations.reduce(
 			(acc, d) => acc + Number(d.amount),
-			0
+			0,
 		);
 		const daysLeft = c.end
 			? Math.ceil(
 					(new Date(c.end).getTime() - new Date().getTime()) /
-						(1000 * 60 * 60 * 24)
-			  )
+						(1000 * 60 * 60 * 24),
+				)
 			: 0;
 		const slugKey =
 			c.category.slug ||
 			Object.entries(CATEGORY_TITLE).find(
-				([, name]) => name === c.category.name
+				([, name]) => name === c.category.name,
 			)?.[0];
 
 		return {
@@ -1085,4 +1108,76 @@ function mapCampaignsToTypes(campaigns: CampaignWithRelations[]) {
 			isEmergency: c.isEmergency,
 		};
 	});
+}
+
+export async function getQuickDonationCampaign() {
+	try {
+		let campaign = await prisma.campaign.findUnique({
+			where: { slug: QUICK_DONATION_SLUG },
+			include: {
+				category: true,
+				createdBy: true,
+				donations: true,
+				media: true,
+			},
+		});
+
+		if (!campaign) {
+			// Find an admin user
+			const admin = await prisma.user.findFirst({
+				where: { role: "ADMIN" },
+			});
+
+			if (!admin) {
+				return {
+					success: false,
+					error: "Admin user not found to create quick donation campaign",
+				};
+			}
+
+			// Find or create category
+			let category = await prisma.campaignCategory.findFirst({
+				where: { name: "Lainnya" },
+			});
+
+			if (!category) {
+				category = await prisma.campaignCategory.create({
+					data: { name: "Lainnya", slug: "lainnya" },
+				});
+			}
+
+			campaign = await prisma.campaign.create({
+				data: {
+					title: "Donasi Cepat",
+					slug: QUICK_DONATION_SLUG,
+					story:
+						"Campaign khusus untuk menampung donasi cepat dari halaman utama.",
+					target: 1000000000,
+					status: "ACTIVE",
+					start: new Date(),
+					categoryId: category.id,
+					createdById: admin.id,
+				},
+				include: {
+					category: true,
+					createdBy: true,
+					donations: true,
+					media: true,
+				},
+			});
+		}
+
+		return { success: true, data: campaign };
+	} catch (error) {
+		console.error("Get quick donation campaign error:", error);
+		return { success: false, error: "Failed to fetch quick donation campaign" };
+	}
+}
+
+export async function getQuickDonationCampaignId() {
+	const res = await getQuickDonationCampaign();
+	if (res.success && res.data) {
+		return res.data.id;
+	}
+	return null;
 }

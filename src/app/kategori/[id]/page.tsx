@@ -4,7 +4,7 @@ import Image from "next/image";
 import { getCampaigns } from "@/actions/campaign";
 import { CATEGORY_TITLE } from "@/lib/constants";
 
-const PRIMARY = "#61ce70";
+const PRIMARY = "#0ba976";
 
 function rupiah(n: number) {
 	return new Intl.NumberFormat("id-ID").format(n);
@@ -47,6 +47,8 @@ function CampaignCard({ c }: { c: any }) {
 	const img = c.thumbnail || "/defaultimg.webp";
 	const rawPct = c.target ? Math.round((c.collected / c.target) * 100) : 0;
 	const pct = Math.min(100, Math.max(0, rawPct));
+
+	const isQuickDonate = c.slug === "donasi-cepat";
 
 	return (
 		<Link href={`/donasi/${c.slug || c.id}`}>
@@ -107,7 +109,7 @@ function CampaignCard({ c }: { c: any }) {
 							backdropFilter: "blur(10px)",
 						}}
 					>
-						{c.daysLeft} hari
+						{isQuickDonate ? "∞" : `${c.daysLeft} hari`}
 					</Box>
 				</Box>
 				<Box sx={{ p: 1.25 }}>
@@ -144,27 +146,29 @@ function CampaignCard({ c }: { c: any }) {
 							Terkumpul
 						</Typography>
 						<Typography sx={{ fontSize: 10, fontWeight: 900, color: PRIMARY }}>
-							{pct}%
+							{isQuickDonate ? "∞" : `${pct}%`}
 						</Typography>
 					</Box>
-					<Box
-						sx={{
-							height: 6,
-							borderRadius: 999,
-							bgcolor: "#e11d48",
-							overflow: "hidden",
-						}}
-					>
+					{!isQuickDonate && (
 						<Box
 							sx={{
-								height: "100%",
-								width: `${pct}%`,
-								bgcolor: PRIMARY,
+								height: 6,
 								borderRadius: 999,
-								transition: "width 250ms ease",
+								bgcolor: "#e11d48",
+								overflow: "hidden",
 							}}
-						/>
-					</Box>
+						>
+							<Box
+								sx={{
+									height: "100%",
+									width: `${pct}%`,
+									bgcolor: PRIMARY,
+									borderRadius: 999,
+									transition: "width 250ms ease",
+								}}
+							/>
+						</Box>
+					)}
 					<Box
 						sx={{ display: "flex", justifyContent: "space-between", mt: 0.5 }}
 					>
@@ -208,7 +212,7 @@ export default async function KategoriIdPage({
 		categoryName,
 		undefined,
 		undefined,
-		sortParam
+		sortParam,
 	);
 
 	const rows: any[] =

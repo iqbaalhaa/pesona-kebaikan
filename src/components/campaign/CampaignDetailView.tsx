@@ -338,8 +338,8 @@ export default function CampaignDetailView({ data }: { data: any }) {
 									fontWeight: 600,
 									fontSize: 14,
 								},
-								"& .Mui-selected": { color: "#61ce70" },
-								"& .MuiTabs-indicator": { bgcolor: "#61ce70" },
+								"& .Mui-selected": { color: "#0ba976" },
+								"& .MuiTabs-indicator": { bgcolor: "#0ba976" },
 							}}
 						>
 							<Tab label="Cerita" />

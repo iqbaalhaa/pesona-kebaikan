@@ -59,9 +59,11 @@ export default async function CampaignDetailPage({
 		notFound();
 	}
 
+	const isQuickDonate = campaign.slug === "donasi-cepat";
+
 	const categoryKey =
 		Object.keys(CATEGORY_TITLE).find(
-			(key) => CATEGORY_TITLE[key] === campaign.category.name
+			(key) => CATEGORY_TITLE[key] === campaign.category.name,
 		) || "lainnya";
 
 	const type = categoryKey === "medis" ? "sakit" : "lainnya";
@@ -87,26 +89,26 @@ export default async function CampaignDetailPage({
 
 	const donations = campaign.donations;
 	const successfulDonations = donations.filter((d: any) =>
-		["PAID", "paid", "SETTLED", "COMPLETED"].includes(d.status)
+		["PAID", "paid", "SETTLED", "COMPLETED"].includes(d.status),
 	);
 	const totalCollected = successfulDonations.reduce(
 		(acc, d) => acc + Number(d.amount),
-		0
+		0,
 	);
 	const donorCount = new Set(
-		successfulDonations.map((d) => d.userId || d.donorPhone || d.id)
+		successfulDonations.map((d) => d.userId || d.donorPhone || d.id),
 	).size;
 
 	const progress = Math.min(
 		100,
-		Math.round((totalCollected / Number(campaign.target)) * 100)
+		Math.round((totalCollected / Number(campaign.target)) * 100),
 	);
 
 	const daysLeft = campaign.end
 		? Math.ceil(
 				(new Date(campaign.end).getTime() - new Date().getTime()) /
-					(1000 * 60 * 60 * 24)
-		  )
+					(1000 * 60 * 60 * 24),
+			)
 		: 0;
 
 	return (
@@ -201,41 +203,49 @@ export default async function CampaignDetailPage({
 							}).format(totalCollected)}
 						</Typography>
 
-						<Stack
-							direction="row"
-							alignItems="center"
-							spacing={1}
-							sx={{ mb: 1 }}
-						>
-							<Typography
-								variant="caption"
-								fontWeight={600}
-								sx={{ opacity: 0.9 }}
+						{!isQuickDonate && (
+							<Stack
+								direction="row"
+								alignItems="center"
+								spacing={1}
+								sx={{ mb: 1 }}
 							>
-								{progress}%
-							</Typography>
-							<LinearProgress
-								variant="determinate"
-								value={progress}
-								sx={{
-									flex: 1,
-									height: 6,
-									borderRadius: 4,
-									bgcolor: "rgba(255,255,255,0.2)",
-									"& .MuiLinearProgress-bar": {
-										bgcolor: "#34d399",
+								<Typography
+									variant="caption"
+									fontWeight={600}
+									sx={{ opacity: 0.9 }}
+								>
+									{progress}%
+								</Typography>
+								<LinearProgress
+									variant="determinate"
+									value={progress}
+									sx={{
+										flex: 1,
+										height: 6,
 										borderRadius: 4,
-									},
-								}}
-							/>
-						</Stack>
+										bgcolor: "rgba(255,255,255,0.2)",
+										"& .MuiLinearProgress-bar": {
+											bgcolor: "#34d399",
+											borderRadius: 4,
+										},
+									}}
+								/>
+							</Stack>
+						)}
 						<Typography variant="caption" sx={{ opacity: 0.7 }}>
-							Target:{" "}
-							{new Intl.NumberFormat("id-ID", {
-								style: "currency",
-								currency: "IDR",
-								maximumFractionDigits: 0,
-							}).format(Number(campaign.target))}
+							{isQuickDonate ? (
+								"Target: Tanpa Batas"
+							) : (
+								<>
+									Target:{" "}
+									{new Intl.NumberFormat("id-ID", {
+										style: "currency",
+										currency: "IDR",
+										maximumFractionDigits: 0,
+									}).format(Number(campaign.target))}
+								</>
+							)}
 						</Typography>
 					</CardContent>
 				</Card>
@@ -280,10 +290,10 @@ export default async function CampaignDetailPage({
 					>
 						<AccessTimeRoundedIcon color="warning" sx={{ mb: 1 }} />
 						<Typography variant="h6" fontWeight={700} lineHeight={1}>
-							{daysLeft > 0 ? daysLeft : 0}
+							{isQuickDonate ? "∞" : daysLeft > 0 ? daysLeft : 0}
 						</Typography>
 						<Typography variant="caption" color="text.secondary">
-							Sisa Hari
+							{isQuickDonate ? "Tanpa Batas" : "Sisa Hari"}
 						</Typography>
 					</Paper>
 				</Stack>
@@ -445,7 +455,7 @@ export default async function CampaignDetailPage({
 													month: "short",
 													hour: "2-digit",
 													minute: "2-digit",
-												}
+												},
 											)}
 										</Typography>
 									</Box>
@@ -470,8 +480,8 @@ export default async function CampaignDetailPage({
 												donation.status === "Berhasil"
 													? "success"
 													: donation.status === "PENDING"
-													? "warning"
-													: "default"
+														? "warning"
+														: "default"
 											}
 											sx={{ height: 18, fontSize: 10, fontWeight: 700 }}
 										/>
