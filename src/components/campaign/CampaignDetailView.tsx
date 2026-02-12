@@ -7,8 +7,6 @@ import {
   Box,
   Button,
   Container,
-  Tabs,
-  Tab,
   Divider,
   Snackbar,
   Alert,
@@ -20,17 +18,17 @@ import {
   List,
   ListItemButton,
   ListItemText,
+  Typography,
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import FlagOutlinedIcon from "@mui/icons-material/FlagOutlined";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
-import { Typography } from "@mui/material";
 
 import { createReport } from "@/actions/report";
 import { checkPendingDonations } from "@/actions/donation";
 import { ReportReason } from "@/generated/prisma";
 
-// New Components
+// Components
 import CampaignHero from "./detail/CampaignHero";
 import CampaignHeader from "./detail/CampaignHeader";
 import CampaignFundraiser from "./detail/CampaignFundraiser";
@@ -77,8 +75,15 @@ export default function CampaignDetailView({
   const router = useRouter();
   const { data: session } = useSession();
   const searchParams = useSearchParams();
+
   const [tabValue, setTabValue] = React.useState(0);
   const [showFullStory, setShowFullStory] = React.useState(false);
+
+  // Share URL state (avoid empty on first click)
+  const [shareUrl, setShareUrl] = React.useState("");
+  React.useEffect(() => {
+    if (typeof window !== "undefined") setShareUrl(window.location.href);
+  }, []);
 
   // Report state
   const [reportLoading, setReportLoading] = React.useState(false);
@@ -108,47 +113,6 @@ export default function CampaignDetailView({
     { value: "OTHER", label: "Lainnya" },
   ];
 
-  const handleSubmitReport = async () => {
-    if (
-      !reportReason ||
-      !reportDetails ||
-      !reporterName ||
-      !reporterPhone ||
-      !reporterEmail
-    ) {
-      setSnack({ open: true, msg: "Mohon lengkapi semua data", type: "error" });
-      return;
-    }
-
-    setReportLoading(true);
-    const res = await createReport({
-      campaignId: data.id,
-      reason: reportReason as ReportReason,
-      details: reportDetails,
-      reporterName,
-      reporterPhone,
-      reporterEmail,
-    });
-    setReportLoading(false);
-
-    if (res.success) {
-      setOpenReportModal(false);
-      setReportSuccessOpen(true);
-      // Reset form
-      setReportReason("");
-      setReportDetails("");
-      setReporterName("");
-      setReporterPhone("");
-      setReporterEmail("");
-    } else {
-      setSnack({
-        open: true,
-        msg: res.error || "Gagal mengirim laporan",
-        type: "error",
-      });
-    }
-  };
-
   // Modals State
   const [openMedicalModal, setOpenMedicalModal] = React.useState(false);
   const [openPatientModal, setOpenPatientModal] = React.useState(false);
@@ -169,9 +133,11 @@ export default function CampaignDetailView({
     }
   }, [openReportModal, session]);
 
+  // Donation success check (stable deps)
+  const donationSuccessParam = searchParams.get("donation_success");
   React.useEffect(() => {
     const checkStatus = async () => {
-      if (searchParams.get("donation_success") === "true") {
+      if (donationSuccessParam === "true") {
         setDonationSuccessOpen(true);
 
         // Clean up URL first
@@ -189,56 +155,87 @@ export default function CampaignDetailView({
       }
     };
     checkStatus();
-  }, [searchParams, data.slug, data.id, router]);
-
-  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
-    setTabValue(newValue);
-  };
+  }, [donationSuccessParam, data.slug, data.id, router]);
 
   const effectiveTitle =
     (data as any).fundraiserTitle && !showFundraiser
       ? (data as any).fundraiserTitle
       : data.title;
+
   const effectiveTarget =
     (data as any).fundraiserTarget && !showFundraiser
       ? (data as any).fundraiserTarget
       : data.target;
-  const progress = Math.min(
-    100,
-    Math.round((data.collected / effectiveTarget) * 100)
-  );
 
-  const donations = data.donations || [];
+  // Safe progress calc (avoid NaN/Infinity)
+  const safeTarget = Number(effectiveTarget) || 0;
+  const safeCollected = Number(data.collected) || 0;
+  const progress =
+    safeTarget > 0
+      ? Math.min(100, Math.round((safeCollected / safeTarget) * 100))
+      : 0;
+
+  const donations = Array.isArray(data.donations) ? data.donations : [];
   const prayers =
     Array.isArray((data as any).fundraiserPrayers) &&
     (data as any).fundraiserPrayers.length > 0
       ? (data as any).fundraiserPrayers
-      : donations.filter((d: any) => d.comment && d.comment.trim() !== "");
+      : donations.filter(
+          (d: any) => d.comment && String(d.comment).trim() !== ""
+        );
+
   const latestDonations = donations.slice(0, 3);
   const latestPrayers = prayers.slice(0, 3);
-  const hasWithdrawals =
-    data.updates && data.updates.some((u: any) => u.type === "withdrawal");
-  const withdrawalCount =
-    data.updates?.filter((u: any) => u.type === "withdrawal").length || 0;
-  const updateCount = data.updates?.length || 0;
-  const fundraiserCount = data.fundraisers?.length || 0;
+
+  const hasWithdrawals = Array.isArray(data.updates)
+    ? data.updates.some((u: any) => u?.type === "withdrawal")
+    : false;
+
+  const withdrawalCount = Array.isArray(data.updates)
+    ? data.updates.filter((u: any) => u?.type === "withdrawal").length
+    : 0;
+
+  const updateCount = Array.isArray(data.updates) ? data.updates.length : 0;
+  const fundraiserCount = Array.isArray(data.fundraisers)
+    ? data.fundraisers.length
+    : 0;
 
   // Calculate Fund Details
-  const totalCollected = data.collected || 0;
-  // Mocking fees as 5% for display purposes to match design (in real app, this comes from backend)
+  const totalCollected = safeCollected;
   const fees = Math.round(totalCollected * 0.05);
-  // Calculate withdrawn amount from updates if available
-  const withdrawn =
-    data.updates
-      ?.filter((u: any) => u.type === "withdrawal")
-      .reduce((acc: number, curr: any) => acc + (curr.amount || 0), 0) || 0;
-  const remaining = totalCollected - fees - withdrawn;
-  // Mock duration
-  const campaignDuration = 23; // Days running
 
-  // Share Logic
-  const shareUrl = typeof window !== "undefined" ? window.location.href : "";
-  const shareText = `Bantu ${data.title} di Pesona Kebaikan`;
+  const withdrawn = Array.isArray(data.updates)
+    ? data.updates
+        .filter((u: any) => u?.type === "withdrawal")
+        .reduce(
+          (acc: number, curr: any) => acc + (Number(curr?.amount) || 0),
+          0
+        )
+    : 0;
+
+  const remaining = Math.max(0, totalCollected - fees - withdrawn);
+
+  // Mock duration
+  const campaignDuration = 23;
+
+  // Normalize images to string[]
+  const images =
+    Array.isArray(data.images) && data.images.length > 0
+      ? data.images
+          .map((img: any) => (typeof img === "string" ? img : img?.url))
+          .filter(Boolean)
+      : [data.thumbnail || "https://placehold.co/600x400?text=No+Image"];
+
+  const shareText = `Bantu ${effectiveTitle} di Pesona Kebaikan`;
+
+  const copyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setSnackbarOpen(true);
+    } catch {
+      setSnack({ open: true, msg: "Gagal menyalin tautan", type: "error" });
+    }
+  };
 
   const handleShareAction = (platform: string) => {
     let url = "";
@@ -259,14 +256,12 @@ export default function CampaignDetailView({
         )}&url=${encodeURIComponent(shareUrl)}`;
         break;
       case "instagram":
-        navigator.clipboard.writeText(shareUrl);
-        setSnackbarOpen(true);
+        copyToClipboard(shareUrl);
         window.open("https://www.instagram.com/", "_blank");
         setOpenShareModal(false);
         return;
       case "copy":
-        navigator.clipboard.writeText(shareUrl);
-        setSnackbarOpen(true);
+        copyToClipboard(shareUrl);
         setOpenShareModal(false);
         return;
       default:
@@ -278,15 +273,61 @@ export default function CampaignDetailView({
     }
   };
 
-  const images =
-    data.images && data.images.length > 0
-      ? data.images
-      : [data.thumbnail || "https://placehold.co/600x400?text=No+Image"];
+  const handleSubmitReport = async () => {
+    if (
+      !reportReason ||
+      !reportDetails ||
+      !reporterName ||
+      !reporterPhone ||
+      !reporterEmail
+    ) {
+      setSnack({ open: true, msg: "Mohon lengkapi semua data", type: "error" });
+      return;
+    }
+
+    setReportLoading(true);
+    try {
+      const res = await createReport({
+        campaignId: data.id,
+        reason: reportReason as ReportReason,
+        details: reportDetails,
+        reporterName,
+        reporterPhone,
+        reporterEmail,
+      });
+
+      if (res.success) {
+        setOpenReportModal(false);
+        setReportSuccessOpen(true);
+
+        // Reset form
+        setReportReason("");
+        setReportDetails("");
+        setReporterName("");
+        setReporterPhone("");
+        setReporterEmail("");
+      } else {
+        setSnack({
+          open: true,
+          msg: res.error || "Gagal mengirim laporan",
+          type: "error",
+        });
+      }
+    } catch (e) {
+      console.error(e);
+      setSnack({
+        open: true,
+        msg: "Terjadi kesalahan saat mengirim laporan",
+        type: "error",
+      });
+    } finally {
+      setReportLoading(false);
+    }
+  };
 
   return (
     <Box
       sx={{
-        // Add extra padding at bottom for sticky footer
         pb: "100px",
         bgcolor: "#fff",
         minHeight: "100vh",
@@ -362,6 +403,7 @@ export default function CampaignDetailView({
             <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
               Cerita Penggalangan Dana
             </Typography>
+
             <CampaignStory
               data={{ ...data, title: effectiveTitle, target: effectiveTarget }}
               showFullStory={showFullStory}
@@ -548,14 +590,9 @@ export default function CampaignDetailView({
                   key={f.id}
                   onClick={() => {
                     setOpenFundraiserModal(false);
-                    if (f.slug) {
-                      router.push(`/donasi/fundraiser/${f.slug}`);
-                    }
+                    if (f.slug) router.push(`/donasi/fundraiser/${f.slug}`);
                   }}
-                  sx={{
-                    borderRadius: 2,
-                    mb: 0.5,
-                  }}
+                  sx={{ borderRadius: 2, mb: 0.5 }}
                 >
                   <ListItemText
                     primaryTypographyProps={{
@@ -579,17 +616,16 @@ export default function CampaignDetailView({
               </Typography>
             </Box>
           )}
+
           <Box sx={{ mt: 2 }}>
             <Divider sx={{ my: 2 }} />
             <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
               <Box
                 onClick={() => {
                   setOpenFundraiserModal(false);
-                  if (data.slug) {
+                  if (data.slug)
                     router.push(`/donasi/${data.slug}/create-fundraiser`);
-                  } else {
-                    router.push("/donasi/fundraiser");
-                  }
+                  else router.push("/donasi/fundraiser");
                 }}
                 sx={{
                   bgcolor: "primary.main",
@@ -607,11 +643,9 @@ export default function CampaignDetailView({
               <Box
                 onClick={() => {
                   setOpenFundraiserModal(false);
-                  if (data.slug) {
+                  if (data.slug)
                     router.push(`/donasi/${data.slug}/create-fundraiser`);
-                  } else {
-                    router.push("/donasi/fundraiser");
-                  }
+                  else router.push("/donasi/fundraiser");
                 }}
                 sx={{
                   color: "primary.main",
@@ -629,6 +663,8 @@ export default function CampaignDetailView({
           </Box>
         </DialogContent>
       </Dialog>
+
+      {/* Copy-link snackbar */}
       <Snackbar
         open={snackbarOpen}
         autoHideDuration={3000}
@@ -637,6 +673,8 @@ export default function CampaignDetailView({
         anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
       />
 
+      {/* ✅ FIX TS ERROR: Alert children exists. If your TS says otherwise, it means your Alert import/type is wrong.
+          This version avoids that mismatch by using message prop instead of children. */}
       <Snackbar
         open={reportSuccessOpen}
         autoHideDuration={6000}
@@ -655,11 +693,11 @@ export default function CampaignDetailView({
       <Snackbar
         open={snack.open}
         autoHideDuration={4000}
-        onClose={() => setSnack({ ...snack, open: false })}
+        onClose={() => setSnack((s) => ({ ...s, open: false }))}
         anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
       >
         <Alert
-          onClose={() => setSnack({ ...snack, open: false })}
+          onClose={() => setSnack((s) => ({ ...s, open: false }))}
           severity={snack.type}
           sx={{ width: "100%", borderRadius: "12px", boxShadow: 3 }}
         >
