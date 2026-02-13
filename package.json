@@ -29,7 +29,7 @@
 		"jsdom": "^27.3.0",
 		"jspdf": "^3.0.4",
 		"jspdf-autotable": "^5.0.2",
-		"next": "16.0.10",
+		"next": "^16.1.6",
 		"next-auth": "^5.0.0-beta.30",
 		"nodemailer": "^6.10.1",
 		"pg": "^8.16.3",

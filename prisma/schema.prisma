@@ -49,6 +49,7 @@ model User {
   // untuk Blog.createdById relation("UserBlogs")
   blogs         Blog[]         @relation("UserBlogs")
   campaigns     Campaign[]     @relation("UserCampaigns")
+  fundraisers   Fundraiser[]   @relation("UserFundraisers")
   donations     Donation[]     @relation("UserDonations")
   notifications Notification[]
 
@@ -64,6 +65,7 @@ model User {
   address    String?   @db.Text
 
   amiins Amiin[] @relation("UserAmiins")
+  fundraiserAmiins FundraiserAmiin[] @relation("UserFundraiserAmiins")
 }
 
 model LoginActivity {
@@ -307,10 +309,33 @@ model Campaign {
   updates     CampaignUpdate[]
   reports     Report[]
   carousels   Carousel[]
+  fundraisers Fundraiser[] @relation("CampaignFundraisers")
 
   @@index([categoryId])
   @@index([createdById])
   @@index([status])
+}
+
+model Fundraiser {
+  id        String   @id @default(cuid())
+  title     String
+  slug      String   @unique
+  target    Decimal  @db.Decimal(19, 2)
+  amiinCount Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  campaignId String?
+  campaign   Campaign? @relation("CampaignFundraisers", fields: [campaignId], references: [id], onDelete: Cascade)
+
+  createdById String
+  createdBy   User @relation("UserFundraisers", fields: [createdById], references: [id])
+
+  donations Donation[] @relation("FundraiserDonations")
+  amiins    FundraiserAmiin[] @relation("FundraiserAmiins")
+
+  @@index([campaignId])
+  @@index([createdById])
 }
 
 enum CampaignMediaType {
@@ -371,11 +396,15 @@ model Donation {
   campaignId String
   campaign   Campaign @relation(fields: [campaignId], references: [id])
 
+  fundraiserId String?
+  fundraiser   Fundraiser? @relation("FundraiserDonations", fields: [fundraiserId], references: [id], onDelete: SetNull)
+
   userId String?
   user   User?   @relation("UserDonations", fields: [userId], references: [id])
 
   @@index([campaignId])
   @@index([userId])
+  @@index([fundraiserId])
 
   amiins Amiin[] @relation("DonationAmiins")
 }
@@ -393,6 +422,21 @@ model Amiin {
   @@index([donationId])
   @@unique([userId, donationId])
   @@unique([sessionId, donationId])
+}
+ 
+model FundraiserAmiin {
+  id            String    @id @default(cuid())
+  fundraiserId  String
+  fundraiser    Fundraiser @relation("FundraiserAmiins", fields: [fundraiserId], references: [id], onDelete: Cascade)
+  userId        String?
+  user          User?     @relation("UserFundraiserAmiins", fields: [userId], references: [id], onDelete: SetNull)
+  sessionId     String?
+  ipAddress     String?
+  createdAt     DateTime  @default(now())
+
+  @@index([fundraiserId])
+  @@unique([userId, fundraiserId])
+  @@unique([sessionId, fundraiserId])
 }
 enum NotificationType {
   KABAR

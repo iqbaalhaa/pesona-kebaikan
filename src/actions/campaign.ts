@@ -107,20 +107,12 @@ export async function createCampaign(formData: FormData) {
 		const target = parseFloat(targetStr.replace(/[^\d]/g, "")) || 0;
 
 		// Dates
-		let start = new Date();
-		let end = new Date();
-
-		const customStart = formData.get("customStart") as string;
-		const customEnd = formData.get("customEnd") as string;
-
-		if (duration === "custom" && customStart && customEnd) {
-			start = new Date(customStart);
-			end = new Date(customEnd);
-			end.setHours(23, 59, 59, 999);
-		} else if (duration) {
+		const start = new Date();
+		const end = new Date();
+		if (duration && duration !== "custom") {
 			end.setDate(end.getDate() + parseInt(duration));
 		} else {
-			// Default 30 days if not specified
+			// Default 30 days if custom or not specified
 			end.setDate(end.getDate() + 30);
 		}
 
@@ -139,7 +131,6 @@ export async function createCampaign(formData: FormData) {
 				categoryId: category.id,
 				createdById: session.user.id,
 				status,
-				metadata: metadata || Prisma.JsonNull,
 				media: coverUrl
 					? {
 							create: {
@@ -189,6 +180,9 @@ export async function getCampaigns(
 	isVerified?: boolean,
 	sortBy: string = "newest",
 	includeQuickDonation: boolean = false,
+	startDate?: string,
+	endDate?: string,
+	provinceId?: string,
 ) {
 	const skip = (page - 1) * limit;
 
@@ -231,6 +225,21 @@ export async function getCampaigns(
 
 	if (isVerified) {
 		where.verifiedAt = { not: null };
+	}
+
+	if (startDate || endDate) {
+		const range: any = {};
+		if (startDate) {
+			range.gte = new Date(startDate);
+		}
+		if (endDate) {
+			range.lte = new Date(endDate);
+		}
+		where.createdAt = range;
+	}
+
+	if (provinceId) {
+		where.createdBy = { provinceId };
 	}
 
 	let orderBy: Prisma.CampaignOrderByWithRelationInput = { createdAt: "desc" };
@@ -397,6 +406,26 @@ export async function getCampaignBySlug(slug: string) {
 			})),
 		].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
+		let fundraisers: {
+			id: string;
+			title: string;
+			slug: string;
+			target: any;
+		}[] = [];
+		const hasFundraiserModel =
+			(prisma as any).fundraiser &&
+			typeof (prisma as any).fundraiser.findMany === "function";
+		if (hasFundraiserModel) {
+			fundraisers = await (prisma as any).fundraiser.findMany({
+				where: { campaignId: campaign.id },
+				select: { id: true, title: true, slug: true, target: true },
+			});
+		} else {
+			fundraisers = await prisma.$queryRaw<
+				{ id: string; title: string; slug: string; target: any }[]
+			>`SELECT id, title, slug, target FROM "Fundraiser" WHERE "campaignId" = ${campaign.id}`;
+		}
+
 		const data = {
 			id: campaign.id,
 			slug: campaign.slug,
@@ -416,8 +445,6 @@ export async function getCampaignBySlug(slug: string) {
 			ownerVerifiedAs: (campaign.createdBy as any).verifiedAs || null,
 			phone: campaign.phone || "-",
 			target: Number(campaign.target),
-			start: campaign.start,
-			end: campaign.end,
 			collected,
 			donors,
 			daysLeft: daysLeft > 0 ? daysLeft : 0,
@@ -438,6 +465,12 @@ export async function getCampaignBySlug(slug: string) {
 				comment: d.message,
 			})),
 			updates: timeline,
+			fundraisers: fundraisers.map((f) => ({
+				id: f.id,
+				title: f.title,
+				slug: f.slug,
+				target: Number(f.target),
+			})),
 		};
 
 		return { success: true, data };
@@ -518,12 +551,31 @@ export async function getCampaignById(id: string) {
 			})),
 		].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
+		let fundraisers: {
+			id: string;
+			title: string;
+			slug: string;
+			target: any;
+		}[] = [];
+		const hasFundraiserModel =
+			(prisma as any).fundraiser &&
+			typeof (prisma as any).fundraiser.findMany === "function";
+		if (hasFundraiserModel) {
+			fundraisers = await (prisma as any).fundraiser.findMany({
+				where: { campaignId: campaign.id },
+				select: { id: true, title: true, slug: true, target: true },
+			});
+		} else {
+			fundraisers = await prisma.$queryRaw<
+				{ id: string; title: string; slug: string; target: any }[]
+			>`SELECT id, title, slug, target FROM "Fundraiser" WHERE "campaignId" = ${campaign.id}`;
+		}
+
 		const data = {
 			id: campaign.id,
 			slug: campaign.slug,
 			title: campaign.title,
 			category: campaign.category.name,
-			categorySlug: campaign.category.slug,
 			type:
 				campaign.category.name === "Bantuan Medis & Kesehatan"
 					? "sakit"
@@ -547,7 +599,6 @@ export async function getCampaignById(id: string) {
 					? "ended"
 					: campaign.status.toLowerCase(),
 			description: campaign.story,
-			metadata: campaign.metadata,
 			updatedAt: campaign.updatedAt,
 			thumbnail,
 			images: campaign.media.map((m) => m.url),
@@ -667,10 +718,6 @@ export async function updateCampaign(id: string, formData: FormData) {
 
 		const target = parseFloat(targetStr?.replace(/[^\d]/g, "") || "0") || 0;
 
-		const duration = formData.get("duration") as string;
-		const customStart = formData.get("customStart") as string;
-		const customEnd = formData.get("customEnd") as string;
-
 		let category = await prisma.campaignCategory.findUnique({
 			where: { slug: categoryKey },
 		});
@@ -690,27 +737,6 @@ export async function updateCampaign(id: string, formData: FormData) {
 
 		if (!category) {
 			return { success: false, error: "Invalid category" };
-		}
-
-		// Dates Logic
-		const currentCampaign = await prisma.campaign.findUnique({
-			where: { id },
-			select: { start: true },
-		});
-
-		let start = currentCampaign?.start || new Date();
-		let end = new Date();
-
-		if (duration === "custom" && customStart && customEnd) {
-			start = new Date(customStart);
-			end = new Date(customEnd);
-			end.setHours(23, 59, 59, 999);
-		} else if (duration) {
-			end = new Date(start);
-			end.setDate(end.getDate() + parseInt(duration));
-		} else {
-			// fallback if duration is somehow missing but it shouldn't be
-			end.setDate(end.getDate() + 30);
 		}
 
 		// File upload
