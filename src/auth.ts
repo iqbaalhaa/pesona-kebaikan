@@ -1,10 +1,18 @@
-import NextAuth from "next-auth";
+import NextAuth, { CredentialsSignin } from "next-auth";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { Role } from "@/generated/prisma";
 import { headers } from "next/headers";
+
+export class InvalidEmailError extends CredentialsSignin {
+	code = "InvalidEmail";
+}
+
+export class InvalidPasswordError extends CredentialsSignin {
+	code = "InvalidPassword";
+}
 
 console.log("Initializing NextAuth...");
 
@@ -21,7 +29,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 			},
 			async authorize(credentials) {
 				if (!credentials?.email || !credentials?.password) {
-					return null;
+					throw new InvalidEmailError();
 				}
 
 				const user = await prisma.user.findUnique({
@@ -29,16 +37,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 				});
 
 				if (!user || !user.password) {
-					return null;
+					throw new InvalidEmailError();
 				}
 
 				const isPasswordValid = await bcrypt.compare(
 					credentials.password as string,
-					user.password
+					user.password,
 				);
 
 				if (!isPasswordValid) {
-					return null;
+					throw new InvalidPasswordError();
 				}
 
 				// Log activity

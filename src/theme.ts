@@ -17,7 +17,7 @@ const baseTheme = {
   components: {
     MuiButton: {
       defaultProps: {
-        color: "primary",
+        color: "primary" as const,
       },
       styleOverrides: {
         root: {

@@ -164,7 +164,7 @@ function BuatGalangDanaPageContent() {
 					return;
 				}
 
-				const m = (c.metadata as any) || {};
+				const m = ((c as any).metadata as any) || {};
 
 				if (c.type === "sakit") {
 					setTitle(c.title);

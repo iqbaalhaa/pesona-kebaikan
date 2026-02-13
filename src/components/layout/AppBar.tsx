@@ -152,21 +152,23 @@ export default function SimpleAppBar({ variant = "solid" }: SimpleAppBarProps) {
 		>
 			<Toolbar sx={{ px: 2, minHeight: 64, gap: 1.25 }}>
 				<Box sx={{ flexShrink: 0, display: "flex", alignItems: "center" }}>
-					<Image
-						src={logoSrc}
-						alt="Pesona Kebaikan"
-						width={140}
-						height={32}
-						priority
-						style={{
-							height: 32,
-							width: "auto",
-							objectFit: "contain",
-							display: "block",
-							filter: "none",
-						}}
-						onError={() => setLogoSrc("/defaultimg.webp")}
-					/>
+					<Link href="/">
+						<Image
+							src={logoSrc}
+							alt="Pesona Kebaikan"
+							width={140}
+							height={32}
+							priority
+							style={{
+								height: 32,
+								width: "auto",
+								objectFit: "contain",
+								display: "block",
+								filter: "none",
+							}}
+							onError={() => setLogoSrc("/defaultimg.webp")}
+						/>
+					</Link>
 				</Box>
 
 				<Box sx={{ flex: 1, minWidth: 0, position: "relative" }}>

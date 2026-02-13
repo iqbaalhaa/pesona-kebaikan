@@ -176,7 +176,7 @@ export default function CreateFundraiserPage({
         msg: "Fundraiser berhasil dibuat",
         type: "success",
       });
-      setCreatedSlug(res.data.slug);
+      setCreatedSlug(res.data?.slug ?? null);
     } catch {
       setSnack({ open: true, msg: "Gagal membuat fundraiser", type: "error" });
     } finally {

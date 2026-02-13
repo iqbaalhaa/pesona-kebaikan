@@ -369,6 +369,10 @@ export async function getCampaignBySlug(slug: string) {
 			(acc, d) => acc + Number(d.amount),
 			0,
 		);
+		const totalFees = validDonations.reduce(
+			(acc, d) => acc + (Number(d.fee) || 0),
+			0,
+		);
 		const donors = validDonations.length;
 		const thumbnail =
 			campaign.media.find((m) => m.isThumbnail)?.url ||
@@ -412,18 +416,11 @@ export async function getCampaignBySlug(slug: string) {
 			slug: string;
 			target: any;
 		}[] = [];
-		const hasFundraiserModel =
-			(prisma as any).fundraiser &&
-			typeof (prisma as any).fundraiser.findMany === "function";
-		if (hasFundraiserModel) {
+		if ((prisma as any).fundraiser) {
 			fundraisers = await (prisma as any).fundraiser.findMany({
 				where: { campaignId: campaign.id },
 				select: { id: true, title: true, slug: true, target: true },
 			});
-		} else {
-			fundraisers = await prisma.$queryRaw<
-				{ id: string; title: string; slug: string; target: any }[]
-			>`SELECT id, title, slug, target FROM "Fundraiser" WHERE "campaignId" = ${campaign.id}`;
 		}
 
 		const data = {
@@ -446,6 +443,8 @@ export async function getCampaignBySlug(slug: string) {
 			phone: campaign.phone || "-",
 			target: Number(campaign.target),
 			collected,
+			totalFees,
+			foundationFee: campaign.foundationFee,
 			donors,
 			daysLeft: daysLeft > 0 ? daysLeft : 0,
 			status:
@@ -514,6 +513,10 @@ export async function getCampaignById(id: string) {
 			(acc, d) => acc + Number(d.amount),
 			0,
 		);
+		const totalFees = validDonations.reduce(
+			(acc, d) => acc + (Number(d.fee) || 0),
+			0,
+		);
 		const donors = validDonations.length;
 		const thumbnail =
 			campaign.media.find((m) => m.isThumbnail)?.url ||
@@ -557,18 +560,11 @@ export async function getCampaignById(id: string) {
 			slug: string;
 			target: any;
 		}[] = [];
-		const hasFundraiserModel =
-			(prisma as any).fundraiser &&
-			typeof (prisma as any).fundraiser.findMany === "function";
-		if (hasFundraiserModel) {
+		if ((prisma as any).fundraiser) {
 			fundraisers = await (prisma as any).fundraiser.findMany({
 				where: { campaignId: campaign.id },
 				select: { id: true, title: true, slug: true, target: true },
 			});
-		} else {
-			fundraisers = await prisma.$queryRaw<
-				{ id: string; title: string; slug: string; target: any }[]
-			>`SELECT id, title, slug, target FROM "Fundraiser" WHERE "campaignId" = ${campaign.id}`;
 		}
 
 		const data = {
@@ -592,6 +588,8 @@ export async function getCampaignById(id: string) {
 			start: campaign.start,
 			end: campaign.end,
 			collected,
+			totalFees,
+			foundationFee: campaign.foundationFee,
 			donors,
 			daysLeft: daysLeft > 0 ? daysLeft : 0,
 			status:
@@ -705,6 +703,8 @@ export async function updateCampaign(id: string, formData: FormData) {
 		const story = formData.get("story") as string;
 		const phone = formData.get("phone") as string;
 		const status = formData.get("status") as CampaignStatus | null;
+		const startStr = formData.get("start") as string;
+		const endStr = formData.get("end") as string;
 
 		const metadataStr = formData.get("metadata") as string;
 		let metadata = undefined;
@@ -773,8 +773,8 @@ export async function updateCampaign(id: string, formData: FormData) {
 				story,
 				target,
 				phone,
-				start,
-				end,
+				start: startStr ? new Date(startStr) : undefined,
+				end: endStr ? new Date(endStr) : undefined,
 				categoryId: category.id,
 				...(metadata ? { metadata } : {}),
 				...(status ? { status } : {}),

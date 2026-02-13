@@ -7,6 +7,7 @@ import {
 	checkMidtransStatus,
 	mapMidtransToInternal,
 } from "@/lib/midtrans-status";
+import { calculateMidtransFee } from "@/lib/fee-calculator";
 
 export type CreateDonationInput = {
 	campaignId: string;
@@ -59,6 +60,7 @@ export async function createDonation(input: CreateDonationInput) {
 				campaignId: input.campaignId,
 				fundraiserId: input.fundraiserId,
 				amount: input.amount,
+				fee: calculateMidtransFee(input.amount, input.paymentMethod),
 				donorName: input.donorName,
 				donorPhone: input.donorPhone,
 				message: input.message,
@@ -118,7 +120,7 @@ export async function checkPendingDonations(campaignId?: string) {
 				if (midtransData && midtransData.transaction_status) {
 					const newStatus = mapMidtransToInternal(
 						midtransData.transaction_status,
-						midtransData.fraud_status
+						midtransData.fraud_status,
 					);
 
 					if (newStatus !== "PENDING" && newStatus !== d.status) {
@@ -130,7 +132,7 @@ export async function checkPendingDonations(campaignId?: string) {
 						updatedCount++;
 					}
 				}
-			})
+			}),
 		);
 
 		if (updatedCount > 0) {

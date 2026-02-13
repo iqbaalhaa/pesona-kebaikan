@@ -2,6 +2,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
+import { revalidatePath } from "next/cache";
 import {
 	checkMidtransStatus,
 	mapMidtransToInternal,
@@ -58,7 +59,7 @@ export async function getAdminTransactions() {
 					if (midtransData && midtransData.transaction_status) {
 						const newStatus = mapMidtransToInternal(
 							midtransData.transaction_status,
-							midtransData.fraud_status
+							midtransData.fraud_status,
 						);
 
 						if (newStatus !== "PENDING" && newStatus !== d.status) {
@@ -71,7 +72,7 @@ export async function getAdminTransactions() {
 						}
 					}
 					return null;
-				})
+				}),
 			);
 
 			// Refresh donations list if any updates occurred
@@ -88,7 +89,8 @@ export async function getAdminTransactions() {
 
 		const mappedDonations = donations.map((d) => {
 			let method = "manual";
-			if (d.paymentMethod === "EWALLET") method = "gopay"; // Default mapping
+			if (d.paymentMethod === "EWALLET")
+				method = "gopay"; // Default mapping
 			else if (d.paymentMethod === "VIRTUAL_ACCOUNT") method = "va_bca";
 			else if (d.paymentMethod === "TRANSFER") method = "manual";
 			else if (d.paymentMethod === "CARD") method = "qris"; // Approx mapping
@@ -120,7 +122,7 @@ export async function getAdminTransactions() {
 							name: d.user.name || "No Name",
 							email: d.user.email,
 							phone: d.user.phone || "-",
-					  }
+						}
 					: null,
 			};
 		});
@@ -195,7 +197,7 @@ export async function getCampaignTransactions(campaignId: string) {
 							name: d.user.name || "No Name",
 							email: d.user.email,
 							phone: d.user.phone || "-",
-					  }
+						}
 					: null,
 			};
 		});
@@ -204,5 +206,57 @@ export async function getCampaignTransactions(campaignId: string) {
 	} catch (error) {
 		console.error("Error fetching campaign transactions:", error);
 		return { success: false, error: "Gagal mengambil data transaksi campaign" };
+	}
+}
+
+export async function updateAllCampaignsFee(feePercentage: number) {
+	try {
+		const session = await auth();
+		if (!session?.user || session.user.role !== "ADMIN") {
+			return { success: false, error: "Unauthorized" };
+		}
+
+		// Update ALL campaigns
+		await prisma.campaign.updateMany({
+			data: { foundationFee: feePercentage },
+		});
+
+		revalidatePath("/admin/campaign");
+		revalidatePath("/admin/transaksi");
+		revalidatePath("/"); // Optionally revalidate home if fees are shown there
+
+		return { success: true };
+	} catch (error) {
+		console.error("Error updating all campaigns fee:", error);
+		return {
+			success: false,
+			error: "Gagal mengupdate fee yayasan untuk semua campaign",
+		};
+	}
+}
+
+export async function searchCampaigns(query: string) {
+	try {
+		const session = await auth();
+		if (!session?.user || session.user.role !== "ADMIN") {
+			return { success: false, error: "Unauthorized" };
+		}
+
+		const campaigns = await prisma.campaign.findMany({
+			where: {
+				title: { contains: query, mode: "insensitive" },
+			},
+			take: 10,
+			select: {
+				id: true,
+				title: true,
+				foundationFee: true,
+			},
+		});
+
+		return { success: true, data: campaigns };
+	} catch (error) {
+		console.error("Error searching campaigns:", error);
+		return { success: false, error: "Gagal mencari campaign" };
 	}
 }

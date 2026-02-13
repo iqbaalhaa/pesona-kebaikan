@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { signIn, getSession } from "next-auth/react";
+import { getSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import {
 	Box,
@@ -23,6 +23,7 @@ import {
 	VisibilityOff,
 	ArrowBack,
 } from "@mui/icons-material";
+import { loginAction } from "./action";
 
 export default function LoginPage() {
 	const router = useRouter();
@@ -48,16 +49,22 @@ export default function LoginPage() {
 		setLoading(true);
 
 		try {
-			const result = await signIn("credentials", {
-				email: formData.email,
-				password: formData.password,
-				redirect: false,
-			});
+			const form = new FormData();
+			form.append("email", formData.email);
+			form.append("password", formData.password);
 
-			if (!result?.ok) {
-				setError(
-					"Email atau password yang Anda masukkan tidak terdaftar atau salah",
-				);
+			const result = await loginAction(undefined, form);
+
+			if (result?.error) {
+				if (result.error === "InvalidEmail") {
+					setError("Email tidak terdaftar");
+				} else if (result.error === "InvalidPassword") {
+					setError("Email atau password salah");
+				} else {
+					setError(
+						"Email atau password yang Anda masukkan tidak terdaftar atau salah",
+					);
+				}
 				return;
 			}
 

@@ -292,6 +292,7 @@ model Campaign {
   start       DateTime
   end         DateTime?
   phone       String?
+  foundationFee Int      @default(0) // Percentage fee (0-100)
   metadata    Json?
 
   createdAt DateTime @default(now())
@@ -387,6 +388,7 @@ model Donation {
   message       String?       @db.Text
   isAnonymous   Boolean       @default(false)
   amount        Decimal       @db.Decimal(19, 2)
+  fee           Decimal       @default(0) @db.Decimal(19, 2)
   paymentMethod PaymentMethod
   status        String        @default("PENDING")
   createdAt     DateTime      @default(now())
