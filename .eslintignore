@@ -1,0 +1,3 @@
+src/generated/prisma/**
+prisma/migrations/**
+check_data.js

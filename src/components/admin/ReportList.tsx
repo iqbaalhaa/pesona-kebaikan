@@ -656,9 +656,6 @@ export default function ReportList() {
 											>
 												{g.campaignTitle}
 											</Typography>
-											<Typography variant="caption" color="text.secondary">
-												ID: {g.campaignIdShort}...
-											</Typography>
 										</TableCell>
 
 										<TableCell>
@@ -776,7 +773,6 @@ export default function ReportList() {
 								{selectedCampaign.campaignTitle}
 							</Typography>
 							<Typography variant="caption" color="text.secondary">
-								ID: {selectedCampaign.campaignIdShort}... •{" "}
 								{selectedCampaign.totalReports} laporan
 							</Typography>
 						</Box>

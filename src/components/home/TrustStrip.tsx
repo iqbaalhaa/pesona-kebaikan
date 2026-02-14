@@ -5,16 +5,19 @@ import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import ButtonBase from "@mui/material/ButtonBase";
 import Link from "next/link";
+import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
+import CachedIcon from "@mui/icons-material/Cached";
+import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
 
 const PRIMARY = "#0ba976";
 
 function TrustItem({
-	icon,
+	icon: Icon,
 	title,
 	desc,
 	href,
 }: {
-	icon: string;
+	icon: React.ElementType;
 	title: string;
 	desc?: string;
 	href: string;
@@ -25,46 +28,60 @@ function TrustItem({
 			href={href}
 			sx={{
 				display: "flex",
-				gap: 1.1,
-				minWidth: 0,
+				gap: 2,
 				textAlign: "left",
 				width: "100%",
 				justifyContent: "flex-start",
-				p: 0.5,
-				borderRadius: 2,
-				transition: "all 0.2s",
+				p: 2,
+				borderRadius: 3,
+				transition: "all 0.3s ease",
+				border: "1px solid transparent",
 				"&:hover": {
-					bgcolor: "rgba(11,169,118,0.05)",
+					bgcolor: "rgba(11,169,118,0.04)",
+					borderColor: "rgba(11,169,118,0.2)",
+					transform: "translateY(-2px)",
+					boxShadow: "0 4px 12px rgba(11,169,118,0.08)",
+					"& .icon-box": {
+						bgcolor: PRIMARY,
+						color: "white",
+						transform: "scale(1.1)",
+					},
 				},
 			}}
 		>
 			<Box
+				className="icon-box"
 				sx={{
-					width: 36,
-					height: 36,
-					borderRadius: 999,
+					width: 48,
+					height: 48,
+					borderRadius: "14px",
 					display: "grid",
 					placeItems: "center",
-					bgcolor: "rgba(11,169,118,0.14)",
-					border: "none",
-					boxShadow: "none",
+					bgcolor: "rgba(11,169,118,0.1)",
+					color: PRIMARY,
 					flexShrink: 0,
+					transition: "all 0.3s ease",
 				}}
 			>
-				<Box sx={{ fontSize: 18 }}>{icon}</Box>
+				<Icon sx={{ fontSize: 24 }} />
 			</Box>
 
-			<Box sx={{ minWidth: 0 }}>
+			<Box
+				sx={{
+					minWidth: 0,
+					display: "flex",
+					flexDirection: "column",
+					justifyContent: "center",
+				}}
+			>
 				<Typography
 					sx={{
-						fontSize: 12,
-						fontWeight: 800,
-						color: "#0f172a",
-						lineHeight: 1.15,
-						display: "-webkit-box",
-						WebkitLineClamp: 1,
-						WebkitBoxOrient: "vertical",
-						overflow: "hidden",
+						fontSize: 14,
+						fontWeight: 700,
+						color: "#1e293b",
+						lineHeight: 1.2,
+						mb: 0.5,
+						letterSpacing: "-0.01em",
 					}}
 				>
 					{title}
@@ -72,14 +89,9 @@ function TrustItem({
 				{desc && (
 					<Typography
 						sx={{
-							mt: 0.35,
-							fontSize: 11,
-							color: "rgba(15,23,42,.60)",
-							lineHeight: 1.2,
-							display: "-webkit-box",
-							WebkitLineClamp: 2,
-							WebkitBoxOrient: "vertical",
-							overflow: "hidden",
+							fontSize: 12,
+							color: "#64748b",
+							lineHeight: 1.4,
 						}}
 					>
 						{desc}
@@ -92,30 +104,34 @@ function TrustItem({
 
 export default function TrustStrip() {
 	return (
-		<Box sx={{ px: 2, mt: 2.5 }}>
+		<Box sx={{ px: 2, mt: 3 }}>
 			<Box
 				sx={{
-					borderRadius: 4,
-					p: 1.6,
-					border: "none",
-					background:
-						"linear-gradient(135deg, rgba(11,169,118,0.16) 0%, rgba(255,255,255,0.94) 55%, rgba(15,23,42,0.02) 100%)",
-					boxShadow: "none",
+					p: 2,
+					bgcolor: "white",
+					boxShadow: "0 10px 40px -10px rgba(0,0,0,0.05)",
+					border: "1px solid rgba(241, 245, 249, 1)",
 				}}
 			>
-				{/* Header mini */}
-				<Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.25 }}>
+				{/* Header */}
+				<Box
+					sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2, px: 1 }}
+				>
 					<Box
 						sx={{
-							width: 10,
-							height: 10,
-							borderRadius: 999,
+							width: 4,
+							height: 24,
+							borderRadius: 4,
 							bgcolor: PRIMARY,
-							boxShadow: "none",
 						}}
 					/>
 					<Typography
-						sx={{ fontSize: 13.5, fontWeight: 900, color: "#0f172a" }}
+						sx={{
+							fontSize: 16,
+							fontWeight: 800,
+							color: "#0f172a",
+							letterSpacing: "-0.02em",
+						}}
 					>
 						Aman & Transparan
 					</Typography>
@@ -125,23 +141,26 @@ export default function TrustStrip() {
 				<Box
 					sx={{
 						display: "grid",
-						gridTemplateColumns: { xs: "1fr", sm: "repeat(3, minmax(0, 1fr))" },
-						gap: 1.25,
+						gridTemplateColumns: "1fr",
+						gap: 1.5,
 					}}
 				>
 					<TrustItem
-						icon="✅"
-						title="Verifikasi penggalang"
+						icon={VerifiedUserIcon}
+						title="Verifikasi Penggalang"
+						desc="Identitas penggalang dana terverifikasi valid"
 						href="/profil/tentang"
 					/>
 					<TrustItem
-						icon="🔄"
-						title="Update rutin kampanye"
+						icon={CachedIcon}
+						title="Update Rutin Kampanye"
+						desc="Kabar terbaru penggunaan dana secara berkala"
 						href="/profil/syarat-ketentuan"
 					/>
 					<TrustItem
-						icon="📄"
-						title="Pelaporan Useran dana"
+						icon={ReceiptLongIcon}
+						title="Laporan Transparan"
+						desc="Bukti penyaluran dana dapat diakses publik"
 						href="/profil/bantuan"
 					/>
 				</Box>

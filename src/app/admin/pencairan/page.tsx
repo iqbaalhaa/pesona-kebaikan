@@ -20,6 +20,7 @@ import {
 	DialogTitle,
 	DialogContent,
 	DialogActions,
+	DialogContentText,
 	Alert,
 	Snackbar,
 	SxProps,
@@ -124,11 +125,24 @@ export default function PencairanPage() {
 	const [selectedWithdrawalForRejection, setSelectedWithdrawalForRejection] =
 		React.useState<WithdrawalRow | null>(null);
 	// Confirm Dialog State
-	const [confirmDialogOpen, setConfirmDialogOpen] = React.useState(false);
-	const [confirmTarget, setConfirmTarget] = React.useState<{
-		id: string;
-		status: Exclude<WithdrawalStatus, "PENDING">;
-	} | null>(null);
+	const [confirmDialog, setConfirmDialog] = React.useState<{
+		open: boolean;
+		title: string;
+		message: string;
+		confirmColor?:
+			| "primary"
+			| "secondary"
+			| "error"
+			| "info"
+			| "success"
+			| "warning";
+		onConfirm: () => void;
+	}>({
+		open: false,
+		title: "",
+		message: "",
+		onConfirm: () => {},
+	});
 
 	// Form state
 	const [selectedCampaign, setSelectedCampaign] = React.useState<string>("");
@@ -232,8 +246,27 @@ export default function PencairanPage() {
 				setRejectDialogOpen(true);
 				return;
 			}
-			setConfirmTarget({ id, status });
-			setConfirmDialogOpen(true);
+
+			setConfirmDialog({
+				open: true,
+				title: "Konfirmasi Aksi",
+				message: `Ubah status menjadi ${status}?`,
+				onConfirm: async () => {
+					try {
+						const res = await updateWithdrawalStatus(id, status);
+						if (!res?.success) {
+							showSnack(res?.error || "Gagal update status", "error");
+							return;
+						}
+						fetchData();
+						showSnack("Status pencairan berhasil diperbarui", "success");
+					} catch (e) {
+						console.error(e);
+						showSnack("Gagal update status", "error");
+					}
+					setConfirmDialog((prev) => ({ ...prev, open: false }));
+				},
+			});
 		} catch (e) {
 			console.error(e);
 			showSnack("Gagal update status", "error");
@@ -243,40 +276,41 @@ export default function PencairanPage() {
 	const handleApproveClick = async (row: WithdrawalRow) => {
 		// Bypass OTP flow if configured
 		if (process.env.NEXT_PUBLIC_DISBURSEMENT_BYPASS_OTP === "true") {
-			// Optional: confirm dialog or just proceed
-			if (
-				!confirm(
+			setConfirmDialog({
+				open: true,
+				title: "Development Mode",
+				message:
 					"Development Mode: OTP Bypass aktif. Lanjutkan persetujuan tanpa OTP?",
-				)
-			) {
-				return;
-			}
+				confirmColor: "warning",
+				onConfirm: async () => {
+					try {
+						const res = await updateWithdrawalStatus(
+							row.id,
+							"APPROVED",
+							undefined,
+							"BYPASSED", // dummy OTP
+							undefined,
+							adminPhone,
+						);
 
-			try {
-				const res = await updateWithdrawalStatus(
-					row.id,
-					"APPROVED",
-					undefined,
-					"BYPASSED", // dummy OTP
-					undefined,
-					adminPhone,
-				);
-
-				if (!res?.success) {
-					showSnack(res?.error || "Gagal menyetujui pencairan", "error");
-					return;
-				}
-				fetchData();
-				showSnack(
-					res.payoutMode === "IRIS"
-						? "Pencairan berhasil disetujui (Midtrans Iris)"
-						: "Pencairan disetujui (mode manual/bypass).",
-					"success",
-				);
-			} catch (e) {
-				console.error(e);
-				showSnack("Gagal menyetujui pencairan", "error");
-			}
+						if (!res?.success) {
+							showSnack(res?.error || "Gagal menyetujui pencairan", "error");
+							return;
+						}
+						fetchData();
+						showSnack(
+							res.payoutMode === "IRIS"
+								? "Pencairan berhasil disetujui (Midtrans Iris)"
+								: "Pencairan disetujui (mode manual/bypass).",
+							"success",
+						);
+					} catch (e) {
+						console.error(e);
+						showSnack("Gagal menyetujui pencairan", "error");
+					}
+					setConfirmDialog((prev) => ({ ...prev, open: false }));
+				},
+			});
 			return;
 		}
 
@@ -710,41 +744,28 @@ export default function PencairanPage() {
 			</Snackbar>
 			{/* Confirm Dialog */}
 			<Dialog
-				open={confirmDialogOpen}
-				onClose={() => setConfirmDialogOpen(false)}
+				open={confirmDialog.open}
+				onClose={() => setConfirmDialog((prev) => ({ ...prev, open: false }))}
 				maxWidth="xs"
 				fullWidth
 				PaperProps={{ sx: { borderRadius: 3 } }}
 			>
-				<DialogTitle>Konfirmasi Aksi</DialogTitle>
+				<DialogTitle>{confirmDialog.title}</DialogTitle>
 				<DialogContent>
-					<Typography variant="body2">
-						Ubah status menjadi {confirmTarget?.status}?
-					</Typography>
+					<DialogContentText>{confirmDialog.message}</DialogContentText>
 				</DialogContent>
 				<DialogActions sx={{ p: 2.5 }}>
-					<Button onClick={() => setConfirmDialogOpen(false)}>Batal</Button>
+					<Button
+						onClick={() =>
+							setConfirmDialog((prev) => ({ ...prev, open: false }))
+						}
+					>
+						Batal
+					</Button>
 					<Button
 						variant="contained"
-						onClick={async () => {
-							if (!confirmTarget) return;
-							try {
-								const res = await updateWithdrawalStatus(
-									confirmTarget.id,
-									confirmTarget.status,
-								);
-								if (!res?.success) {
-									showSnack(res?.error || "Gagal update status", "error");
-									return;
-								}
-								setConfirmDialogOpen(false);
-								fetchData();
-								showSnack("Status pencairan berhasil diperbarui", "success");
-							} catch (e) {
-								console.error(e);
-								showSnack("Gagal update status", "error");
-							}
-						}}
+						color={confirmDialog.confirmColor || "primary"}
+						onClick={confirmDialog.onConfirm}
 						sx={{ borderRadius: 999 }}
 					>
 						OK

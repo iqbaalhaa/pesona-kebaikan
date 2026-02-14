@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Script from "next/script";
 import Box from "@mui/material/Box";
@@ -12,7 +12,7 @@ import Snackbar from "@mui/material/Snackbar";
 import Alert from "@mui/material/Alert";
 
 import type { Campaign } from "@/types";
-import { createDonation } from "@/actions/donation";
+import { createDonation, cancelPendingDonation } from "@/actions/donation";
 import { getQuickDonationCampaignId } from "@/actions/campaign";
 
 const PRIMARY = "#0ba976";
@@ -69,6 +69,7 @@ function CheckIcon() {
 
 export default function QuickDonate() {
 	const router = useRouter();
+	const searchParams = useSearchParams();
 	const { data: session, status } = useSession();
 
 	const [selectedAmount, setSelectedAmount] = React.useState<number>(
@@ -79,6 +80,9 @@ export default function QuickDonate() {
 	// bottom sheet state
 	const [open, setOpen] = React.useState(false);
 	const [campaignId, setCampaignId] = React.useState<string>("");
+	const [currentDonationId, setCurrentDonationId] = React.useState<
+		string | undefined
+	>(undefined);
 
 	// donor identity handled by session
 	const [message, setMessage] = React.useState<string>("");
@@ -97,6 +101,36 @@ export default function QuickDonate() {
 		fetchId();
 	}, []);
 
+	// Fix body scroll issue after Midtrans Snap success and auto-close success message
+	React.useEffect(() => {
+		let timeoutId: NodeJS.Timeout;
+
+		if (success) {
+			document.body.style.overflow = "unset";
+			document.body.style.paddingRight = "unset";
+
+			// Auto-close success message after 5 seconds
+			timeoutId = setTimeout(() => {
+				setSuccess(false);
+				setCustom("");
+				setSelectedAmount(amountPresets[0]);
+				setMessage("");
+			}, 5000);
+		}
+
+		return () => {
+			if (timeoutId) clearTimeout(timeoutId);
+		};
+	}, [success]);
+
+	// Auto open bottom sheet when redirected from login
+	React.useEffect(() => {
+		const q = searchParams?.get("quickDonate");
+		if (q === "1") {
+			setOpen(true);
+		}
+	}, [searchParams]);
+
 	const finalAmount = React.useMemo(() => {
 		const clean = custom.replace(/[^\d]/g, "");
 		const n = clean ? Number(clean) : 0;
@@ -113,7 +147,9 @@ export default function QuickDonate() {
 
 	const handleSubmit = async () => {
 		if (status === "unauthenticated") {
-			router.push("/auth/login");
+			router.push(
+				"/auth/login?callbackUrl=" + encodeURIComponent("/?quickDonate=1"),
+			);
 			return;
 		}
 
@@ -157,6 +193,7 @@ export default function QuickDonate() {
 
 			if (res.success) {
 				const donationId = (res as any).data?.id;
+				setCurrentDonationId(donationId);
 				const slug = "donasi-cepat"; // Fixed slug for quick donation
 
 				if ((window as any).snap?.show) {
@@ -177,16 +214,28 @@ export default function QuickDonate() {
 						onSuccess: () => {
 							setSuccess(true);
 							setOpen(false);
+							setCurrentDonationId(undefined);
 						},
 						onPending: () => {
-							setSuccess(true);
 							setOpen(false);
+							// Jangan hapus donasi saat pending karena bisa sukses kemudian via notifikasi Midtrans
+							// Biarkan status tetap PENDING di DB; Donasi Saya sudah memfilter hanya yang Berhasil
 						},
 						onError: () => {
-							setError("Pembayaran gagal");
+							setError("Transaksi gagal");
+							setSuccess(false);
+							if (currentDonationId) {
+								cancelPendingDonation(currentDonationId);
+							}
+							setCurrentDonationId(undefined);
 						},
 						onClose: () => {
-							setError("Pembayaran belum selesai");
+							setError("Transaksi gagal");
+							setSuccess(false);
+							if (currentDonationId) {
+								cancelPendingDonation(currentDonationId);
+							}
+							setCurrentDonationId(undefined);
 						},
 					});
 				} else {
@@ -194,6 +243,10 @@ export default function QuickDonate() {
 						(window as any).snap.hide();
 					}
 					setError(j.error || "Gagal memulai pembayaran");
+					if (currentDonationId) {
+						await cancelPendingDonation(currentDonationId);
+					}
+					setCurrentDonationId(undefined);
 				}
 			} else {
 				setError(res.error || "Gagal membuat donasi");
@@ -203,6 +256,10 @@ export default function QuickDonate() {
 				(window as any).snap.hide();
 			}
 			setError("Terjadi kesalahan sistem");
+			if (currentDonationId) {
+				await cancelPendingDonation(currentDonationId);
+			}
+			setCurrentDonationId(undefined);
 		} finally {
 			setLoading(false);
 		}
@@ -716,7 +773,14 @@ export default function QuickDonate() {
 
 							<Button
 								fullWidth
-								onClick={() => setOpen(false)}
+								onClick={() => {
+									setOpen(false);
+									setError("Transaksi gagal");
+									if (currentDonationId) {
+										cancelPendingDonation(currentDonationId);
+										setCurrentDonationId(undefined);
+									}
+								}}
 								sx={{
 									borderRadius: "14px",
 									py: 1.2,

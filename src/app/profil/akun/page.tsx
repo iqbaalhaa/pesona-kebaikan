@@ -21,6 +21,9 @@ import PhotoCamera from "@mui/icons-material/PhotoCamera";
 import ProfileHeader from "@/components/profile/ProfileHeader";
 import PageContainer from "@/components/profile/PageContainer";
 import { getMyProfile, updateMyProfile } from "@/actions/user";
+import Cropper from "react-easy-crop";
+import getCroppedImg from "@/lib/cropImage";
+import Slider from "@mui/material/Slider";
 
 export default function AccountInfoPage() {
 	const [user, setUser] = React.useState<{
@@ -35,11 +38,22 @@ export default function AccountInfoPage() {
 	} | null>(null);
 	const [avatarUrl, setAvatarUrl] = React.useState<string | null>(null);
 	const [openEdit, setOpenEdit] = React.useState(false);
-	const [editForm, setEditForm] = React.useState<{ name: string; email: string; phone: string }>({
+	const [editForm, setEditForm] = React.useState<{
+		name: string;
+		email: string;
+		phone: string;
+	}>({
 		name: "",
 		email: "",
 		phone: "",
 	});
+
+	// Crop state
+	const [crop, setCrop] = React.useState({ x: 0, y: 0 });
+	const [zoom, setZoom] = React.useState(1);
+	const [isCropping, setIsCropping] = React.useState(false);
+	const [tempImage, setTempImage] = React.useState<string | null>(null);
+	const [croppedAreaPixels, setCroppedAreaPixels] = React.useState<any>(null);
 
 	React.useEffect(() => {
 		const load = async () => {
@@ -49,13 +63,16 @@ export default function AccountInfoPage() {
 				month: "short",
 				year: "numeric",
 			});
-			const initial = (profile.name?.[0] || profile.email?.[0] || "A").toUpperCase();
-			const memberStatus =
-				profile.verifiedAt
-					? profile.verifiedAs === "organization"
-						? "Organisasi Terverifikasi"
-						: "Individu Terverifikasi"
-					: "Belum Terverifikasi";
+			const initial = (
+				profile.name?.[0] ||
+				profile.email?.[0] ||
+				"A"
+			).toUpperCase();
+			const memberStatus = profile.verifiedAt
+				? profile.verifiedAs === "organization"
+					? "Organisasi Terverifikasi"
+					: "Individu Terverifikasi"
+				: "Belum Terverifikasi";
 			setUser({
 				id: profile.id,
 				name: profile.name,
@@ -78,7 +95,11 @@ export default function AccountInfoPage() {
 
 	const handleOpenEdit = () => {
 		if (!user) return;
-		setEditForm({ name: user.name || "", email: user.email, phone: user.phone || "" });
+		setEditForm({
+			name: user.name || "",
+			email: user.email,
+			phone: user.phone || "",
+		});
 		setOpenEdit(true);
 	};
 
@@ -92,16 +113,24 @@ export default function AccountInfoPage() {
 			if (res?.success) {
 				const profile = await getMyProfile();
 				if (profile) {
-					const joined = new Date(profile.createdAt).toLocaleDateString("id-ID", {
-						month: "short",
-						year: "numeric",
-					});
-					const initial = (profile.name?.[0] || profile.email?.[0] || "A").toUpperCase();
-					const memberStatus =
-						profile.verifiedAt
-							? profile.verifiedAs === "organization"
-								? "Organisasi Terverifikasi"
-								: "Individu Terverifikasi"
+					const joined = new Date(profile.createdAt).toLocaleDateString(
+						"id-ID",
+						{
+							month: "short",
+							year: "numeric",
+						},
+					);
+					const initial = (
+						profile.name?.[0] ||
+						profile.email?.[0] ||
+						"A"
+					).toUpperCase();
+					const memberStatus = profile.verifiedAt
+						? profile.verifiedAs === "organization"
+							? "Organisasi Terverifikasi"
+							: "Individu Terverifikasi"
+						: profile.verificationRequests?.[0]?.status === "PENDING"
+							? "Menunggu Verifikasi"
 							: "Belum Terverifikasi";
 					setUser({
 						id: profile.id,
@@ -122,8 +151,53 @@ export default function AccountInfoPage() {
 	const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const file = e.target.files?.[0];
 		if (!file) return;
-		const url = URL.createObjectURL(file);
-		setAvatarUrl(url);
+
+		// Validate file size (max 4MB)
+		if (file.size > 4 * 1024 * 1024) {
+			alert("Ukuran file maksimal 4MB");
+			return;
+		}
+
+		// Read file as data URL to preview and prepare for upload
+		const reader = new FileReader();
+		reader.onloadend = () => {
+			setTempImage(reader.result as string);
+			setIsCropping(true);
+			setZoom(1);
+			setCrop({ x: 0, y: 0 });
+		};
+		reader.readAsDataURL(file);
+		// Reset input value so same file can be selected again
+		e.target.value = "";
+	};
+
+	const onCropComplete = React.useCallback(
+		(croppedArea: any, croppedAreaPixels: any) => {
+			setCroppedAreaPixels(croppedAreaPixels);
+		},
+		[],
+	);
+
+	const handleSaveCroppedImage = async () => {
+		try {
+			if (!tempImage || !croppedAreaPixels) return;
+			const croppedImage = await getCroppedImg(tempImage, croppedAreaPixels);
+			if (croppedImage) {
+				// Auto-save the image to the server
+				const res = await updateMyProfile({ image: croppedImage });
+				if (res?.success) {
+					setAvatarUrl(croppedImage);
+					setUser((prev) => (prev ? { ...prev, image: croppedImage } : null));
+					setIsCropping(false);
+					setTempImage(null);
+				} else {
+					alert("Gagal menyimpan foto profil");
+				}
+			}
+		} catch (e) {
+			console.error("Error cropping/saving image:", e);
+			alert("Terjadi kesalahan saat memproses gambar");
+		}
 	};
 
 	return (
@@ -331,6 +405,61 @@ export default function AccountInfoPage() {
 					<Button onClick={() => setOpenEdit(false)}>Batal</Button>
 					<Button variant="contained" onClick={handleSaveEdit}>
 						Simpan
+					</Button>
+				</DialogActions>
+			</Dialog>
+
+			{/* Crop Dialog */}
+			<Dialog
+				open={isCropping}
+				onClose={() => setIsCropping(false)}
+				maxWidth="sm"
+				fullWidth
+			>
+				<DialogTitle>Sesuaikan Foto</DialogTitle>
+				<DialogContent dividers>
+					<Box
+						sx={{
+							position: "relative",
+							width: "100%",
+							height: 400,
+							bgcolor: "#333",
+							mb: 2,
+						}}
+					>
+						{tempImage && (
+							<Cropper
+								image={tempImage}
+								crop={crop}
+								zoom={zoom}
+								aspect={1}
+								onCropChange={setCrop}
+								onCropComplete={onCropComplete}
+								onZoomChange={setZoom}
+							/>
+						)}
+					</Box>
+					<Box sx={{ px: 2 }}>
+						<Typography
+							gutterBottom
+							variant="caption"
+							sx={{ color: "text.secondary" }}
+						>
+							Zoom
+						</Typography>
+						<Slider
+							value={zoom}
+							min={1}
+							max={3}
+							step={0.1}
+							onChange={(e, zoom) => setZoom(zoom as number)}
+						/>
+					</Box>
+				</DialogContent>
+				<DialogActions>
+					<Button onClick={() => setIsCropping(false)}>Batal</Button>
+					<Button variant="contained" onClick={handleSaveCroppedImage}>
+						Simpan Foto
 					</Button>
 				</DialogActions>
 			</Dialog>

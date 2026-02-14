@@ -17,6 +17,7 @@ import {
 	DialogTitle,
 	DialogContent,
 	DialogActions,
+	DialogContentText,
 	TextField,
 	MenuItem,
 	Pagination,
@@ -66,7 +67,7 @@ export default function NotificationClient({
 	const [message, setMessage] = useState("");
 	const [type, setType] = useState<NotificationType>("KABAR");
 	const [targetMode, setTargetMode] = useState<"BROADCAST" | "SINGLE">(
-		"BROADCAST"
+		"BROADCAST",
 	);
 	const [selectedUser, setSelectedUser] = useState<any>(null);
 
@@ -79,6 +80,18 @@ export default function NotificationClient({
 		open: false,
 		message: "",
 		severity: "success" as "success" | "error",
+	});
+
+	const [confirmDialog, setConfirmDialog] = useState<{
+		open: boolean;
+		title: string;
+		message: string;
+		onConfirm: () => void;
+	}>({
+		open: false,
+		title: "",
+		message: "",
+		onConfirm: () => {},
 	});
 
 	const handleUserSearch = async (query: string) => {
@@ -123,7 +136,7 @@ export default function NotificationClient({
 					selectedUser.id,
 					title,
 					message,
-					type
+					type,
 				);
 			}
 
@@ -156,35 +169,41 @@ export default function NotificationClient({
 		}
 	};
 
-	const handleDelete = async (id: string) => {
-		if (!confirm("Anda yakin ingin menghapus notifikasi ini?")) return;
-
-		setDeleteLoading(id);
-		try {
-			const result = await deleteNotification(id);
-			if (result.success) {
-				setSnackbar({
-					open: true,
-					message: "Notifikasi dihapus",
-					severity: "success",
-				});
-				router.refresh();
-			} else {
-				setSnackbar({
-					open: true,
-					message: "Gagal menghapus",
-					severity: "error",
-				});
-			}
-		} catch (error) {
-			setSnackbar({
-				open: true,
-				message: "Terjadi kesalahan",
-				severity: "error",
-			});
-		} finally {
-			setDeleteLoading(null);
-		}
+	const handleDelete = (id: string) => {
+		setConfirmDialog({
+			open: true,
+			title: "Hapus Notifikasi",
+			message: "Anda yakin ingin menghapus notifikasi ini?",
+			onConfirm: async () => {
+				setDeleteLoading(id);
+				try {
+					const result = await deleteNotification(id);
+					if (result.success) {
+						setSnackbar({
+							open: true,
+							message: "Notifikasi dihapus",
+							severity: "success",
+						});
+						router.refresh();
+					} else {
+						setSnackbar({
+							open: true,
+							message: "Gagal menghapus",
+							severity: "error",
+						});
+					}
+				} catch (error) {
+					setSnackbar({
+						open: true,
+						message: "Terjadi kesalahan",
+						severity: "error",
+					});
+				} finally {
+					setDeleteLoading(null);
+				}
+				setConfirmDialog((prev) => ({ ...prev, open: false }));
+			},
+		});
 	};
 
 	return (
@@ -211,7 +230,12 @@ export default function NotificationClient({
 			<TableContainer
 				component={Paper}
 				elevation={0}
-				sx={{ borderRadius: 2, border: "1px solid", borderColor: "divider", overflowX: "auto" }}
+				sx={{
+					borderRadius: 2,
+					border: "1px solid",
+					borderColor: "divider",
+					overflowX: "auto",
+				}}
 			>
 				<Table>
 					<TableHead>
@@ -390,7 +414,8 @@ export default function NotificationClient({
 
 						{targetMode === "BROADCAST" && (
 							<Alert severity="info">
-								Notifikasi ini akan dikirim ke SEMUA User terdaftar. Gunakan dengan hati-hati.
+								Notifikasi ini akan dikirim ke SEMUA User terdaftar. Gunakan
+								dengan hati-hati.
 							</Alert>
 						)}
 					</Stack>
@@ -410,6 +435,37 @@ export default function NotificationClient({
 						}
 					>
 						Kirim Notifikasi
+					</Button>
+				</DialogActions>
+			</Dialog>
+
+			{/* Confirmation Dialog */}
+			<Dialog
+				open={confirmDialog.open}
+				onClose={() => setConfirmDialog((prev) => ({ ...prev, open: false }))}
+			>
+				<DialogTitle sx={{ fontWeight: 700 }}>
+					{confirmDialog.title}
+				</DialogTitle>
+				<DialogContent>
+					<DialogContentText>{confirmDialog.message}</DialogContentText>
+				</DialogContent>
+				<DialogActions sx={{ p: 2 }}>
+					<Button
+						onClick={() =>
+							setConfirmDialog((prev) => ({ ...prev, open: false }))
+						}
+						sx={{ color: "text.secondary" }}
+					>
+						Batal
+					</Button>
+					<Button
+						onClick={confirmDialog.onConfirm}
+						variant="contained"
+						color="error"
+						sx={{ fontWeight: 700, boxShadow: "none" }}
+					>
+						Ya, Hapus
 					</Button>
 				</DialogActions>
 			</Dialog>

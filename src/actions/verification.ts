@@ -26,6 +26,24 @@ export async function markPhoneVerified(phone: string) {
   return { success: true };
 }
 
+export async function getVerificationStatus() {
+  const session = await auth();
+  if (!session?.user?.email) return { success: false, error: "Unauthorized" };
+
+  const user = await prisma.user.findUnique({
+    where: { email: session.user.email },
+    select: { phoneVerified: true, emailVerified: true },
+  });
+
+  return {
+    success: true,
+    data: {
+      phoneVerified: user?.phoneVerified,
+      emailVerified: user?.emailVerified,
+    },
+  };
+}
+
 type SubmitVerificationInput = {
   type: "individu" | "organisasi";
   ktpNumber?: string;

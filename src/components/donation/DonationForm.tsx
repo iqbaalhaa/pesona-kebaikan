@@ -18,8 +18,10 @@ import {
 	FormControlLabel,
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import { createDonation } from "@/actions/donation";
 import Script from "next/script";
+import { useTheme, alpha, darken } from "@mui/material/styles";
 
 const PRESET_AMOUNTS = [10000, 20000, 50000, 100000, 200000, 500000];
 const MIN_DONATION = Number(process.env.NEXT_PUBLIC_MIN_DONATION ?? 1);
@@ -44,6 +46,7 @@ export default function DonationForm({
 	fundraiserId,
 }: Props) {
 	const router = useRouter();
+	const theme = useTheme();
 	const [amount, setAmount] = React.useState<number | "">("");
 	const [customAmount, setCustomAmount] = React.useState<string>("");
 	const [donorName, setDonorName] = React.useState("");
@@ -158,17 +161,18 @@ export default function DonationForm({
 				<Button
 					onClick={() => router.back()}
 					sx={{
-						minWidth: 40,
-						width: 40,
-						height: 40,
+						minWidth: 44,
+						width: 44,
+						height: 44,
 						borderRadius: "50%",
 						bgcolor: "white",
 						color: "text.primary",
-						boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+						boxShadow: "0 10px 24px rgba(2,6,23,0.08)",
 						position: "absolute",
 						left: 16,
 						top: 24,
 						zIndex: 10,
+						border: "1px solid #e2e8f0",
 						"&:hover": { bgcolor: "#f8fafc" },
 					}}
 				>
@@ -177,10 +181,11 @@ export default function DonationForm({
 				<Typography
 					variant="h6"
 					sx={{
-						fontWeight: 700,
+						fontWeight: 800,
 						lineHeight: 1.2,
 						width: "100%",
 						textAlign: "center",
+						letterSpacing: 0.2,
 					}}
 				>
 					Donasi
@@ -192,15 +197,18 @@ export default function DonationForm({
 				sx={{
 					p: 3,
 					mb: 3,
-					borderRadius: 3,
+					borderRadius: 4,
 					bgcolor: "background.paper",
-					boxShadow: "0 8px 32px rgba(0,0,0,0.15)",
+					boxShadow: "0 12px 40px rgba(2,6,23,0.08)",
+					border: "1px solid #e6edf7",
+					backgroundImage:
+						"linear-gradient(135deg, rgba(255,255,255,1), rgba(248,250,252,0.9))",
 				}}
 			>
 				<Typography variant="body2" color="text.secondary" gutterBottom>
 					Anda akan berdonasi untuk:
 				</Typography>
-				<Typography variant="subtitle1" fontWeight={700}>
+				<Typography variant="subtitle1" fontWeight={800}>
 					{campaignTitle}
 				</Typography>
 			</Paper>
@@ -225,14 +233,34 @@ export default function DonationForm({
 								fullWidth
 								onClick={() => handleAmountSelect(val)}
 								sx={{
-									borderColor: amount === val ? "primary.main" : "#e2e8f0",
+									borderColor: amount === val ? "transparent" : "#e2e8f0",
 									color: amount === val ? "white" : "text.primary",
-									boxShadow: "none",
+									boxShadow:
+										amount === val
+											? `0 10px 24px ${alpha(theme.palette.primary.main, 0.35)}`
+											: "none",
+									borderRadius: 3,
+									fontWeight: 700,
+									py: 1.25,
+									backgroundImage:
+										amount === val
+											? `linear-gradient(135deg, ${theme.palette.primary.main}, ${darken(
+													theme.palette.primary.main,
+													0.08,
+												)})`
+											: "none",
+									bgcolor: amount === val ? "primary.main" : "rgba(0,0,0,0.02)",
 									"&:hover": {
-										boxShadow: "none",
+										boxShadow:
+											amount === val
+												? `0 12px 28px ${alpha(
+														theme.palette.primary.main,
+														0.45,
+													)}`
+												: "none",
 										borderColor: "primary.main",
 										bgcolor:
-											amount === val ? "primary.dark" : "rgba(0,0,0,0.02)",
+											amount === val ? "primary.dark" : "rgba(2,6,23,0.04)",
 									},
 								}}
 							>
@@ -254,12 +282,14 @@ export default function DonationForm({
 					helperText={`Minimal Rp ${MIN_DONATION.toLocaleString("id-ID")}`}
 					sx={{
 						"& .MuiInputBase-root": {
-							borderRadius: 2.5,
+							borderRadius: 3,
 							boxShadow: "none",
+							transition: "all .2s ease",
 						},
-						"& .MuiInputLabel-root": {
-							fontSize: 14,
+						"& .MuiOutlinedInput-root.Mui-focused": {
+							boxShadow: `0 0 0 4px ${alpha(theme.palette.primary.main, 0.15)}`,
 						},
+						"& .MuiInputLabel-root": { fontSize: 14 },
 					}}
 				/>
 			</Box>
@@ -276,14 +306,30 @@ export default function DonationForm({
 							label="Nama Lengkap"
 							value={donorName}
 							onChange={(e) => setDonorName(e.target.value)}
-							sx={{ mb: 2 }}
+							sx={{
+								mb: 2,
+								"& .MuiOutlinedInput-root.Mui-focused": {
+									boxShadow: `0 0 0 4px ${alpha(
+										theme.palette.primary.main,
+										0.15,
+									)}`,
+								},
+							}}
 						/>
 						<TextField
 							fullWidth
 							label="Nomor WhatsApp / HP"
 							value={donorPhone}
 							onChange={(e) => setDonorPhone(e.target.value)}
-							sx={{ mb: 2 }}
+							sx={{
+								mb: 2,
+								"& .MuiOutlinedInput-root.Mui-focused": {
+									boxShadow: `0 0 0 4px ${alpha(
+										theme.palette.primary.main,
+										0.15,
+									)}`,
+								},
+							}}
 							type="tel"
 						/>
 					</>
@@ -324,7 +370,15 @@ export default function DonationForm({
 						label="Nomor WhatsApp / HP (Penting)"
 						value={donorPhone}
 						onChange={(e) => setDonorPhone(e.target.value)}
-						sx={{ mt: 2 }}
+						sx={{
+							mt: 2,
+							"& .MuiOutlinedInput-root.Mui-focused": {
+								boxShadow: `0 0 0 4px ${alpha(
+									theme.palette.primary.main,
+									0.15,
+								)}`,
+							},
+						}}
 						type="tel"
 					/>
 				)}
@@ -343,7 +397,10 @@ export default function DonationForm({
 					value={message}
 					onChange={(e) => setMessage(e.target.value)}
 					sx={{
-						"& .MuiOutlinedInput-root": { borderRadius: 2 },
+						"& .MuiOutlinedInput-root": { borderRadius: 3 },
+						"& .MuiOutlinedInput-root.Mui-focused": {
+							boxShadow: `0 0 0 4px ${alpha(theme.palette.primary.main, 0.15)}`,
+						},
 						"& .MuiInputLabel-root": { fontSize: 14 },
 					}}
 				/>
@@ -367,6 +424,9 @@ export default function DonationForm({
 						p: 2,
 						borderTop: "1px solid #e2e8f0",
 						borderRadius: 0,
+						backgroundImage:
+							"linear-gradient(180deg, rgba(255,255,255,0.95), rgba(248,250,252,0.9))",
+						backdropFilter: "blur(6px)",
 					}}
 				>
 					<Button
@@ -377,7 +437,19 @@ export default function DonationForm({
 						onClick={handleSubmit}
 						disabled={loading}
 						sx={{
-							fontWeight: 700,
+							fontWeight: 800,
+							borderRadius: 3,
+							boxShadow: `0 12px 28px ${alpha(theme.palette.primary.main, 0.35)}`,
+							backgroundImage: `linear-gradient(135deg, ${theme.palette.primary.main}, ${darken(
+								theme.palette.primary.main,
+								0.08,
+							)})`,
+							"&:hover": {
+								boxShadow: `0 14px 34px ${alpha(
+									theme.palette.primary.main,
+									0.45,
+								)}`,
+							},
 						}}
 					>
 						{loading ? (
@@ -386,6 +458,21 @@ export default function DonationForm({
 							`Lanjut Pembayaran`
 						)}
 					</Button>
+					<Box
+						sx={{
+							display: "flex",
+							alignItems: "center",
+							justifyContent: "center",
+							mt: 1.5,
+							color: "text.secondary",
+							gap: 1,
+						}}
+					>
+						<LockOutlinedIcon fontSize="small" />
+						<Typography variant="caption">
+							Pembayaran aman & terenkripsi. Dilindungi oleh Midtrans.
+						</Typography>
+					</Box>
 				</Paper>
 			</Box>
 

@@ -17,16 +17,29 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 		!res.data ||
 		res.data.status === "paused" ||
 		res.data.status === "ended" ||
-		res.data.status === "rejected"
+		res.data.status === "rejected" ||
+		res.data.daysLeft === 0
 	) {
 		return {
 			title: "Campaign Not Found",
+			robots: {
+				index: false,
+				follow: false,
+				googleBot: {
+					index: false,
+					follow: false,
+				},
+			},
 		};
 	}
 
 	return {
 		title: `${res.data.title} | Pesona Kebaikan`,
 		description: res.data.description.substring(0, 160),
+		robots: {
+			index: true,
+			follow: true,
+		},
 		openGraph: {
 			images: res.data.thumbnail ? [res.data.thumbnail] : [],
 		},
@@ -50,10 +63,19 @@ export default async function CampaignDetailPage({ params }: Props) {
 		notFound();
 	}
 
+	// Double check if the resolved campaign is the restricted one (e.g. accessed via ID)
+	if (res.data.slug === "donasi-cepat") {
+		const session = await auth();
+		if (session?.user?.role !== "ADMIN") {
+			redirect("/");
+		}
+	}
+
 	if (
 		res.data.status === "paused" ||
 		res.data.status === "ended" ||
-		res.data.status === "rejected"
+		res.data.status === "rejected" ||
+		res.data.daysLeft === 0
 	) {
 		notFound();
 	}

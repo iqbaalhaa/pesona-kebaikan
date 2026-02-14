@@ -20,9 +20,8 @@ function SortLink({
 	href: string;
 }) {
 	return (
-		<Link href={href}>
+		<Link href={href} style={{ textDecoration: "none" }}>
 			<Box
-				component="a"
 				sx={{
 					px: 1.5,
 					py: 0.75,
@@ -33,7 +32,6 @@ function SortLink({
 					color: selected ? "background.paper" : "text.secondary",
 					fontSize: 12.5,
 					fontWeight: 800,
-					textDecoration: "none",
 					whiteSpace: "nowrap",
 				}}
 			>
@@ -51,9 +49,11 @@ function CampaignCard({ c }: { c: any }) {
 	const isQuickDonate = c.slug === "donasi-cepat";
 
 	return (
-		<Link href={`/donasi/${c.slug || c.id}`}>
+		<Link
+			href={`/donasi/${c.slug || c.id}`}
+			style={{ textDecoration: "none", display: "block" }}
+		>
 			<Box
-				component="a"
 				sx={{
 					display: "block",
 					borderRadius: 2,
@@ -61,7 +61,6 @@ function CampaignCard({ c }: { c: any }) {
 					bgcolor: "#fff",
 					boxShadow: "0 14px 26px rgba(15,23,42,.06)",
 					overflow: "hidden",
-					textDecoration: "none",
 				}}
 			>
 				<Box sx={{ position: "relative", height: 140 }}>

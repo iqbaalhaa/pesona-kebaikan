@@ -129,7 +129,7 @@ export async function createPayout(payload: PayoutPayload) {
 	if (IS_MOCK) {
 		console.log("[Iris Mock] createPayout called with:", payload);
 		return {
-			payouts: payload.payouts.map((p) => ({
+			payouts: payload.payouts.map(() => ({
 				status: "queued",
 				reference_no: `MOCK-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
 			})),
@@ -154,8 +154,8 @@ export async function createPayout(payload: PayoutPayload) {
 				);
 			}
 		}
-		const response = await postWithRetry<any>("/payouts", payload);
-		return response.data as any;
+		const response = await postWithRetry<unknown>("/payouts", payload);
+		return response.data as unknown;
 	} catch (err: unknown) {
 		if (axios.isAxiosError(err)) {
 			const data = err.response?.data;
@@ -208,11 +208,11 @@ export async function approvePayout(reference_nos: string[], otp: string) {
 	}
 
 	try {
-		const response = await postWithRetry<any>("/payouts/approve", {
+		const response = await postWithRetry<unknown>("/payouts/approve", {
 			reference_nos,
 			otp,
 		});
-		return response.data;
+		return response.data as unknown;
 	} catch (err: unknown) {
 		if (axios.isAxiosError(err)) {
 			const data = err.response?.data;
@@ -245,8 +245,8 @@ export async function getPayoutDetails(reference_no: string) {
 	}
 
 	try {
-		const response = await getWithRetry<any>(`/payouts/${reference_no}`);
-		return response.data;
+		const response = await getWithRetry<unknown>(`/payouts/${reference_no}`);
+		return response.data as unknown;
 	} catch (err: unknown) {
 		if (axios.isAxiosError(err)) {
 			console.error(

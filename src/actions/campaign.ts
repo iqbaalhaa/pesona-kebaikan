@@ -3,9 +3,10 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { uploadFile } from "@/actions/upload";
-import { CampaignStatus, Prisma } from "@/generated/prisma";
+import { CampaignStatus, Prisma, NotificationType } from "@/generated/prisma";
 import { revalidatePath } from "next/cache";
 import { CATEGORY_TITLE } from "@/lib/constants";
+import { createNotification } from "@/actions/notification";
 
 const QUICK_DONATION_SLUG = "donasi-cepat";
 
@@ -202,6 +203,8 @@ export async function getCampaigns(
 		where.NOT = {
 			slug: QUICK_DONATION_SLUG,
 		};
+		// Exclude campaigns that have already ended for public contexts
+		where.end = { gte: new Date() };
 	}
 
 	if (search) {
@@ -216,7 +219,7 @@ export async function getCampaigns(
 	}
 
 	if (categoryName && categoryName !== "Semua") {
-		where.category = { name: categoryName };
+		where.category = { is: { name: categoryName } };
 	}
 
 	if (isEmergency) {
@@ -273,6 +276,18 @@ export async function getCampaigns(
 			}),
 			prisma.campaign.count({ where }),
 		]);
+
+		const now = new Date();
+		const expiredIds = campaigns
+			.filter((c) => c.end && new Date(c.end).getTime() < now.getTime())
+			.filter((c) => c.status !== "COMPLETED")
+			.map((c) => c.id);
+		if (expiredIds.length > 0) {
+			await prisma.campaign.updateMany({
+				where: { id: { in: expiredIds } },
+				data: { status: "COMPLETED" },
+			});
+		}
 
 		// Map to simplified structure if needed, or return as is.
 		// UI expects: id, title, category, type, ownerName, target, collected, donors, status, updatedAt
@@ -359,6 +374,19 @@ export async function getCampaignBySlug(slug: string) {
 		if (!campaign) {
 			// Fallback to ID check if slug not found (in case slug param is actually an ID)
 			return getCampaignById(slug);
+		}
+
+		if (
+			campaign.end &&
+			new Date(campaign.end).getTime() < new Date().getTime()
+		) {
+			if (campaign.status !== "COMPLETED") {
+				await prisma.campaign.update({
+					where: { id: campaign.id },
+					data: { status: "COMPLETED" },
+				});
+				campaign.status = "COMPLETED";
+			}
 		}
 
 		const validDonations = campaign.donations.filter((d) =>
@@ -503,6 +531,19 @@ export async function getCampaignById(id: string) {
 
 		if (!campaign) {
 			return { success: false, error: "Campaign not found" };
+		}
+
+		if (
+			campaign.end &&
+			new Date(campaign.end).getTime() < new Date().getTime()
+		) {
+			if (campaign.status !== "COMPLETED") {
+				await prisma.campaign.update({
+					where: { id: campaign.id },
+					data: { status: "COMPLETED" },
+				});
+				campaign.status = "COMPLETED";
+			}
 		}
 
 		const validDonations = campaign.donations.filter((d) =>
@@ -670,10 +711,24 @@ export async function updateCampaignStatus(
 			return { success: false, error: "Unauthorized" };
 		}
 
+		const prev = await prisma.campaign.findUnique({
+			where: { id: campaignId },
+			select: { createdById: true, title: true, status: true },
+		});
+
 		await prisma.campaign.update({
 			where: { id: campaignId },
 			data: { status },
 		});
+
+		if (status === "ACTIVE" && prev?.createdById && prev.status !== "ACTIVE") {
+			await createNotification(
+				prev.createdById,
+				"Campaign Disetujui",
+				`Campaign "${prev.title}" telah disetujui dan sekarang aktif.`,
+				NotificationType.KABAR,
+			);
+		}
 
 		revalidatePath("/admin/campaign");
 		revalidatePath(`/admin/campaign/${campaignId}`);
@@ -1086,6 +1141,9 @@ export async function getPopularCampaigns(limit: number = 10) {
 		const campaigns = await prisma.campaign.findMany({
 			where: {
 				status: "ACTIVE",
+				end: {
+					gte: new Date(),
+				},
 				slug: {
 					not: QUICK_DONATION_SLUG,
 				},
@@ -1131,6 +1189,9 @@ export async function getAllActiveCampaigns(limit: number = 50) {
 		const campaigns = await prisma.campaign.findMany({
 			where: {
 				status: "ACTIVE",
+				end: {
+					gte: new Date(),
+				},
 				slug: {
 					not: QUICK_DONATION_SLUG,
 				},

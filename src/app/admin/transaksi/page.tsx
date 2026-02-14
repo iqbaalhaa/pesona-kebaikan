@@ -24,6 +24,8 @@ import {
 	DialogTitle,
 	DialogContent,
 	DialogActions,
+	Snackbar,
+	Alert,
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 
@@ -170,6 +172,27 @@ export default function AdminTransaksiPage() {
 	const [feeValue, setFeeValue] = React.useState<string>("0");
 	const [feeLoading, setFeeLoading] = React.useState(false);
 
+	const [snackbar, setSnackbar] = React.useState<{
+		open: boolean;
+		message: string;
+		severity: "success" | "error" | "info" | "warning";
+	}>({
+		open: false,
+		message: "",
+		severity: "info",
+	});
+
+	const showSnackbar = (
+		message: string,
+		severity: "success" | "error" | "info" | "warning" = "info",
+	) => {
+		setSnackbar({ open: true, message, severity });
+	};
+
+	const handleCloseSnackbar = () => {
+		setSnackbar((prev) => ({ ...prev, open: false }));
+	};
+
 	const handleSaveFee = async () => {
 		setFeeLoading(true);
 		try {
@@ -179,13 +202,13 @@ export default function AdminTransaksiPage() {
 				setFeeValue("0");
 				// Refresh transactions if needed, though fee change doesn't directly affect tx list immediately unless we show it
 				onRefresh();
-				alert("Fee berhasil diupdate untuk semua campaign");
+				showSnackbar("Fee berhasil diupdate untuk semua campaign", "success");
 			} else {
-				alert(res.error || "Gagal mengupdate fee");
+				showSnackbar(res.error || "Gagal mengupdate fee", "error");
 			}
 		} catch (e) {
 			console.error(e);
-			alert("Terjadi kesalahan");
+			showSnackbar("Terjadi kesalahan", "error");
 		} finally {
 			setFeeLoading(false);
 		}
@@ -712,6 +735,22 @@ export default function AdminTransaksiPage() {
 					</Button>
 				</DialogActions>
 			</Dialog>
+			<Snackbar
+				open={snackbar.open}
+				autoHideDuration={4000}
+				onClose={handleCloseSnackbar}
+				anchorOrigin={{ vertical: "top", horizontal: "center" }}
+				sx={{ zIndex: 99999 }}
+			>
+				<Alert
+					onClose={handleCloseSnackbar}
+					severity={snackbar.severity}
+					variant="filled"
+					sx={{ width: "100%", boxShadow: 3, fontWeight: 600 }}
+				>
+					{snackbar.message}
+				</Alert>
+			</Snackbar>
 		</Box>
 	);
 }

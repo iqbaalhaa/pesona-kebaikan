@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { getSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
 	Box,
 	Typography,
@@ -27,6 +27,7 @@ import { loginAction } from "./action";
 
 export default function LoginPage() {
 	const router = useRouter();
+	const searchParams = useSearchParams();
 	const [error, setError] = useState("");
 	const [loading, setLoading] = useState(false);
 	const [showPassword, setShowPassword] = useState(false);
@@ -72,6 +73,11 @@ export default function LoginPage() {
 			const session = await getSession();
 			console.log("Login session:", session); // Debugging
 
+			const callbackUrl = searchParams.get("callbackUrl");
+			if (callbackUrl) {
+				router.push(callbackUrl);
+				return;
+			}
 			if (session?.user?.role === "ADMIN") {
 				router.push("/admin");
 			} else {

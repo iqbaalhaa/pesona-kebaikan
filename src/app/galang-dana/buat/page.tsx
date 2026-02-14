@@ -1183,6 +1183,27 @@ function BuatGalangDanaPageContent() {
 									</Paper>
 								</RadioGroup>
 
+								{inpatient === "ya" && (
+									<Box sx={{ mt: 2 }}>
+										<Typography
+											sx={{ fontWeight: 600, fontSize: 14, mb: 0.75 }}
+										>
+											Nama Rumah Sakit <span style={{ color: "red" }}>*</span>
+										</Typography>
+										<TextField
+											size="small"
+											sx={{
+												"& .MuiInputBase-input": { fontSize: 13.5 },
+												"& .MuiInputLabel-root": { fontSize: 13.5 },
+											}}
+											value={hospital}
+											onChange={(e) => setHospital(e.target.value)}
+											fullWidth
+											placeholder="Masukkan nama rumah sakit"
+										/>
+									</Box>
+								)}
+
 								<Box sx={{ mt: 2 }}>
 									<Typography sx={{ fontWeight: 600, fontSize: 14, mb: 0.75 }}>
 										Upaya pengobatan yang sudah atau sedang dilakukan{" "}

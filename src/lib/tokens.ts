@@ -1,5 +1,4 @@
 import { prisma } from "@/lib/prisma";
-import crypto from "crypto";
 
 export const generateVerificationToken = async (email: string) => {
   // Generate 6 digit OTP code

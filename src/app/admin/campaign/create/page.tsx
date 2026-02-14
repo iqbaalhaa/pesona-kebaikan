@@ -12,6 +12,8 @@ import {
 	Stack,
 	CircularProgress,
 	InputAdornment,
+	Snackbar,
+	Alert,
 } from "@mui/material";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import ArrowBackIosNewRoundedIcon from "@mui/icons-material/ArrowBackIosNewRounded";
@@ -29,6 +31,27 @@ export default function AdminCreateCampaignPage() {
 	const [submitting, setSubmitting] = React.useState(false);
 	const [coverPreview, setCoverPreview] = React.useState<string>("");
 	const [target, setTarget] = React.useState<string>("");
+
+	const [snackbar, setSnackbar] = React.useState<{
+		open: boolean;
+		message: string;
+		severity: "success" | "error" | "info" | "warning";
+	}>({
+		open: false,
+		message: "",
+		severity: "info",
+	});
+
+	const showSnackbar = (
+		message: string,
+		severity: "success" | "error" | "info" | "warning" = "info",
+	) => {
+		setSnackbar({ open: true, message, severity });
+	};
+
+	const handleCloseSnackbar = () => {
+		setSnackbar((prev) => ({ ...prev, open: false }));
+	};
 
 	React.useEffect(() => {
 		fetch("/api/campaigns/categories")
@@ -61,7 +84,7 @@ export default function AdminCreateCampaignPage() {
 		if (res.success) {
 			router.push("/admin/campaign");
 		} else {
-			alert(res.error || "Gagal membuat campaign");
+			showSnackbar(res.error || "Gagal membuat campaign", "error");
 		}
 		setSubmitting(false);
 	}
@@ -204,6 +227,22 @@ export default function AdminCreateCampaignPage() {
 					</Button>
 				</Stack>
 			</Paper>
+			<Snackbar
+				open={snackbar.open}
+				autoHideDuration={4000}
+				onClose={handleCloseSnackbar}
+				anchorOrigin={{ vertical: "top", horizontal: "center" }}
+				sx={{ zIndex: 99999 }}
+			>
+				<Alert
+					onClose={handleCloseSnackbar}
+					severity={snackbar.severity}
+					variant="filled"
+					sx={{ width: "100%", boxShadow: 3, fontWeight: 600 }}
+				>
+					{snackbar.message}
+				</Alert>
+			</Snackbar>
 		</Box>
 	);
 }

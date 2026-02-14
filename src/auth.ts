@@ -88,17 +88,34 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 					image: user.image,
 					role: user.role,
 					phone: user.phone,
+					emailVerified: user.emailVerified,
+					phoneVerified: user.phoneVerified,
 				};
 			},
 		}),
 	],
 	callbacks: {
-		async jwt({ token, user }) {
+		async jwt({ token, user, trigger }) {
 			if (user) {
 				token.role = user.role as Role;
 				token.id = user.id as string;
 				token.phone = user.phone;
+				token.emailVerified = user.emailVerified;
+				token.phoneVerified = user.phoneVerified;
 			}
+
+			if (trigger === "update") {
+				const freshUser = await prisma.user.findUnique({
+					where: { id: token.id as string },
+				});
+				if (freshUser) {
+					token.phone = freshUser.phone;
+					token.emailVerified = freshUser.emailVerified;
+					token.phoneVerified = freshUser.phoneVerified;
+					token.role = freshUser.role;
+				}
+			}
+
 			return token;
 		},
 		async session({ session, token }) {
@@ -109,6 +126,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 					session.user.id = token.id as string;
 				}
 				session.user.phone = token.phone as string | null | undefined;
+				session.user.emailVerified = (token.emailVerified as Date | null) || null;
+				session.user.phoneVerified = (token.phoneVerified as Date | null) || null;
 			}
 
 			if (token.role && session.user) {

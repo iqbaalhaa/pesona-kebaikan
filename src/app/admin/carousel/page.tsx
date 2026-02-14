@@ -17,6 +17,7 @@ import {
 	DialogTitle,
 	DialogContent,
 	DialogActions,
+	DialogContentText,
 	TextField,
 	FormControlLabel,
 	Switch,
@@ -25,6 +26,8 @@ import {
 	Chip,
 	Stack,
 	CircularProgress,
+	Snackbar,
+	Alert,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
@@ -60,6 +63,38 @@ export default function AdminCarouselPage() {
 	const [open, setOpen] = useState(false);
 	const [editingId, setEditingId] = useState<string | null>(null);
 	const [loading, setLoading] = useState(false);
+	const [snackbar, setSnackbar] = useState<{
+		open: boolean;
+		message: string;
+		severity: "success" | "error" | "info" | "warning";
+	}>({
+		open: false,
+		message: "",
+		severity: "info",
+	});
+
+	const [confirmDialog, setConfirmDialog] = useState<{
+		open: boolean;
+		title: string;
+		message: string;
+		onConfirm: () => void;
+	}>({
+		open: false,
+		title: "",
+		message: "",
+		onConfirm: () => {},
+	});
+
+	const showSnackbar = (
+		message: string,
+		severity: "success" | "error" | "info" | "warning" = "info",
+	) => {
+		setSnackbar({ open: true, message, severity });
+	};
+
+	const handleCloseSnackbar = () => {
+		setSnackbar((prev) => ({ ...prev, open: false }));
+	};
 
 	// Form State
 	const [isCampaign, setIsCampaign] = useState(false);
@@ -165,27 +200,37 @@ export default function AdminCarouselPage() {
 			if (res.ok) {
 				fetchCarousels();
 				handleClose();
+				showSnackbar("Berhasil disimpan", "success");
 			} else {
 				const errData = await res.text();
 				console.error("Save failed:", errData);
-				alert("Failed to save. Check console for details.");
+				showSnackbar("Failed to save. Check console for details.", "error");
 			}
 		} catch (error) {
 			console.error(error);
-			alert("Error saving");
+			showSnackbar("Error saving", "error");
 		} finally {
 			setLoading(false);
 		}
 	};
 
-	const handleDelete = async (id: string) => {
-		if (!confirm("Are you sure?")) return;
-		try {
-			await fetch(`/api/admin/carousel/${id}`, { method: "DELETE" });
-			fetchCarousels();
-		} catch (error) {
-			console.error(error);
-		}
+	const handleDelete = (id: string) => {
+		setConfirmDialog({
+			open: true,
+			title: "Hapus Carousel",
+			message: "Apakah Anda yakin ingin menghapus carousel ini?",
+			onConfirm: async () => {
+				try {
+					await fetch(`/api/admin/carousel/${id}`, { method: "DELETE" });
+					fetchCarousels();
+					showSnackbar("Carousel berhasil dihapus", "success");
+				} catch (error) {
+					console.error(error);
+					showSnackbar("Gagal menghapus carousel", "error");
+				}
+				setConfirmDialog((prev) => ({ ...prev, open: false }));
+			},
+		});
 	};
 
 	// Helper to fetch campaigns inside the component for now
@@ -200,7 +245,7 @@ export default function AdminCarouselPage() {
 				mb={3}
 			>
 				<Typography variant="h5" fontWeight="bold">
-					Carousel 
+					Carousel
 				</Typography>
 				<Button
 					variant="contained"
@@ -212,7 +257,7 @@ export default function AdminCarouselPage() {
 				</Button>
 			</Stack>
 
-			<TableContainer component={Paper} sx={{ overflowX: 'auto' }}>
+			<TableContainer component={Paper} sx={{ overflowX: "auto" }}>
 				<Table>
 					<TableHead>
 						<TableRow>
@@ -418,6 +463,53 @@ export default function AdminCarouselPage() {
 					</Button>
 				</DialogActions>
 			</Dialog>
+
+			<Dialog
+				open={confirmDialog.open}
+				onClose={() => setConfirmDialog((prev) => ({ ...prev, open: false }))}
+			>
+				<DialogTitle sx={{ fontWeight: 700 }}>
+					{confirmDialog.title}
+				</DialogTitle>
+				<DialogContent>
+					<DialogContentText>{confirmDialog.message}</DialogContentText>
+				</DialogContent>
+				<DialogActions sx={{ p: 2 }}>
+					<Button
+						onClick={() =>
+							setConfirmDialog((prev) => ({ ...prev, open: false }))
+						}
+						sx={{ color: "text.secondary" }}
+					>
+						Batal
+					</Button>
+					<Button
+						onClick={confirmDialog.onConfirm}
+						variant="contained"
+						color="error"
+						sx={{ fontWeight: 700, boxShadow: "none" }}
+					>
+						Ya, Hapus
+					</Button>
+				</DialogActions>
+			</Dialog>
+
+			<Snackbar
+				open={snackbar.open}
+				autoHideDuration={4000}
+				onClose={handleCloseSnackbar}
+				anchorOrigin={{ vertical: "top", horizontal: "center" }}
+				sx={{ zIndex: 99999 }}
+			>
+				<Alert
+					onClose={handleCloseSnackbar}
+					severity={snackbar.severity}
+					variant="filled"
+					sx={{ width: "100%", boxShadow: 3, fontWeight: 600 }}
+				>
+					{snackbar.message}
+				</Alert>
+			</Snackbar>
 		</Box>
 	);
 }

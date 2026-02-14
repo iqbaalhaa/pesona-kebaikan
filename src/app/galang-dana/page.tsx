@@ -239,14 +239,6 @@ export default function GalangDanaSayaPage() {
 		router.push("/galang-dana/buat?type=sakit");
 	};
 
-	const handleSeeExample = () => {
-		setSnack({
-			open: true,
-			msg: "Contoh dokumen medis — segera hadir",
-			type: "info",
-		});
-	};
-
 	const counts: Record<StatusKey, number> = React.useMemo(() => {
 		const base = {
 			all: items.length,
@@ -1039,19 +1031,6 @@ export default function GalangDanaSayaPage() {
 						onClick={handleAgreeMedical}
 					>
 						Saya Mengerti, Lanjut
-					</Button>
-					<Button
-						variant="text"
-						fullWidth
-						sx={{
-							borderRadius: 99,
-							fontWeight: 600,
-							color: "text.secondary",
-							m: "0 !important",
-						}}
-						onClick={handleSeeExample}
-					>
-						Lihat Contoh Dokumen
 					</Button>
 				</DialogActions>
 			</Dialog>

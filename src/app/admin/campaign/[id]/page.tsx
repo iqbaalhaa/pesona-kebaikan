@@ -764,8 +764,7 @@ export default function AdminCampaignDetailPage() {
 					</Tooltip>
 
 					<Box sx={{ flex: 1, minWidth: 0 }}>
-						<Typography
-							sx={{ fontWeight: 1000, fontSize: 16 }}
+						<Typography sx={{ fontWeight: 1000, fontSize: 16 }}
 							className="line-clamp-2"
 						>
 							{data.title}
@@ -777,12 +776,6 @@ export default function AdminCampaignDetailPage() {
 							alignItems="center"
 							sx={{ mt: 0.4, flexWrap: "wrap" }}
 						>
-							<Typography sx={{ fontSize: 12.5, color: "text.secondary" }}>
-								ID: <b>{data.id || "—"}</b>
-							</Typography>
-							<Typography sx={{ fontSize: 12.5, color: "text.secondary" }}>
-								•
-							</Typography>
 							<Typography sx={{ fontSize: 12.5, color: "text.secondary" }}>
 								Update <b>{data.updatedAt}</b>
 							</Typography>

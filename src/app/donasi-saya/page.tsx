@@ -21,7 +21,6 @@ import Radio from "@mui/material/Radio";
 import RadioGroup from "@mui/material/RadioGroup";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import FormControl from "@mui/material/FormControl";
-import InputAdornment from "@mui/material/InputAdornment";
 import CircularProgress from "@mui/material/CircularProgress";
 import Snackbar from "@mui/material/Snackbar";
 
@@ -39,9 +38,12 @@ import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import QrCodeIcon from "@mui/icons-material/QrCode";
 import CreditCardIcon from "@mui/icons-material/CreditCard";
 import { useRouter } from "next/navigation";
+import Script from "next/script";
 import { createDonation } from "@/actions/donation";
+import { getQuickDonationCampaignId } from "@/actions/campaign";
 
 import { getMyDonations } from "@/actions/my-donations";
+import { checkPendingDonations } from "@/actions/donation";
 
 interface DonationItem {
 	id: string;
@@ -81,9 +83,7 @@ function KindnessCalendar({ donations, onDateClick }: KindnessCalendarProps) {
 		// Map date string (YYYY-MM-DD) to boolean
 		const map: Record<string, boolean> = {};
 		donations
-			.filter(
-				(d) => d.status === "Berhasil" || d.status === "Menunggu Pembayaran"
-			)
+			.filter((d) => d.status === "Berhasil")
 			.forEach((d) => {
 				map[d.rawDate] = true;
 			});
@@ -223,21 +223,24 @@ export default function MyDonationPage() {
 
 	// Redonate sheet state
 	const amountPresets = [10000, 25000, 50000, 75000, 100000];
-	type Method = "EWALLET" | "VIRTUAL_ACCOUNT" | "TRANSFER";
+	const [quickCampaignId, setQuickCampaignId] = React.useState<string>("");
 	const [reOpen, setReOpen] = React.useState(false);
 	const [reCampaignId, setReCampaignId] = React.useState<string>("");
 	const [reCampaignTitle, setReCampaignTitle] = React.useState<string>("");
 	const [selectedAmount, setSelectedAmount] = React.useState<number>(
-		amountPresets[0]
+		amountPresets[0],
 	);
 	const [customAmount, setCustomAmount] = React.useState<string>("");
-	const [method, setMethod] = React.useState<Method>("EWALLET");
+	// Method removed, defaulted to EWALLET/SNAP
 	const [isAnonymous, setIsAnonymous] = React.useState<boolean>(false);
 	const [donorName, setDonorName] = React.useState<string>("");
 	const [donorPhone, setDonorPhone] = React.useState<string>("");
 	const [message, setMessage] = React.useState<string>("");
 	const [submitLoading, setSubmitLoading] = React.useState(false);
 	const [submitError, setSubmitError] = React.useState("");
+
+	// Limit display state
+	const [showAll, setShowAll] = React.useState(false);
 
 	const finalAmount = React.useMemo(() => {
 		const clean = customAmount.replace(/[^\d]/g, "");
@@ -251,7 +254,6 @@ export default function MyDonationPage() {
 		setReCampaignTitle(item.campaign);
 		setSelectedAmount(amountPresets[0]);
 		setCustomAmount("");
-		setMethod("EWALLET");
 		setIsAnonymous(false);
 		setDonorName("");
 		setDonorPhone("");
@@ -268,18 +270,15 @@ export default function MyDonationPage() {
 		const MIN_DONATION = Number(process.env.NEXT_PUBLIC_MIN_DONATION ?? 1);
 		if (!finalAmount || Number(finalAmount) < MIN_DONATION) {
 			setSubmitError(
-				`Minimal donasi Rp ${MIN_DONATION.toLocaleString("id-ID")}`
+				`Minimal donasi Rp ${MIN_DONATION.toLocaleString("id-ID")}`,
 			);
 			return;
 		}
-		if (!donorPhone) {
+		if (missingPhone && !donorPhone) {
 			setSubmitError("Nomor HP wajib diisi");
 			return;
 		}
-		if (!isAnonymous && !donorName) {
-			setSubmitError("Nama donatur wajib diisi");
-			return;
-		}
+		// Identitas akan otomatis diambil dari session jika tersedia
 		setSubmitLoading(true);
 		setSubmitError("");
 		try {
@@ -290,15 +289,66 @@ export default function MyDonationPage() {
 				donorPhone,
 				message,
 				isAnonymous,
-				paymentMethod: method,
+				paymentMethod: "EWALLET", // Default for Snap
 			});
 			if (res.success) {
-				setReOpen(false);
-				router.push(`/donasi/${reCampaignId}?donation_success=true`);
+				const donationId = (res as any).data?.id;
+
+				if ((window as any).snap?.show) {
+					(window as any).snap.show();
+				}
+
+				// Get Snap Token
+				const r = await fetch("/api/midtrans/snap-token", {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({ donationId }),
+				});
+				const j = await r.json();
+
+				if (j.success && j.token && (window as any).snap) {
+					const isProd =
+						process.env.NEXT_PUBLIC_MIDTRANS_IS_PRODUCTION === "true";
+
+					(window as any).snap.pay(j.token, {
+						language: "id",
+						...(isProd ? { uiMode: "qr" } : {}),
+						onSuccess: () => {
+							setReOpen(false);
+							if (reCampaignId === quickCampaignId) {
+								router.push("/");
+							} else {
+								router.push(`/donasi/${reCampaignId}?donation_success=true`);
+							}
+						},
+						onPending: () => {
+							setReOpen(false);
+							if (reCampaignId === quickCampaignId) {
+								router.push("/");
+							} else {
+								router.push(`/donasi/${reCampaignId}?donation_success=true`);
+							}
+						},
+						onError: () => {
+							setSubmitError("Pembayaran gagal");
+						},
+						onClose: () => {
+							setSubmitError("Pembayaran belum selesai");
+						},
+					});
+				} else {
+					if ((window as any).snap?.hide) {
+						(window as any).snap.hide();
+					}
+					setSubmitError(j.error || "Gagal memulai pembayaran");
+				}
 			} else {
 				setSubmitError(res.error || "Gagal membuat donasi");
 			}
 		} catch (err) {
+			if ((window as any).snap?.hide) {
+				(window as any).snap.hide();
+			}
 			setSubmitError("Terjadi kesalahan sistem");
 		} finally {
 			setSubmitLoading(false);
@@ -306,8 +356,15 @@ export default function MyDonationPage() {
 	};
 
 	React.useEffect(() => {
+		getQuickDonationCampaignId().then((id) => {
+			if (id) setQuickCampaignId(id);
+		});
+	}, []);
+
+	React.useEffect(() => {
 		async function fetchData() {
 			try {
+				await checkPendingDonations(); // sinkronisasi status PENDING -> PAID/FAILED jika ada
 				const res = (await getMyDonations()) as {
 					success: boolean;
 					data?: DonationItem[];
@@ -351,9 +408,7 @@ export default function MyDonationPage() {
 
 	// Calculate Stats
 	const stats = React.useMemo(() => {
-		const activeDonations = donations.filter(
-			(d) => d.status === "Berhasil" || d.status === "Menunggu Pembayaran"
-		);
+		const activeDonations = donations.filter((d) => d.status === "Berhasil");
 		const uniqueDays = new Set(activeDonations.map((d) => d.rawDate)).size;
 		const uniqueCampaigns = new Set(activeDonations.map((d) => d.campaignId))
 			.size;
@@ -388,7 +443,7 @@ export default function MyDonationPage() {
 		return donations.filter(
 			(d) =>
 				d.rawDate === selectedDate &&
-				(d.status === "Berhasil" || d.status === "Menunggu Pembayaran")
+				d.status === "Berhasil",
 		);
 	}, [selectedDate, donations]);
 
@@ -440,6 +495,15 @@ export default function MyDonationPage() {
 
 	return (
 		<Box sx={{ px: 2, pt: 2.5, pb: 12, maxWidth: 600, mx: "auto" }}>
+			<Script
+				src={
+					process.env.NEXT_PUBLIC_MIDTRANS_IS_PRODUCTION === "true"
+						? "https://app.midtrans.com/snap/snap.js"
+						: "https://app.sandbox.midtrans.com/snap/snap.js"
+				}
+				data-client-key={process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY}
+				strategy="lazyOnload"
+			/>
 			<Box
 				sx={{
 					display: "flex",
@@ -634,131 +698,160 @@ export default function MyDonationPage() {
 					</Button>
 				</Box>
 			) : (
-				<Stack spacing={2}>
-					{donations.map((item) => (
-						<Card
-							key={item.id}
+				<>
+					<Stack spacing={2}>
+						{(showAll ? donations : donations.slice(0, 5)).map((item) => (
+							<Card
+								key={item.id}
+								variant="outlined"
+								sx={{
+									borderRadius: 3,
+									borderColor: "rgba(0,0,0,0.06)",
+									bgcolor: "#fff",
+									transition: "all 0.2s ease",
+									"&:hover": { borderColor: "rgba(0,0,0,0.12)" },
+								}}
+							>
+								<CardContent sx={{ p: 2 }}>
+									<Box
+										sx={{
+											display: "flex",
+											justifyContent: "space-between",
+											alignItems: "flex-start",
+											mb: 1.5,
+										}}
+									>
+										<Box sx={{ flex: 1, mr: 1.5 }}>
+											<Typography
+												sx={{
+													fontSize: 14,
+													fontWeight: 800,
+													color: "#0f172a",
+													lineHeight: 1.4,
+												}}
+											>
+												{item.campaign}
+											</Typography>
+											<Typography
+												sx={{
+													fontSize: 11,
+													color: "rgba(15,23,42,.5)",
+													mt: 0.5,
+													fontWeight: 600,
+												}}
+											>
+												{item.date}
+											</Typography>
+										</Box>
+										<Chip
+											label={item.status}
+											size="small"
+											color={item.status === "Berhasil" ? "success" : "warning"}
+											variant={
+												item.status === "Berhasil" ? "filled" : "outlined"
+											}
+											sx={{
+												height: 22,
+												fontSize: 10,
+												fontWeight: 800,
+												borderRadius: 1.5,
+											}}
+										/>
+									</Box>
+
+									<Divider sx={{ my: 1.5, borderStyle: "dashed" }} />
+
+									<Box
+										sx={{
+											display: "flex",
+											justifyContent: "space-between",
+											alignItems: "center",
+										}}
+									>
+										<Box>
+											<Typography
+												sx={{
+													fontSize: 11,
+													color: "rgba(15,23,42,.6)",
+													mb: 0.2,
+												}}
+											>
+												Jumlah Donasi
+											</Typography>
+											<Typography
+												sx={{ fontSize: 15, fontWeight: 900, color: "#0ba976" }}
+											>
+												Rp {item.amount.toLocaleString("id-ID")}
+											</Typography>
+										</Box>
+										<Stack direction="row" spacing={1}>
+											<Button
+												variant="outlined"
+												size="small"
+												onClick={() => openReDonate(item)}
+												sx={{
+													textTransform: "none",
+													borderRadius: 2,
+													fontSize: 12,
+													fontWeight: 700,
+													py: 0.5,
+													color: "#16a34a",
+													borderColor: "rgba(22,163,74,0.3)",
+													"&:hover": {
+														borderColor: "#16a34a",
+														bgcolor: "rgba(22,163,74,0.05)",
+													},
+												}}
+											>
+												Donasi Lagi
+											</Button>
+											<Button
+												variant="text"
+												size="small"
+												onClick={() => handleOpenDetail(item)}
+												sx={{
+													textTransform: "none",
+													borderRadius: 2,
+													fontSize: 12,
+													fontWeight: 700,
+													py: 0.5,
+													color: "rgba(15,23,42,.6)",
+													"&:hover": {
+														bgcolor: "rgba(0,0,0,0.04)",
+														color: "rgba(15,23,42,.9)",
+													},
+												}}
+											>
+												Detail
+											</Button>
+										</Stack>
+									</Box>
+								</CardContent>
+							</Card>
+						))}
+					</Stack>
+					{!showAll && donations.length > 5 && (
+						<Button
+							fullWidth
 							variant="outlined"
+							onClick={() => setShowAll(true)}
 							sx={{
+								mt: 2,
 								borderRadius: 3,
-								borderColor: "rgba(0,0,0,0.06)",
-								bgcolor: "#fff",
-								transition: "all 0.2s ease",
-								"&:hover": { borderColor: "rgba(0,0,0,0.12)" },
+								fontWeight: 700,
+								textTransform: "none",
+								color: "#16a34a",
+								borderColor: "rgba(22,163,74,0.3)",
+								"&:hover": {
+									borderColor: "#16a34a",
+									bgcolor: "rgba(22,163,74,0.05)",
+								},
 							}}
 						>
-							<CardContent sx={{ p: 2 }}>
-								<Box
-									sx={{
-										display: "flex",
-										justifyContent: "space-between",
-										alignItems: "flex-start",
-										mb: 1.5,
-									}}
-								>
-									<Box sx={{ flex: 1, mr: 1.5 }}>
-										<Typography
-											sx={{
-												fontSize: 14,
-												fontWeight: 800,
-												color: "#0f172a",
-												lineHeight: 1.4,
-											}}
-										>
-											{item.campaign}
-										</Typography>
-										<Typography
-											sx={{
-												fontSize: 11,
-												color: "rgba(15,23,42,.5)",
-												mt: 0.5,
-												fontWeight: 600,
-											}}
-										>
-											{item.date} • {item.id}
-										</Typography>
-									</Box>
-									<Chip
-										label={item.status}
-										size="small"
-										color={item.status === "Berhasil" ? "success" : "warning"}
-										variant={item.status === "Berhasil" ? "filled" : "outlined"}
-										sx={{
-											height: 22,
-											fontSize: 10,
-											fontWeight: 800,
-											borderRadius: 1.5,
-										}}
-									/>
-								</Box>
-
-								<Divider sx={{ my: 1.5, borderStyle: "dashed" }} />
-
-								<Box
-									sx={{
-										display: "flex",
-										justifyContent: "space-between",
-										alignItems: "center",
-									}}
-								>
-									<Box>
-										<Typography
-											sx={{ fontSize: 11, color: "rgba(15,23,42,.6)", mb: 0.2 }}
-										>
-											Jumlah Donasi
-										</Typography>
-										<Typography
-											sx={{ fontSize: 15, fontWeight: 900, color: "#0ba976" }}
-										>
-											Rp {item.amount.toLocaleString("id-ID")}
-										</Typography>
-									</Box>
-									<Stack direction="row" spacing={1}>
-										<Button
-											variant="outlined"
-											size="small"
-											onClick={() => openReDonate(item)}
-											sx={{
-												textTransform: "none",
-												borderRadius: 2,
-												fontSize: 12,
-												fontWeight: 700,
-												py: 0.5,
-												color: "#16a34a",
-												borderColor: "rgba(22,163,74,0.3)",
-												"&:hover": {
-													borderColor: "#16a34a",
-													bgcolor: "rgba(22,163,74,0.05)",
-												},
-											}}
-										>
-											Donasi Lagi
-										</Button>
-										<Button
-											variant="text"
-											size="small"
-											onClick={() => handleOpenDetail(item)}
-											sx={{
-												textTransform: "none",
-												borderRadius: 2,
-												fontSize: 12,
-												fontWeight: 700,
-												py: 0.5,
-												color: "rgba(15,23,42,.6)",
-												"&:hover": {
-													bgcolor: "rgba(0,0,0,0.04)",
-													color: "rgba(15,23,42,.9)",
-												},
-											}}
-										>
-											Detail
-										</Button>
-									</Stack>
-								</Box>
-							</CardContent>
-						</Card>
-					))}
-				</Stack>
+							Lihat Semua
+						</Button>
+					)}
+				</>
 			)}
 
 			{/* Detail Modal (Single Donation) */}
@@ -986,165 +1079,120 @@ export default function MyDonationPage() {
 						>
 							Nominal
 						</Typography>
-						<Box sx={{ mt: 1, display: "flex", gap: 1, flexWrap: "wrap" }}>
+						<Box
+							sx={{
+								mt: 1,
+								display: "grid",
+								gridTemplateColumns: "repeat(3, 1fr)",
+								gap: 1,
+							}}
+						>
 							{amountPresets.map((a) => {
 								const active =
 									customAmount.trim().length === 0 && selectedAmount === a;
 								return (
-									<Button
+									<Box
 										key={a}
-										variant={active ? "contained" : "outlined"}
+										component="button"
+										type="button"
 										onClick={() => {
 											setCustomAmount("");
 											setSelectedAmount(a);
 										}}
 										sx={{
-											borderRadius: 2,
+											width: "100%",
+											borderRadius: "12px",
+											px: 1,
+											py: 0.85,
+											cursor: "pointer",
 											fontWeight: 800,
-											fontSize: 12,
+											fontSize: 12.5,
+											border: active
+												? "1px solid rgba(11,169,118,0.45)"
+												: "1px solid rgba(15,23,42,0.10)",
+											bgcolor: active
+												? "rgba(11,169,118,0.12)"
+												: "rgba(255,255,255,0.92)",
+											color: "rgba(15,23,42,.82)",
+											boxShadow: "none",
+											"&:active": { transform: "scale(0.99)" },
 										}}
 									>
 										Rp {a.toLocaleString("id-ID")}
-									</Button>
+									</Box>
 								);
 							})}
+
+							{/* Custom */}
+							<Box
+								sx={{
+									gridColumn: "span 1",
+									display: "flex",
+									alignItems: "center",
+									gap: 0.5,
+									borderRadius: "12px",
+									px: 1.2,
+									py: 0.55,
+									border:
+										customAmount.trim().length > 0
+											? "1px solid rgba(11,169,118,0.45)"
+											: "1px solid rgba(15,23,42,0.10)",
+									bgcolor: "rgba(255,255,255,0.92)",
+									boxShadow: "none",
+								}}
+							>
+								<Typography
+									sx={{
+										fontSize: 12,
+										fontWeight: 800,
+										color: "rgba(15,23,42,.55)",
+									}}
+								>
+									Rp
+								</Typography>
+								<Box
+									component="input"
+									inputMode="numeric"
+									placeholder="Lainnya"
+									value={customAmount}
+									onChange={(e) => {
+										const n = e.target.value.replace(/\D/g, "");
+										const formatted = n
+											? n.replace(/\B(?=(\d{3})+(?!\d))/g, ".")
+											: "";
+										setCustomAmount(formatted);
+									}}
+									style={{
+										width: "100%",
+										outline: "none",
+										border: "none",
+										background: "transparent",
+										fontWeight: 800,
+										fontSize: 12.5,
+										color: "rgba(15,23,42,.82)",
+										padding: 0,
+									}}
+								/>
+							</Box>
 						</Box>
-						<TextField
-							fullWidth
-							placeholder="Nominal lainnya"
-							value={customAmount}
-							onChange={(e) =>
-								setCustomAmount(e.target.value.replace(/\D/g, ""))
-							}
-							InputProps={{
-								startAdornment: (
-									<InputAdornment position="start">Rp</InputAdornment>
-								),
-							}}
-							sx={{ mt: 1 }}
-							helperText="Minimal Rp 1.000"
-						/>
 					</Box>
 
 					<Box sx={{ mb: 2 }}>
-						<Typography
-							sx={{
-								fontSize: 12,
-								fontWeight: 900,
-								color: "rgba(15,23,42,.80)",
-							}}
-						>
-							Data Donatur
-						</Typography>
-						<FormControlLabel
-							control={
-								<Radio
-									checked={isAnonymous}
-									onChange={() => setIsAnonymous(true)}
-								/>
-							}
-							label="Hamba Allah (Anonim)"
-							sx={{ mr: 2 }}
-						/>
-						<FormControlLabel
-							control={
-								<Radio
-									checked={!isAnonymous}
-									onChange={() => setIsAnonymous(false)}
-								/>
-							}
-							label="Tampilkan nama saya"
-						/>
-						{!isAnonymous && (
-							<TextField
-								fullWidth
-								label="Nama Lengkap"
-								value={donorName}
-								onChange={(e) => setDonorName(e.target.value)}
-								sx={{ mt: 1 }}
-							/>
-						)}
-						<TextField
-							fullWidth
-							label="Nomor WhatsApp / HP"
-							value={donorPhone}
-							onChange={(e) => setDonorPhone(e.target.value)}
-							sx={{ mt: 1 }}
-							type="tel"
-						/>
 						<TextField
 							fullWidth
 							label="Doa & Dukungan (opsional)"
 							multiline
-							rows={3}
+							rows={1}
 							value={message}
 							onChange={(e) => setMessage(e.target.value)}
+							inputProps={{ maxLength: 55 }}
+							helperText={`${message.length}/55`}
 							sx={{ mt: 1 }}
 						/>
 					</Box>
 
 					<Box sx={{ mb: 1.5 }}>
-						<Typography
-							sx={{
-								fontSize: 12,
-								fontWeight: 900,
-								color: "rgba(15,23,42,.80)",
-							}}
-						>
-							Metode Pembayaran
-						</Typography>
-						<FormControl component="fieldset" fullWidth sx={{ mt: 1 }}>
-							<RadioGroup
-								value={method}
-								onChange={(e) => setMethod(e.target.value as Method)}
-							>
-								<FormControlLabel
-									value="EWALLET"
-									control={<Radio />}
-									label={
-										<Box
-											sx={{ display: "flex", alignItems: "center", gap: 1.2 }}
-										>
-											<QrCodeIcon color="action" />
-											<Typography sx={{ fontSize: 12, fontWeight: 700 }}>
-												E-Wallet / QRIS
-											</Typography>
-										</Box>
-									}
-									sx={{ m: 0, p: 0.5 }}
-								/>
-								<FormControlLabel
-									value="VIRTUAL_ACCOUNT"
-									control={<Radio />}
-									label={
-										<Box
-											sx={{ display: "flex", alignItems: "center", gap: 1.2 }}
-										>
-											<AccountBalanceWalletIcon color="action" />
-											<Typography sx={{ fontSize: 12, fontWeight: 700 }}>
-												Virtual Account
-											</Typography>
-										</Box>
-									}
-									sx={{ m: 0, p: 0.5 }}
-								/>
-								<FormControlLabel
-									value="TRANSFER"
-									control={<Radio />}
-									label={
-										<Box
-											sx={{ display: "flex", alignItems: "center", gap: 1.2 }}
-										>
-											<CreditCardIcon color="action" />
-											<Typography sx={{ fontSize: 12, fontWeight: 700 }}>
-												Transfer Bank
-											</Typography>
-										</Box>
-									}
-									sx={{ m: 0, p: 0.5 }}
-								/>
-							</RadioGroup>
-						</FormControl>
+						{/* Payment Method removed - using Snap */}
 					</Box>
 				</DialogContent>
 				<DialogActions sx={{ p: 2 }}>

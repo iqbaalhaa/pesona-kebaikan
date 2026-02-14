@@ -18,11 +18,19 @@ export async function getMyDonations() {
 	});
 
 	try {
-		let whereClause: any = { userId: session.user.id };
+		let whereClause: any = {
+			AND: [
+				{ status: { in: ["PAID", "SETTLED"] } },
+				{ userId: session.user.id },
+			],
+		};
 
 		if (user?.phone) {
 			whereClause = {
-				OR: [{ userId: session.user.id }, { donorPhone: user.phone }],
+				AND: [
+					{ status: { in: ["PAID", "SETTLED"] } },
+					{ OR: [{ userId: session.user.id }, { donorPhone: user.phone }] },
+				],
 			};
 		}
 
@@ -51,9 +59,15 @@ export async function getMyDonations() {
 			}),
 			rawDate: d.createdAt.toISOString().split("T")[0],
 			status:
-				d.status === "PAID" || d.status === "PENDING"
+				d.status === "PAID" || d.status === "SETTLED"
 					? "Berhasil"
-					: d.status,
+					: d.status === "PENDING"
+						? "Menunggu Pembayaran"
+						: d.status === "FAILED"
+							? "Gagal"
+							: d.status === "REFUNDED"
+								? "Dikembalikan"
+								: d.status,
 			paymentMethod: formatPaymentMethod(d.paymentMethod),
 			prayer: d.message || "",
 			campaignId: d.campaignId,

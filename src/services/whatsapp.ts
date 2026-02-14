@@ -46,7 +46,17 @@ export async function sendWhatsAppMessage(to: string, message: string) {
 			}),
 		});
 
-		const data = await response.json();
+		const responseText = await response.text();
+		let data;
+
+		try {
+			data = JSON.parse(responseText);
+		} catch {
+			console.error("WhatsApp API Invalid JSON Response:", responseText);
+			throw new Error(
+				`Gagal menghubungi server WhatsApp (Status: ${response.status}). Response bukan JSON valid.`,
+			);
+		}
 
 		if (!response.ok) {
 			console.error("WhatsApp API Error:", data);

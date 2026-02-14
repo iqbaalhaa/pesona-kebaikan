@@ -26,6 +26,8 @@ import {
 	DialogContent,
 	DialogContentText,
 	DialogActions,
+	Snackbar,
+	Alert,
 } from "@mui/material";
 
 import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
@@ -131,7 +133,7 @@ const DOC_RULES: DocRule[] = [
 
 function requiredDocsFor(type: CampaignType) {
 	return DOC_RULES.filter(
-		(d) => d.requiredFor === "all" || d.requiredFor === type
+		(d) => d.requiredFor === "all" || d.requiredFor === type,
 	).map((d) => d.key);
 }
 function missingRequired(row: CampaignVerifyRow) {
@@ -161,7 +163,7 @@ export default function AdminCampaignVerifikasiPage() {
 		// borderColor: alpha(theme.palette.divider, 1),
 		bgcolor: alpha(
 			theme.palette.background.paper,
-			theme.palette.mode === "dark" ? 0.92 : 1
+			theme.palette.mode === "dark" ? 0.92 : 1,
 		),
 		backdropFilter: "blur(10px)",
 		boxShadow:
@@ -186,6 +188,27 @@ export default function AdminCampaignVerifikasiPage() {
 		mode?: "approve" | "reject";
 		row?: CampaignVerifyRow;
 	}>({ open: false });
+
+	const [snackbar, setSnackbar] = React.useState<{
+		open: boolean;
+		message: string;
+		severity: "success" | "error" | "info" | "warning";
+	}>({
+		open: false,
+		message: "",
+		severity: "info",
+	});
+
+	const showSnackbar = (
+		message: string,
+		severity: "success" | "error" | "info" | "warning" = "info",
+	) => {
+		setSnackbar({ open: true, message, severity });
+	};
+
+	const handleCloseSnackbar = () => {
+		setSnackbar((prev) => ({ ...prev, open: false }));
+	};
 
 	const fetchCampaigns = async () => {
 		setLoading(true);
@@ -267,7 +290,7 @@ export default function AdminCampaignVerifikasiPage() {
 
 	const selected = React.useMemo(
 		() => rows.find((r) => r.id === selectedId) ?? filtered[0],
-		[rows, selectedId, filtered]
+		[rows, selectedId, filtered],
 	);
 
 	const onRefresh = () => {
@@ -276,23 +299,35 @@ export default function AdminCampaignVerifikasiPage() {
 
 	const onApprove = async () => {
 		if (!confirm.row) return;
-		const res = await updateCampaignStatus(confirm.row.id, "ACTIVE");
-		if (res.success) {
-			setRows((prev) => prev.filter((x) => x.id !== confirm.row?.id));
-			setConfirm({ open: false });
-		} else {
-			alert("Gagal approve");
+		try {
+			const res = await updateCampaignStatus(confirm.row.id, "ACTIVE");
+			if (res.success) {
+				setRows((prev) => prev.filter((x) => x.id !== confirm.row?.id));
+				setConfirm({ open: false });
+				showSnackbar("Campaign berhasil diapprove", "success");
+			} else {
+				showSnackbar(res.error || "Gagal approve", "error");
+			}
+		} catch (error) {
+			console.error(error);
+			showSnackbar("Terjadi kesalahan saat approve", "error");
 		}
 	};
 
 	const onReject = async () => {
 		if (!confirm.row) return;
-		const res = await updateCampaignStatus(confirm.row.id, "REJECTED");
-		if (res.success) {
-			setRows((prev) => prev.filter((x) => x.id !== confirm.row?.id));
-			setConfirm({ open: false });
-		} else {
-			alert("Gagal reject");
+		try {
+			const res = await updateCampaignStatus(confirm.row.id, "REJECTED");
+			if (res.success) {
+				setRows((prev) => prev.filter((x) => x.id !== confirm.row?.id));
+				setConfirm({ open: false });
+				showSnackbar("Campaign berhasil ditolak", "success");
+			} else {
+				showSnackbar(res.error || "Gagal reject", "error");
+			}
+		} catch (error) {
+			console.error(error);
+			showSnackbar("Terjadi kesalahan saat reject", "error");
 		}
 	};
 
@@ -340,7 +375,7 @@ export default function AdminCampaignVerifikasiPage() {
 									borderRadius: 2.5,
 									bgcolor: alpha(
 										theme.palette.background.default,
-										theme.palette.mode === "dark" ? 0.22 : 1
+										theme.palette.mode === "dark" ? 0.22 : 1,
 									),
 								},
 								"& .MuiInputBase-input": { fontSize: 13.5 },
@@ -356,7 +391,7 @@ export default function AdminCampaignVerifikasiPage() {
 									// borderColor: alpha(theme.palette.divider, 1),
 									bgcolor: alpha(
 										theme.palette.background.default,
-										theme.palette.mode === "dark" ? 0.18 : 1
+										theme.palette.mode === "dark" ? 0.18 : 1,
 									),
 								}}
 							>
@@ -384,12 +419,12 @@ export default function AdminCampaignVerifikasiPage() {
 							f.key === "all"
 								? counts.all
 								: f.key === "ready"
-								? counts.ready
-								: f.key === "missing"
-								? counts.missing
-								: f.key === "sakit"
-								? counts.sakit
-								: counts.lainnya;
+									? counts.ready
+									: f.key === "missing"
+										? counts.missing
+										: f.key === "sakit"
+											? counts.sakit
+											: counts.lainnya;
 
 						return (
 							<Chip
@@ -414,12 +449,12 @@ export default function AdminCampaignVerifikasiPage() {
 												background: active
 													? alpha(
 															theme.palette.primary.main,
-															theme.palette.mode === "dark" ? 0.25 : 0.18
-													  )
+															theme.palette.mode === "dark" ? 0.25 : 0.18,
+														)
 													: alpha(
 															theme.palette.text.primary,
-															theme.palette.mode === "dark" ? 0.18 : 0.08
-													  ),
+															theme.palette.mode === "dark" ? 0.18 : 0.08,
+														),
 												color: active
 													? theme.palette.primary.main
 													: theme.palette.text.secondary,
@@ -439,8 +474,8 @@ export default function AdminCampaignVerifikasiPage() {
 									bgcolor: active
 										? alpha(
 												theme.palette.primary.main,
-												theme.palette.mode === "dark" ? 0.16 : 0.08
-										  )
+												theme.palette.mode === "dark" ? 0.16 : 0.08,
+											)
 										: "transparent",
 									color: active
 										? theme.palette.primary.main
@@ -501,7 +536,7 @@ export default function AdminCampaignVerifikasiPage() {
 											border: "none",
 											bgcolor: alpha(
 												theme.palette.background.default,
-												theme.palette.mode === "dark" ? 0.2 : 1
+												theme.palette.mode === "dark" ? 0.2 : 1,
 											),
 										}}
 									>
@@ -519,7 +554,7 @@ export default function AdminCampaignVerifikasiPage() {
 											sx={{ mt: 1.25, borderRadius: 2 }}
 										/>
 									</Paper>
-							  ))
+								))
 							: paged.map((row) => (
 									<VerifyCard
 										key={row.id}
@@ -527,7 +562,7 @@ export default function AdminCampaignVerifikasiPage() {
 										selected={row.id === selectedId}
 										onClick={() => setSelectedId(row.id)}
 									/>
-							  ))}
+								))}
 					</Box>
 
 					{/* Pagination */}
@@ -572,7 +607,7 @@ export default function AdminCampaignVerifikasiPage() {
 										placeItems: "center",
 										bgcolor: alpha(
 											theme.palette.background.default,
-											theme.palette.mode === "dark" ? 0.2 : 1
+											theme.palette.mode === "dark" ? 0.2 : 1,
 										),
 									}}
 								>
@@ -624,13 +659,13 @@ export default function AdminCampaignVerifikasiPage() {
 													selected.type === "sakit"
 														? t.palette.info.main
 														: t.palette.success.main,
-													0.25
+													0.25,
 												),
 												bgcolor: alpha(
 													selected.type === "sakit"
 														? t.palette.info.main
 														: t.palette.success.main,
-													t.palette.mode === "dark" ? 0.16 : 0.08
+													t.palette.mode === "dark" ? 0.16 : 0.08,
 												),
 												color:
 													selected.type === "sakit"
@@ -648,7 +683,7 @@ export default function AdminCampaignVerifikasiPage() {
 												borderColor: alpha(t.palette.warning.main, 0.25),
 												bgcolor: alpha(
 													t.palette.warning.main,
-													t.palette.mode === "dark" ? 0.16 : 0.08
+													t.palette.mode === "dark" ? 0.16 : 0.08,
 												),
 												color: t.palette.warning.main,
 											})}
@@ -705,7 +740,7 @@ export default function AdminCampaignVerifikasiPage() {
 										borderRadius: 999,
 										bgcolor: alpha(
 											theme.palette.text.primary,
-											theme.palette.mode === "dark" ? 0.1 : 0.06
+											theme.palette.mode === "dark" ? 0.1 : 0.06,
 										),
 										"& .MuiLinearProgress-bar": { borderRadius: 999 },
 									}}
@@ -733,7 +768,7 @@ export default function AdminCampaignVerifikasiPage() {
 							>
 								{DOC_RULES.filter(
 									(d) =>
-										d.requiredFor === "all" || d.requiredFor === selected.type
+										d.requiredFor === "all" || d.requiredFor === selected.type,
 								).map((d) => {
 									const ok = selected.docs[d.key];
 									return (
@@ -748,11 +783,11 @@ export default function AdminCampaignVerifikasiPage() {
 												fontWeight: 900,
 												borderColor: alpha(
 													ok ? t.palette.success.main : t.palette.warning.main,
-													0.25
+													0.25,
 												),
 												bgcolor: alpha(
 													ok ? t.palette.success.main : t.palette.warning.main,
-													t.palette.mode === "dark" ? 0.16 : 0.08
+													t.palette.mode === "dark" ? 0.16 : 0.08,
 												),
 												color: ok
 													? t.palette.success.main
@@ -779,7 +814,7 @@ export default function AdminCampaignVerifikasiPage() {
 										border: "none",
 										bgcolor: alpha(
 											theme.palette.warning.main,
-											theme.palette.mode === "dark" ? 0.12 : 0.06
+											theme.palette.mode === "dark" ? 0.12 : 0.06,
 										),
 									}}
 								>
@@ -912,6 +947,22 @@ export default function AdminCampaignVerifikasiPage() {
 					</Button>
 				</DialogActions>
 			</Dialog>
+			<Snackbar
+				open={snackbar.open}
+				autoHideDuration={4000}
+				onClose={handleCloseSnackbar}
+				anchorOrigin={{ vertical: "top", horizontal: "center" }}
+				sx={{ zIndex: 99999 }}
+			>
+				<Alert
+					onClose={handleCloseSnackbar}
+					severity={snackbar.severity}
+					variant="filled"
+					sx={{ width: "100%", boxShadow: 3, fontWeight: 600 }}
+				>
+					{snackbar.message}
+				</Alert>
+			</Snackbar>
 		</Box>
 	);
 }
@@ -939,7 +990,7 @@ function VerifyCard({
 		border: "none",
 		bgcolor: alpha(
 			theme.palette.background.default,
-			theme.palette.mode === "dark" ? 0.2 : 1
+			theme.palette.mode === "dark" ? 0.2 : 1,
 		),
 		cursor: "pointer",
 		transition: "all 140ms ease",
@@ -964,7 +1015,7 @@ function VerifyCard({
 							placeItems: "center",
 							bgcolor: alpha(
 								theme.palette.background.paper,
-								theme.palette.mode === "dark" ? 0.2 : 1
+								theme.palette.mode === "dark" ? 0.2 : 1,
 							),
 						}}
 					>
@@ -1009,11 +1060,11 @@ function VerifyCard({
 									fontWeight: 900,
 									borderColor: alpha(
 										ready ? t.palette.success.main : t.palette.warning.main,
-										0.25
+										0.25,
 									),
 									bgcolor: alpha(
 										ready ? t.palette.success.main : t.palette.warning.main,
-										t.palette.mode === "dark" ? 0.16 : 0.08
+										t.palette.mode === "dark" ? 0.16 : 0.08,
 									),
 									color: ready
 										? t.palette.success.main
@@ -1056,7 +1107,7 @@ function VerifyCard({
 						borderRadius: 999,
 						bgcolor: alpha(
 							theme.palette.text.primary,
-							theme.palette.mode === "dark" ? 0.1 : 0.06
+							theme.palette.mode === "dark" ? 0.1 : 0.06,
 						),
 						"& .MuiLinearProgress-bar": { borderRadius: 999 },
 					}}

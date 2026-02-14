@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { createHash } from "crypto";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { createNotification } from "@/actions/notification";
+import { NotificationType } from "@/generated/prisma";
 
 type MidtransNotification = {
 	order_id?: string;
@@ -21,7 +23,7 @@ function computeSignature(input: {
 }) {
 	return createHash("sha512")
 		.update(
-			`${input.orderId}${input.statusCode}${input.grossAmount}${input.serverKey}`
+			`${input.orderId}${input.statusCode}${input.grossAmount}${input.serverKey}`,
 		)
 		.digest("hex");
 }
@@ -60,7 +62,7 @@ export async function POST(req: Request) {
 			console.error("MIDTRANS_SERVER_KEY missing");
 			return NextResponse.json(
 				{ success: false, error: "MIDTRANS_SERVER_KEY belum dikonfigurasi" },
-				{ status: 500 }
+				{ status: 500 },
 			);
 		}
 
@@ -82,7 +84,7 @@ export async function POST(req: Request) {
 			console.error("Incomplete payload");
 			return NextResponse.json(
 				{ success: false, error: "Payload Midtrans tidak lengkap" },
-				{ status: 400 }
+				{ status: 400 },
 			);
 		}
 
@@ -120,7 +122,7 @@ export async function POST(req: Request) {
 				});
 				return NextResponse.json(
 					{ success: false, error: "Signature tidak valid" },
-					{ status: 401 }
+					{ status: 401 },
 				);
 			}
 		}
@@ -134,7 +136,13 @@ export async function POST(req: Request) {
 
 		const existing = await prisma.donation.findUnique({
 			where: { id: orderId },
-			select: { id: true, campaign: { select: { slug: true, id: true } } },
+			select: {
+				id: true,
+				userId: true,
+				amount: true,
+				donorName: true,
+				campaign: { select: { slug: true, id: true, title: true } },
+			},
 		});
 
 		if (!existing) {
@@ -148,6 +156,30 @@ export async function POST(req: Request) {
 		});
 
 		console.log("Donation updated:", updated);
+
+		if (newStatus === "PAID" || newStatus === "SETTLED") {
+			let targetUserId = existing.userId as string | undefined;
+			if (!targetUserId) {
+				const byPhone = await prisma.user.findUnique({
+					where: { phone: updated.donorPhone || "" },
+					select: { id: true },
+				});
+				targetUserId = byPhone?.id;
+			}
+			if (targetUserId) {
+				const amountNum = Number(existing.amount);
+				const amountStr = isFinite(amountNum)
+					? amountNum.toLocaleString("id-ID")
+					: `${existing.amount}`;
+				const campaignTitle = existing.campaign?.title || "Campaign";
+				await createNotification(
+					targetUserId,
+					"Donasi Berhasil",
+					`Terima kasih. Donasi Rp ${amountStr} ke ${campaignTitle} telah berhasil.`,
+					NotificationType.KABAR,
+				);
+			}
+		}
 
 		revalidatePath("/admin/transaksi");
 		revalidatePath("/donasi");
@@ -164,7 +196,7 @@ export async function POST(req: Request) {
 		console.error("Midtrans notification error:", error);
 		return NextResponse.json(
 			{ success: false, error: "Terjadi kesalahan memproses notifikasi" },
-			{ status: 500 }
+			{ status: 500 },
 		);
 	}
 }

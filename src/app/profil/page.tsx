@@ -46,33 +46,36 @@ function ProfilePageContent() {
 		image: string | null;
 		verifiedAs: "personal" | "organization" | null;
 		verifiedAt: string | Date | null;
+		verificationRequests?: { status: string }[];
 	} | null>(null);
+
+	const loadProfile = React.useCallback(async () => {
+		const p = await getMyProfile();
+		if (p) {
+			setMyProfile({
+				id: p.id,
+				name: p.name ?? null,
+				email: p.email,
+				image: p.image ?? null,
+				verifiedAs:
+					(p.verifiedAs as "personal" | "organization" | null) ?? null,
+				verifiedAt: p.verifiedAt ?? null,
+				verificationRequests: p.verificationRequests,
+			});
+		} else {
+			setMyProfile(null);
+		}
+	}, []);
+
 	React.useEffect(() => {
 		let mounted = true;
-		const load = async () => {
-			const p = await getMyProfile();
-			if (mounted) {
-				if (p) {
-					setMyProfile({
-						id: p.id,
-						name: p.name ?? null,
-						email: p.email,
-						image: p.image ?? null,
-						verifiedAs: (p.verifiedAs as "personal" | "organization" | null) ?? null,
-						verifiedAt: p.verifiedAt ?? null,
-					});
-				} else {
-					setMyProfile(null);
-				}
-			}
-		};
 		if (status === "authenticated") {
-			load();
+			loadProfile();
 		}
 		return () => {
 			mounted = false;
 		};
-	}, [status]);
+	}, [status, loadProfile]);
 
 	// Mock Stats Data
 	const userStats = [
@@ -169,9 +172,10 @@ function ProfilePageContent() {
 					<ProfileCard user={myProfile || user} />
 
 					{/* Verification Banner */}
-					{!myProfile?.verifiedAt && (
-						<VerificationBanner onClick={handleOpenVerification} />
-					)}
+					{!myProfile?.verifiedAt &&
+						!myProfile?.verificationRequests?.[0]?.status && (
+							<VerificationBanner onClick={handleOpenVerification} />
+						)}
 
 					{/* Account Menus */}
 					<Box sx={{ mb: 3 }}>
@@ -189,7 +193,11 @@ function ProfilePageContent() {
 							Akun
 						</Typography>
 						<List disablePadding>
-							<ProfileMenu icon={<SecurityIcon />} label="Keamanan & Password" onClick={() => router.push("/profil/keamanan")} />
+							<ProfileMenu
+								icon={<SecurityIcon />}
+								label="Keamanan & Password"
+								onClick={() => router.push("/profil/keamanan")}
+							/>
 						</List>
 					</Box>
 				</>
@@ -244,7 +252,12 @@ function ProfilePageContent() {
 			</Box>
 
 			{/* Verification Modal */}
-			<VerificationDialog open={openVerification} onClose={() => setOpenVerification(false)} userEmail={user?.email} />
+			<VerificationDialog
+				open={openVerification}
+				onClose={() => setOpenVerification(false)}
+				userEmail={user?.email}
+				onSuccess={loadProfile}
+			/>
 		</Box>
 	);
 }
