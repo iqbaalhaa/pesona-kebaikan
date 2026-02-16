@@ -3,7 +3,7 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { uploadFile } from "@/actions/upload";
-import { CampaignStatus, Prisma, NotificationType } from "@/generated/prisma";
+import { CampaignStatus, Prisma, NotificationType } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { CATEGORY_TITLE } from "@/lib/constants";
 import { createNotification } from "@/actions/notification";

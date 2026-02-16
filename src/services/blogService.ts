@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { JSDOM } from "jsdom";
-import { BlogMediaType } from "@/generated/prisma";
+import { BlogMediaType } from "@prisma/client";
 
 // Helper to extract media from HTML content
 function extractMediaFromContent(content: string) {

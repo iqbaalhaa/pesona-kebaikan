@@ -3,7 +3,7 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
-import { Prisma } from "@/generated/prisma";
+import { Prisma } from "@prisma/client";
 
 // --- FAQ Actions ---
 

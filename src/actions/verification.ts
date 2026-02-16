@@ -2,7 +2,7 @@
 
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { VerifiedAs, VerificationStatus } from "@/generated/prisma";
+import { VerifiedAs, VerificationStatus } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 
 function normalizePhone(phone: string): string | null {

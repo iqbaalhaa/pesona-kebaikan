@@ -1,5 +1,5 @@
 import { prisma } from "../../src/lib/prisma";
-import { BlogMediaType } from "@/generated/prisma";
+import { BlogMediaType } from "@prisma/client";
 
 async function upsertBlogCategory(name: string) {
 	return prisma.blogCategory.upsert({

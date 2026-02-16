@@ -9,7 +9,7 @@ import {
 } from "@/lib/midtrans-status";
 import { calculateMidtransFee } from "@/lib/fee-calculator";
 import { createNotification } from "@/actions/notification";
-import { NotificationType } from "@/generated/prisma";
+import { NotificationType } from "@prisma/client";
 
 export type CreateDonationInput = {
 	campaignId: string;

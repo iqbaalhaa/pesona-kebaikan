@@ -2,10 +2,10 @@
 
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { ReportReason } from "@/generated/prisma";
+import { ReportReason } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { createNotification } from "@/actions/notification";
-import { NotificationType } from "@/generated/prisma";
+import { NotificationType } from "@prisma/client";
 
 export type ReportData = {
 	campaignId: string;

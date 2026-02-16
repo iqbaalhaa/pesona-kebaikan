@@ -20,7 +20,7 @@ import {
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import ReportProblemRoundedIcon from "@mui/icons-material/ReportProblemRounded";
-import { ReportReason } from "@/generated/prisma";
+import { ReportReason } from "@prisma/client";
 import { Transition } from "../utils";
 
 interface ReportModalProps {

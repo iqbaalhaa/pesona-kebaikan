@@ -26,7 +26,7 @@ import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 
 import { createReport } from "@/actions/report";
 import { checkPendingDonations } from "@/actions/donation";
-import { ReportReason } from "@/generated/prisma";
+import { ReportReason } from "@prisma/client";
 
 // Components
 import CampaignHero from "./detail/CampaignHero";
