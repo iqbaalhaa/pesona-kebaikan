@@ -131,10 +131,10 @@ function CampaignRowCard({ item }: { item: Campaign }) {
 			sx={{
 				minWidth: 200,
 				maxWidth: 200,
-								borderRadius: 0,
-								border: "none",
-								bgcolor: "#fff",
-				boxShadow: "0 14px 26px rgba(15,23,42,.06)",
+				borderRadius: 0,
+				border: "none",
+				bgcolor: "transparent",
+				boxShadow: "none",
 				overflow: "hidden",
 				position: "relative",
 				cursor: "pointer",
@@ -146,7 +146,7 @@ function CampaignRowCard({ item }: { item: Campaign }) {
 			{/* Cover */}
 			<Box sx={{ position: "relative", height: 120 }}>
 				<Box
-					className="relative w-full h-full flex-shrink-0 overflow-hidden bg-gray-100"
+					className="relative w-full h-full shrink-0 overflow-hidden bg-gray-100"
 					sx={{ borderRadius: 0 }}
 				>
 					<Image
@@ -202,7 +202,7 @@ function CampaignRowCard({ item }: { item: Campaign }) {
 			</Box>
 
 			{/* Body */}
-			<Box sx={{ p: 1.25 }}>
+			<Box sx={{ p: 1.25, bgcolor: "#fff" }}>
 				<Typography
 					sx={{
 						fontSize: 13,
@@ -230,17 +230,21 @@ function CampaignRowCard({ item }: { item: Campaign }) {
 					<Typography sx={{ fontSize: 11, color: "rgba(15,23,42,.60)" }}>
 						{item.organizer}
 					</Typography>
-					<Chip
-						label="ORG"
-						size="small"
-						sx={{
-							height: 18,
-							bgcolor: "rgba(11,169,118,0.14)",
-							color: PRIMARY,
-							fontWeight: 900,
-							"& .MuiChip-label": { px: 0.8, fontSize: 9 },
-						}}
-					/>
+					{item.organizerVerifiedAt ? (
+						<Chip
+							label={
+								item.organizerVerifiedAs === "organization" ? "ORG" : "PER"
+							}
+							size="small"
+							sx={{
+								height: 18,
+								bgcolor: "rgba(11,169,118,0.14)",
+								color: PRIMARY,
+								fontWeight: 900,
+								"& .MuiChip-label": { px: 0.8, fontSize: 9 },
+							}}
+						/>
+					) : null}
 				</Box>
 
 				<Box sx={{ mt: 1.5 }}>

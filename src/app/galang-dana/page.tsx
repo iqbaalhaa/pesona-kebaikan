@@ -883,29 +883,29 @@ export default function GalangDanaSayaPage() {
 							mb: 3,
 							textAlign: "center",
 						}}
-					>
-						Pilih kategori yang sesuai dengan tujuan kamu
-					</Typography>
+					></Typography>
 
-					<Stack spacing={2}>
+					<Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
 						<PickCard
 							iconBg={alpha("#0ea5e9", 0.1)}
-							icon={<HealingRoundedIcon sx={{ color: "#0ea5e9" }} />}
-							title="Bantuan Pengobatan"
+							icon={
+								<HealingRoundedIcon sx={{ color: "#0ea5e9", fontSize: 36 }} />
+							}
+							title="Bantuan Medis"
 							desc="Galang dana untuk biaya pengobatan, rawat inap, atau kebutuhan medis lainnya."
-							buttonText="Pilih Kategori Ini"
 							onClick={handlePickSakit}
 						/>
 
 						<PickCard
 							iconBg={alpha("#fb7185", 0.1)}
-							icon={<FavoriteRoundedIcon sx={{ color: "#fb7185" }} />}
-							title="Kategori Lainnya"
+							icon={
+								<FavoriteRoundedIcon sx={{ color: "#fb7185", fontSize: 32 }} />
+							}
+							title="Non Medis"
 							desc="Untuk pendidikan, bencana alam, rumah ibadah, panti asuhan, dan sosial."
-							buttonText="Pilih Kategori Ini"
 							onClick={handlePickLainnya}
 						/>
-					</Stack>
+					</Box>
 				</Box>
 			</Drawer>
 
@@ -1027,14 +1027,12 @@ function PickCard({
 	iconBg,
 	title,
 	desc,
-	buttonText,
 	onClick,
 }: {
 	icon: React.ReactNode;
 	iconBg: string;
 	title: string;
 	desc: string;
-	buttonText: string;
 	onClick: () => void;
 }) {
 	return (
@@ -1043,53 +1041,64 @@ function PickCard({
 			onClick={onClick}
 			elevation={0}
 			sx={{
-				p: 2,
+				p: 3,
 				width: "100%",
-				borderRadius: 3,
+				height: "100%",
+				borderRadius: 4,
 				border: "1px solid",
 				borderColor: "divider",
 				display: "flex",
+				flexDirection: "column",
 				alignItems: "center",
+				justifyContent: "center",
 				gap: 2,
-				textAlign: "left",
+				textAlign: "center",
 				transition: "all 0.2s",
 				"&:hover": {
 					borderColor: "primary.main",
 					bgcolor: alpha(iconBg, 0.1),
-					transform: "translateY(-2px)",
+					transform: "translateY(-4px)",
 					boxShadow: "0 10px 30px rgba(0,0,0,0.05)",
 				},
 			}}
 		>
 			<Box
 				sx={{
-					width: 56,
-					height: 56,
-					borderRadius: 2.5,
+					width: 72,
+					height: 72,
+					borderRadius: 3.5,
 					display: "grid",
 					placeItems: "center",
 					bgcolor: iconBg,
 					flexShrink: 0,
+					mb: 0.5,
 				}}
 			>
 				{icon}
 			</Box>
 
-			<Box sx={{ flex: 1, minWidth: 0 }}>
-				<Typography sx={{ fontWeight: 800, fontSize: 15 }}>{title}</Typography>
+			<Box>
 				<Typography
 					sx={{
-						mt: 0.5,
+						fontWeight: 700,
+						fontSize: 15,
+						color: "#0f172a",
+						lineHeight: 1.3,
+						mb: 1,
+					}}
+				>
+					{title}
+				</Typography>
+				<Typography
+					sx={{
 						fontSize: 13,
 						color: "text.secondary",
-						lineHeight: 1.4,
+						lineHeight: 1.5,
 					}}
 				>
 					{desc}
 				</Typography>
 			</Box>
-
-			<ArrowForwardRoundedIcon sx={{ color: "text.disabled" }} />
 		</Paper>
 	);
 }

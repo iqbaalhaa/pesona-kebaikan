@@ -196,17 +196,19 @@ function PopularCard({ c }: { c: Campaign }) {
 					<Typography sx={{ fontSize: 11, color: "rgba(15,23,42,.60)" }}>
 						{c.organizer}
 					</Typography>
-					<Chip
-						label="ORG"
-						size="small"
-						sx={{
-							height: 18,
-							bgcolor: "rgba(11,169,118,0.14)",
-							color: PRIMARY,
-							fontWeight: 900,
-							"& .MuiChip-label": { px: 0.8, fontSize: 9 },
-						}}
-					/>
+					{c.organizerVerifiedAt ? (
+						<Chip
+							label={c.organizerVerifiedAs === "organization" ? "ORG" : "PER"}
+							size="small"
+							sx={{
+								height: 18,
+								bgcolor: "rgba(11,169,118,0.14)",
+								color: PRIMARY,
+								fontWeight: 900,
+								"& .MuiChip-label": { px: 0.8, fontSize: 9 },
+							}}
+						/>
+					) : null}
 				</Box>
 
 				<Box sx={{ mt: 1.5 }}>

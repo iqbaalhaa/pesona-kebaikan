@@ -19,7 +19,7 @@ import {
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
-import VerifiedRoundedIcon from "@mui/icons-material/VerifiedRounded";
+import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
 import AccessTimeRoundedIcon from "@mui/icons-material/AccessTimeRounded";
 
 export type CampaignItem = {
@@ -62,16 +62,10 @@ export default function DonationExplorer({
 	const onlyUrgent = searchParams.get("urgent") === "true";
 
 	// Local state for search input
-	const [searchVal, setSearchVal] = React.useState(q);
+	const [searchVal, setSearchVal] = React.useState("");
 	const inputRef = React.useRef<HTMLInputElement>(null);
 
-	// Sync from URL to local state (handle back/forward navigation)
-	React.useEffect(() => {
-		// Only sync if the input is NOT focused to avoid overwriting user typing
-		if (document.activeElement !== inputRef.current) {
-			setSearchVal(q);
-		}
-	}, [q]);
+	// Keep input independent from URL/query changes
 
 	// Debounce search update
 	React.useEffect(() => {
@@ -88,7 +82,7 @@ export default function DonationExplorer({
 		const params = new URLSearchParams(searchParams.toString());
 		if (value) params.set(key, value);
 		else params.delete(key);
-		router.push(`?${params.toString()}`);
+		router.replace(`/donasi?${params.toString()}`);
 	};
 
 	const handleSearch = (e: React.FormEvent) => {
@@ -183,7 +177,7 @@ export default function DonationExplorer({
 					onClick={toggleVerified}
 					color={onlyVerified ? "info" : "default"}
 					variant={onlyVerified ? "filled" : "outlined"}
-					icon={onlyVerified ? <VerifiedRoundedIcon /> : undefined}
+					icon={onlyVerified ? <VerifiedUserIcon /> : undefined}
 					clickable
 				/>
 			</Stack>
@@ -277,10 +271,10 @@ export default function DonationExplorer({
 												color: theme.palette.primary.main,
 											}}
 										/>
-										{x.ownerName === "Verified User" || x.verifiedAt ? (
+										{x.verifiedAt ? (
 											<Chip
 												icon={
-													<VerifiedRoundedIcon
+													<VerifiedUserIcon
 														sx={{ fontSize: "12px !important" }}
 													/>
 												}

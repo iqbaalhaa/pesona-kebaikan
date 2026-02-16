@@ -28,6 +28,7 @@ type Props = {
 	campaignId: string;
 	campaignTitle: string;
 	campaignSlug: string;
+	fundraiserId?: string;
 };
 
 function formatIDR(numStr: string) {
@@ -40,6 +41,7 @@ export default function DonationForm({
 	campaignId,
 	campaignTitle,
 	campaignSlug,
+	fundraiserId,
 }: Props) {
 	const router = useRouter();
 	const [amount, setAmount] = React.useState<number | "">("");
@@ -83,6 +85,7 @@ export default function DonationForm({
 		try {
 			const res = await createDonation({
 				campaignId,
+				fundraiserId,
 				amount: Number(amount),
 				donorName,
 				donorPhone,
@@ -368,14 +371,13 @@ export default function DonationForm({
 				>
 					<Button
 						variant="contained"
+						color="primary"
 						fullWidth
 						size="large"
 						onClick={handleSubmit}
 						disabled={loading}
 						sx={{
-							bgcolor: "#e11d48",
 							fontWeight: 700,
-							"&:hover": { bgcolor: "#be123c" },
 						}}
 					>
 						{loading ? (

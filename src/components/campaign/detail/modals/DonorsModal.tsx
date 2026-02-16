@@ -11,6 +11,10 @@ import {
 	ListItem,
 	ListItemText,
 	Box,
+	Select,
+	MenuItem,
+	FormControl,
+	SelectChangeEvent,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import { Transition, formatIDR } from "../utils";
@@ -28,6 +32,29 @@ export default function DonorsModal({
 	donorsCount,
 	donations,
 }: DonorsModalProps) {
+	const [sortOrder, setSortOrder] = React.useState("newest");
+
+	const handleSortChange = (event: SelectChangeEvent) => {
+		setSortOrder(event.target.value);
+	};
+
+	const sortedDonations = React.useMemo(() => {
+		if (!donations) return [];
+		const sorted = [...donations];
+		switch (sortOrder) {
+			case "highest":
+				return sorted.sort((a, b) => b.amount - a.amount);
+			case "lowest":
+				return sorted.sort((a, b) => a.amount - b.amount);
+			case "newest":
+			default:
+				// Assuming donations come sorted by date desc, or we can sort by date
+				return sorted.sort(
+					(a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
+				);
+		}
+	}, [donations, sortOrder]);
+
 	return (
 		<Dialog
 			open={open}
@@ -42,21 +69,45 @@ export default function DonorsModal({
 			<DialogTitle
 				sx={{
 					display: "flex",
-					justifyContent: "space-between",
-					alignItems: "center",
+					flexDirection: "column",
+					gap: 2,
+					pb: 1,
 				}}
 			>
-				<Typography variant="h6" fontWeight={700} component="div">
-					Donatur ({donorsCount})
-				</Typography>
-				<IconButton onClick={onClose} size="small">
-					<CloseIcon />
-				</IconButton>
+				<Box
+					sx={{
+						display: "flex",
+						justifyContent: "space-between",
+						alignItems: "center",
+						width: "100%",
+					}}
+				>
+					<Typography variant="h6" fontWeight={700} component="div">
+						Donatur ({donorsCount})
+					</Typography>
+					<IconButton onClick={onClose} size="small">
+						<CloseIcon />
+					</IconButton>
+				</Box>
+
+				<FormControl size="small" fullWidth>
+					<Select
+						value={sortOrder}
+						onChange={handleSortChange}
+						displayEmpty
+						inputProps={{ "aria-label": "Urutkan donasi" }}
+						sx={{ borderRadius: 2, fontSize: 14 }}
+					>
+						<MenuItem value="newest">Paling Baru</MenuItem>
+						<MenuItem value="highest">Nominal Terbesar</MenuItem>
+						<MenuItem value="lowest">Nominal Terkecil</MenuItem>
+					</Select>
+				</FormControl>
 			</DialogTitle>
 			<DialogContent dividers>
 				<List>
-					{donations && donations.length > 0 ? (
-						donations.map((donation: any) => (
+					{sortedDonations && sortedDonations.length > 0 ? (
+						sortedDonations.map((donation: any) => (
 							<ListItem
 								key={donation.id}
 								alignItems="flex-start"

@@ -10,6 +10,7 @@ import {
 
 export type CreateDonationInput = {
 	campaignId: string;
+	fundraiserId?: string;
 	amount: number;
 	donorName: string;
 	donorPhone: string;
@@ -56,6 +57,7 @@ export async function createDonation(input: CreateDonationInput) {
 		const donation = await prisma.donation.create({
 			data: {
 				campaignId: input.campaignId,
+				fundraiserId: input.fundraiserId,
 				amount: input.amount,
 				donorName: input.donorName,
 				donorPhone: input.donorPhone,

@@ -11,7 +11,7 @@ import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
 import Chip from "@mui/material/Chip";
 import EditIcon from "@mui/icons-material/Edit";
-import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
 
 type UserCardData = {
   name?: string | null;
@@ -65,7 +65,7 @@ export default function ProfileCard({ user }: { user: UserCardData }) {
           </Typography>
           {isVerified ? (
             <Tooltip title="Terverifikasi">
-              <CheckCircleIcon sx={{ fontSize: 18, color: "#0ba976" }} />
+              <VerifiedUserIcon sx={{ fontSize: 18, color: "#3b82f6" }} />
             </Tooltip>
           ) : null}
           {isVerified && user?.verifiedAs === "organization" ? (

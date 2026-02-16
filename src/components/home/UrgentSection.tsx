@@ -120,7 +120,7 @@ function UrgentCard({ item }: { item: Campaign }) {
 		>
 			{/* Cover */}
 			<Box
-				className="relative h-[140px] overflow-hidden bg-gray-100"
+				className="relative h-35 overflow-hidden bg-gray-100"
 				sx={{
 					borderRadius: 0,
 				}}
@@ -139,18 +139,27 @@ function UrgentCard({ item }: { item: Campaign }) {
 					className="absolute top-2 left-2"
 					onClick={(e) => e.stopPropagation()}
 				>
-					<Chip
-						label={item.tag === "ORG" ? "ORGANISASI" : "TERVERIFIKASI"}
-						component={Link}
-						href="/galang-dana"
-						className="h-5 text-[9px] font-bold bg-white/95 backdrop-blur-sm shadow-none"
-						sx={{
-							color: item.tag === "ORG" ? "primary.main" : "info.main",
-							border: "1px solid",
-							borderColor: "rgba(255,255,255,0.2)",
-							cursor: "pointer",
-						}}
-					/>
+					{item.organizerVerifiedAt && (
+						<Chip
+							label={
+								item.organizerVerifiedAs === "organization"
+									? "ORGANISASI"
+									: "PERSONAL"
+							}
+							component={Link}
+							href="/galang-dana"
+							className="h-5 text-[9px] font-bold bg-white/95 backdrop-blur-sm shadow-none"
+							sx={{
+								color:
+									item.organizerVerifiedAs === "organization"
+										? "primary.main"
+										: "info.main",
+								border: "1px solid",
+								borderColor: "rgba(255,255,255,0.2)",
+								cursor: "pointer",
+							}}
+						/>
+					)}
 				</Box>
 				{/* Days Left Badge */}
 				<Box className="absolute bottom-2 left-2 bg-black/60 backdrop-blur-md text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
@@ -161,14 +170,14 @@ function UrgentCard({ item }: { item: Campaign }) {
 			{/* Content */}
 			<Box className="p-3">
 				<Typography
-					className="text-[13px] font-bold leading-snug line-clamp-2 min-h-[40px]"
+					className="text-[13px] font-bold leading-snug line-clamp-2 min-h-10"
 					sx={{ color: "text.primary" }}
 				>
 					{item.title}
 				</Typography>
 
 				<Box className="flex items-center gap-1.5 mt-2 mb-3">
-					<Box className="w-4 h-4 rounded-full bg-gray-200 overflow-hidden relative flex-shrink-0">
+					<Box className="w-4 h-4 rounded-full bg-gray-200 overflow-hidden relative shrink-0">
 						<Image
 							src="/brand/logo.png"
 							alt={item.organizer}
@@ -183,7 +192,7 @@ function UrgentCard({ item }: { item: Campaign }) {
 					>
 						{item.organizer}
 					</Typography>
-					{item.tag === "ORG" && (
+					{item.organizerVerifiedAt && (
 						<Box className="w-3 h-3 text-blue-500">
 							<svg
 								viewBox="0 0 24 24"
@@ -319,13 +328,13 @@ export default function UrgentSection({
 
 			{/* Floating arrows */}
 			{canLeft && (
-				<Box className="hidden md:block absolute left-2 top-[140px] z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+				<Box className="hidden md:block absolute left-2 top-35 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
 					<ArrowButton dir="left" onClick={scrollPrev} />
 				</Box>
 			)}
 
 			{canRight && (
-				<Box className="hidden md:block absolute right-2 top-[140px] z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+				<Box className="hidden md:block absolute right-2 top-35 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
 					<ArrowButton dir="right" onClick={scrollNext} />
 				</Box>
 			)}

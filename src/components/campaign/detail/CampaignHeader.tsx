@@ -119,11 +119,9 @@ export default function CampaignHeader({
 				>
 					{/* Donasi */}
 					<Box
-						onClick={() => setOpenDonorsModal(true)}
 						sx={{
 							textAlign: "center",
-							cursor: "pointer",
-							"&:hover": { opacity: 0.8 },
+							cursor: "default",
 						}}
 					>
 						<Box
@@ -149,11 +147,9 @@ export default function CampaignHeader({
 
 					{/* Kabar Terbaru */}
 					<Box
-						onClick={() => setTabValue(1)}
 						sx={{
 							textAlign: "center",
-							cursor: "pointer",
-							"&:hover": { opacity: 0.8 },
+							cursor: "default",
 						}}
 					>
 						<Box
@@ -179,11 +175,9 @@ export default function CampaignHeader({
 
 					{/* Pencairan Dana */}
 					<Box
-						onClick={() => setTabValue(1)}
 						sx={{
 							textAlign: "center",
-							cursor: "pointer",
-							"&:hover": { opacity: 0.8 },
+							cursor: "default",
 						}}
 					>
 						<Box

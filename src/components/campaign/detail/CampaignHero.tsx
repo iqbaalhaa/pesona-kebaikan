@@ -37,7 +37,7 @@ export default function CampaignHero({ images, title }: CampaignHeroProps) {
 			sx={{
 				position: "relative",
 				width: "100%",
-				aspectRatio: { xs: "4/3", sm: "16/9", md: "21/9" },
+				aspectRatio: { xs: "4/3", sm: "16/9", md: "16/9" },
 				bgcolor: "#f1f5f9",
 			}}
 		>

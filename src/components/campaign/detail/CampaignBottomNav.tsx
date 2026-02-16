@@ -49,17 +49,14 @@ export default function CampaignBottomNav({
 				</Button>
 				<Button
 					variant="contained"
+					color="primary"
 					fullWidth
 					disabled={data.status === "ended" || data.status === "rejected"}
 					onClick={() => router.push(`/donasi/${data.slug || data.id}/payment`)}
 					sx={{
-						bgcolor: "#e11d48",
-						color: "white",
 						borderRadius: "12px",
 						fontWeight: 700,
 						fontSize: 16,
-						boxShadow: "0 4px 12px rgba(225, 29, 72, 0.3)",
-						"&:hover": { bgcolor: "#be123c" },
 						"&.Mui-disabled": {
 							bgcolor: "#cbd5e1",
 							color: "#94a3b8",

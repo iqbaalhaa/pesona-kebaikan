@@ -16,11 +16,25 @@ const baseTheme = {
   },
   components: {
     MuiButton: {
+      defaultProps: {
+        color: "primary",
+      },
       styleOverrides: {
         root: {
           textTransform: "none",
           fontWeight: 700,
           borderRadius: 8,
+        },
+        contained: {
+          backgroundColor: PRIMARY_COLOR,
+          color: "#ffffff",
+          "&:hover": {
+            backgroundColor: alpha(PRIMARY_COLOR, 0.85),
+          },
+          "&:disabled": {
+            backgroundColor: alpha(PRIMARY_COLOR, 0.4),
+            color: "#ffffff",
+          },
         },
       },
     },

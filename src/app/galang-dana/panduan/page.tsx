@@ -18,7 +18,9 @@ export default async function FundraiseGuidePage() {
   const content = await getPageContent("fundraise_guide");
 
   const title = content?.title || "Panduan Galang Dana";
-  const html = content?.content || `
+  const html =
+    content?.content ||
+    `
     <h2>Mulai Dengan Cerita Yang Kuat</h2>
     <p>Ceritakan siapa yang dibantu, kenapa butuh bantuan, dan bagaimana dampaknya. Gunakan bahasa yang jujur dan menyentuh.</p>
     <h2>Tambahkan Bukti Yang Relevan</h2>
@@ -27,7 +29,12 @@ export default async function FundraiseGuidePage() {
     <p>Bagikan campaign ke WhatsApp, media sosial, dan komunitas untuk menjangkau lebih banyak orang baik.</p>
   `;
 
-  const tips: { icon: ReactElement; title: string; desc: string; color: string }[] = [
+  const tips: {
+    icon: ReactElement;
+    title: string;
+    desc: string;
+    color: string;
+  }[] = [
     {
       icon: <LightbulbOutlinedIcon />,
       title: "Tulis judul yang spesifik",
@@ -84,7 +91,9 @@ export default async function FundraiseGuidePage() {
               variant="outlined"
             />
           </Box>
-          <Typography sx={{ fontWeight: 900, fontSize: 22, mt: 1, color: "text.primary" }}>
+          <Typography
+            sx={{ fontWeight: 900, fontSize: 22, mt: 1, color: "text.primary" }}
+          >
             {title}
           </Typography>
           <Typography sx={{ fontSize: 13, color: "text.secondary", mt: 0.5 }}>
@@ -123,10 +132,18 @@ export default async function FundraiseGuidePage() {
                   {t.icon}
                 </Box>
                 <Box sx={{ flex: 1, minWidth: 0 }}>
-                  <Typography sx={{ fontWeight: 800, fontSize: 14, color: "text.primary" }}>
+                  <Typography
+                    sx={{
+                      fontWeight: 800,
+                      fontSize: 14,
+                      color: "text.primary",
+                    }}
+                  >
                     {t.title}
                   </Typography>
-                  <Typography sx={{ fontSize: 13, color: "text.secondary", mt: 0.3 }}>
+                  <Typography
+                    sx={{ fontSize: 13, color: "text.secondary", mt: 0.3 }}
+                  >
                     {t.desc}
                   </Typography>
                 </Box>
@@ -146,12 +163,19 @@ export default async function FundraiseGuidePage() {
             bgcolor: "background.paper",
           }}
         >
-          <Typography sx={{ fontWeight: 800, fontSize: 16, mb: 1 }}>Langkah-langkah</Typography>
+          <Typography sx={{ fontWeight: 800, fontSize: 16, mb: 1 }}>
+            Langkah-langkah
+          </Typography>
           <Stack spacing={1.2}>
             {steps.map((s, i) => (
-              <Box key={i} sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <Box
+                key={i}
+                sx={{ display: "flex", alignItems: "center", gap: 1 }}
+              >
                 <CheckCircleIcon sx={{ fontSize: 18, color: "success.main" }} />
-                <Typography sx={{ fontSize: 13, color: "text.secondary" }}>{s}</Typography>
+                <Typography sx={{ fontSize: 13, color: "text.secondary" }}>
+                  {s}
+                </Typography>
               </Box>
             ))}
           </Stack>
@@ -170,9 +194,24 @@ export default async function FundraiseGuidePage() {
         >
           <Box
             sx={{
-              "& img": { maxWidth: "100%", height: "auto", borderRadius: 2, my: 1.5 },
-              "& p": { fontSize: 15, lineHeight: 1.8, color: "text.secondary", mb: 2 },
-              "& h1, & h2, & h3": { color: "text.primary", fontWeight: 800, mt: 2, mb: 1 },
+              "& img": {
+                maxWidth: "100%",
+                height: "auto",
+                borderRadius: 2,
+                my: 1.5,
+              },
+              "& p": {
+                fontSize: 15,
+                lineHeight: 1.8,
+                color: "text.secondary",
+                mb: 2,
+              },
+              "& h1, & h2, & h3": {
+                color: "text.primary",
+                fontWeight: 800,
+                mt: 2,
+                mb: 1,
+              },
               "& ul, & ol": { pl: 3, mb: 2 },
               "& li": { mb: 0.5 },
               "& a": { color: "primary.main", textDecoration: "underline" },
@@ -184,4 +223,3 @@ export default async function FundraiseGuidePage() {
     </Box>
   );
 }
-

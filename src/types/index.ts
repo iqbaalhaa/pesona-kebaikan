@@ -47,4 +47,6 @@ export interface Campaign {
 	latestUpdate?: string;
 	slug?: string;
 	isEmergency?: boolean;
+	organizerVerifiedAt?: Date | string | null;
+	organizerVerifiedAs?: string | null;
 }
