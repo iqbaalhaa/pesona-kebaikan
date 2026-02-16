@@ -198,7 +198,7 @@ export default function PrayersSection({
 				}}
 			>
 				<Typography sx={{ fontSize: 16, fontWeight: 900, color: "#0f172a" }}>
-					Doa-doa orang baik
+					Doa orang baik
 				</Typography>
 
 				<Button

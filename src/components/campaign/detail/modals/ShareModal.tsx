@@ -12,7 +12,7 @@ import {
 import CloseIcon from "@mui/icons-material/Close";
 import WhatsAppIcon from "@mui/icons-material/WhatsApp";
 import FacebookIcon from "@mui/icons-material/Facebook";
-import TwitterIcon from "@mui/icons-material/Twitter";
+import XIcon from "@mui/icons-material/X";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import { Transition } from "../utils";
 
@@ -101,22 +101,22 @@ export default function ShareModal({
 						</Box>
 					</Box>
 					<Box
-						onClick={() => handleShareAction("twitter")}
+						onClick={() => handleShareAction("x")}
 						sx={{ textAlign: "center", cursor: "pointer" }}
 					>
 						<Box sx={{ textAlign: "center", cursor: "pointer" }}>
 							<Avatar
 								sx={{
-									bgcolor: "#1DA1F2",
+									bgcolor: "#020617",
 									width: 50,
 									height: 50,
 									mx: "auto",
 									mb: 1,
 								}}
 							>
-								<TwitterIcon />
+								<XIcon sx={{ fontSize: 28, color: "#ffffff" }} />
 							</Avatar>
-							<Typography variant="caption">Twitter</Typography>
+							<Typography variant="caption">X</Typography>
 						</Box>
 					</Box>
 					<Box

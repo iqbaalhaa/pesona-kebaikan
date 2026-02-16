@@ -10,9 +10,12 @@ export default async function SettingsPage() {
 		redirect("/auth/login");
 	}
 
-	// Fetch existing key (e.g., 'whatsapp_client_id')
-	const notifyKey = await getNotifyKey("whatsapp_client_id");
-	const secretKey = await getNotifyKey("whatsapp_secret_key");
+	const applicationIdKey =
+		(await getNotifyKey("whatsapp_application_id")) ||
+		(await getNotifyKey("whatsapp_client_id"));
+	const applicationSecretKey =
+		(await getNotifyKey("whatsapp_application_secret")) ||
+		(await getNotifyKey("whatsapp_secret_key"));
 
 	// Fetch Email Settings
 	const emailKeys = await getNotifyKeys([
@@ -56,25 +59,28 @@ export default async function SettingsPage() {
 			<div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
 				<h2 className="text-lg font-semibold mb-4">Notifikasi WhatsApp</h2>
 				<p className="text-sm text-gray-500 mb-6">
-					Konfigurasi Client ID untuk layanan notifikasi WhatsApp gateway.
+					Konfigurasi Application ID dan Application Secret untuk layanan
+					notifikasi WhatsApp gateway.
 				</p>
 
 				<SettingsForm
-					initialKey="whatsapp_client_id"
-					initialValue={notifyKey?.value || ""}
-					initialName={notifyKey?.name || "WhatsApp Gateway Client ID"}
-					label="WhatsApp Client ID"
-					placeholder="Masukkan Client ID (UUID)"
+					initialKey="whatsapp_application_id"
+					initialValue={applicationIdKey?.value || ""}
+					initialName={applicationIdKey?.name || "WhatsApp Application ID"}
+					label="WhatsApp Application ID"
+					placeholder="Masukkan Application ID"
 				/>
 
 				<div className="my-4"></div>
 
 				<SettingsForm
-					initialKey="whatsapp_secret_key"
-					initialValue={secretKey?.value || ""}
-					initialName={secretKey?.name || "WhatsApp Gateway Secret Key"}
-					label="WhatsApp Secret Key"
-					placeholder="Masukkan Secret Key"
+					initialKey="whatsapp_application_secret"
+					initialValue={applicationSecretKey?.value || ""}
+					initialName={
+						applicationSecretKey?.name || "WhatsApp Application Secret"
+					}
+					label="WhatsApp Application Secret"
+					placeholder="Masukkan Application Secret"
 				/>
 			</div>
 

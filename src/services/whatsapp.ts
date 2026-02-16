@@ -15,20 +15,32 @@ function formatPhoneNumber(phone: string) {
 
 export async function sendWhatsAppMessage(to: string, message: string) {
 	try {
-		const [notifyKey, secretKey] = await Promise.all([
-			prisma.notifyKey.findUnique({ where: { key: "whatsapp_client_id" } }),
-			prisma.notifyKey.findUnique({ where: { key: "whatsapp_secret_key" } }),
-		]);
+		const [applicationIdKey, legacyClientIdKey, applicationSecretKey, legacySecretKey] =
+			await Promise.all([
+				prisma.notifyKey.findUnique({
+					where: { key: "whatsapp_application_id" },
+				}),
+				prisma.notifyKey.findUnique({
+					where: { key: "whatsapp_client_id" },
+				}),
+				prisma.notifyKey.findUnique({
+					where: { key: "whatsapp_application_secret" },
+				}),
+				prisma.notifyKey.findUnique({
+					where: { key: "whatsapp_secret_key" },
+				}),
+			]);
 
-		if (!notifyKey || !notifyKey.value) {
-			throw new Error("WhatsApp Client ID belum dikonfigurasi.");
+		const applicationId = applicationIdKey?.value || legacyClientIdKey?.value;
+
+		if (!applicationId) {
+			throw new Error("WhatsApp Application ID belum dikonfigurasi.");
 		}
 
-		const clientId = notifyKey.value;
-		// Use configured secret key or fallback to default
-		const secret = secretKey?.value || WA_SECRET_DEFAULT;
+		const secret =
+			applicationSecretKey?.value || legacySecretKey?.value || WA_SECRET_DEFAULT;
 
-		const url = `${WA_NOTIFY_API}/${clientId}/send`;
+		const url = `${WA_NOTIFY_API}/applications/${applicationId}/send`;
 
 		const formattedTo = formatPhoneNumber(to);
 
@@ -61,15 +73,19 @@ export async function sendWhatsAppMessage(to: string, message: string) {
 		if (!response.ok) {
 			console.error("WhatsApp API Error:", data);
 
-			if (response.status === 404 && data.error === "client not found") {
+			if (
+				response.status === 404 &&
+				(data.error === "client not found" ||
+					data.error === "application not found")
+			) {
 				throw new Error(
-					"WhatsApp Client ID tidak valid atau tidak ditemukan. Silakan periksa pengaturan.",
+					"WhatsApp Application ID tidak valid atau tidak ditemukan. Silakan periksa pengaturan.",
 				);
 			}
 
 			if (response.status === 401) {
 				throw new Error(
-					"WhatsApp Secret Key salah atau tidak cocok dengan Client ID. Silakan periksa pengaturan.",
+					"WhatsApp Application Secret salah atau tidak cocok dengan Application ID. Silakan periksa pengaturan.",
 				);
 			}
 

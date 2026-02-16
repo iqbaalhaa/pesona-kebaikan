@@ -79,6 +79,7 @@ export default function VerificationDialog({
 	const [emailLoading, setEmailLoading] = React.useState<boolean>(false);
 
 	const [waCooldown, setWaCooldown] = React.useState<number>(0);
+	const [otpPhone, setOtpPhone] = React.useState<string | null>(null);
 	const [showResend, setShowResend] = React.useState<boolean>(false);
 	const [docNumber, setDocNumber] = React.useState<string>("");
 	const [ktpUrl, setKtpUrl] = React.useState<string | null>(null);
@@ -507,6 +508,7 @@ export default function VerificationDialog({
 																setWaLoading(true);
 																const res = await requestVerificationOtp(phone);
 																if (res.success) {
+																	setOtpPhone(phone);
 																	setWaCooldown(60); // 60 seconds cooldown
 																	setShowResend(true);
 																}
@@ -593,10 +595,20 @@ export default function VerificationDialog({
 													}
 													try {
 														setWaLoading(true);
-														const res = await verifyOtp(phone, waOtp);
+														const phoneForOtp = otpPhone || phone;
+														const res = await verifyOtp(phoneForOtp, waOtp);
 														if (res.success) {
-															await markPhoneVerified(phone);
-															await update(); // Refresh session
+															const markRes =
+																await markPhoneVerified(phoneForOtp);
+															if (!markRes.success) {
+																showSnackbar(
+																	markRes.error ||
+																		"Gagal menandai nomor sebagai terverifikasi",
+																	"error",
+																);
+																return;
+															}
+															await update();
 															setActiveStep((s) => s + 1);
 														} else {
 															showSnackbar(

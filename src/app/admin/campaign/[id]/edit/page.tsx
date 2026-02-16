@@ -36,6 +36,7 @@ export default function AdminEditCampaignPage() {
 	const [coverPreview, setCoverPreview] = React.useState<string>("");
 	const [target, setTarget] = React.useState<string>("");
 	const [campaign, setCampaign] = React.useState<any>(null);
+	const [featured, setFeatured] = React.useState<boolean>(false);
 
 	const [snackbar, setSnackbar] = React.useState<{
 		open: boolean;
@@ -97,6 +98,9 @@ export default function AdminEditCampaignPage() {
 		setSubmitting(true);
 		const formData = new FormData(e.currentTarget);
 		formData.set("target", target.replace(/\D/g, ""));
+		if (featured) {
+			formData.set("metadata", JSON.stringify({ featured: true }));
+		}
 
 		const res = await updateCampaign(id, formData);
 		if (res.success) {
@@ -234,6 +238,17 @@ export default function AdminEditCampaignPage() {
 								}}
 							/>
 						)}
+					</Box>
+
+					<Box sx={{ display: "flex", alignItems: "center" }}>
+						<input
+							type="checkbox"
+							id="featured"
+							checked={featured}
+							onChange={(e) => setFeatured(e.target.checked)}
+							style={{ marginRight: 8 }}
+						/>
+						<label htmlFor="featured">Jadikan Pilihan Pesona</label>
 					</Box>
 
 					<Button

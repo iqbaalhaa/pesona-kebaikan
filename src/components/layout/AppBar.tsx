@@ -261,11 +261,11 @@ export default function SimpleAppBar({ variant = "solid" }: SimpleAppBarProps) {
 									<Paper
 										elevation={4}
 										sx={{
-											position: "absolute",
-											top: "100%",
+											position: "fixed",
+											top: 72,
 											left: 0,
 											right: 0,
-											mt: 1,
+											mt: 0,
 											maxHeight: 400,
 											overflowY: "auto",
 											zIndex: 1200,

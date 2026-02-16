@@ -22,403 +22,405 @@ import ListItemButton from "@mui/material/ListItemButton";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import { useTheme } from "@mui/material/styles";
 import ShareIcon from "@mui/icons-material/Share";
-import TwitterIcon from "@mui/icons-material/Twitter";
+import XIcon from "@mui/icons-material/X";
 import FacebookIcon from "@mui/icons-material/Facebook";
 import WhatsAppIcon from "@mui/icons-material/WhatsApp";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 
 type BlogPost = {
-  id: string;
-  title: string;
-  excerpt: string;
-  cover: string;
-  date: string;
-  tag: string;
+	id: string;
+	title: string;
+	excerpt: string;
+	cover: string;
+	date: string;
+	tag: string;
 };
 
 type BlogListClientProps = {
-  posts: BlogPost[];
-  categories: string[];
+	posts: BlogPost[];
+	categories: string[];
 };
 
 export default function BlogListClient({
-  posts,
-  categories,
+	posts,
+	categories,
 }: BlogListClientProps) {
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  
-  const currentCategory = searchParams.get("category") || "Semua";
+	const theme = useTheme();
+	const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+	const router = useRouter();
+	const searchParams = useSearchParams();
 
-  const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
-  const [selectedPostId, setSelectedPostId] = React.useState<string | null>(
-    null
-  );
-  const open = Boolean(anchorEl);
-  const drawerOpen = Boolean(selectedPostId);
+	const currentCategory = searchParams.get("category") || "Semua";
 
-  const handleFilterChange = (category: string) => {
-    if (category === "Semua") {
-      router.push("/blog");
-    } else {
-      router.push(`/blog?category=${category}`);
-    }
-  };
+	const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
+	const [selectedPostId, setSelectedPostId] = React.useState<string | null>(
+		null,
+	);
+	const open = Boolean(anchorEl);
+	const drawerOpen = Boolean(selectedPostId);
 
-  const handleShareClick = (
-    event: React.MouseEvent<HTMLElement>,
-    postId: string
-  ) => {
-    event.preventDefault();
-    event.stopPropagation();
-    if (!isMobile) {
-      setAnchorEl(event.currentTarget);
-    }
-    setSelectedPostId(postId);
-  };
+	const handleFilterChange = (category: string) => {
+		if (category === "Semua") {
+			router.push("/blog");
+		} else {
+			router.push(`/blog?category=${category}`);
+		}
+	};
 
-  const handleClose = (e?: React.MouseEvent) => {
-    if (e) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
-    setAnchorEl(null);
-    setSelectedPostId(null);
-  };
+	const handleShareClick = (
+		event: React.MouseEvent<HTMLElement>,
+		postId: string,
+	) => {
+		event.preventDefault();
+		event.stopPropagation();
+		if (!isMobile) {
+			setAnchorEl(event.currentTarget);
+		}
+		setSelectedPostId(postId);
+	};
 
-  const handleShare = (platform: string) => {
-    if (!selectedPostId) return;
+	const handleClose = (e?: React.MouseEvent) => {
+		if (e) {
+			e.preventDefault();
+			e.stopPropagation();
+		}
+		setAnchorEl(null);
+		setSelectedPostId(null);
+	};
 
-    const post = posts.find((p) => p.id === selectedPostId);
-    if (!post) return;
+	const handleShare = (platform: string) => {
+		if (!selectedPostId) return;
 
-    const url = `${window.location.origin}/blog/${post.id}`;
-    const text = post.title;
+		const post = posts.find((p) => p.id === selectedPostId);
+		if (!post) return;
 
-    let shareUrl = "";
-    switch (platform) {
-      case "twitter":
-        shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(
-          text
-        )}&url=${encodeURIComponent(url)}`;
-        break;
-      case "facebook":
-        shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(
-          url
-        )}`;
-        break;
-      case "whatsapp":
-        shareUrl = `https://wa.me/?text=${encodeURIComponent(
-          text + " " + url
-        )}`;
-        break;
-      case "copy":
-        navigator.clipboard.writeText(url);
-        handleClose();
-        return;
-    }
+		const url = `${window.location.origin}/blog/${post.id}`;
+		const text = post.title;
 
-    if (shareUrl) {
-      window.open(shareUrl, "_blank", "noopener,noreferrer");
-    }
-    handleClose();
-  };
+		let shareUrl = "";
+		switch (platform) {
+			case "twitter":
+				shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(
+					text,
+				)}&url=${encodeURIComponent(url)}`;
+				break;
+			case "facebook":
+				shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(
+					url,
+				)}`;
+				break;
+			case "whatsapp":
+				shareUrl = `https://wa.me/?text=${encodeURIComponent(
+					text + " " + url,
+				)}`;
+				break;
+			case "copy":
+				navigator.clipboard.writeText(url);
+				handleClose();
+				return;
+		}
 
-  const shareOptions = [
-    { id: "twitter", label: "Twitter", icon: <TwitterIcon fontSize="small" /> },
-    {
-      id: "facebook",
-      label: "Facebook",
-      icon: <FacebookIcon fontSize="small" />,
-    },
-    {
-      id: "whatsapp",
-      label: "WhatsApp",
-      icon: <WhatsAppIcon fontSize="small" />,
-    },
-    {
-      id: "copy",
-      label: "Salin Link",
-      icon: <ContentCopyIcon fontSize="small" />,
-    },
-  ];
+		if (shareUrl) {
+			window.open(shareUrl, "_blank", "noopener,noreferrer");
+		}
+		handleClose();
+	};
 
-  return (
-    <Box sx={{ px: 2, pt: 2.5, maxWidth: 800, mx: "auto" }}>
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          mb: 2,
-        }}
-      >
-        <Typography sx={{ fontSize: 24, fontWeight: 900, color: "#0f172a" }}>
-          Blog
-        </Typography>
-      </Box>
+	const shareOptions = [
+		{ id: "twitter", label: "X", icon: <XIcon fontSize="small" /> },
+		{
+			id: "facebook",
+			label: "Facebook",
+			icon: <FacebookIcon fontSize="small" />,
+		},
+		{
+			id: "whatsapp",
+			label: "WhatsApp",
+			icon: <WhatsAppIcon fontSize="small" />,
+		},
+		{
+			id: "copy",
+			label: "Salin Link",
+			icon: <ContentCopyIcon fontSize="small" />,
+		},
+	];
 
-      <Stack
-        direction="row"
-        spacing={1}
-        sx={{ mt: 2, mb: 3, overflowX: "auto", pb: 0.5 }}
-      >
-        {["Semua", ...categories].map((tag) => (
-          <Chip
-            key={tag}
-            label={tag}
-            color={currentCategory === tag ? "primary" : "default"}
-            variant={currentCategory === tag ? "filled" : "outlined"}
-            onClick={() => handleFilterChange(tag)}
-            sx={{ fontWeight: 600, cursor: "pointer" }}
-          />
-        ))}
-      </Stack>
+	return (
+		<Box sx={{ px: 2, pt: 2.5, maxWidth: 800, mx: "auto" }}>
+			<Box
+				sx={{
+					display: "flex",
+					alignItems: "center",
+					justifyContent: "space-between",
+					mb: 2,
+				}}
+			>
+				<Typography sx={{ fontSize: 24, fontWeight: 900, color: "#0f172a" }}>
+					Blog
+				</Typography>
+			</Box>
 
-      <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-        {posts.length === 0 ? (
-           <Typography sx={{ textAlign: 'center', mt: 4, color: 'text.secondary' }}>
-             Tidak ada artikel ditemukan.
-           </Typography>
-        ) : (
-          posts.map((post) => (
-            <Link 
-              key={post.id} 
-              href={`/blog/${post.id}`}
-              style={{ textDecoration: 'none', display: 'block' }}
-            >
-              <Card
-                variant="outlined"
-                sx={{
-                  display: "flex",
-                  flexDirection: { xs: "column", sm: "row" },
-                  gap: 2,
-                  p: 2,
-                  borderRadius: 3,
-                  borderColor: "rgba(0,0,0,0.08)",
-                  bgcolor: "#fff",
-                  transition: "all 0.2s ease",
-                  "&:hover": {
-                    borderColor: "primary.main",
-                    boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
-                    transform: "translateY(-2px)",
-                  },
-                }}
-              >
-                <CardMedia
-                  component="img"
-                  image={post.cover}
-                  alt={post.title}
-                  sx={{
-                    width: { xs: "100%", sm: 200 },
-                    height: { xs: 200, sm: 160 },
-                    borderRadius: 2,
-                    objectFit: "cover",
-                    flexShrink: 0,
-                    bgcolor: "rgba(0,0,0,0.04)",
-                  }}
-                />
-                <CardContent
-                  sx={{
-                    p: 0,
-                    display: "flex",
-                    flexDirection: "column",
-                    justifyContent: "center",
-                    flex: 1,
-                    "&:last-child": { pb: 0 },
-                  }}
-                >
-                  <Box
-                    sx={{ 
-                      display: "flex", 
-                      alignItems: "center", 
-                      gap: 1, 
-                      mb: 1.5,
-                    }}
-                  >
-                    <Chip
-                      size="small"
-                      label={post.tag}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        handleFilterChange(post.tag);
-                      }}
-                      sx={{
-                        borderRadius: 1,
-                        height: 24,
-                        fontSize: 11,
-                        fontWeight: 700,
-                        cursor: "pointer",
-                      }}
-                      color="primary"
-                      variant="filled"
-                    />
-                    <Typography
-                      sx={{
-                        fontSize: 11.5,
-                        color: "rgba(15,23,42,.55)",
-                        fontWeight: 700,
-                      }}
-                    >
-                      {post.date}
-                    </Typography>
-                  </Box>
-                  <Typography
-                    sx={{
-                      fontSize: 18,
-                      fontWeight: 800,
-                      color: "#0f172a",
-                      lineHeight: 1.3,
-                      mb: 1,
-                      display: "-webkit-box",
-                      WebkitLineClamp: 2,
-                      WebkitBoxOrient: "vertical",
-                      overflow: "hidden",
-                    }}
-                  >
-                    {post.title}
-                  </Typography>
-                  <Typography
-                    sx={{
-                      fontSize: 14.5,
-                      color: "rgba(15,23,42,.70)",
-                      lineHeight: 1.6,
-                      mb: 2,
-                      display: "-webkit-box",
-                      WebkitLineClamp: 2,
-                      WebkitBoxOrient: "vertical",
-                      overflow: "hidden",
-                    }}
-                  >
-                    {post.excerpt}
-                  </Typography>
+			<Stack
+				direction="row"
+				spacing={1}
+				sx={{ mt: 2, mb: 3, overflowX: "auto", pb: 0.5 }}
+			>
+				{["Semua", ...categories].map((tag) => (
+					<Chip
+						key={tag}
+						label={tag}
+						color={currentCategory === tag ? "primary" : "default"}
+						variant={currentCategory === tag ? "filled" : "outlined"}
+						onClick={() => handleFilterChange(tag)}
+						sx={{ fontWeight: 600, cursor: "pointer" }}
+					/>
+				))}
+			</Stack>
 
-                  <Box
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      mt: "auto",
-                    }}
-                  >
-                    <Typography
-                      sx={{
-                        fontSize: 13,
-                        fontWeight: 700,
-                        color: "primary.main",
-                      }}
-                    >
-                      Baca Selengkapnya
-                    </Typography>
-                    <IconButton
-                      size="small"
-                      onClick={(e) => handleShareClick(e, post.id)}
-                      sx={{ 
-                        color: "rgba(15,23,42,.4)",
-                        "&:hover": { color: "primary.main" }
-                      }}
-                    >
-                      <ShareIcon fontSize="small" />
-                    </IconButton>
-                  </Box>
-                </CardContent>
-              </Card>
-            </Link>
-          ))
-        )}
-      </Box>
+			<Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+				{posts.length === 0 ? (
+					<Typography
+						sx={{ textAlign: "center", mt: 4, color: "text.secondary" }}
+					>
+						Tidak ada artikel ditemukan.
+					</Typography>
+				) : (
+					posts.map((post) => (
+						<Link
+							key={post.id}
+							href={`/blog/${post.id}`}
+							style={{ textDecoration: "none", display: "block" }}
+						>
+							<Card
+								variant="outlined"
+								sx={{
+									display: "flex",
+									flexDirection: { xs: "column", sm: "row" },
+									gap: 2,
+									p: 2,
+									borderRadius: 3,
+									borderColor: "rgba(0,0,0,0.08)",
+									bgcolor: "#fff",
+									transition: "all 0.2s ease",
+									"&:hover": {
+										borderColor: "primary.main",
+										boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
+										transform: "translateY(-2px)",
+									},
+								}}
+							>
+								<CardMedia
+									component="img"
+									image={post.cover}
+									alt={post.title}
+									sx={{
+										width: { xs: "100%", sm: 200 },
+										height: { xs: 200, sm: 160 },
+										borderRadius: 2,
+										objectFit: "cover",
+										flexShrink: 0,
+										bgcolor: "rgba(0,0,0,0.04)",
+									}}
+								/>
+								<CardContent
+									sx={{
+										p: 0,
+										display: "flex",
+										flexDirection: "column",
+										justifyContent: "center",
+										flex: 1,
+										"&:last-child": { pb: 0 },
+									}}
+								>
+									<Box
+										sx={{
+											display: "flex",
+											alignItems: "center",
+											gap: 1,
+											mb: 1.5,
+										}}
+									>
+										<Chip
+											size="small"
+											label={post.tag}
+											onClick={(e) => {
+												e.preventDefault();
+												e.stopPropagation();
+												handleFilterChange(post.tag);
+											}}
+											sx={{
+												borderRadius: 1,
+												height: 24,
+												fontSize: 11,
+												fontWeight: 700,
+												cursor: "pointer",
+											}}
+											color="primary"
+											variant="filled"
+										/>
+										<Typography
+											sx={{
+												fontSize: 11.5,
+												color: "rgba(15,23,42,.55)",
+												fontWeight: 700,
+											}}
+										>
+											{post.date}
+										</Typography>
+									</Box>
+									<Typography
+										sx={{
+											fontSize: 18,
+											fontWeight: 800,
+											color: "#0f172a",
+											lineHeight: 1.3,
+											mb: 1,
+											display: "-webkit-box",
+											WebkitLineClamp: 2,
+											WebkitBoxOrient: "vertical",
+											overflow: "hidden",
+										}}
+									>
+										{post.title}
+									</Typography>
+									<Typography
+										sx={{
+											fontSize: 14.5,
+											color: "rgba(15,23,42,.70)",
+											lineHeight: 1.6,
+											mb: 2,
+											display: "-webkit-box",
+											WebkitLineClamp: 2,
+											WebkitBoxOrient: "vertical",
+											overflow: "hidden",
+										}}
+									>
+										{post.excerpt}
+									</Typography>
 
-      {isMobile ? (
-        <Drawer
-          anchor="bottom"
-          open={drawerOpen}
-          onClose={() => handleClose()}
-          PaperProps={{
-            sx: {
-              borderTopLeftRadius: 16,
-              borderTopRightRadius: 16,
-              p: 2,
-            },
-          }}
-        >
-          <Typography
-            sx={{
-              fontWeight: 800,
-              mb: 2,
-              fontSize: 16,
-              textAlign: "center",
-              color: "#0f172a",
-            }}
-          >
-            Bagikan ke
-          </Typography>
-          <List sx={{ pt: 0 }}>
-            {shareOptions.map((option) => (
-              <ListItem key={option.id} disablePadding>
-                <ListItemButton
-                  onClick={() => handleShare(option.id)}
-                  sx={{
-                    borderRadius: 2,
-                    py: 1.5,
-                    display: "flex",
-                    gap: 2,
-                  }}
-                >
-                  <ListItemIcon
-                    sx={{ minWidth: 0, color: "rgba(15,23,42,.8)" }}
-                  >
-                    {option.icon}
-                  </ListItemIcon>
-                  <ListItemText
-                    primary={option.label}
-                    primaryTypographyProps={{
-                      fontWeight: 600,
-                      fontSize: 14.5,
-                      color: "#0f172a",
-                    }}
-                  />
-                </ListItemButton>
-              </ListItem>
-            ))}
-          </List>
-        </Drawer>
-      ) : (
-        <Menu
-          anchorEl={anchorEl}
-          open={open}
-          onClose={() => handleClose()}
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-          }}
-          PaperProps={{
-            elevation: 3,
-            sx: {
-              mt: 1,
-              borderRadius: 2,
-              minWidth: 180,
-              "& .MuiMenuItem-root": {
-                fontSize: 14,
-                fontWeight: 600,
-                color: "rgba(15,23,42,.8)",
-                py: 1,
-              },
-            },
-          }}
-          transformOrigin={{ horizontal: "right", vertical: "top" }}
-          anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
-        >
-          {shareOptions.map((option) => (
-            <MenuItem key={option.id} onClick={() => handleShare(option.id)}>
-              <ListItemIcon>{option.icon}</ListItemIcon>
-              <ListItemText>{option.label}</ListItemText>
-            </MenuItem>
-          ))}
-        </Menu>
-      )}
-    </Box>
-  );
+									<Box
+										sx={{
+											display: "flex",
+											alignItems: "center",
+											justifyContent: "space-between",
+											mt: "auto",
+										}}
+									>
+										<Typography
+											sx={{
+												fontSize: 13,
+												fontWeight: 700,
+												color: "primary.main",
+											}}
+										>
+											Baca Selengkapnya
+										</Typography>
+										<IconButton
+											size="small"
+											onClick={(e) => handleShareClick(e, post.id)}
+											sx={{
+												color: "rgba(15,23,42,.4)",
+												"&:hover": { color: "primary.main" },
+											}}
+										>
+											<ShareIcon fontSize="small" />
+										</IconButton>
+									</Box>
+								</CardContent>
+							</Card>
+						</Link>
+					))
+				)}
+			</Box>
+
+			{isMobile ? (
+				<Drawer
+					anchor="bottom"
+					open={drawerOpen}
+					onClose={() => handleClose()}
+					PaperProps={{
+						sx: {
+							borderTopLeftRadius: 16,
+							borderTopRightRadius: 16,
+							p: 2,
+						},
+					}}
+				>
+					<Typography
+						sx={{
+							fontWeight: 800,
+							mb: 2,
+							fontSize: 16,
+							textAlign: "center",
+							color: "#0f172a",
+						}}
+					>
+						Bagikan ke
+					</Typography>
+					<List sx={{ pt: 0 }}>
+						{shareOptions.map((option) => (
+							<ListItem key={option.id} disablePadding>
+								<ListItemButton
+									onClick={() => handleShare(option.id)}
+									sx={{
+										borderRadius: 2,
+										py: 1.5,
+										display: "flex",
+										gap: 2,
+									}}
+								>
+									<ListItemIcon
+										sx={{ minWidth: 0, color: "rgba(15,23,42,.8)" }}
+									>
+										{option.icon}
+									</ListItemIcon>
+									<ListItemText
+										primary={option.label}
+										primaryTypographyProps={{
+											fontWeight: 600,
+											fontSize: 14.5,
+											color: "#0f172a",
+										}}
+									/>
+								</ListItemButton>
+							</ListItem>
+						))}
+					</List>
+				</Drawer>
+			) : (
+				<Menu
+					anchorEl={anchorEl}
+					open={open}
+					onClose={() => handleClose()}
+					onClick={(e) => {
+						e.preventDefault();
+						e.stopPropagation();
+					}}
+					PaperProps={{
+						elevation: 3,
+						sx: {
+							mt: 1,
+							borderRadius: 2,
+							minWidth: 180,
+							"& .MuiMenuItem-root": {
+								fontSize: 14,
+								fontWeight: 600,
+								color: "rgba(15,23,42,.8)",
+								py: 1,
+							},
+						},
+					}}
+					transformOrigin={{ horizontal: "right", vertical: "top" }}
+					anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
+				>
+					{shareOptions.map((option) => (
+						<MenuItem key={option.id} onClick={() => handleShare(option.id)}>
+							<ListItemIcon>{option.icon}</ListItemIcon>
+							<ListItemText>{option.label}</ListItemText>
+						</MenuItem>
+					))}
+				</Menu>
+			)}
+		</Box>
+	);
 }

@@ -1236,7 +1236,10 @@ export default function UsersClient({
 												<Tooltip title="Atur Ulang Kata Sandi">
 													<IconButton
 														size="small"
-														onClick={() => handleOpenResetPassword(user)}
+														onClick={(e) => {
+															e.stopPropagation();
+															handleOpenResetPassword(user);
+														}}
 														sx={{
 															color: "warning.main",
 															bgcolor: alpha(theme.palette.warning.main, 0.1),
@@ -1248,7 +1251,10 @@ export default function UsersClient({
 												<Tooltip title="Edit">
 													<IconButton
 														size="small"
-														onClick={() => handleOpenEdit(user)}
+														onClick={(e) => {
+															e.stopPropagation();
+															handleOpenEdit(user);
+														}}
 														sx={{
 															color: "primary.main",
 															bgcolor: alpha(theme.palette.primary.main, 0.1),
@@ -1260,7 +1266,10 @@ export default function UsersClient({
 												<Tooltip title="Hapus">
 													<IconButton
 														size="small"
-														onClick={() => handleOpenDelete(user)}
+														onClick={(e) => {
+															e.stopPropagation();
+															handleOpenDelete(user);
+														}}
 														sx={{
 															color: "error.main",
 															bgcolor: alpha(theme.palette.error.main, 0.1),
@@ -1923,7 +1932,7 @@ export default function UsersClient({
 					>
 						<DeleteIcon fontSize="large" />
 					</Box>
-					<Typography variant="h6" fontWeight={800}>
+					<Typography component="span" variant="h6" fontWeight={800}>
 						Hapus User?
 					</Typography>
 				</DialogTitle>
@@ -2076,7 +2085,9 @@ export default function UsersClient({
 						alignItems="center"
 						justifyContent="space-between"
 					>
-						<Typography variant="h6">Pratinjau Foto</Typography>
+						<Typography component="span" variant="h6">
+							Pratinjau Foto
+						</Typography>
 						<IconButton onClick={() => setPreviewImage(null)} size="small">
 							<CancelIcon />
 						</IconButton>

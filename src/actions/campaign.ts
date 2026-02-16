@@ -1183,6 +1183,66 @@ export async function getPopularCampaigns(limit: number = 10) {
 	}
 }
 
+export async function getFeaturedCampaigns(limit: number = 10) {
+	try {
+		const campaigns = await prisma.campaign.findMany({
+			where: {
+				status: "ACTIVE",
+				end: { gte: new Date() },
+				slug: { not: QUICK_DONATION_SLUG },
+			},
+			orderBy: { createdAt: "desc" },
+			take: limit * 5,
+			include: {
+				category: true,
+				createdBy: true,
+				donations: true,
+				media: true,
+			},
+		});
+
+		let picks = campaigns.filter((c) => {
+			const m: any = (c as any).metadata || {};
+			return m?.featured === true || m?.featured === "true";
+		});
+
+		if (picks.length > 0) {
+			picks = picks
+				.map((c) => {
+					const m: any = (c as any).metadata || {};
+					const order =
+						typeof m?.featuredOrder === "number"
+							? m.featuredOrder
+							: parseInt(m?.featuredOrder || "0", 10) || 0;
+					return { c, order };
+				})
+				.sort((a, b) => a.order - b.order)
+				.map((x) => x.c)
+				.slice(0, limit);
+		} else {
+			picks = campaigns
+				.sort((a, b) => {
+					const validA = a.donations.filter((d) =>
+						["PAID", "paid", "SETTLED", "COMPLETED"].includes(d.status),
+					).length;
+					const validB = b.donations.filter((d) =>
+						["PAID", "paid", "SETTLED", "COMPLETED"].includes(d.status),
+					).length;
+					return validB - validA;
+				})
+				.slice(0, limit);
+		}
+
+		return {
+			success: true,
+			data: mapCampaignsToTypes(picks),
+		};
+	} catch (error) {
+		console.error("Get featured campaigns error:", error);
+		return { success: false, error: "Failed to fetch featured campaigns" };
+	}
+}
+
 export async function getAllActiveCampaigns(limit: number = 50) {
 	try {
 		// Fetch active campaigns

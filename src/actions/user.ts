@@ -7,6 +7,12 @@ import { Role, NotificationType } from "@/generated/prisma";
 import { auth } from "@/auth";
 import { createNotification } from "@/actions/notification";
 
+function normalizePhone(phone?: string | null): string | null {
+	if (!phone) return null;
+	const digits = phone.replace(/\D/g, "");
+	return digits || null;
+}
+
 export async function getUsers(
 	query?: string,
 	role?: string,
@@ -165,12 +171,13 @@ export async function createUser(data: CreateUserInput) {
 	try {
 		const hashedPassword = await bcrypt.hash(data.password, 10);
 		const isAdmin = data.role === "ADMIN";
+		const normalizedPhone = normalizePhone(data.phone);
 
 		await prisma.user.create({
 			data: {
 				name: data.name,
 				email: data.email,
-				phone: data.phone || null,
+				phone: normalizedPhone,
 				role: data.role,
 				password: hashedPassword,
 				emailVerified: isAdmin ? new Date() : null,
@@ -200,10 +207,12 @@ type UpdateUserInput = {
 
 export async function updateUser(id: string, data: UpdateUserInput) {
 	try {
+		const normalizedPhone = normalizePhone(data.phone);
+
 		const updateData: Record<string, unknown> = {
 			name: data.name,
 			email: data.email,
-			phone: data.phone || null,
+			phone: normalizedPhone,
 			role: data.role,
 		};
 
@@ -257,11 +266,16 @@ export async function updateCurrentUserPhone(phone: string) {
 		return { success: false, error: "Unauthorized" };
 	}
 
+	const normalizedPhone = normalizePhone(phone);
+	if (!normalizedPhone) {
+		return { success: false, error: "Nomor WhatsApp tidak boleh kosong" };
+	}
+
 	try {
 		// Check if phone is already taken by another user
 		const existing = await prisma.user.findFirst({
 			where: {
-				phone,
+				phone: normalizedPhone,
 				id: { not: session.user.id },
 			},
 		});
@@ -275,7 +289,7 @@ export async function updateCurrentUserPhone(phone: string) {
 
 		await prisma.user.update({
 			where: { id: session.user.id },
-			data: { phone },
+			data: { phone: normalizedPhone },
 		});
 
 		revalidatePath("/admin/pencairan");
@@ -561,7 +575,9 @@ export async function updateMyProfile(data: {
 	const updateData: Record<string, any> = {};
 	if (data.name !== undefined) updateData.name = data.name;
 	if (data.email !== undefined) updateData.email = data.email;
-	if (data.phone !== undefined) updateData.phone = data.phone || null;
+	if (data.phone !== undefined) {
+		updateData.phone = normalizePhone(data.phone);
+	}
 	if (data.image !== undefined) updateData.image = data.image;
 
 	await prisma.user.update({

@@ -114,7 +114,7 @@ export default function FundDetailsModal({
 					<Box sx={{ display: "flex", gap: 1.5, mb: 1 }}>
 						<AccountBalanceWalletRoundedIcon
 							color="primary"
-							sx={{ fontSize: 28, color: "#64748b" }}
+							sx={{ fontSize: 28, color: "#0ba976" }}
 						/>
 						<Box>
 							<Typography sx={{ fontWeight: 700, fontSize: 16 }}>
@@ -141,7 +141,7 @@ export default function FundDetailsModal({
 								label="100%"
 								size="small"
 								sx={{
-									bgcolor: "#0ea5e9",
+									bgcolor: "#0ba976",
 									color: "white",
 									fontWeight: 800,
 									height: 24,
@@ -160,7 +160,7 @@ export default function FundDetailsModal({
 					{/* Breakdown Box */}
 					<Box
 						sx={{
-							bgcolor: "#e0f2fe",
+							bgcolor: "rgba(11,169,118,0.3)",
 							borderRadius: 2,
 							p: 2,
 							mb: 3,
@@ -180,7 +180,7 @@ export default function FundDetailsModal({
 										label={`${100 - (foundationFeePercentage || 0)}%`}
 										size="small"
 										sx={{
-											bgcolor: "#0ea5e9",
+											bgcolor: "#0ba976",
 											color: "white",
 											fontWeight: 800,
 											height: 20,
@@ -264,8 +264,8 @@ export default function FundDetailsModal({
 									label={`${foundationFeePercentage}%`}
 									size="small"
 									sx={{
-										bgcolor: "#e0f2fe", // Lighter blue for 5%
-										color: "#0ea5e9",
+										bgcolor: "rgba(11,169,118,0.08)",
+										color: "#0ba976",
 										fontWeight: 800,
 										height: 24,
 										fontSize: 12,
@@ -281,7 +281,7 @@ export default function FundDetailsModal({
 										? "rotate(180deg)"
 										: "rotate(0deg)",
 									transition: "0.2s",
-									color: "#0ea5e9",
+									color: "#0ba976",
 								}}
 							/>
 						</Box>
@@ -321,14 +321,14 @@ export default function FundDetailsModal({
 							transaksi digital dan Virtual Account, dompet digital dan QRIS
 							serta layanan notifikasi (SMS, WA & email) dan server. Pesona
 							Kebaikan tidak mengambil keuntungan dari layanan ini.{" "}
-							<Link href="#" sx={{ color: "#0ea5e9", textDecoration: "none" }}>
+							<Link href="#" sx={{ color: "#0ba976", textDecoration: "none" }}>
 								Baca lebih lengkap.
 							</Link>
 						</Typography>
 						<Typography sx={{ fontSize: 12, lineHeight: 1.5 }}>
 							** Dana dapat dicairkan dan dikelola oleh penggalang dana. Jika
 							terdapat donasi yang belum disalurkan/dicairkan{" "}
-							<Link href="#" sx={{ color: "#0ea5e9", textDecoration: "none" }}>
+							<Link href="#" sx={{ color: "#0ba976", textDecoration: "none" }}>
 								baca selengkapnya di sini.
 							</Link>
 						</Typography>
@@ -378,7 +378,7 @@ export default function FundDetailsModal({
 					<Box sx={{ display: "flex", gap: 1.5, mb: 1 }}>
 						<FavoriteRoundedIcon
 							color="primary"
-							sx={{ fontSize: 28, color: "#0ea5e9" }}
+							sx={{ fontSize: 28, color: "#0ba976" }}
 						/>
 						<Box>
 							<Typography sx={{ fontWeight: 700, fontSize: 16 }}>
@@ -409,7 +409,7 @@ export default function FundDetailsModal({
 								>
 									<Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
 										<KeyboardArrowRightRoundedIcon
-											sx={{ color: "#0ea5e9", fontSize: 24 }}
+											sx={{ color: "#0ba976", fontSize: 24 }}
 										/>
 										<Typography sx={{ fontSize: 14, color: "#334155" }}>
 											{item.title}
@@ -501,19 +501,6 @@ export default function FundDetailsModal({
 										</Typography>
 									</li>
 								</ul>
-								<Link
-									href="#"
-									underline="none"
-									sx={{
-										fontSize: 14,
-										fontWeight: 800,
-										color: "#0ea5e9",
-										display: "block",
-										mt: 2,
-									}}
-								>
-									SELENGKAPNYA
-								</Link>
 							</Box>
 						</Collapse>
 					</Box>
@@ -525,13 +512,13 @@ export default function FundDetailsModal({
 					variant="contained"
 					onClick={onClose}
 					sx={{
-						bgcolor: "#0ea5e9",
+						bgcolor: "#0ba976",
 						textTransform: "none",
 						fontWeight: 700,
 						py: 1.5,
 						borderRadius: 2,
 						boxShadow: "none",
-						"&:hover": { bgcolor: "#0284c7", boxShadow: "none" },
+						"&:hover": { bgcolor: "#059669", boxShadow: "none" },
 					}}
 				>
 					Tutup
