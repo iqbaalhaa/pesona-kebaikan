@@ -47,6 +47,7 @@ export async function uploadFile(formData: FormData) {
 				Key: key,
 				Body: buffer,
 				ContentType: (file as any).type || "application/octet-stream",
+				ACL: "public-read",
 			}),
 		);
 
