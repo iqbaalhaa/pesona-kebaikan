@@ -113,6 +113,40 @@ export default function PrayersSection({
 		return `p_${idRef.current.toString(36)}`;
 	}, []);
 
+	React.useEffect(() => {
+		if (typeof window === "undefined") return;
+		try {
+			const raw = window.localStorage.getItem("pk_amiin_donations");
+			if (!raw) return;
+			const ids = JSON.parse(raw) as string[];
+			if (!Array.isArray(ids)) return;
+			setLiked((prev) => {
+				const next = { ...prev };
+				ids.forEach((id) => {
+					next[id] = true;
+				});
+				return next;
+			});
+		} catch {}
+	}, []);
+
+	const rememberLiked = React.useCallback((id: string) => {
+		if (typeof window === "undefined") return;
+		try {
+			const raw = window.localStorage.getItem("pk_amiin_donations");
+			const existing = raw ? (JSON.parse(raw) as string[]) : [];
+			if (!Array.isArray(existing)) {
+				window.localStorage.setItem("pk_amiin_donations", JSON.stringify([id]));
+				return;
+			}
+			if (existing.includes(id)) return;
+			window.localStorage.setItem(
+				"pk_amiin_donations",
+				JSON.stringify([...existing, id]),
+			);
+		} catch {}
+	}, []);
+
 	const pulseCount = (prayerId: string) => {
 		setPulsing((prev) => ({ ...prev, [prayerId]: true }));
 		window.setTimeout(() => {
@@ -182,8 +216,10 @@ export default function PrayersSection({
 				pulseCount(id);
 			}
 			setLiked((prev) => ({ ...prev, [id]: true }));
+			rememberLiked(id);
 		} catch {
 			setLiked((prev) => ({ ...prev, [id]: true }));
+			rememberLiked(id);
 		}
 	};
 
@@ -192,12 +228,19 @@ export default function PrayersSection({
 			<Box
 				sx={{
 					display: "flex",
-					alignItems: "center",
+					alignItems: "baseline",
 					justifyContent: "space-between",
-					mb: 1.25,
+					mb: 1.75,
 				}}
 			>
-				<Typography sx={{ fontSize: 16, fontWeight: 900, color: "#0f172a" }}>
+				<Typography
+					sx={{
+						fontSize: 18,
+						fontWeight: 900,
+						color: "#0f172a",
+						letterSpacing: "-0.02em",
+					}}
+				>
 					Doa orang baik
 				</Typography>
 
@@ -207,10 +250,11 @@ export default function PrayersSection({
 					sx={{
 						textTransform: "none",
 						fontWeight: 800,
-						color: "rgba(15,23,42,.60)",
+						fontSize: 12,
+						color: "rgba(15,23,42,.55)",
 						px: 1,
 						borderRadius: 2,
-						"&:hover": { bgcolor: "rgba(15,23,42,.04)" },
+						"&:hover": { bgcolor: "rgba(15,23,42,.04)", color: "#0f172a" },
 					}}
 					component={Link}
 					href="/galang-dana"
@@ -244,9 +288,9 @@ export default function PrayersSection({
 								minWidth: 240,
 								maxWidth: 240,
 								borderRadius: 0,
-								bgcolor: "#fff",
-								border: "none",
-								boxShadow: "none",
+								bgcolor: "rgba(255,255,255,0.96)",
+								border: "1px solid rgba(148,163,184,0.16)",
+								boxShadow: "0 18px 40px rgba(15,23,42,0.06)",
 								overflow: "hidden",
 								scrollSnapAlign: "start",
 							}}
@@ -297,10 +341,10 @@ export default function PrayersSection({
 												display: "inline-flex",
 												maxWidth: "100%",
 												px: 1,
-												py: "3px",
+												py: "2px",
 												borderRadius: 999,
-												border: "1px solid rgba(11,169,118,0.22)",
-												bgcolor: "rgba(11,169,118,0.10)",
+												border: "1px solid rgba(11,169,118,0.18)",
+												bgcolor: "rgba(11,169,118,0.06)",
 											}}
 										>
 											<Typography
@@ -334,7 +378,7 @@ export default function PrayersSection({
 									sx={{
 										mt: 1.2,
 										fontSize: 12.5,
-										color: "rgba(15,23,42,.78)",
+										color: "rgba(15,23,42,.80)",
 										lineHeight: 1.35,
 										display: "-webkit-box",
 										WebkitLineClamp: 4,
@@ -350,7 +394,7 @@ export default function PrayersSection({
 									sx={{
 										mt: 1.2,
 										fontSize: 10.5,
-										color: "rgba(15,23,42,.45)",
+										color: isPulse ? PRIMARY : "rgba(15,23,42,.45)",
 										display: "inline-block",
 										animation: isPulse ? `${pop} 260ms ease` : "none",
 									}}
@@ -451,6 +495,7 @@ export default function PrayersSection({
 									onClick={() => toggleAmiin(p.id)}
 									fullWidth
 									disableRipple
+									disabled={isLiked}
 									variant="contained"
 									sx={{
 										position: "relative",
@@ -461,16 +506,24 @@ export default function PrayersSection({
 										gap: 1,
 										borderRadius: 2.5,
 										py: 1,
-										border: "1px solid rgba(15,23,42,0.10)",
-										bgcolor: "rgba(15,23,42,0.02)",
+										border: isLiked
+											? "1px solid rgba(11,169,118,0.65)"
+											: "1px solid rgba(15,23,42,0.10)",
+										bgcolor: isLiked
+											? "rgba(11,169,118,0.10)"
+											: "rgba(15,23,42,0.02)",
 										color: isLiked ? PRIMARY : "rgba(15,23,42,.75)",
 										textTransform: "none",
 										fontWeight: 800,
 										boxShadow: "none",
 										"&:hover": {
-											bgcolor: "rgba(15,23,42,0.06)",
+											bgcolor: isLiked
+												? "rgba(11,169,118,0.16)"
+												: "rgba(15,23,42,0.06)",
 											boxShadow: "none",
-											border: "1px solid rgba(15,23,42,0.10)",
+											border: isLiked
+												? "1px solid rgba(11,169,118,0.80)"
+												: "1px solid rgba(15,23,42,0.12)",
 										},
 										"&:active": { transform: "scale(0.97)" },
 									}}
