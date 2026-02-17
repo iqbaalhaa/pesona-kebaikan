@@ -44,7 +44,7 @@ import {
 	broadcastNotification,
 } from "@/actions/notification";
 import { getUsers } from "@/actions/user";
-import { NotificationType } from "@/generated/prisma";
+import { NotificationType } from "@prisma/client";
 
 interface NotificationClientProps {
 	initialNotifications: any[];

@@ -2,7 +2,7 @@
 
 import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
-import { NotificationType } from '@/generated/prisma';
+import { NotificationType } from '@prisma/client';
 
 export async function getNotifications(userId: string, type?: NotificationType, limit = 20) {
   try {

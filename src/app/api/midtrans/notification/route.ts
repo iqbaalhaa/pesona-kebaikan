@@ -3,7 +3,7 @@ import { createHash } from "crypto";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { createNotification } from "@/actions/notification";
-import { NotificationType } from "@/generated/prisma";
+import { NotificationType } from "@prisma/client";
 
 type MidtransNotification = {
 	order_id?: string;

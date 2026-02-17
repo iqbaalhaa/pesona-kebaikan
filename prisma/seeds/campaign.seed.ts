@@ -1,5 +1,5 @@
 import { prisma } from "../../src/lib/prisma";
-import { CampaignStatus, CampaignMediaType, PaymentMethod } from "@/generated/prisma";
+import { CampaignStatus, CampaignMediaType, PaymentMethod } from "@prisma/client";
 import { faker } from "@faker-js/faker";
 import { CATEGORY_TITLE } from "../../src/lib/constants";
 

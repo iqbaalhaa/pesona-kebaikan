@@ -3,7 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import bcrypt from "bcryptjs";
-import { Role, NotificationType } from "@/generated/prisma";
+import { Role, NotificationType } from "@prisma/client";
 import { auth } from "@/auth";
 import { createNotification } from "@/actions/notification";
 

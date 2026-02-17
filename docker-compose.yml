@@ -1,0 +1,20 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        DATABASE_URL: "postgresql://postgres:postgres@db-host:5432/pesonakebaikan?schema=public"
+    container_name: pesonakebaikan-app
+    ports:
+      - "3000:3000"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+      - "db-host:host-gateway"
+    env_file:
+      - .env
+      
+    environment:
+      NODE_ENV: production
+    command: npm run start
+    restart: unless-stopped
