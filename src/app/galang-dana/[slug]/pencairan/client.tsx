@@ -81,7 +81,7 @@ export default function WithdrawalList({
 		campaign.collected -
 		withdrawals.reduce(
 			(acc, w) => acc + (w.status !== "REJECTED" ? Number(w.amount) : 0),
-			0
+			0,
 		);
 
 	const handleWithdrawalSubmit = async () => {
@@ -299,10 +299,10 @@ export default function WithdrawalList({
 															w.status === "COMPLETED"
 																? "Selesai"
 																: w.status === "APPROVED"
-																? "Disetujui"
-																: w.status === "REJECTED"
-																? "Ditolak"
-																: "Menunggu"
+																	? "Disetujui"
+																	: w.status === "REJECTED"
+																		? "Ditolak"
+																		: "Menunggu"
 														}
 														size="small"
 														color={
@@ -310,8 +310,8 @@ export default function WithdrawalList({
 															w.status === "APPROVED"
 																? "success"
 																: w.status === "REJECTED"
-																? "error"
-																: "warning"
+																	? "error"
+																	: "warning"
 														}
 														sx={{
 															height: 20,
@@ -543,7 +543,7 @@ export default function WithdrawalList({
 							fullWidth
 							multiline
 							rows={6}
-							placeholder="Ceritakan perkembangan terbaru atau Useran dana..."
+							placeholder="Ceritakan perkembangan terbaru atau penggunaan dana..."
 							value={updateForm.content}
 							onChange={(e) =>
 								setUpdateForm({ ...updateForm, content: e.target.value })

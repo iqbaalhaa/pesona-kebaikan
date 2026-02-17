@@ -483,6 +483,13 @@ export default function SimpleAppBar({ variant = "solid" }: SimpleAppBarProps) {
 													: alpha(theme.palette.primary.main, 0.05),
 											}}
 											onClick={() => {
+												const match =
+													/CAMPAIGN_CHANGE_REQUEST:([a-zA-Z0-9-_]+)/.exec(
+														item.message || "",
+													);
+												if (match && match[1]) {
+													router.push(`/admin/campaign/${match[1]}`);
+												}
 												if (!item.isRead) {
 													markAsRead(item.id);
 													setNotifications((prev) =>

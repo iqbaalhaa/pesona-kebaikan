@@ -53,6 +53,7 @@ import {
 	addCampaignMedia,
 	finishCampaign,
 	updateCampaignStory,
+	updateCampaignMedicalDocs,
 } from "@/actions/campaign";
 import { getCampaignTransactions } from "@/actions/admin";
 import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
@@ -188,7 +189,7 @@ function nowLabel() {
 	const d = new Date();
 	const pad = (x: number) => String(x).padStart(2, "0");
 	return `${pad(d.getDate())}/${pad(d.getMonth() + 1)} ${pad(
-		d.getHours()
+		d.getHours(),
 	)}:${pad(d.getMinutes())}`;
 }
 
@@ -273,13 +274,103 @@ export default function AdminCampaignDetailPage() {
 					.replace(/\s*Tujuan:[\s\S]*/i, "")
 					.trim();
 
+				const meta = (c as any).metadata || {};
+				const type: CampaignType =
+					c.type === "sakit" || c.category === "Bantuan Medis & Kesehatan"
+						? "sakit"
+						: "lainnya";
+
+				const sakitMeta =
+					type === "sakit"
+						? {
+								who: meta.who || "",
+								whoOther: meta.whoOther || "",
+								whoLabel:
+									meta.who === "self"
+										? "Saya sendiri"
+										: meta.who === "kk"
+											? "Keluarga satu KK"
+											: meta.who === "beda_kk"
+												? "Keluarga inti berbeda KK"
+												: meta.who === "other"
+													? meta.whoOther || "Lainnya"
+													: "-",
+								bank: meta.bank || "",
+								bankLabel:
+									meta.bank === "pasien"
+										? "Pasien langsung"
+										: meta.bank === "kk"
+											? "Keluarga satu KK"
+											: meta.bank === "beda_kk"
+												? "Keluarga inti berbeda KK"
+												: meta.bank === "rs"
+													? "Rumah sakit"
+													: meta.bank === "yayasan"
+														? "Rekening Pesona Kebaikan"
+														: "-",
+								patientName: meta.patientName || "-",
+								patientAge: meta.patientAge || "-",
+								patientGender: meta.patientGender || "",
+								patientGenderLabel:
+									meta.patientGender === "L"
+										? "Laki-laki"
+										: meta.patientGender === "P"
+											? "Perempuan"
+											: "-",
+								patientCity: meta.patientCity || "-",
+								inpatient: meta.inpatient || "",
+								inpatientLabel:
+									meta.inpatient === "ya"
+										? "Sedang rawat inap"
+										: meta.inpatient === "tidak"
+											? "Tidak rawat inap"
+											: "-",
+								treatment: meta.treatment || "-",
+								hospital: meta.hospital || "-",
+								bpjs: meta.bpjs || "",
+								bpjsLabel:
+									meta.bpjs === "ya"
+										? "Terdaftar BPJS"
+										: meta.bpjs === "tidak"
+											? "Tidak BPJS"
+											: "-",
+								prevCost: meta.prevCost || "",
+								prevCostLabel:
+									meta.prevCost === "mandiri"
+										? "Biaya mandiri/pribadi"
+										: meta.prevCost === "asuransi"
+											? "Asuransi/BPJS"
+											: "-",
+								usage: meta.usage || "-",
+								cta: meta.cta || "-",
+							}
+						: null;
+
+				const lainnyaMeta =
+					type === "lainnya"
+						? {
+								purposeKey: meta.purposeKey || "-",
+								ktpName: meta.ktpName || "-",
+								receiverName: meta.receiverName || "-",
+								goal: meta.goal || "-",
+								location: meta.location || "-",
+								usageOther: meta.usageOther || "-",
+								ctaOther: meta.ctaOther || "-",
+								job: meta.job || "-",
+								workplace: meta.workplace || "-",
+								soc: meta.soc || "-",
+								socHandle: meta.socHandle || "-",
+								beneficiaries:
+									typeof meta.beneficiaries === "number"
+										? String(meta.beneficiaries)
+										: meta.beneficiaries || "-",
+							}
+						: null;
+
 				const mappedData = {
 					id: c.id,
 					title: c.title,
-					type:
-						c.type === "sakit" || c.category === "Bantuan Medis & Kesehatan"
-							? "sakit"
-							: "lainnya",
+					type,
 					category: c.category || "-",
 					status: statusMap[c.status] || "review",
 					ownerName: c.ownerName || "-",
@@ -301,11 +392,14 @@ export default function AdminCampaignDetailPage() {
 					}),
 					publicUrl: `/donasi/${c.slug || c.id}`,
 					shortInvite: cleanStory.substring(0, 100) + "...",
-					story: c.description, // Use full description (HTML or text)
+					story: c.description,
+					meta: {
+						sakit: sakitMeta,
+						lainnya: lainnyaMeta,
+					},
 				};
 				setData(mappedData);
 
-				// Setup docs
 				const base: DocItem[] = [
 					{
 						key: "cover",
@@ -325,21 +419,31 @@ export default function AdminCampaignDetailPage() {
 				];
 
 				if (mappedData.type === "sakit") {
+					const meta = (c as any).metadata || {};
+					const medicalDocs = (meta as any).medicalDocs || {};
 					base.push(
 						{
 							key: "resume_medis",
 							title: "Surat / Resume Medis",
 							required: false,
 							help: "Dokumen diagnosis/riwayat medis.",
-							uploaded: false,
+							uploaded: !!medicalDocs.resume_medis,
+							filename: medicalDocs.resume_medis
+								? String(medicalDocs.resume_medis).split("/").pop()
+								: undefined,
+							previewUrl: medicalDocs.resume_medis || undefined,
 						},
 						{
 							key: "surat_rs",
 							title: "Dokumen Rumah Sakit",
 							required: false,
 							help: "Surat rujukan, rincian biaya, dll (opsional).",
-							uploaded: false,
-						}
+							uploaded: !!medicalDocs.surat_rs,
+							filename: medicalDocs.surat_rs
+								? String(medicalDocs.surat_rs).split("/").pop()
+								: undefined,
+							previewUrl: medicalDocs.surat_rs || undefined,
+						},
 					);
 				} else {
 					base.push({
@@ -465,23 +569,26 @@ export default function AdminCampaignDetailPage() {
 					label: "Medis",
 					icon: <LocalHospitalRoundedIcon fontSize="small" />,
 					color: theme.palette.info.main,
-			  }
+				}
 			: {
 					label: "Lainnya",
 					icon: <CategoryRoundedIcon fontSize="small" />,
 					color: theme.palette.success.main,
-			  };
+				};
+
+	const metaSakit = (data as any)?.meta?.sakit;
+	const metaLainnya = (data as any)?.meta?.lainnya;
 
 	const shellSx = {
 		borderRadius: 3,
 		border: "1px solid",
 		borderColor: alpha(
 			theme.palette.divider,
-			theme.palette.mode === "dark" ? 0.9 : 1
+			theme.palette.mode === "dark" ? 0.9 : 1,
 		),
 		bgcolor: alpha(
 			theme.palette.background.paper,
-			theme.palette.mode === "dark" ? 0.92 : 1
+			theme.palette.mode === "dark" ? 0.92 : 1,
 		),
 		backdropFilter: "blur(10px)",
 	};
@@ -554,9 +661,9 @@ export default function AdminCampaignDetailPage() {
 							filename: file.name,
 							previewUrl: url,
 							updatedAt: nowLabel(),
-					  }
-					: d
-			)
+						}
+					: d,
+			),
 		);
 
 		const formData = new FormData();
@@ -569,6 +676,29 @@ export default function AdminCampaignDetailPage() {
 			const res = await addCampaignMedia(id, formData);
 
 			if (res.success) {
+				if (key === "resume_medis" || key === "surat_rs") {
+					const finalUrl = (res as any).url || (res.data as any)?.url;
+					if (finalUrl) {
+						setDocs((prev) =>
+							prev.map((d) =>
+								d.key === key
+									? {
+											...d,
+											previewUrl: finalUrl,
+											filename: finalUrl.split("/").pop() || file.name,
+										}
+									: d,
+							),
+						);
+						await updateCampaignMedicalDocs(
+							id,
+							key === "resume_medis"
+								? { resume_medis: finalUrl }
+								: { surat_rs: finalUrl },
+						);
+					}
+				}
+
 				pushAudit({
 					title: "Dokumen diupload",
 					meta: `${file.name} (${key})`,
@@ -594,15 +724,15 @@ export default function AdminCampaignDetailPage() {
 								filename: undefined,
 								previewUrl: undefined,
 								updatedAt: undefined,
-						  }
-						: d
-				)
+							}
+						: d,
+				),
 			);
 			setSnack({ open: true, msg: "Gagal upload dokumen.", type: "error" });
 		}
 	};
 
-	const handleRemoveDoc = (key: DocKey) => {
+	const handleRemoveDoc = async (key: DocKey) => {
 		setDocs((prev) =>
 			prev.map((d) =>
 				d.key === key
@@ -612,10 +742,17 @@ export default function AdminCampaignDetailPage() {
 							filename: undefined,
 							previewUrl: undefined,
 							updatedAt: nowLabel(),
-					  }
-					: d
-			)
+						}
+					: d,
+			),
 		);
+		if (key === "resume_medis" || key === "surat_rs") {
+			await updateCampaignMedicalDocs(
+				id,
+				key === "resume_medis" ? { resume_medis: null } : { surat_rs: null },
+			);
+		}
+
 		pushAudit({
 			title: "Dokumen dihapus",
 			meta: `(${key})`,
@@ -755,7 +892,7 @@ export default function AdminCampaignDetailPage() {
 								height: 40,
 								bgcolor: alpha(
 									theme.palette.background.default,
-									theme.palette.mode === "dark" ? 0.25 : 1
+									theme.palette.mode === "dark" ? 0.25 : 1,
 								),
 							}}
 						>
@@ -764,7 +901,8 @@ export default function AdminCampaignDetailPage() {
 					</Tooltip>
 
 					<Box sx={{ flex: 1, minWidth: 0 }}>
-						<Typography sx={{ fontWeight: 1000, fontSize: 16 }}
+						<Typography
+							sx={{ fontWeight: 1000, fontSize: 16 }}
 							className="line-clamp-2"
 						>
 							{data.title}
@@ -798,7 +936,7 @@ export default function AdminCampaignDetailPage() {
 								borderColor: alpha(typeMeta.color, 0.25),
 								bgcolor: alpha(
 									typeMeta.color,
-									theme.palette.mode === "dark" ? 0.16 : 0.1
+									theme.palette.mode === "dark" ? 0.16 : 0.1,
 								),
 								color:
 									theme.palette.mode === "dark"
@@ -968,7 +1106,7 @@ export default function AdminCampaignDetailPage() {
 											borderRadius: 999,
 											bgcolor: alpha(
 												theme.palette.text.primary,
-												theme.palette.mode === "dark" ? 0.1 : 0.06
+												theme.palette.mode === "dark" ? 0.1 : 0.06,
 											),
 											"& .MuiLinearProgress-bar": { borderRadius: 999 },
 										}}
@@ -1075,6 +1213,144 @@ export default function AdminCampaignDetailPage() {
 								<InfoRow k="Email" v={data.ownerEmail} />
 								<InfoRow k="No. HP" v={data.ownerPhone} />
 							</Stack>
+
+							{data.type === "sakit" && metaSakit && (
+								<>
+									<Divider sx={{ my: 1.25 }} />
+									<Typography
+										sx={{
+											fontWeight: 1000,
+											fontSize: 13.5,
+											color: "text.primary",
+										}}
+									>
+										Data Pasien
+									</Typography>
+									<Stack spacing={1} sx={{ mt: 1 }}>
+										<InfoRow k="Siapa yang sakit" v={metaSakit.whoLabel} />
+										<InfoRow k="Nama Pasien" v={metaSakit.patientName} />
+										<InfoRow k="Usia" v={metaSakit.patientAge} />
+										<InfoRow
+											k="Jenis Kelamin"
+											v={metaSakit.patientGenderLabel}
+										/>
+										<InfoRow k="Kota/Kabupaten" v={metaSakit.patientCity} />
+									</Stack>
+
+									<Divider sx={{ my: 1.25 }} />
+									<Typography
+										sx={{
+											fontWeight: 1000,
+											fontSize: 13.5,
+											color: "text.primary",
+										}}
+									>
+										Riwayat Pengobatan & Biaya
+									</Typography>
+									<Stack spacing={1} sx={{ mt: 1 }}>
+										<InfoRow
+											k="Status Rawat Inap"
+											v={metaSakit.inpatientLabel}
+										/>
+										<InfoRow k="Rumah Sakit" v={metaSakit.hospital} />
+										<InfoRow k="Riwayat pengobatan" v={metaSakit.treatment} />
+										<InfoRow k="Status BPJS" v={metaSakit.bpjsLabel} />
+										<InfoRow
+											k="Sumber biaya sebelumnya"
+											v={metaSakit.prevCostLabel}
+										/>
+										<InfoRow
+											k="Rencana penggunaan dana"
+											v={metaSakit.usage || "-"}
+										/>
+										<InfoRow k="Ajakan singkat" v={metaSakit.cta || "-"} />
+									</Stack>
+
+									<Divider sx={{ my: 1.25 }} />
+									<Typography
+										sx={{
+											fontWeight: 1000,
+											fontSize: 13.5,
+											color: "text.primary",
+										}}
+									>
+										Rekening Tujuan
+									</Typography>
+									<Stack spacing={1} sx={{ mt: 1 }}>
+										<InfoRow
+											k="Jenis rekening"
+											v={metaSakit.bankLabel || "-"}
+										/>
+									</Stack>
+								</>
+							)}
+
+							{data.type === "lainnya" && metaLainnya && (
+								<>
+									<Divider sx={{ my: 1.25 }} />
+									<Typography
+										sx={{
+											fontWeight: 1000,
+											fontSize: 13.5,
+											color: "text.primary",
+										}}
+									>
+										Tujuan Donasi
+									</Typography>
+									<Stack spacing={1} sx={{ mt: 1 }}>
+										<InfoRow k="Segmen Tujuan" v={metaLainnya.purposeKey} />
+										<InfoRow k="Penerima" v={metaLainnya.receiverName} />
+										<InfoRow k="Tujuan galang dana" v={metaLainnya.goal} />
+										<InfoRow k="Lokasi" v={metaLainnya.location} />
+										<InfoRow
+											k="Perkiraan penerima manfaat"
+											v={metaLainnya.beneficiaries}
+										/>
+									</Stack>
+
+									<Divider sx={{ my: 1.25 }} />
+									<Typography
+										sx={{
+											fontWeight: 1000,
+											fontSize: 13.5,
+											color: "text.primary",
+										}}
+									>
+										Penggalang Dana (Detail)
+									</Typography>
+									<Stack spacing={1} sx={{ mt: 1 }}>
+										<InfoRow k="Nama KTP" v={metaLainnya.ktpName} />
+										<InfoRow k="Pekerjaan" v={metaLainnya.job} />
+										<InfoRow
+											k="Sekolah/Tempat kerja"
+											v={metaLainnya.workplace}
+										/>
+										<InfoRow k="Media sosial" v={metaLainnya.soc} />
+										<InfoRow k="Handle/Link" v={metaLainnya.socHandle || "-"} />
+									</Stack>
+
+									<Divider sx={{ my: 1.25 }} />
+									<Typography
+										sx={{
+											fontWeight: 1000,
+											fontSize: 13.5,
+											color: "text.primary",
+										}}
+									>
+										Rencana Penggunaan Dana
+									</Typography>
+									<Stack spacing={1} sx={{ mt: 1 }}>
+										<InfoRow
+											k="Rencana penggunaan"
+											v={metaLainnya.usageOther || "-"}
+										/>
+										<InfoRow
+											k="Ajakan singkat"
+											v={metaLainnya.ctaOther || "-"}
+										/>
+									</Stack>
+								</>
+							)}
 						</Paper>
 					)}
 
@@ -1236,13 +1512,13 @@ export default function AdminCampaignDetailPage() {
 											verifyReady
 												? theme.palette.success.main
 												: theme.palette.warning.main,
-											0.3
+											0.3,
 										),
 										bgcolor: alpha(
 											verifyReady
 												? theme.palette.success.main
 												: theme.palette.warning.main,
-											theme.palette.mode === "dark" ? 0.18 : 0.1
+											theme.palette.mode === "dark" ? 0.18 : 0.1,
 										),
 										color: verifyReady
 											? theme.palette.success.main
@@ -1270,7 +1546,7 @@ export default function AdminCampaignDetailPage() {
 									label="Cerita memadai & meyakinkan"
 									checked={check.storyOk}
 									onChange={(v) => setCheck((c) => ({ ...c, storyOk: v }))}
-									hint="Kronologi, kebutuhan biaya, Useran dana jelas."
+									hint="Kronologi, kebutuhan biaya, penggunaan dana jelas."
 								/>
 								<VerifyItem
 									label="Target biaya wajar & terisi"
@@ -1352,7 +1628,7 @@ export default function AdminCampaignDetailPage() {
 										border: "none",
 										bgcolor: alpha(
 											theme.palette.warning.main,
-											theme.palette.mode === "dark" ? 0.12 : 0.06
+											theme.palette.mode === "dark" ? 0.12 : 0.06,
 										),
 									}}
 								>
@@ -1806,7 +2082,7 @@ function fieldSx(theme: any) {
 			borderRadius: 2.5,
 			bgcolor: alpha(
 				theme.palette.background.default,
-				theme.palette.mode === "dark" ? 0.22 : 1
+				theme.palette.mode === "dark" ? 0.22 : 1,
 			),
 		},
 		"& .MuiInputBase-input": { fontSize: 13.5 },
@@ -1839,8 +2115,8 @@ function SegTab({
 				bgcolor: active
 					? alpha(
 							theme.palette.primary.main,
-							theme.palette.mode === "dark" ? 0.18 : 0.08
-					  )
+							theme.palette.mode === "dark" ? 0.18 : 0.08,
+						)
 					: "transparent",
 				color: active
 					? theme.palette.primary.main
@@ -1849,7 +2125,7 @@ function SegTab({
 				"&:hover": {
 					bgcolor: alpha(
 						theme.palette.primary.main,
-						theme.palette.mode === "dark" ? 0.14 : 0.06
+						theme.palette.mode === "dark" ? 0.14 : 0.06,
 					),
 				},
 			}}
@@ -1867,7 +2143,7 @@ function QuickPill({ label, value }: { label: string; value: string }) {
 				borderRadius: 2,
 				bgcolor: alpha(
 					theme.palette.background.default,
-					theme.palette.mode === "dark" ? 0.18 : 1
+					theme.palette.mode === "dark" ? 0.18 : 1,
 				),
 				minWidth: 180,
 			}}
@@ -1898,7 +2174,7 @@ function MiniStat({ label, value }: { label: string; value: string }) {
 				borderColor: alpha(theme.palette.divider, 1),
 				bgcolor: alpha(
 					theme.palette.background.default,
-					theme.palette.mode === "dark" ? 0.2 : 1
+					theme.palette.mode === "dark" ? 0.2 : 1,
 				),
 			}}
 		>
@@ -2008,7 +2284,7 @@ function DocRow({
 				border: "none",
 				bgcolor: alpha(
 					theme.palette.background.default,
-					theme.palette.mode === "dark" ? 0.2 : 1
+					theme.palette.mode === "dark" ? 0.2 : 1,
 				),
 			}}
 		>
@@ -2059,7 +2335,7 @@ function DocRow({
 								borderColor: alpha(badgeColor, 0.28),
 								bgcolor: alpha(
 									badgeColor,
-									theme.palette.mode === "dark" ? 0.16 : 0.08
+									theme.palette.mode === "dark" ? 0.16 : 0.08,
 								),
 								color: badgeColor,
 							}}
@@ -2128,12 +2404,12 @@ function TimelineRow({ event }: { event: AuditEvent }) {
 		tone === "success"
 			? theme.palette.success.main
 			: tone === "warning"
-			? theme.palette.warning.main
-			: tone === "error"
-			? theme.palette.error.main
-			: tone === "info"
-			? theme.palette.info.main
-			: theme.palette.text.secondary;
+				? theme.palette.warning.main
+				: tone === "error"
+					? theme.palette.error.main
+					: tone === "info"
+						? theme.palette.info.main
+						: theme.palette.text.secondary;
 
 	return (
 		<Paper
@@ -2145,7 +2421,7 @@ function TimelineRow({ event }: { event: AuditEvent }) {
 				border: "none",
 				bgcolor: alpha(
 					theme.palette.background.default,
-					theme.palette.mode === "dark" ? 0.2 : 1
+					theme.palette.mode === "dark" ? 0.2 : 1,
 				),
 			}}
 		>
@@ -2173,7 +2449,7 @@ function TimelineRow({ event }: { event: AuditEvent }) {
 						bgcolor: c,
 						boxShadow: `0 0 0 3px ${alpha(
 							c,
-							theme.palette.mode === "dark" ? 0.18 : 0.12
+							theme.palette.mode === "dark" ? 0.18 : 0.12,
 						)}`,
 					}}
 				/>
@@ -2195,7 +2471,7 @@ function TxRowCard({ row }: { row: TxRow }) {
 				borderColor: alpha(theme.palette.divider, 1),
 				bgcolor: alpha(
 					theme.palette.background.default,
-					theme.palette.mode === "dark" ? 0.2 : 1
+					theme.palette.mode === "dark" ? 0.2 : 1,
 				),
 			}}
 		>
@@ -2214,7 +2490,7 @@ function TxRowCard({ row }: { row: TxRow }) {
 						placeItems: "center",
 						bgcolor: alpha(
 							meta.tone === "success" ? "#22c55e" : "#f97316",
-							0.12
+							0.12,
 						),
 						color: meta.tone === "success" ? "#22c55e" : "#f97316",
 					}}

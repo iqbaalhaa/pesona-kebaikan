@@ -262,7 +262,20 @@ export default function NotificationClient({
 							</TableRow>
 						) : (
 							initialNotifications.map((notif) => (
-								<TableRow key={notif.id} hover>
+								<TableRow
+									key={notif.id}
+									hover
+									onClick={() => {
+										const match =
+											/CAMPAIGN_CHANGE_REQUEST:([a-zA-Z0-9-_]+)/.exec(
+												notif.message || "",
+											);
+										if (match && match[1]) {
+											router.push(`/admin/campaign/${match[1]}`);
+										}
+									}}
+									sx={{ cursor: "pointer" }}
+								>
 									<TableCell>{notif.title}</TableCell>
 									<TableCell
 										sx={{
@@ -306,7 +319,10 @@ export default function NotificationClient({
 										<IconButton
 											size="small"
 											color="error"
-											onClick={() => handleDelete(notif.id)}
+											onClick={(e) => {
+												e.stopPropagation();
+												handleDelete(notif.id);
+											}}
 											disabled={deleteLoading === notif.id}
 										>
 											{deleteLoading === notif.id ? (

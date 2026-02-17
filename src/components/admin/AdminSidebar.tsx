@@ -78,6 +78,12 @@ const menus: { title: string; items: MenuItem[] }[] = [
 				icon: <CategoryRoundedIcon fontSize="small" />,
 				desc: "Struktur kategori (lainnya)",
 			},
+			{
+				label: "Pengajuan Campaign",
+				href: "/admin/pengajuan-campaign",
+				icon: <CampaignIcon fontSize="small" />,
+				desc: "Perpanjangan & tambah target",
+			},
 		],
 	},
 	{

@@ -22,19 +22,21 @@ import {
 import PhotoCameraRoundedIcon from "@mui/icons-material/PhotoCameraRounded";
 import SaveRoundedIcon from "@mui/icons-material/SaveRounded";
 
-	import { CATEGORY_TITLE } from "@/lib/constants";
-	import RichTextEditor from "@/components/admin/RichTextEditor";
-	
-	function formatIDR(numStr: string) {
-		const n = numStr.replace(/\D/g, "");
-		if (!n) return "";
-		return n.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-	}
+import { CATEGORY_TITLE } from "@/lib/constants";
+import RichTextEditor from "@/components/admin/RichTextEditor";
+
+function formatIDR(numStr: string) {
+	const n = numStr.replace(/\D/g, "");
+	if (!n) return "";
+	return n.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+}
 
 type AdminCampaignFormProps = {
 	mode: "create" | "edit";
 	initialData?: any; // Replace with proper type if available
-	onSubmit: (formData: FormData) => Promise<{ success: boolean; error?: string }>;
+	onSubmit: (
+		formData: FormData,
+	) => Promise<{ success: boolean; error?: string }>;
 };
 
 export default function AdminCampaignForm({
@@ -52,12 +54,12 @@ export default function AdminCampaignForm({
 	const [category, setCategory] = React.useState(
 		initialData?.category
 			? Object.keys(CATEGORY_TITLE).find(
-					(k) => CATEGORY_TITLE[k] === initialData.category
-			  ) || "lainnya"
-			: "lainnya"
+					(k) => CATEGORY_TITLE[k] === initialData.category,
+				) || "lainnya"
+			: "lainnya",
 	);
 	const [target, setTarget] = React.useState(
-		formatIDR(initialData?.target?.toString() || "")
+		formatIDR(initialData?.target?.toString() || ""),
 	);
 	const [duration, setDuration] = React.useState("30"); // Default 30
 	const [phone, setPhone] = React.useState(initialData?.phone || "");
@@ -66,7 +68,7 @@ export default function AdminCampaignForm({
 	// File Upload
 	const [coverFile, setCoverFile] = React.useState<File | null>(null);
 	const [coverPreview, setCoverPreview] = React.useState<string>(
-		initialData?.thumbnail || ""
+		initialData?.thumbnail || "",
 	);
 
 	const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -126,7 +128,11 @@ export default function AdminCampaignForm({
 			<form onSubmit={handleSubmit}>
 				<Stack spacing={3}>
 					{/* Title & Slug */}
-					<Box display="grid" gridTemplateColumns={{ xs: "1fr", md: "1fr 1fr" }} gap={2}>
+					<Box
+						display="grid"
+						gridTemplateColumns={{ xs: "1fr", md: "1fr 1fr" }}
+						gap={2}
+					>
 						<TextField
 							label="Judul Campaign"
 							value={title}
@@ -145,7 +151,11 @@ export default function AdminCampaignForm({
 					</Box>
 
 					{/* Category & Target */}
-					<Box display="grid" gridTemplateColumns={{ xs: "1fr", md: "1fr 1fr" }} gap={2}>
+					<Box
+						display="grid"
+						gridTemplateColumns={{ xs: "1fr", md: "1fr 1fr" }}
+						gap={2}
+					>
 						<FormControl fullWidth>
 							<InputLabel>Kategori</InputLabel>
 							<Select
@@ -167,13 +177,19 @@ export default function AdminCampaignForm({
 							required
 							fullWidth
 							InputProps={{
-								startAdornment: <InputAdornment position="start">Rp</InputAdornment>,
+								startAdornment: (
+									<InputAdornment position="start">Rp</InputAdornment>
+								),
 							}}
 						/>
 					</Box>
 
 					{/* Phone & Duration */}
-					<Box display="grid" gridTemplateColumns={{ xs: "1fr", md: "1fr 1fr" }} gap={2}>
+					<Box
+						display="grid"
+						gridTemplateColumns={{ xs: "1fr", md: "1fr 1fr" }}
+						gap={2}
+					>
 						<TextField
 							label="Nomor Telepon / WhatsApp"
 							value={phone}
@@ -199,7 +215,7 @@ export default function AdminCampaignForm({
 						<RichTextEditor
 							value={story}
 							onChange={setStory}
-							placeholder="Tulis latar belakang, kondisi, kebutuhan biaya, rencana Useran dana, dan ajakan..."
+							placeholder="Tulis latar belakang, kondisi, kebutuhan biaya, rencana penggunaan dana, dan ajakan..."
 							minHeight={260}
 						/>
 					</Box>
@@ -250,7 +266,9 @@ export default function AdminCampaignForm({
 								/>
 							) : null}
 							<Box sx={{ position: "relative", zIndex: 1 }}>
-								<PhotoCameraRoundedIcon sx={{ fontSize: 48, color: "text.secondary", mb: 1 }} />
+								<PhotoCameraRoundedIcon
+									sx={{ fontSize: 48, color: "text.secondary", mb: 1 }}
+								/>
 								<Typography color="text.secondary">
 									Klik untuk upload foto
 								</Typography>
@@ -266,7 +284,9 @@ export default function AdminCampaignForm({
 							type="submit"
 							variant="contained"
 							disabled={loading}
-							startIcon={loading ? <CircularProgress size={20} /> : <SaveRoundedIcon />}
+							startIcon={
+								loading ? <CircularProgress size={20} /> : <SaveRoundedIcon />
+							}
 						>
 							{loading ? "Menyimpan..." : "Simpan Campaign"}
 						</Button>

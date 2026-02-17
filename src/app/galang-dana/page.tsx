@@ -612,6 +612,9 @@ export default function GalangDanaSayaPage() {
 													maximumFractionDigits: 0,
 												}).format(x.collected || 0)} terkumpul`;
 
+									const imgSrc =
+										x.thumbnail || (isDraft ? "/defaultimg.webp" : "");
+
 									return (
 										<Paper
 											key={x.id}
@@ -646,10 +649,10 @@ export default function GalangDanaSayaPage() {
 															borderColor: "divider",
 														}}
 													>
-														{x.thumbnail ? (
+														{imgSrc ? (
 															<Box
 																component="img"
-																src={x.thumbnail}
+																src={imgSrc}
 																alt=""
 																sx={{
 																	width: "100%",

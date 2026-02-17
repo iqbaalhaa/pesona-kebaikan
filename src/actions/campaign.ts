@@ -60,6 +60,32 @@ export async function createCampaign(formData: FormData) {
 			}
 		}
 
+		const resumeMedisFile = formData.get("resume_medis") as File;
+		const suratRsFile = formData.get("surat_rs") as File;
+		let medicalDocs = (metadata as any)?.medicalDocs || {};
+
+		if (resumeMedisFile && (resumeMedisFile as any).size > 0) {
+			const uploadFormData = new FormData();
+			uploadFormData.append("file", resumeMedisFile);
+			const uploadRes = await uploadFile(uploadFormData);
+			if (uploadRes.success && uploadRes.url) {
+				medicalDocs = { ...medicalDocs, resume_medis: uploadRes.url };
+			}
+		}
+
+		if (suratRsFile && (suratRsFile as any).size > 0) {
+			const uploadFormData = new FormData();
+			uploadFormData.append("file", suratRsFile);
+			const uploadRes = await uploadFile(uploadFormData);
+			if (uploadRes.success && uploadRes.url) {
+				medicalDocs = { ...medicalDocs, surat_rs: uploadRes.url };
+			}
+		}
+
+		if (Object.keys(medicalDocs || {}).length > 0) {
+			metadata = { ...(metadata || {}), medicalDocs };
+		}
+
 		// File upload
 		const coverFile = formData.get("cover") as File;
 		let coverUrl = "";
@@ -132,6 +158,7 @@ export async function createCampaign(formData: FormData) {
 				categoryId: category.id,
 				createdById: session.user.id,
 				status,
+				...(metadata ? { metadata } : {}),
 				media: coverUrl
 					? {
 							create: {
@@ -637,6 +664,7 @@ export async function getCampaignById(id: string) {
 				campaign.status === "COMPLETED"
 					? "ended"
 					: campaign.status.toLowerCase(),
+			metadata: campaign.metadata,
 			description: campaign.story,
 			updatedAt: campaign.updatedAt,
 			thumbnail,
@@ -744,6 +772,111 @@ export async function updateCampaignStatus(
 	}
 }
 
+export async function requestCampaignChange(
+	campaignId: string,
+	extraDays: number | null,
+	extraTarget: number | null,
+) {
+	try {
+		const session = await auth();
+		if (!session?.user?.id) {
+			return { success: false, error: "Unauthorized" };
+		}
+
+		const campaign = await prisma.campaign.findUnique({
+			where: { id: campaignId },
+			select: { id: true, title: true, createdById: true },
+		});
+
+		if (!campaign) {
+			return { success: false, error: "Campaign not found" };
+		}
+
+		if (campaign.createdById !== session.user.id) {
+			return { success: false, error: "Forbidden" };
+		}
+
+		const safeExtraDays = extraDays && extraDays > 0 ? extraDays : null;
+		const safeExtraTarget = extraTarget && extraTarget > 0 ? extraTarget : null;
+
+		await prisma.campaignChangeRequest.create({
+			data: {
+				campaignId: campaign.id,
+				userId: session.user.id,
+				extraDays: safeExtraDays ?? undefined,
+				extraTarget: safeExtraTarget
+					? new Prisma.Decimal(safeExtraTarget)
+					: undefined,
+			},
+		});
+
+		const admins = await prisma.user.findMany({
+			where: { role: "ADMIN" },
+			select: { id: true },
+		});
+
+		if (admins.length > 0) {
+			let changeSummary = "";
+
+			if (safeExtraDays && safeExtraTarget) {
+				changeSummary = `Perpanjangan ${safeExtraDays} hari dan penambahan target Rp${safeExtraTarget.toLocaleString(
+					"id-ID",
+				)}`;
+			} else if (safeExtraDays) {
+				changeSummary = `Perpanjangan ${safeExtraDays} hari`;
+			} else if (safeExtraTarget) {
+				changeSummary = `Penambahan target Rp${safeExtraTarget.toLocaleString(
+					"id-ID",
+				)}`;
+			} else {
+				changeSummary = "Perubahan campaign";
+			}
+
+			const message = `Pengajuan perubahan campaign "${campaign.title}" oleh fundraiser. ${changeSummary}. CAMPAIGN_CHANGE_REQUEST:${campaign.id}`;
+
+			await prisma.notification.createMany({
+				data: admins.map((admin) => ({
+					userId: admin.id,
+					title: "Pengajuan Perubahan Campaign",
+					message,
+					type: NotificationType.KABAR,
+				})),
+			});
+		}
+
+		return { success: true };
+	} catch (error) {
+		console.error("Request campaign change error:", error);
+		return { success: false, error: "Failed to create request" };
+	}
+}
+
+export async function getCampaignChangeRequests(page = 1, limit = 20) {
+	try {
+		const [requests, total] = await Promise.all([
+			prisma.campaignChangeRequest.findMany({
+				skip: (page - 1) * limit,
+				take: limit,
+				orderBy: { createdAt: "desc" },
+				include: {
+					campaign: { select: { id: true, title: true, slug: true } },
+					user: { select: { id: true, name: true, email: true } },
+				},
+			}),
+			prisma.campaignChangeRequest.count(),
+		]);
+
+		return {
+			requests,
+			total,
+			totalPages: Math.ceil(total / limit),
+		};
+	} catch (error) {
+		console.error("Get campaign change requests error:", error);
+		return { requests: [], total: 0, totalPages: 0 };
+	}
+}
+
 export async function updateCampaign(id: string, formData: FormData) {
 	try {
 		const session = await auth();
@@ -769,6 +902,32 @@ export async function updateCampaign(id: string, formData: FormData) {
 			} catch (e) {
 				console.error("Failed to parse metadata", e);
 			}
+		}
+
+		const resumeMedisFile = formData.get("resume_medis") as File;
+		const suratRsFile = formData.get("surat_rs") as File;
+		let medicalDocs = (metadata as any)?.medicalDocs || {};
+
+		if (resumeMedisFile && (resumeMedisFile as any).size > 0) {
+			const uploadFormData = new FormData();
+			uploadFormData.append("file", resumeMedisFile);
+			const uploadRes = await uploadFile(uploadFormData);
+			if (uploadRes.success && uploadRes.url) {
+				medicalDocs = { ...medicalDocs, resume_medis: uploadRes.url };
+			}
+		}
+
+		if (suratRsFile && (suratRsFile as any).size > 0) {
+			const uploadFormData = new FormData();
+			uploadFormData.append("file", suratRsFile);
+			const uploadRes = await uploadFile(uploadFormData);
+			if (uploadRes.success && uploadRes.url) {
+				medicalDocs = { ...medicalDocs, surat_rs: uploadRes.url };
+			}
+		}
+
+		if (Object.keys(medicalDocs || {}).length > 0) {
+			metadata = { ...(metadata || {}), medicalDocs };
 		}
 
 		const target = parseFloat(targetStr?.replace(/[^\d]/g, "") || "0") || 0;
@@ -1057,14 +1216,68 @@ export async function addCampaignMedia(campaignId: string, formData: FormData) {
 		});
 
 		revalidatePath(`/admin/campaign/${campaignId}`);
-		revalidatePath(`/donasi/${campaignId}`); // Assuming slug might be same as ID or I need to find slug. Revalidating by ID might not work if path uses slug.
-		// Better revalidate the path that uses it.
-		// But for admin panel it is /admin/campaign/[id]
+		revalidatePath(`/donasi/${campaignId}`);
 
-		return { success: true, data: media };
+		return { success: true, data: media, url: uploadRes.url };
 	} catch (error) {
 		console.error("Add campaign media error:", error);
 		return { success: false, error: "Failed to add campaign media" };
+	}
+}
+
+export async function updateCampaignMedicalDocs(
+	campaignId: string,
+	docs: { resume_medis?: string | null; surat_rs?: string | null },
+) {
+	const session = await auth();
+	if (!session?.user?.id) {
+		return { success: false, error: "Unauthorized" };
+	}
+
+	try {
+		const campaign = await prisma.campaign.findUnique({
+			where: { id: campaignId },
+			select: { metadata: true },
+		});
+
+		let metadata: any = campaign?.metadata || {};
+		let medicalDocs: any = metadata.medicalDocs || {};
+
+		if ("resume_medis" in docs) {
+			if (docs.resume_medis) {
+				medicalDocs = { ...medicalDocs, resume_medis: docs.resume_medis };
+			} else {
+				delete medicalDocs.resume_medis;
+			}
+		}
+
+		if ("surat_rs" in docs) {
+			if (docs.surat_rs) {
+				medicalDocs = { ...medicalDocs, surat_rs: docs.surat_rs };
+			} else {
+				delete medicalDocs.surat_rs;
+			}
+		}
+
+		if (Object.keys(medicalDocs).length > 0) {
+			metadata = { ...metadata, medicalDocs };
+		} else if (metadata.medicalDocs) {
+			const { medicalDocs: _removed, ...rest } = metadata;
+			metadata = rest;
+		}
+
+		await prisma.campaign.update({
+			where: { id: campaignId },
+			data: { metadata },
+		});
+
+		revalidatePath(`/admin/campaign/${campaignId}`);
+		revalidatePath("/admin/campaign/verifikasi");
+
+		return { success: true };
+	} catch (error) {
+		console.error("Update medical docs error:", error);
+		return { success: false, error: "Failed to update medical docs" };
 	}
 }
 

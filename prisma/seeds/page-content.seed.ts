@@ -52,8 +52,14 @@ export async function seedPageContent() {
 			tips: [
 				{ title: "Judul spesifik", desc: "Buat judul yang jelas dan fokus." },
 				{ title: "Visual kuat", desc: "Gunakan foto/video yang relevan." },
-				{ title: "Update berkala", desc: "Cerita perkembangan membuat donatur terlibat." },
-				{ title: "Transparansi", desc: "Jelaskan Useran dana dan bukti penyaluran." },
+				{
+					title: "Update berkala",
+					desc: "Cerita perkembangan membuat donatur terlibat.",
+				},
+				{
+					title: "Transparansi",
+					desc: "Jelaskan penggunaan dana dan bukti penyaluran.",
+				},
 			],
 			steps: [
 				"Tentukan tujuan dan target",

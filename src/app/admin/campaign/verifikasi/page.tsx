@@ -214,27 +214,31 @@ export default function AdminCampaignVerifikasiPage() {
 		setLoading(true);
 		const res = await getCampaigns(1, 100, "PENDING");
 		if (res.success && res.data) {
-			const mapped: CampaignVerifyRow[] = res.data.map((c: any) => ({
-				id: c.id,
-				title: c.title,
-				category: c.category,
-				type: c.type,
-				ownerName: c.ownerName,
-				ownerPhone: "-",
-				target: c.target,
-				collected: c.collected,
-				donors: c.donors,
-				status: "review",
-				updatedAt: c.updatedAt,
-				docs: {
-					cover: !!c.thumbnail,
-					ktp: false,
-					resume_medis: false,
-					surat_rs: false,
-					pendukung: false,
-				},
-				notes: "",
-			}));
+			const mapped: CampaignVerifyRow[] = res.data.map((c: any) => {
+				const meta = (c as any).metadata || {};
+				const medicalDocs = (meta as any).medicalDocs || {};
+				return {
+					id: c.id,
+					title: c.title,
+					category: c.category,
+					type: c.type,
+					ownerName: c.ownerName,
+					ownerPhone: "-",
+					target: c.target,
+					collected: c.collected,
+					donors: c.donors,
+					status: "review",
+					updatedAt: c.updatedAt,
+					docs: {
+						cover: !!c.thumbnail,
+						ktp: false,
+						resume_medis: !!medicalDocs.resume_medis,
+						surat_rs: !!medicalDocs.surat_rs,
+						pendukung: false,
+					},
+					notes: "",
+				};
+			});
 			setRows(mapped);
 		}
 		setLoading(false);

@@ -115,7 +115,9 @@ function BuatGalangDanaPageContent() {
 	const type = sp.get("type") ?? "lainnya";
 	const category = sp.get("category") ?? "";
 	const draftId = sp.get("draft");
+	const mode = sp.get("mode") ?? "";
 	const isEdit = !!draftId;
+	const isContentEdit = isEdit && mode === "content";
 
 	const isSakit = type === "sakit";
 	const isLainnya = type === "lainnya";
@@ -171,6 +173,9 @@ function BuatGalangDanaPageContent() {
 					setSlug(c.slug || "");
 					setTarget(c.target.toString());
 					setStory(c.description);
+					if (isContentEdit) {
+						setShowStoryEditor(true);
+					}
 					setPhone(c.phone || "");
 
 					setWho(m.who || "other");
@@ -187,6 +192,10 @@ function BuatGalangDanaPageContent() {
 					setPrevCost(m.prevCost || "mandiri");
 					setUsage(m.usage || "");
 					setCta(m.cta || "");
+					if (m.medicalDocs) {
+						setMedicalResumeUrl(m.medicalDocs.resume_medis || "");
+						setMedicalExamUrl(m.medicalDocs.surat_rs || "");
+					}
 
 					if (m.terms) {
 						setT1(m.terms.t1);
@@ -209,30 +218,43 @@ function BuatGalangDanaPageContent() {
 						setCustomEnd(endDate.toISOString().split("T")[0]);
 					}
 
-					// Auto-navigate to last incomplete step
-					let nextStep = 0;
-					// Step 0: Tujuan
-					if ((m.who || "other") && c.phone && (m.bank || "pasien"))
-						nextStep = 1;
-					// Step 1: Detail
-					if (nextStep === 1 && m.patientName && m.patientAge && m.patientCity)
-						nextStep = 2;
-					// Step 2: Riwayat
-					if (nextStep === 2 && m.inpatient && m.treatment && m.prevCost)
-						nextStep = 3;
-					// Step 3: Target
-					if (nextStep === 3 && c.target && Number(c.target) > 0) nextStep = 4;
-					// Step 4: Judul
-					if (nextStep === 4 && c.title) nextStep = 5;
-					// Step 5: Cerita
-					if (nextStep === 5 && c.description) nextStep = 6;
+					if (isContentEdit) {
+						setStep(5);
+					} else {
+						// Auto-navigate to last incomplete step
+						let nextStep = 0;
+						// Step 0: Tujuan
+						if ((m.who || "other") && c.phone && (m.bank || "pasien"))
+							nextStep = 1;
+						// Step 1: Detail
+						if (
+							nextStep === 1 &&
+							m.patientName &&
+							m.patientAge &&
+							m.patientCity
+						)
+							nextStep = 2;
+						// Step 2: Riwayat
+						if (nextStep === 2 && m.inpatient && m.treatment && m.prevCost)
+							nextStep = 3;
+						// Step 3: Target
+						if (nextStep === 3 && c.target && Number(c.target) > 0)
+							nextStep = 4;
+						// Step 4: Judul
+						if (nextStep === 4 && c.title) nextStep = 5;
+						// Step 5: Cerita
+						if (nextStep === 5 && c.description) nextStep = 6;
 
-					setStep(nextStep);
+						setStep(nextStep);
+					}
 				} else {
 					setTitleOther(c.title);
 					setSlugOther(c.slug || "");
 					setTargetOther(c.target.toString());
 					setStoryOther(c.description);
+					if (isContentEdit) {
+						setShowStoryEditorOther(true);
+					}
 					setPhoneOther(c.phone || "");
 
 					setPurposeKey(m.purposeKey || "program");
@@ -268,23 +290,29 @@ function BuatGalangDanaPageContent() {
 						setCustomEndOther(endDate.toISOString().split("T")[0]);
 					}
 
-					// Auto-navigate to last incomplete step
-					let nextStep = 0;
-					// Step 0: Tujuan
-					if ((m.purposeKey || "program") && m.ktpName && c.phone) nextStep = 1;
-					// Step 1: Data Diri
-					if (nextStep === 1 && m.job && m.workplace) nextStep = 2;
-					// Step 2: Penerima
-					if (nextStep === 2 && m.receiverName && m.goal && m.location)
-						nextStep = 3;
-					// Step 3: Target
-					if (nextStep === 3 && c.target && Number(c.target) > 0) nextStep = 4;
-					// Step 4: Judul
-					if (nextStep === 4 && c.title) nextStep = 5;
-					// Step 5: Cerita
-					if (nextStep === 5 && c.description) nextStep = 6;
+					if (isContentEdit) {
+						setStep(5);
+					} else {
+						// Auto-navigate to last incomplete step
+						let nextStep = 0;
+						// Step 0: Tujuan
+						if ((m.purposeKey || "program") && m.ktpName && c.phone)
+							nextStep = 1;
+						// Step 1: Data Diri
+						if (nextStep === 1 && m.job && m.workplace) nextStep = 2;
+						// Step 2: Penerima
+						if (nextStep === 2 && m.receiverName && m.goal && m.location)
+							nextStep = 3;
+						// Step 3: Target
+						if (nextStep === 3 && c.target && Number(c.target) > 0)
+							nextStep = 4;
+						// Step 4: Judul
+						if (nextStep === 4 && c.title) nextStep = 5;
+						// Step 5: Cerita
+						if (nextStep === 5 && c.description) nextStep = 6;
 
-					setStep(nextStep);
+						setStep(nextStep);
+					}
 				}
 
 				if (c.thumbnail) {
@@ -294,7 +322,7 @@ function BuatGalangDanaPageContent() {
 			}
 		}
 		load();
-	}, [draftId]);
+	}, [draftId, sp, router]);
 
 	if (status === "loading") {
 		return <Box sx={{ p: 4, textAlign: "center" }}>Loading session...</Box>;
@@ -348,6 +376,14 @@ function BuatGalangDanaPageContent() {
 	const [prevCost, setPrevCost] = React.useState<"mandiri" | "asuransi" | "">(
 		"",
 	);
+	const [medicalResumeFile, setMedicalResumeFile] = React.useState<File | null>(
+		null,
+	);
+	const [medicalResumeUrl, setMedicalResumeUrl] = React.useState("");
+	const [medicalExamFile, setMedicalExamFile] = React.useState<File | null>(
+		null,
+	);
+	const [medicalExamUrl, setMedicalExamUrl] = React.useState("");
 
 	const [target, setTarget] = React.useState("");
 	const [duration, setDuration] = React.useState<
@@ -585,10 +621,13 @@ function BuatGalangDanaPageContent() {
 		ctaOther,
 	]);
 
-	const goPrev = () => setStep((s) => Math.max(0, s - 1));
+	const goPrev = () =>
+		setStep((s) => (isContentEdit ? Math.max(5, s - 1) : Math.max(0, s - 1)));
 	const goNext = () => setStep((s) => Math.min(steps.length - 1, s + 1));
 
 	const onClickNext = async () => {
+		if (!canNext || submitting) return;
+
 		if (isSakit && stepKey === "tujuan") {
 			setOpenTerms(true);
 			return;
@@ -611,6 +650,13 @@ function BuatGalangDanaPageContent() {
 				}
 				formData.append("phone", phone);
 
+				if (medicalResumeFile) {
+					formData.append("resume_medis", medicalResumeFile);
+				}
+				if (medicalExamFile) {
+					formData.append("surat_rs", medicalExamFile);
+				}
+
 				if (coverFile) formData.append("cover", coverFile);
 
 				formData.append("story", story);
@@ -632,8 +678,48 @@ function BuatGalangDanaPageContent() {
 				formData.append("story", storyOther);
 			}
 
+			const metadata = isSakit
+				? {
+						who,
+						whoOther,
+						bank,
+						patientName,
+						patientAge,
+						patientGender,
+						patientCity,
+						treatment,
+						hospital,
+						inpatient,
+						bpjs,
+						prevCost,
+						usage,
+						cta,
+						terms: { t1, t2, t3, t4 },
+						medicalDocs: {
+							resume_medis: medicalResumeUrl,
+							surat_rs: medicalExamUrl,
+						},
+					}
+				: {
+						purposeKey,
+						ktpName,
+						receiverName,
+						goal,
+						location,
+						usageOther,
+						ctaOther,
+						job,
+						workplace,
+						soc,
+						socHandle,
+						beneficiaries,
+						agree: { agreeA, agreeB },
+					};
+			formData.append("metadata", JSON.stringify(metadata));
+
 			let res;
 			if (isEdit) {
+				formData.append("status", "PENDING");
 				res = await updateCampaign(draftId!, formData);
 			} else {
 				res = await createCampaign(formData);
@@ -684,6 +770,13 @@ function BuatGalangDanaPageContent() {
 			}
 			formData.append("phone", phone);
 
+			if (medicalResumeFile) {
+				formData.append("resume_medis", medicalResumeFile);
+			}
+			if (medicalExamFile) {
+				formData.append("surat_rs", medicalExamFile);
+			}
+
 			if (coverFile) formData.append("cover", coverFile);
 
 			formData.append("story", story);
@@ -723,6 +816,10 @@ function BuatGalangDanaPageContent() {
 					usage,
 					cta,
 					terms: { t1, t2, t3, t4 },
+					medicalDocs: {
+						resume_medis: medicalResumeUrl,
+						surat_rs: medicalExamUrl,
+					},
 				}
 			: {
 					purposeKey,
@@ -821,13 +918,14 @@ function BuatGalangDanaPageContent() {
 						const active = i === step;
 						const done = i < step;
 						const isFuture = !isEdit && i > step;
+						const locked = isContentEdit && i < 5;
 						return (
 							<Chip
 								key={s.key}
 								onClick={() => {
-									if (!isFuture) setStep(i);
+									if (!isFuture && !locked) setStep(i);
 								}}
-								clickable={!isFuture}
+								clickable={!isFuture && !locked}
 								label={
 									<Box
 										sx={{
@@ -864,7 +962,7 @@ function BuatGalangDanaPageContent() {
 								color={active ? "primary" : "default"}
 								sx={{
 									borderRadius: 999,
-									opacity: isFuture ? 0.5 : 1,
+									opacity: isFuture || locked ? 0.5 : 1,
 								}}
 							/>
 						);
@@ -873,6 +971,26 @@ function BuatGalangDanaPageContent() {
 
 				<Divider sx={{ mt: 1 }} />
 			</Box>
+
+			{isContentEdit && (
+				<Box sx={{ px: 2, pb: 1 }}>
+					<Typography
+						sx={{
+							fontSize: 12,
+							color: "text.secondary",
+							bgcolor: "warning.50",
+							borderRadius: 2,
+							border: "1px solid",
+							borderColor: "warning.100",
+							px: 1.5,
+							py: 1,
+						}}
+					>
+						Anda hanya dapat mengubah Cerita dan Ajakan pada campaign yang sudah
+						berjalan.
+					</Typography>
+				</Box>
+			)}
 
 			{/* Content */}
 			<Box sx={{ px: 2 }}>
@@ -1268,6 +1386,103 @@ function BuatGalangDanaPageContent() {
 										</Paper>
 									</RadioGroup>
 								</Box>
+
+								<Box sx={{ mt: 2 }}>
+									<Typography sx={{ fontWeight: 600, fontSize: 14, mb: 0.75 }}>
+										Unggah dokumen medis pendukung
+									</Typography>
+									<Typography
+										sx={{ fontSize: 12.5, color: "text.secondary", mb: 1 }}
+									>
+										Surat keterangan medis dengan diagnosis/penyakit dan hasil
+										pemeriksaan (lab, rontgen, dsb.) sangat membantu proses
+										verifikasi.
+									</Typography>
+
+									<Stack spacing={1.25}>
+										<Paper
+											variant="outlined"
+											sx={{ borderRadius: 2, p: 1, display: "flex", gap: 1 }}
+										>
+											<input
+												id="resume-medis-upload"
+												type="file"
+												accept="image/*,.pdf"
+												hidden
+												onChange={(e) => {
+													const f = e.target.files?.[0] || null;
+													setMedicalResumeFile(f);
+													if (f) {
+														setMedicalResumeUrl("");
+													}
+												}}
+											/>
+											<Button
+												component="label"
+												htmlFor="resume-medis-upload"
+												variant="outlined"
+												sx={{ borderRadius: 999, fontWeight: 700, minWidth: 0 }}
+											>
+												Pilih file
+											</Button>
+											<Box sx={{ flex: 1, minWidth: 0 }}>
+												<Typography sx={{ fontSize: 13, fontWeight: 600 }}>
+													Surat keterangan medis / diagnosis
+												</Typography>
+												<Typography
+													sx={{ fontSize: 12.5, color: "text.secondary" }}
+													noWrap
+												>
+													{medicalResumeFile?.name ||
+														(medicalResumeUrl
+															? "Dokumen sudah tersimpan"
+															: "") ||
+														"Belum ada file"}
+												</Typography>
+											</Box>
+										</Paper>
+
+										<Paper
+											variant="outlined"
+											sx={{ borderRadius: 2, p: 1, display: "flex", gap: 1 }}
+										>
+											<input
+												id="hasil-pemeriksaan-upload"
+												type="file"
+												accept="image/*,.pdf"
+												hidden
+												onChange={(e) => {
+													const f = e.target.files?.[0] || null;
+													setMedicalExamFile(f);
+													if (f) {
+														setMedicalExamUrl("");
+													}
+												}}
+											/>
+											<Button
+												component="label"
+												htmlFor="hasil-pemeriksaan-upload"
+												variant="outlined"
+												sx={{ borderRadius: 999, fontWeight: 700, minWidth: 0 }}
+											>
+												Pilih file
+											</Button>
+											<Box sx={{ flex: 1, minWidth: 0 }}>
+												<Typography sx={{ fontSize: 13, fontWeight: 600 }}>
+													Hasil pemeriksaan (lab, rontgen, dsb.)
+												</Typography>
+												<Typography
+													sx={{ fontSize: 12.5, color: "text.secondary" }}
+													noWrap
+												>
+													{medicalExamFile?.name ||
+														(medicalExamUrl ? "Dokumen sudah tersimpan" : "") ||
+														"Belum ada file"}
+												</Typography>
+											</Box>
+										</Paper>
+									</Stack>
+								</Box>
 							</Box>
 						)}
 
@@ -1361,7 +1576,7 @@ function BuatGalangDanaPageContent() {
 
 								<Box sx={{ mt: 2 }}>
 									<Typography sx={{ fontWeight: 600, fontSize: 14, mb: 0.75 }}>
-										Isi rincian Useran dana{" "}
+										Isi rincian penggunaan dana{" "}
 										<span style={{ color: "red" }}>*</span>
 									</Typography>
 									<TextField
@@ -1571,7 +1786,7 @@ function BuatGalangDanaPageContent() {
 										<RichTextEditor
 											value={story}
 											onChange={setStory}
-											placeholder="Tulis kronologi, kondisi pasien, kebutuhan biaya, rencana Useran dana, dan ajakan..."
+											placeholder="Tulis kronologi, kondisi pasien, kebutuhan biaya, rencana penggunaan dana, dan ajakan..."
 											minHeight={240}
 										/>
 									</Box>
@@ -1733,7 +1948,7 @@ function BuatGalangDanaPageContent() {
 															onChange={(e) => setAgreeA(e.target.checked)}
 														/>
 													}
-													label="Pemilik rekening bertanggung jawab atas Useran dana yang diterima dari galang dana ini."
+													label="Pemilik rekening bertanggung jawab atas penggunaan dana yang diterima dari galang dana ini."
 												/>
 												<Divider sx={{ my: 1 }} />
 												<FormControlLabel
@@ -1743,7 +1958,7 @@ function BuatGalangDanaPageContent() {
 															onChange={(e) => setAgreeB(e.target.checked)}
 														/>
 													}
-													label="Kamu sebagai penggalang dana bertanggung jawab atas permintaan pencairan dan pelaporan Useran dana."
+													label="Kamu sebagai penggalang dana bertanggung jawab atas permintaan pencairan dan pelaporan penggunaan dana."
 												/>
 											</Paper>
 										</Box>
@@ -2094,7 +2309,7 @@ function BuatGalangDanaPageContent() {
 
 								<Box sx={{ mt: 2 }}>
 									<Typography sx={{ fontWeight: 600, fontSize: 14, mb: 0.75 }}>
-										Isi rincian Useran dana{" "}
+										Isi rincian penggunaan dana{" "}
 										<span style={{ color: "red" }}>*</span>
 									</Typography>
 									<TextField
@@ -2307,7 +2522,7 @@ function BuatGalangDanaPageContent() {
 										<RichTextEditor
 											value={storyOther}
 											onChange={setStoryOther}
-											placeholder="Tulis latar belakang, kondisi, kebutuhan biaya, rencana Useran dana, dan ajakan..."
+											placeholder="Tulis latar belakang, kondisi, kebutuhan biaya, rencana penggunaan dana, dan ajakan..."
 											minHeight={240}
 										/>
 									</Box>
@@ -2399,15 +2614,17 @@ function BuatGalangDanaPageContent() {
 						</Button>
 					</Stack>
 
-					<Button
-						onClick={handleSaveDraft}
-						disabled={submitting}
-						variant="text"
-						fullWidth
-						sx={{ mt: 0.5, fontWeight: 600, color: "text.secondary" }}
-					>
-						Simpan dan lanjutkan nanti
-					</Button>
+					{!isContentEdit && (
+						<Button
+							onClick={handleSaveDraft}
+							disabled={submitting}
+							variant="text"
+							fullWidth
+							sx={{ mt: 0.5, fontWeight: 600, color: "text.secondary" }}
+						>
+							Simpan dan lanjutkan nanti
+						</Button>
+					)}
 				</Box>
 			</Paper>
 
@@ -2447,7 +2664,7 @@ function BuatGalangDanaPageContent() {
 									onChange={(e) => setT1(e.target.checked)}
 								/>
 							}
-							label="Pemilik rekening bertanggung jawab atas Useran dana yang diterima dari galang dana ini."
+							label="Pemilik rekening bertanggung jawab atas penggunaan dana yang diterima dari galang dana ini."
 						/>
 						<FormControlLabel
 							sx={{ "& .MuiFormControlLabel-label": { fontSize: 13 } }}
@@ -2457,7 +2674,7 @@ function BuatGalangDanaPageContent() {
 									onChange={(e) => setT2(e.target.checked)}
 								/>
 							}
-							label="Kamu sebagai penggalang dana bertanggung jawab atas permintaan pencairan dan pelaporan Useran dana."
+							label="Kamu sebagai penggalang dana bertanggung jawab atas permintaan pencairan dan pelaporan penggunaan dana."
 						/>
 						<FormControlLabel
 							sx={{ "& .MuiFormControlLabel-label": { fontSize: 13 } }}

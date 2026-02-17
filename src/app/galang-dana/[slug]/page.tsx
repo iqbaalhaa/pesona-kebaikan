@@ -2,6 +2,8 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect, notFound } from "next/navigation";
 import { LinkButton, LinkIconButton } from "@/components/ui/LinkButton";
+import OwnerDonationHistory from "@/components/campaign/OwnerDonationHistory";
+import OwnerExtendTargetButton from "@/components/campaign/OwnerExtendTargetButton";
 import { CATEGORY_TITLE } from "@/lib/constants";
 import {
 	Box,
@@ -25,7 +27,6 @@ import PeopleRoundedIcon from "@mui/icons-material/PeopleRounded";
 import VerifiedRoundedIcon from "@mui/icons-material/VerifiedRounded";
 import AccessTimeRoundedIcon from "@mui/icons-material/AccessTimeRounded";
 import AccountBalanceWalletRoundedIcon from "@mui/icons-material/AccountBalanceWalletRounded";
-import TrendingUpRoundedIcon from "@mui/icons-material/TrendingUpRounded";
 import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded";
 import ShareRoundedIcon from "@mui/icons-material/ShareRounded";
 import AddPhotoAlternateRoundedIcon from "@mui/icons-material/AddPhotoAlternateRounded";
@@ -88,6 +89,15 @@ export default async function CampaignDetailPage({
 	}
 
 	const donations = campaign.donations;
+	const donationItems = donations.map((d: any) => ({
+		id: d.id,
+		donorName: d.donorName,
+		isAnonymous: d.isAnonymous,
+		amount: Number(d.amount),
+		status: d.status,
+		message: d.message,
+		createdAt: d.createdAt.toISOString(),
+	}));
 	const successfulDonations = donations.filter((d: any) =>
 		["PAID", "paid", "SETTLED", "COMPLETED"].includes(d.status),
 	);
@@ -340,7 +350,7 @@ export default async function CampaignDetailPage({
 
 					<Stack direction="row" spacing={1.5}>
 						<LinkButton
-							href={`/galang-dana/buat?draft=${campaign.id}&type=${type}&category=${categoryKey}`}
+							href={`/galang-dana/buat?draft=${campaign.id}&type=${type}&category=${categoryKey}&mode=content`}
 							fullWidth
 							variant="outlined"
 							startIcon={<EditRoundedIcon />}
@@ -357,7 +367,8 @@ export default async function CampaignDetailPage({
 							Edit Detail
 						</LinkButton>
 						{/* Note: Share functionality would typically need a client component wrapper or onClick handler */}
-						<Button
+						<LinkButton
+							href={`/donasi/${campaign.slug || campaign.id}`}
 							fullWidth
 							variant="outlined"
 							startIcon={<ShareRoundedIcon />}
@@ -372,143 +383,15 @@ export default async function CampaignDetailPage({
 							}}
 						>
 							Bagikan
-						</Button>
+						</LinkButton>
 					</Stack>
+					<OwnerExtendTargetButton
+						campaignId={campaign.id}
+						campaignTitle={campaign.title}
+					/>
 				</Stack>
 
-				{/* Transactions List */}
-				<Box
-					sx={{
-						mb: 2,
-						display: "flex",
-						justifyContent: "space-between",
-						alignItems: "center",
-					}}
-				>
-					<Typography variant="subtitle2" fontWeight={700} sx={{ px: 0.5 }}>
-						Riwayat Donasi Terbaru
-					</Typography>
-					<Button size="small" sx={{ textTransform: "none", fontSize: 12 }}>
-						Lihat Semua
-					</Button>
-				</Box>
-
-				{donations.length === 0 ? (
-					<Paper
-						elevation={0}
-						sx={{
-							p: 4,
-							textAlign: "center",
-							borderRadius: 3,
-							bgcolor: "white",
-							border: "1px dashed",
-							borderColor: "divider",
-						}}
-					>
-						<PaidRoundedIcon
-							sx={{ fontSize: 40, color: "text.disabled", mb: 1 }}
-						/>
-						<Typography variant="body2" color="text.secondary">
-							Belum ada donasi masuk
-						</Typography>
-					</Paper>
-				) : (
-					<Stack spacing={1.5}>
-						{donations.slice(0, 5).map((donation: any) => (
-							<Paper
-								key={donation.id}
-								elevation={0}
-								sx={{
-									p: 2,
-									borderRadius: 3,
-									bgcolor: "white",
-									border: "1px solid",
-									borderColor: "divider",
-								}}
-							>
-								<Stack direction="row" alignItems="center" spacing={2}>
-									<Avatar
-										sx={{
-											width: 40,
-											height: 40,
-											bgcolor: donation.isAnonymous ? "grey.100" : "primary.50",
-											color: donation.isAnonymous ? "grey.500" : "primary.main",
-											fontWeight: 700,
-											fontSize: 14,
-										}}
-									>
-										{donation.isAnonymous
-											? "A"
-											: (donation.donorName || "U").charAt(0).toUpperCase()}
-									</Avatar>
-									<Box sx={{ flex: 1 }}>
-										<Typography variant="body2" fontWeight={700}>
-											{donation.isAnonymous
-												? "Hamba Allah"
-												: donation.donorName}
-										</Typography>
-										<Typography variant="caption" color="text.secondary">
-											{new Date(donation.createdAt).toLocaleDateString(
-												"id-ID",
-												{
-													day: "numeric",
-													month: "short",
-													hour: "2-digit",
-													minute: "2-digit",
-												},
-											)}
-										</Typography>
-									</Box>
-									<Box sx={{ textAlign: "right" }}>
-										<Typography
-											variant="body2"
-											fontWeight={700}
-											color="success.main"
-										>
-											+
-											{new Intl.NumberFormat("id-ID", {
-												style: "currency",
-												currency: "IDR",
-												maximumFractionDigits: 0,
-											}).format(Number(donation.amount))}
-										</Typography>
-										<Chip
-											label={donation.status || "Pending"}
-											size="small"
-											color={
-												donation.status === "PAID" ||
-												donation.status === "Berhasil"
-													? "success"
-													: donation.status === "PENDING"
-														? "warning"
-														: "default"
-											}
-											sx={{ height: 18, fontSize: 10, fontWeight: 700 }}
-										/>
-									</Box>
-								</Stack>
-								{donation.message && (
-									<Box
-										sx={{
-											mt: 1.5,
-											p: 1.5,
-											bgcolor: "grey.50",
-											borderRadius: 2,
-										}}
-									>
-										<Typography
-											variant="caption"
-											color="text.secondary"
-											fontStyle="italic"
-										>
-											"{donation.message}"
-										</Typography>
-									</Box>
-								)}
-							</Paper>
-						))}
-					</Stack>
-				)}
+				<OwnerDonationHistory donations={donationItems} />
 			</Container>
 		</Box>
 	);

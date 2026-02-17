@@ -348,7 +348,7 @@ export default function VerificationDialog({
 											Individu
 										</Typography>
 										<Typography variant="caption" color="text.secondary">
-											Untuk Useran pribadi dan donasi perorangan
+											Untuk pribadi dan donasi perorangan
 										</Typography>
 									</Box>
 								</Box>
