@@ -6,6 +6,7 @@ import bcrypt from "bcryptjs";
 import { Role, NotificationType } from "@prisma/client";
 import { auth } from "@/auth";
 import { createNotification } from "@/actions/notification";
+import { subDays } from "date-fns";
 
 function normalizePhone(phone?: string | null): string | null {
 	if (!phone) return null;
@@ -518,20 +519,40 @@ export async function bulkDeleteUsers(ids: string[]) {
 
 export async function getUserStats() {
 	try {
-		const [total, admins, users] = await Promise.all([
-			prisma.user.count(),
-			prisma.user.count({ where: { role: "ADMIN" } }),
+		const now = new Date();
+		const thirtyDaysAgo = subDays(now, 30);
+
+		const [totalUsers, newUsersLast30Days] = await Promise.all([
 			prisma.user.count({ where: { role: "USER" } }),
+			prisma.user.count({
+				where: {
+					role: "USER",
+					createdAt: { gte: thirtyDaysAgo },
+				},
+			}),
 		]);
 
-		// Mocking "active" vs "inactive" since we don't have that status field yet,
-		// maybe check loginActivity later? For now, assume all are active.
+		const activeUsers = totalUsers;
+		const previousPeriodUsers = Math.max(totalUsers - newUsersLast30Days, 1);
+		const growthRate = (newUsersLast30Days / previousPeriodUsers) * 100;
 
-		return { total, admins, users };
-	} catch (error) {
-		return { total: 0, admins: 0, users: 0 };
+		return {
+			totalUsers,
+			activeUsers,
+			newUsersLast30Days,
+			growthRate,
+		};
+	} catch {
+		return {
+			totalUsers: 0,
+			activeUsers: 0,
+			newUsersLast30Days: 0,
+			growthRate: 0,
+		};
 	}
 }
+
+export type UserStats = Awaited<ReturnType<typeof getUserStats>>;
 
 export async function getMyProfile() {
 	const session = await auth();

@@ -16,6 +16,7 @@ import {
   Menu,
   MenuItem,
   Pagination,
+  Snackbar,
   Table,
   TableBody,
   TableCell,
@@ -23,6 +24,7 @@ import {
   TableHead,
   TableRow,
   Typography,
+  Alert,
 } from "@mui/material";
 import {
   Add,
@@ -35,8 +37,7 @@ import {
 import { ChangeEvent, FormEvent, useEffect, useState } from "react";
 import { User } from "@prisma/client";
 import { useRouter } from "next/navigation";
-import { toast } from "react-toastify";
-import { UserStats } from "./page";
+import type { UserStats } from "@/actions/user";
 
 interface UsersClientProps {
   initialUsers: User[];
@@ -70,7 +71,28 @@ export default function UsersClient({
     email: "",
   });
 
+  const [snackbar, setSnackbar] = useState<{
+    open: boolean;
+    message: string;
+    severity: "success" | "error" | "info" | "warning";
+  }>({
+    open: false,
+    message: "",
+    severity: "success",
+  });
+
   const router = useRouter();
+
+  const showSnackbar = (
+    message: string,
+    severity: "success" | "error" | "info" | "warning" = "info"
+  ) => {
+    setSnackbar({ open: true, message, severity });
+  };
+
+  const handleCloseSnackbar = () => {
+    setSnackbar((prev) => ({ ...prev, open: false }));
+  };
 
   const fetchUsers = async (
     page: number,
@@ -119,7 +141,7 @@ export default function UsersClient({
   };
 
   const handleEditUserDialogOpen = (user: User) => {
-    setEditUser({ id: user.id, name: user.name, email: user.email });
+    setEditUser({ id: user.id, name: user.name ?? "", email: user.email });
     setEditUserDialogOpen(true);
     handleMenuClose();
   };
@@ -157,16 +179,19 @@ export default function UsersClient({
         body: JSON.stringify(newUser),
       });
       if (response.ok) {
-        toast.success("Pengguna berhasil ditambahkan");
+        showSnackbar("Pengguna berhasil ditambahkan", "success");
         fetchUsers(page, rowsPerPage, searchQuery);
         handleAddUserDialogClose();
         router.refresh();
       } else {
         const errorData = await response.json();
-        toast.error(errorData.message || "Gagal menambahkan pengguna");
+        showSnackbar(
+          errorData.message || "Gagal menambahkan pengguna",
+          "error"
+        );
       }
     } catch (error) {
-      toast.error("Terjadi kesalahan");
+      showSnackbar("Terjadi kesalahan", "error");
     }
   };
 
@@ -179,16 +204,19 @@ export default function UsersClient({
         body: JSON.stringify({ name: editUser.name, email: editUser.email }),
       });
       if (response.ok) {
-        toast.success("Pengguna berhasil diperbarui");
+        showSnackbar("Pengguna berhasil diperbarui", "success");
         fetchUsers(page, rowsPerPage, searchQuery);
         handleEditUserDialogClose();
         router.refresh();
       } else {
         const errorData = await response.json();
-        toast.error(errorData.message || "Gagal memperbarui pengguna");
+        showSnackbar(
+          errorData.message || "Gagal memperbarui pengguna",
+          "error"
+        );
       }
     } catch (error) {
-      toast.error("Terjadi kesalahan");
+      showSnackbar("Terjadi kesalahan", "error");
     }
   };
 
@@ -199,16 +227,19 @@ export default function UsersClient({
           method: "DELETE",
         });
         if (response.ok) {
-          toast.success("Pengguna berhasil dihapus");
+          showSnackbar("Pengguna berhasil dihapus", "success");
           fetchUsers(page, rowsPerPage, searchQuery);
           handleDeleteDialogClose();
           router.refresh();
         } else {
           const errorData = await response.json();
-          toast.error(errorData.message || "Gagal menghapus pengguna");
+          showSnackbar(
+            errorData.message || "Gagal menghapus pengguna",
+            "error"
+          );
         }
       } catch (error) {
-        toast.error("Terjadi kesalahan");
+        showSnackbar("Terjadi kesalahan", "error");
       }
     }
   };
@@ -464,6 +495,22 @@ export default function UsersClient({
           </Button>
         </DialogActions>
       </Dialog>
+
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={4000}
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert
+          onClose={handleCloseSnackbar}
+          severity={snackbar.severity}
+          variant="filled"
+          sx={{ borderRadius: 999, fontWeight: 700 }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </div>
   );
 }
