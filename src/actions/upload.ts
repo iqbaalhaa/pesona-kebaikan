@@ -1,6 +1,7 @@
 "use server";
 
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import sharp from "sharp";
 
 const s3Client = new S3Client({
 	region: process.env.S3_REGION,
@@ -11,6 +12,10 @@ const s3Client = new S3Client({
 	},
 	forcePathStyle: true,
 });
+
+async function bufferToWebP(input: Buffer) {
+	return sharp(input).webp({ quality: 80 }).toBuffer();
+}
 
 export async function uploadImage(formData: FormData) {
 	return uploadFile(formData);
@@ -24,14 +29,18 @@ export async function uploadFile(formData: FormData) {
 		}
 
 		const bytes = await file.arrayBuffer();
-		const buffer = Buffer.from(bytes);
+		const originalBuffer = Buffer.from(bytes);
+
+		const isImage =
+			typeof (file as any).type === "string" &&
+			(file as any).type.startsWith("image/");
+
+		const buffer = isImage ? await bufferToWebP(originalBuffer) : originalBuffer;
 
 		const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-		const ext = file.name.split(".").pop();
-		const cleanName = file.name
-			.replace(/\.[^/.]+$/, "")
-			.replace(/[^a-zA-Z0-9]/g, "-");
-		const filename = `${cleanName}-${uniqueSuffix}.${ext}`;
+		const baseName = file.name.replace(/\.[^/.]+$/, "").replace(/[^a-zA-Z0-9]/g, "-");
+		const ext = isImage ? "webp" : file.name.split(".").pop();
+		const filename = `${baseName}-${uniqueSuffix}.${ext}`;
 
 		const rootDir = process.env.S3_ROOT_DIR || "";
 		const key = rootDir ? `${rootDir.replace(/\/$/, "")}/${filename}` : filename;
@@ -46,7 +55,7 @@ export async function uploadFile(formData: FormData) {
 				Bucket: bucket,
 				Key: key,
 				Body: buffer,
-				ContentType: (file as any).type || "application/octet-stream",
+				ContentType: isImage ? "image/webp" : (file as any).type || "application/octet-stream",
 				ACL: "public-read",
 			}),
 		);
