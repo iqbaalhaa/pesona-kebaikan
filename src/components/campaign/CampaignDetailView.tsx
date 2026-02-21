@@ -79,12 +79,6 @@ export default function CampaignDetailView({
 	const [tabValue, setTabValue] = React.useState(0);
 	const [showFullStory, setShowFullStory] = React.useState(false);
 
-	// Share URL state (avoid empty on first click)
-	const [shareUrl, setShareUrl] = React.useState("");
-	React.useEffect(() => {
-		if (typeof window !== "undefined") setShareUrl(window.location.href);
-	}, []);
-
 	// Report state
 	const [reportLoading, setReportLoading] = React.useState(false);
 	const [reportReason, setReportReason] = React.useState<ReportReason | "">("");
@@ -233,14 +227,26 @@ export default function CampaignDetailView({
 	const diffTime = Math.abs(now.getTime() - startDate.getTime());
 	const campaignDuration = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-	// Normalize images to string[]
-	const images =
+	// Normalize images to string[] in the same way as OG metadata
+	const imagesFromField =
 		Array.isArray(data.images) && data.images.length > 0
 			? data.images
 					.map((img: any) => (typeof img === "string" ? img : img?.url))
 					.filter(Boolean)
-			: [data.thumbnail || "https://placehold.co/600x400?text=No+Image"];
+			: [];
 
+	const fallbackImage =
+		data.thumbnail ||
+		(Array.isArray((data as any).media)
+			? (data as any).media.find((m: any) => m?.isThumbnail)?.url
+			: undefined) ||
+		"/defaultimg.webp";
+
+	const images = imagesFromField.length > 0 ? imagesFromField : [fallbackImage];
+
+	const baseUrl =
+		process.env.NEXT_PUBLIC_APP_URL || "https://pesonakebaikan.id";
+	const shareUrl = `${baseUrl}/donasi/${data.slug || data.id}`;
 	const shareText = `Bantu ${effectiveTitle} di Pesona Kebaikan`;
 
 	const copyToClipboard = async (text: string) => {

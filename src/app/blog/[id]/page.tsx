@@ -12,14 +12,81 @@ import FacebookIcon from "@mui/icons-material/Facebook";
 import InstagramIcon from "@mui/icons-material/Instagram";
 import WhatsAppIcon from "@mui/icons-material/WhatsApp";
 import XIcon from "@mui/icons-material/X";
+import { Metadata } from "next";
 import { blogService } from "@/services/blogService";
 import { CopyLinkButton } from "@/components/blog/CopyLinkButton";
 
-export default async function BlogDetailPage({
-	params,
-}: {
+type Props = {
 	params: Promise<{ id: string }>;
-}) {
+};
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+	const resolvedParams = await params;
+	const blog = await blogService.getBlogById(resolvedParams.id);
+
+	if (!blog) {
+		return {
+			title: "Artikel tidak ditemukan | Pesona Kebaikan",
+			robots: {
+				index: false,
+				follow: false,
+			},
+		};
+	}
+
+	const siteUrl =
+		process.env.NEXT_PUBLIC_BASE_URL || "https://pesonakebaikan.id";
+	const postUrl = `${siteUrl}/blog/${blog.id}`;
+	const plainTextContent = blog.content.replace(/<[^>]*>?/gm, "");
+	const description =
+		plainTextContent.length > 160
+			? `${plainTextContent.substring(0, 157)}...`
+			: plainTextContent;
+
+	const contentImageMatch = blog.content.match(
+		/<img[^>]+src=["']([^"']+)["']/i,
+	);
+	const contentImage = contentImageMatch ? contentImageMatch[1] : null;
+
+	const hasHeroImage = blog.heroImage && blog.heroImage.trim().length > 0;
+
+	const cover =
+		(hasHeroImage ? blog.heroImage : null) ||
+		contentImage ||
+		blog.gallery.find((m) => m.type === "image")?.url ||
+		"/defaultimg.webp";
+
+	return {
+		title: `${blog.title} | Pesona Kebaikan`,
+		description,
+		openGraph: {
+			title: blog.title,
+			description,
+			type: "article",
+			url: postUrl,
+			siteName: "Pesona Kebaikan",
+			images: [
+				{
+					url: cover,
+					width: 1200,
+					height: 630,
+					alt: blog.title,
+				},
+			],
+		},
+		twitter: {
+			card: "summary_large_image",
+			title: blog.title,
+			description,
+			images: [cover],
+		},
+		alternates: {
+			canonical: postUrl,
+		},
+	};
+}
+
+export default async function BlogDetailPage({ params }: Props) {
 	const resolvedParams = await params;
 	const blog = await blogService.getBlogById(resolvedParams.id);
 
@@ -61,8 +128,44 @@ export default async function BlogDetailPage({
 		process.env.NEXT_PUBLIC_BASE_URL || "https://pesonakebaikan.id";
 	const postUrl = `${baseUrl}/blog/${blog.id}`;
 
+	const plainTextContent = blog.content.replace(/<[^>]*>?/gm, "");
+	const description =
+		plainTextContent.length > 160
+			? `${plainTextContent.substring(0, 157)}...`
+			: plainTextContent;
+
+	const jsonLd = {
+		"@context": "https://schema.org",
+		"@type": "BlogPosting",
+		headline: blog.title,
+		description,
+		image: cover,
+		datePublished: new Date(blog.createdAt).toISOString(),
+		dateModified: new Date(blog.updatedAt || blog.createdAt).toISOString(),
+		author: {
+			"@type": "Organization",
+			name: "Pesona Kebaikan",
+		},
+		publisher: {
+			"@type": "Organization",
+			name: "Pesona Kebaikan",
+			logo: {
+				"@type": "ImageObject",
+				url: `${baseUrl}/brand/logo.png`,
+			},
+		},
+		mainEntityOfPage: {
+			"@type": "WebPage",
+			"@id": postUrl,
+		},
+	};
+
 	return (
 		<Box sx={{ px: 2, pt: 2.5, pb: 4, maxWidth: 800, mx: "auto" }}>
+			<script
+				type="application/ld+json"
+				dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+			/>
 			<Box
 				sx={{
 					display: "flex",

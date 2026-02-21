@@ -14,12 +14,57 @@ const pjs = Plus_Jakarta_Sans({
 	weight: ["400", "500", "600", "700", "800"],
 });
 
+const siteName = "Pesona Kebaikan";
+const siteUrl =
+	process.env.NEXT_PUBLIC_APP_URL || "https://pesonakebaikan.id";
+const siteDescription =
+	"Pesona Kebaikan adalah platform donasi dan galang dana online untuk membantu sesama dengan transparan dan terpercaya.";
+
 export const metadata: Metadata = {
-	metadataBase: new URL(
-		process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
-	),
-	title: "Pesona Kebaikan",
-	description: "Created by Depati Digital",
+	metadataBase: new URL(siteUrl),
+	title: {
+		default: `${siteName} – Platform Donasi dan Galang Dana`,
+		template: `%s | ${siteName}`,
+	},
+	description: siteDescription,
+	keywords: [
+		"donasi online",
+		"galang dana",
+		"sedekah",
+		"zakat",
+		"wakaf",
+		"amal",
+		"pesona kebaikan",
+	],
+	openGraph: {
+		title: `${siteName} – Platform Donasi dan Galang Dana`,
+		description: siteDescription,
+		url: "/",
+		siteName,
+		images: [
+			{
+				url: "/defaultimg.webp",
+				width: 1200,
+				height: 630,
+				alt: siteName,
+			},
+		],
+		locale: "id_ID",
+		type: "website",
+	},
+	twitter: {
+		card: "summary_large_image",
+		title: `${siteName} – Platform Donasi dan Galang Dana`,
+		description: siteDescription,
+		images: ["/defaultimg.webp"],
+	},
+	robots: {
+		index: true,
+		follow: true,
+	},
+	alternates: {
+		canonical: "/",
+	},
 };
 
 export default async function RootLayout({

@@ -2,13 +2,27 @@ import { getCampaigns } from "@/actions/campaign";
 import DonationExplorer, {
 	CampaignItem,
 } from "@/components/donation/DonationExplorer";
-import { Metadata } from "next";
+import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
 
 export const metadata: Metadata = {
 	title: "Donasi | Pesona Kebaikan",
 	description:
 		"Temukan dan bantu mereka yang membutuhkan melalui Pesona Kebaikan.",
+	openGraph: {
+		title: "Donasi | Pesona Kebaikan",
+		description:
+			"Temukan dan bantu mereka yang membutuhkan melalui Pesona Kebaikan.",
+		url: "/donasi",
+		siteName: "Pesona Kebaikan",
+		type: "website",
+	},
+	twitter: {
+		card: "summary_large_image",
+		title: "Donasi | Pesona Kebaikan",
+		description:
+			"Temukan dan bantu mereka yang membutuhkan melalui Pesona Kebaikan.",
+	},
 };
 
 export default async function DonationPage({
