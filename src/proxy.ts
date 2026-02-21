@@ -6,9 +6,19 @@ export default auth((req) => {
   const isLoggedIn = !!req.auth;
   const userRole = req.auth?.user?.role;
 
+  const publicProfileRoutes = [
+    "/profil/tentang",
+    "/profil/syarat-ketentuan",
+    "/profil/bantuan",
+  ];
+
+  const isPublicProfileRoute = publicProfileRoutes.some((path) =>
+    nextUrl.pathname.startsWith(path),
+  );
+
   const isAdminRoute = nextUrl.pathname.startsWith("/admin");
-  const isPrivateRoute = 
-    nextUrl.pathname.startsWith("/profil") || 
+  const isPrivateRoute =
+    (!isPublicProfileRoute && nextUrl.pathname.startsWith("/profil")) ||
     nextUrl.pathname.startsWith("/donasi-saya") ||
     nextUrl.pathname.startsWith("/galang-dana/buat");
 
