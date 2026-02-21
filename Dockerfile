@@ -1,10 +1,11 @@
-FROM node:20-alpine AS base
+FROM node:22-alpine AS base
 WORKDIR /app
+RUN apk add --no-cache libc6-compat openssl
+RUN corepack enable
 
 FROM base AS deps
-RUN apk add --no-cache libc6-compat openssl
-COPY package.json package-lock.json* ./
-RUN npm install --legacy-peer-deps
+COPY package.json ./
+RUN yarn install --non-interactive
 
 FROM base AS builder
 WORKDIR /app
@@ -13,8 +14,8 @@ ARG DATABASE_URL
 ENV DATABASE_URL=${DATABASE_URL}
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-RUN npx prisma generate
-RUN npm run build
+RUN npx prisma@6 generate
+RUN yarn build
 
 FROM base AS runner
 WORKDIR /app
@@ -30,4 +31,4 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next ./.next
 COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
 USER nextjs
 EXPOSE 3000
-CMD ["npm", "run", "start"]
+CMD ["sh", "-c", "npx prisma db push --skip-generate && yarn start"]

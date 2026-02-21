@@ -1,3 +1,5 @@
+"use client";
+
 import { StyledTextField } from "@/components/ui/StyledTextField";
 import {
   Button,
