@@ -36,7 +36,7 @@ yarn-error.log*
 .env.production.local
 !.env.example
 !.env.local.example
-.docker-compose.yml
+docker-compose.yml
 # vercel
 .vercel
 
