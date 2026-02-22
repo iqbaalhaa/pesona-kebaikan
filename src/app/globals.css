@@ -6,6 +6,7 @@
 	--background: #f8fafc; /* Matches MUI Light background.default */
 	--foreground: #0f172a; /* Matches MUI Light text.primary */
 	--brand: #0ba976;
+	--font-pjs: "Plus Jakarta Sans";
 	--mui-font-family: var(--font-pjs), "Plus Jakarta Sans", system-ui,
 		-apple-system, Segoe UI, Roboto, Arial, sans-serif;
 }
