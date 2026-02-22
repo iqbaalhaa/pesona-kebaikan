@@ -13,8 +13,8 @@ services:
       - "db-host:host-gateway"
     env_file:
       - .env
-      
+
     environment:
       NODE_ENV: production
-    command: npm run start
+      DATABASE_URL: "postgresql://postgres:postgres@db-host:5432/pesonakebaikan?schema=public"
     restart: unless-stopped
