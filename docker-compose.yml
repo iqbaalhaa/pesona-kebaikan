@@ -4,7 +4,7 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
-        DATABASE_URL: "postgresql://postgres:postgres@db-host:5432/pesonakebaikan?schema=public"
+        DATABASE_URL: "postgresql://vpsdepati:Vpsdepati.123!@db-host:5432/pesonakebaikan?schema=public"
     container_name: pesonakebaikan-app
     ports:
       - "9000:3000"
@@ -16,5 +16,5 @@ services:
 
     environment:
       NODE_ENV: production
-      DATABASE_URL: "postgresql://postgres:postgres@db-host:5432/pesonakebaikan?schema=public"
+      DATABASE_URL: "postgresql://vpsdepati:Vpsdepati.123!@db-host:5432/pesonakebaikan?schema=public"
     restart: unless-stopped
