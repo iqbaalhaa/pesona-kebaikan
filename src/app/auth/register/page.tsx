@@ -14,6 +14,7 @@ import {
 	InputAdornment,
 	IconButton,
 	Container,
+	Dialog,
 } from "@mui/material";
 import {
 	EmailOutlined,
@@ -25,7 +26,9 @@ import {
 	HowToRegOutlined,
 	CheckCircle,
 	Cancel,
+	Close as CloseIcon,
 } from "@mui/icons-material";
+import { newVerification } from "@/actions/new-verification";
 
 export default function RegisterPage() {
 	const router = useRouter();
@@ -40,6 +43,14 @@ export default function RegisterPage() {
 		confirmPassword: "",
 		name: "",
 	});
+
+	// Verification Dialog State
+	const [openVerification, setOpenVerification] = useState(false);
+	const [registeredEmail, setRegisteredEmail] = useState("");
+	const [otp, setOtp] = useState("");
+	const [verifying, setVerifying] = useState(false);
+	const [verificationError, setVerificationError] = useState("");
+	const [verificationSuccess, setVerificationSuccess] = useState(false);
 
 	const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		setFormData({
@@ -95,11 +106,38 @@ export default function RegisterPage() {
 				throw new Error(data.error || "Registrasi gagal");
 			}
 
-			router.push("/auth/login");
+			// Show Verification Dialog instead of redirecting
+			setRegisteredEmail(formData.email);
+			setOpenVerification(true);
 		} catch (err) {
 			setError(err instanceof Error ? err.message : "Terjadi kesalahan");
-		} finally {
 			setLoading(false);
+		}
+	};
+
+	const handleVerify = async () => {
+		if (otp.length < 6) {
+			setVerificationError("Masukkan 6 digit kode OTP");
+			return;
+		}
+
+		setVerifying(true);
+		setVerificationError("");
+
+		try {
+			const res = await newVerification(otp);
+			if (res.success) {
+				setVerificationSuccess(true);
+				setTimeout(() => {
+					router.push("/auth/login");
+				}, 1500);
+			} else {
+				setVerificationError(res.error || "Verifikasi gagal");
+			}
+		} catch (err) {
+			setVerificationError("Terjadi kesalahan saat verifikasi");
+		} finally {
+			setVerifying(false);
 		}
 	};
 
@@ -458,6 +496,102 @@ export default function RegisterPage() {
 					reserved.
 				</Typography>
 			</Container>
+
+			{/* Verification Dialog */}
+			<Dialog
+				open={openVerification}
+				maxWidth="xs"
+				fullWidth
+				PaperProps={{
+					sx: { borderRadius: 3 },
+				}}
+			>
+				<Box sx={{ p: 3, textAlign: "center" }}>
+					<Box
+						sx={{
+							width: 60,
+							height: 60,
+							bgcolor: verificationSuccess ? "success.light" : "primary.light",
+							color: verificationSuccess ? "success.main" : "primary.main",
+							borderRadius: "50%",
+							display: "flex",
+							alignItems: "center",
+							justifyContent: "center",
+							mx: "auto",
+							mb: 2,
+							background: verificationSuccess
+								? "rgba(46, 125, 50, 0.1)"
+								: "rgba(11, 169, 118, 0.1)",
+						}}
+					>
+						{verificationSuccess ? (
+							<CheckCircle sx={{ fontSize: 32 }} />
+						) : (
+							<EmailOutlined sx={{ fontSize: 32 }} />
+						)}
+					</Box>
+
+					<Typography variant="h6" sx={{ fontWeight: 800, mb: 1 }}>
+						{verificationSuccess ? "Verifikasi Berhasil" : "Verifikasi Email"}
+					</Typography>
+
+					<Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+						{verificationSuccess
+							? "Akun Anda telah berhasil diverifikasi. Mengalihkan ke halaman login..."
+							: `Kami telah mengirimkan kode OTP ke email ${registeredEmail}. Silakan cek kotak masuk Anda.`}
+					</Typography>
+
+					{!verificationSuccess && (
+						<Stack spacing={2}>
+							{verificationError && (
+								<Alert severity="error" sx={{ borderRadius: 2 }}>
+									{verificationError}
+								</Alert>
+							)}
+							<StyledTextField
+								placeholder="Masukkan 6 digit kode OTP"
+								fullWidth
+								value={otp}
+								onChange={(e) =>
+									setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))
+								}
+								inputProps={{
+									style: {
+										textAlign: "center",
+										letterSpacing: 4,
+										fontSize: 18,
+									},
+									maxLength: 6,
+								}}
+								disabled={verifying}
+							/>
+							<Button
+								variant="contained"
+								fullWidth
+								onClick={handleVerify}
+								disabled={verifying || otp.length < 6}
+								sx={{
+									py: 1.25,
+									borderRadius: 2,
+									fontWeight: 700,
+									background: "linear-gradient(to right, #0ba976, #4caf50)",
+									boxShadow: "0 4px 12px rgba(11, 169, 118, 0.25)",
+								}}
+							>
+								{verifying ? "Memproses..." : "Verifikasi Akun"}
+							</Button>
+							<Button
+								variant="text"
+								onClick={() => router.push("/auth/login")}
+								disabled={verifying}
+								sx={{ color: "text.secondary" }}
+							>
+								Lewati (Verifikasi Nanti)
+							</Button>
+						</Stack>
+					)}
+				</Box>
+			</Dialog>
 		</Box>
 	);
 }

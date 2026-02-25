@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { useSession, signOut, SessionProvider } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
@@ -23,7 +23,7 @@ import VerificationBanner from "@/components/profile/VerificationBanner";
 import VerificationDialog from "@/components/profile/VerificationDialog";
 import { getMyProfile } from "@/actions/user";
 
-function ProfilePageContent() {
+export default function ProfilePage() {
 	const router = useRouter();
 	const { data: session, status } = useSession();
 
@@ -259,13 +259,5 @@ function ProfilePageContent() {
 				onSuccess={loadProfile}
 			/>
 		</Box>
-	);
-}
-
-export default function ProfilePage() {
-	return (
-		<SessionProvider>
-			<ProfilePageContent />
-		</SessionProvider>
 	);
 }

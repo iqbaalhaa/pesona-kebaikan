@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useSession } from "next-auth/react";
 import {
 	Box,
 	Typography,
@@ -30,6 +31,7 @@ import { loginAction } from "./action";
 export default function LoginPage() {
 	const router = useRouter();
 	const searchParams = useSearchParams();
+	const { update } = useSession();
 	const [error, setError] = useState("");
 	const [loading, setLoading] = useState(false);
 	const [showPassword, setShowPassword] = useState(false);
@@ -68,8 +70,13 @@ export default function LoginPage() {
 						"Email atau password yang Anda masukkan tidak terdaftar atau salah",
 					);
 				}
+				setLoading(false);
 				return;
 			}
+
+			// Force update session to ensure fresh state
+			await update();
+			router.refresh();
 
 			const callbackUrl = searchParams.get("callbackUrl");
 			if (callbackUrl) {
@@ -84,7 +91,6 @@ export default function LoginPage() {
 			}
 		} catch (err) {
 			setError("Terjadi kesalahan saat login");
-		} finally {
 			setLoading(false);
 		}
 	};

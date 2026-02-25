@@ -75,6 +75,7 @@ export default function VerificationDialog({
 	const [phone, setPhone] = React.useState<string>("");
 	const [waOtp, setWaOtp] = React.useState<string>("");
 	const [waLoading, setWaLoading] = React.useState<boolean>(false);
+	const [isEmailVerified, setIsEmailVerified] = React.useState<boolean>(false);
 
 	const [emailOtp, setEmailOtp] = React.useState<string>("");
 	const [emailLoading, setEmailLoading] = React.useState<boolean>(false);
@@ -135,16 +136,20 @@ export default function VerificationDialog({
 			getVerificationStatus().then((res) => {
 				if (res.success && res.data) {
 					const { phoneVerified, emailVerified } = res.data;
+					setIsEmailVerified(!!emailVerified);
 					if (phoneVerified) {
-						setActiveStep(1);
-						if (emailVerified) {
-							setActiveStep(2);
-						}
+						setActiveStep(emailVerified ? 2 : 1);
 					}
 				}
 			});
 		}
 	}, [open, session]);
+
+	React.useEffect(() => {
+		if (activeStep === 1 && isEmailVerified) {
+			setActiveStep(2);
+		}
+	}, [activeStep, isEmailVerified]);
 
 	React.useEffect(() => {
 		let timer: NodeJS.Timeout;
@@ -772,7 +777,8 @@ export default function VerificationDialog({
 													</Typography>
 												</>
 											)}
-										</Box>										<StyledTextField
+										</Box>{" "}
+										<StyledTextField
 											label={
 												verificationType === "individu"
 													? "Nomor NIK KTP"
