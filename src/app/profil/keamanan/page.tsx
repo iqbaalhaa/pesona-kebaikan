@@ -29,15 +29,22 @@ import KeyIcon from "@mui/icons-material/Key";
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import InputAdornment from "@mui/material/InputAdornment";
-import { changePassword, getLoginActivities } from "@/actions/security";
+import {
+	changePassword,
+	getLoginActivities,
+	deleteAccount,
+	checkUserCanDeleteAccount,
+} from "@/actions/security";
 import Snackbar from "@mui/material/Snackbar";
 import CircularProgress from "@mui/material/CircularProgress";
 import LaptopIcon from "@mui/icons-material/Laptop";
 import ProfileHeader from "@/components/profile/ProfileHeader";
 import PageContainer from "@/components/profile/PageContainer";
+import DeleteForever from "@mui/icons-material/DeleteForever";
+import { signOut } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
 export default function SecurityPage() {
-
 	// State for Change Password Modal
 	const [openPassword, setOpenPassword] = React.useState(false);
 	const [showPassword, setShowPassword] = React.useState({
@@ -57,11 +64,13 @@ export default function SecurityPage() {
 	const handleCloseSnackbar = () =>
 		setSnackbar((prev) => ({ ...prev, open: false }));
 
-	const handleSubmitPassword = async (event: React.FormEvent<HTMLFormElement>) => {
+	const handleSubmitPassword = async (
+		event: React.FormEvent<HTMLFormElement>,
+	) => {
 		event.preventDefault();
 		setIsSubmitting(true);
 		const formData = new FormData(event.currentTarget);
-		
+
 		try {
 			const result = await changePassword(null, formData);
 			if (result?.error) {
@@ -138,6 +147,56 @@ export default function SecurityPage() {
 		setShowPassword((prev) => ({ ...prev, [field]: !prev[field] }));
 	};
 
+	// Account Deletion State
+	const [openDelete, setOpenDelete] = React.useState(false);
+	const [isDeleting, setIsDeleting] = React.useState(false);
+	const [deletePassword, setDeletePassword] = React.useState("");
+	const [showDeletePassword, setShowDeletePassword] = React.useState(false);
+	const [canDeleteAccount, setCanDeleteAccount] = React.useState(true);
+	const [deleteRestrictionReason, setDeleteRestrictionReason] =
+		React.useState("");
+
+	React.useEffect(() => {
+		checkUserCanDeleteAccount().then((res) => {
+			if (!res.canDelete) {
+				setCanDeleteAccount(false);
+				setDeleteRestrictionReason(res.error || "Akun tidak dapat dihapus");
+			}
+		});
+	}, []);
+
+	const handleDeleteAccount = async () => {
+		if (!deletePassword) {
+			setSnackbar({
+				open: true,
+				message: "Masukkan password untuk konfirmasi",
+				severity: "error",
+			});
+			return;
+		}
+
+		setIsDeleting(true);
+		const formData = new FormData();
+		formData.append("currentPassword", deletePassword);
+
+		try {
+			const result = await deleteAccount(null, formData);
+			if (result?.error) {
+				setSnackbar({ open: true, message: result.error, severity: "error" });
+			} else if (result?.success) {
+				await signOut({ callbackUrl: "/" });
+			}
+		} catch (e) {
+			setSnackbar({
+				open: true,
+				message: "Terjadi kesalahan saat menghapus akun",
+				severity: "error",
+			});
+		} finally {
+			setIsDeleting(false);
+		}
+	};
+
 	return (
 		<PageContainer>
 			<Snackbar
@@ -208,10 +267,7 @@ export default function SecurityPage() {
 			>
 				<List disablePadding>
 					{/* Ganti Password */}
-					<ListItemButton
-						onClick={() => setOpenPassword(true)}
-						sx={{ py: 2 }}
-					>
+					<ListItemButton onClick={() => setOpenPassword(true)} sx={{ py: 2 }}>
 						<ListItemIcon sx={{ minWidth: 40, color: "#0ba976" }}>
 							<KeyIcon />
 						</ListItemIcon>
@@ -253,6 +309,39 @@ export default function SecurityPage() {
 							color="success"
 						/>
 					</ListItemButton>*/}
+
+					<ListItemButton
+						onClick={() => setOpenDelete(true)}
+						disabled={!canDeleteAccount}
+						sx={{ py: 2 }}
+					>
+						<ListItemIcon
+							sx={{
+								minWidth: 40,
+								color: canDeleteAccount ? "#ef4444" : "text.disabled",
+							}}
+						>
+							<DeleteForever />
+						</ListItemIcon>
+						<ListItemText
+							primary="Hapus Akun"
+							secondary={
+								!canDeleteAccount
+									? deleteRestrictionReason
+									: "Hapus akun anda secara permanen"
+							}
+							primaryTypographyProps={{
+								fontSize: 14,
+								fontWeight: 700,
+								color: canDeleteAccount ? "#ef4444" : "text.disabled",
+								mb: 0.5,
+							}}
+							secondaryTypographyProps={{ fontSize: 12 }}
+						/>
+						{canDeleteAccount && (
+							<ChevronRightIcon sx={{ color: "rgba(15,23,42,0.3)" }} />
+						)}
+					</ListItemButton>
 				</List>
 			</Paper>
 
@@ -302,7 +391,7 @@ export default function SecurityPage() {
 									year: "numeric",
 									hour: "2-digit",
 									minute: "2-digit",
-								}
+								},
 							);
 							return (
 								<React.Fragment key={activity.id}>
@@ -361,7 +450,11 @@ export default function SecurityPage() {
 												onClick={() => handleTogglePassword("current")}
 												edge="end"
 											>
-												{showPassword.current ? <VisibilityOff /> : <Visibility />}
+												{showPassword.current ? (
+													<VisibilityOff />
+												) : (
+													<Visibility />
+												)}
 											</IconButton>
 										</InputAdornment>
 									),
@@ -399,7 +492,11 @@ export default function SecurityPage() {
 												onClick={() => handleTogglePassword("confirm")}
 												edge="end"
 											>
-												{showPassword.confirm ? <VisibilityOff /> : <Visibility />}
+												{showPassword.confirm ? (
+													<VisibilityOff />
+												) : (
+													<Visibility />
+												)}
 											</IconButton>
 										</InputAdornment>
 									),
@@ -430,10 +527,79 @@ export default function SecurityPage() {
 								"&:hover": { bgcolor: "#16a34a", boxShadow: "none" },
 							}}
 						>
-							{isSubmitting ? <CircularProgress size={20} color="inherit" /> : "Simpan Password"}
+							{isSubmitting ? (
+								<CircularProgress size={20} color="inherit" />
+							) : (
+								"Simpan Password"
+							)}
 						</Button>
 					</DialogActions>
 				</form>
+			</Dialog>
+
+			{/* Delete Account Dialog */}
+			<Dialog
+				open={openDelete}
+				onClose={() => setOpenDelete(false)}
+				fullWidth
+				maxWidth="sm"
+				PaperProps={{ sx: { borderRadius: 3 } }}
+			>
+				<DialogTitle sx={{ fontWeight: 800, fontSize: 18, color: "#ef4444" }}>
+					Hapus Akun Permanen
+				</DialogTitle>
+				<DialogContent>
+					<Typography variant="body2" color="text.secondary" paragraph>
+						Apakah anda yakin ingin menghapus akun ini? Tindakan ini tidak dapat
+						dibatalkan. Semua data anda akan hilang secara permanen.
+					</Typography>
+
+					<Alert severity="warning" sx={{ mb: 3, fontSize: 12 }}>
+						Silakan masukkan password anda untuk konfirmasi penghapusan akun.
+					</Alert>
+
+					<TextField
+						label="Password Anda"
+						type={showDeletePassword ? "text" : "password"}
+						fullWidth
+						value={deletePassword}
+						onChange={(e) => setDeletePassword(e.target.value)}
+						InputProps={{
+							endAdornment: (
+								<InputAdornment position="end">
+									<IconButton
+										onClick={() => setShowDeletePassword(!showDeletePassword)}
+										edge="end"
+									>
+										{showDeletePassword ? <VisibilityOff /> : <Visibility />}
+									</IconButton>
+								</InputAdornment>
+							),
+						}}
+					/>
+				</DialogContent>
+				<DialogActions sx={{ px: 3, pb: 3 }}>
+					<Button
+						onClick={() => setOpenDelete(false)}
+						disabled={isDeleting}
+						sx={{ color: "text.secondary", fontWeight: 600 }}
+					>
+						Batal
+					</Button>
+					<Button
+						onClick={handleDeleteAccount}
+						variant="contained"
+						color="error"
+						disabled={isDeleting || !deletePassword}
+						sx={{ fontWeight: 700, boxShadow: "none" }}
+					>
+						{isDeleting ? (
+							<CircularProgress size={20} color="inherit" />
+						) : (
+							"Hapus Akun Selamanya"
+						)}
+					</Button>
+				</DialogActions>
 			</Dialog>
 		</PageContainer>
 	);
