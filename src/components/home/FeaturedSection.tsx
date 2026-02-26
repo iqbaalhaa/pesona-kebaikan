@@ -375,7 +375,7 @@ function FeaturedRow({ c, last = false }: { c: Campaign; last?: boolean }) {
 
 export default function FeaturedSection({
 	campaigns = [],
-	title = "Pilihan Kitabisa",
+	title = "Pilihan Pesona",
 }: {
 	campaigns?: Campaign[];
 	title?: string;
@@ -402,7 +402,7 @@ export default function FeaturedSection({
 					}}
 				>
 					<Typography sx={{ fontSize: 16, fontWeight: 900, color: "#0f172a" }}>
-						{title}
+						Pilihan Pesona
 					</Typography>
 				</Box>
 
@@ -416,7 +416,7 @@ export default function FeaturedSection({
 					<Button
 						variant="text"
 						component={Link}
-						href="/galang-dana"
+						href="/donasi"
 						sx={{
 							textTransform: "none",
 							fontWeight: 800,

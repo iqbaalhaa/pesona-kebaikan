@@ -60,8 +60,11 @@ export async function uploadFile(formData: FormData) {
 			}),
 		);
 
-		const endpoint = process.env.S3_ENDPOINT || "";
-		const base = endpoint.replace(/\/$/, "");
+		const endpoint = process.env.S3_ENDPOINT;
+		if (!endpoint) {
+			console.warn("S3_ENDPOINT is not set in environment variables");
+		}
+		const base = (endpoint || "").replace(/\/$/, "");
 		const url = `${base}/${bucket}/${key}`;
 
 		return { success: true, url };

@@ -7,7 +7,9 @@
 		"dev2": "next dev -H 0.0.0.0",
 		"build": "next build",
 		"start": "next start",
-		"lint": "eslint \"src/**/*.{ts,tsx,js,jsx}\""
+		"lint": "eslint \"src/**/*.{ts,tsx,js,jsx}\"",
+		"typecheck": "tsc -p tsconfig.json --noEmit",
+		"test": "tsx tests/run.ts"
 	},
 	"dependencies": {
 		"@auth/prisma-adapter": "^2.11.1",
