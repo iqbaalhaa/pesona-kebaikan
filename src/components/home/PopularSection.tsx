@@ -349,7 +349,7 @@ export default function PopularSection({
 						"&:hover": { bgcolor: "rgba(15,23,42,.04)" },
 					}}
 					component={Link}
-					href="/galang-dana"
+					href="/donasi"
 				>
 					Lihat semua
 				</Button>

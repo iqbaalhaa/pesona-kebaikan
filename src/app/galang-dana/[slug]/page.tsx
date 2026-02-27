@@ -30,6 +30,7 @@ import AccountBalanceWalletRoundedIcon from "@mui/icons-material/AccountBalanceW
 import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded";
 import ShareRoundedIcon from "@mui/icons-material/ShareRounded";
 import AddPhotoAlternateRoundedIcon from "@mui/icons-material/AddPhotoAlternateRounded";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 
 export default async function CampaignDetailPage({
 	params,
@@ -121,6 +122,8 @@ export default async function CampaignDetailPage({
 			)
 		: 0;
 
+	const isRejected = campaign.status === "REJECTED";
+
 	return (
 		<Box sx={{ bgcolor: "#f8fafc", minHeight: "100vh", pb: 12 }}>
 			{/* Mobile Header */}
@@ -150,8 +153,18 @@ export default async function CampaignDetailPage({
 							</Typography>
 						</Stack>
 						<Chip
-							label={campaign.status}
-							color={campaign.status === "ACTIVE" ? "success" : "default"}
+							label={
+								campaign.status === "REJECTED"
+									? "Butuh Tindakan"
+									: campaign.status
+							}
+							color={
+								campaign.status === "ACTIVE"
+									? "success"
+									: campaign.status === "REJECTED"
+										? "error"
+										: "default"
+							}
 							size="small"
 							sx={{
 								fontWeight: 700,
@@ -165,6 +178,52 @@ export default async function CampaignDetailPage({
 			</Box>
 
 			<Container maxWidth="sm" sx={{ px: 2, mt: 2 }}>
+				{/* Rejection Alert */}
+				{isRejected && (
+					<Paper
+						elevation={0}
+						sx={{
+							p: 2,
+							mb: 3,
+							borderRadius: 3,
+							bgcolor: "#fee2e2", // pink/red-50
+							border: "1px solid",
+							borderColor: "#fecaca", // red-200
+							color: "#991b1b", // red-800
+						}}
+					>
+						<Stack direction="row" spacing={1.5} alignItems="flex-start">
+							<InfoOutlinedIcon color="error" sx={{ mt: 0.2 }} />
+							<Box>
+								<Typography variant="subtitle2" fontWeight={700} gutterBottom>
+									Campaign Ditolak
+								</Typography>
+								<Typography
+									variant="body2"
+									sx={{ mb: 2, whiteSpace: "pre-line" }}
+								>
+									{campaign.rejectionReason ||
+										"Tidak ada alasan yang diberikan."}
+								</Typography>
+								<LinkButton
+									href={`/galang-dana/buat?draft=${campaign.id}&type=${type}&category=${categoryKey}`}
+									variant="contained"
+									color="error"
+									size="small"
+									startIcon={<EditRoundedIcon />}
+									sx={{
+										borderRadius: 2,
+										textTransform: "none",
+										fontWeight: 700,
+									}}
+								>
+									Perbaiki Campaign
+								</LinkButton>
+							</Box>
+						</Stack>
+					</Paper>
+				)}
+
 				{/* Main Stats Card */}
 				<Card
 					elevation={0}
@@ -350,7 +409,9 @@ export default async function CampaignDetailPage({
 
 					<Stack direction="row" spacing={1.5}>
 						<LinkButton
-							href={`/galang-dana/buat?draft=${campaign.id}&type=${type}&category=${categoryKey}&mode=content`}
+							href={`/galang-dana/buat?draft=${campaign.id}&type=${type}&category=${categoryKey}${
+								campaign.status === "REJECTED" ? "" : "&mode=content"
+							}`}
 							fullWidth
 							variant="outlined"
 							startIcon={<EditRoundedIcon />}
@@ -364,7 +425,7 @@ export default async function CampaignDetailPage({
 								justifyContent: "flex-start",
 							}}
 						>
-							Edit Detail
+							{campaign.status === "REJECTED" ? "Perbaiki" : "Edit Detail"}
 						</LinkButton>
 						{/* Note: Share functionality would typically need a client component wrapper or onClick handler */}
 						<LinkButton

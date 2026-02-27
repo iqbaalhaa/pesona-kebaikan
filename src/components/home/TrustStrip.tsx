@@ -20,11 +20,11 @@ function TrustItem({
 	icon: React.ElementType;
 	title: string;
 	desc?: string;
-	href: string;
+	href?: string;
 }) {
 	return (
 		<ButtonBase
-			component={Link}
+			component={href ? Link : "div"}
 			href={href}
 			sx={{
 				display: "flex",
@@ -149,19 +149,16 @@ export default function TrustStrip() {
 						icon={VerifiedUserIcon}
 						title="Verifikasi Penggalang"
 						desc="Identitas penggalang dana terverifikasi valid"
-						href="/profil/tentang"
 					/>
 					<TrustItem
 						icon={CachedIcon}
 						title="Update Rutin Kampanye"
 						desc="Kabar terbaru penggunaan dana secara berkala"
-						href="/profil/syarat-ketentuan"
 					/>
 					<TrustItem
 						icon={ReceiptLongIcon}
 						title="Laporan Transparan"
 						desc="Bukti penyaluran dana dapat diakses publik"
-						href="/profil/bantuan"
 					/>
 				</Box>
 			</Box>

@@ -28,6 +28,7 @@ import {
 import ArrowBackIosNewRoundedIcon from "@mui/icons-material/ArrowBackIosNewRounded";
 import ChevronLeftRoundedIcon from "@mui/icons-material/ChevronLeftRounded";
 import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded";
+import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import PhotoCameraRoundedIcon from "@mui/icons-material/PhotoCameraRounded";
 
@@ -37,13 +38,15 @@ import {
 	updateCampaign,
 } from "@/actions/campaign";
 import { CATEGORY_TITLE } from "@/lib/constants";
-import RichTextEditor from "@/components/admin/RichTextEditor";
+import { MEDICAL_SLUG } from "@/lib/categoryUtils";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import DateRangePickerInput from "@/components/ui/DateRangePickerInput";
+import StoryCreationSection from "@/components/campaign/create/StoryCreationSection";
+import AjakanCreationSection from "@/components/campaign/create/AjakanCreationSection";
 
 type StepKeySakit =
 	| "tujuan"
@@ -191,7 +194,7 @@ function BuatGalangDanaPageContent() {
 
 	React.useEffect(() => {
 		// kalau lainnya wajib ada category
-		if (isLainnya && !category && !draftId)
+		if (isLainnya && (!category || category === MEDICAL_SLUG) && !draftId)
 			router.replace("/galang-dana/kategori");
 		// kalau type aneh, balikin ke kategori
 		if (!isSakit && !isLainnya && !draftId)
@@ -237,6 +240,10 @@ function BuatGalangDanaPageContent() {
 					if (m.medicalDocs) {
 						setMedicalResumeUrl(m.medicalDocs.resume_medis || "");
 						setMedicalExamUrl(m.medicalDocs.surat_rs || "");
+					}
+
+					if (m.storyStructure) {
+						setStoryStructure(m.storyStructure);
 					}
 
 					if (m.terms) {
@@ -449,7 +456,61 @@ function BuatGalangDanaPageContent() {
 	const [coverPreview, setCoverPreview] = React.useState<string>("");
 
 	const [story, setStory] = React.useState("");
+	const [storyStructure, setStoryStructure] = React.useState<any>(null);
 	const [showStoryEditor, setShowStoryEditor] = React.useState(false);
+	const [storyLoaded, setStoryLoaded] = React.useState(false);
+
+	// Persistence for Story (Medis)
+	React.useEffect(() => {
+		if (isEdit) {
+			setStoryLoaded(true);
+			return;
+		}
+
+		try {
+			const saved = localStorage.getItem("draft_story_medis");
+			if (saved) {
+				const parsed = JSON.parse(saved);
+				if (parsed.html) {
+					setStory(parsed.html);
+					setStoryStructure(parsed.structure || null);
+				}
+			}
+		} catch (e) {
+			console.error("Failed to load draft story", e);
+		} finally {
+			setStoryLoaded(true);
+		}
+	}, [isEdit]);
+
+	React.useEffect(() => {
+		if (isEdit) return;
+		if (!storyLoaded) return; // Don't save before load
+
+		try {
+			if (story) {
+				localStorage.setItem(
+					"draft_story_medis",
+					JSON.stringify({ html: story, structure: storyStructure }),
+				);
+			} else {
+				// If explicitly cleared or empty, maybe remove?
+				// But we only want to remove if we intend to clear it.
+				// For now, if story becomes empty string (e.g. user cleared it), we update storage.
+				// However, initial state is empty.
+				// We should probably only save if we have something or if the user explicitly deleted it.
+				// Let's just save whatever state is there.
+				// But wait, if we clear it in UI, we want to clear storage.
+				// If it was empty to begin with, no harm.
+				// CAUTION: If we haven't loaded yet, don't save (handled by storyLoaded check).
+				// If we loaded and it's empty, and we save empty, that's fine.
+				// But if we remove the key, it's better.
+				// localStorage.removeItem("draft_story_medis");
+			}
+		} catch (e) {
+			console.error("Failed to save draft story", e);
+		}
+	}, [story, storyStructure, isEdit, storyLoaded]);
 
 	const [cta, setCta] = React.useState("");
 	const ctaLeft = 160 - cta.length;
@@ -597,7 +658,49 @@ function BuatGalangDanaPageContent() {
 	const [coverPreviewOther, setCoverPreviewOther] = React.useState<string>("");
 
 	const [storyOther, setStoryOther] = React.useState("");
+	const [storyStructureOther, setStoryStructureOther] =
+		React.useState<any>(null);
 	const [showStoryEditorOther, setShowStoryEditorOther] = React.useState(false);
+	const [storyOtherLoaded, setStoryOtherLoaded] = React.useState(false);
+
+	// Persistence for Story (Lainnya)
+	React.useEffect(() => {
+		if (isEdit) {
+			setStoryOtherLoaded(true);
+			return;
+		}
+
+		try {
+			const saved = localStorage.getItem("draft_story_other");
+			if (saved) {
+				const parsed = JSON.parse(saved);
+				if (parsed.html) {
+					setStoryOther(parsed.html);
+					setStoryStructureOther(parsed.structure || null);
+				}
+			}
+		} catch (e) {
+			console.error("Failed to load draft story other", e);
+		} finally {
+			setStoryOtherLoaded(true);
+		}
+	}, [isEdit]);
+
+	React.useEffect(() => {
+		if (isEdit) return;
+		if (!storyOtherLoaded) return;
+
+		try {
+			if (storyOther) {
+				localStorage.setItem(
+					"draft_story_other",
+					JSON.stringify({ html: storyOther, structure: storyStructureOther }),
+				);
+			}
+		} catch (e) {
+			console.error("Failed to save draft story other", e);
+		}
+	}, [storyOther, storyStructureOther, isEdit, storyOtherLoaded]);
 
 	const [ctaOther, setCtaOther] = React.useState("");
 	const ctaOtherLeft = 160 - ctaOther.length;
@@ -806,6 +909,7 @@ function BuatGalangDanaPageContent() {
 							resume_medis: medicalResumeUrl,
 							surat_rs: medicalExamUrl,
 						},
+						storyStructure,
 					}
 				: {
 						purposeKey,
@@ -1924,79 +2028,29 @@ function BuatGalangDanaPageContent() {
 									<span style={{ color: "red" }}>*</span>
 								</Typography>
 
-								<Paper
-									elevation={0}
-									sx={{
-										borderRadius: 3,
-										border: "1px solid",
-										borderColor: "divider",
-										p: 1.25,
+								<StoryCreationSection
+									mode="wizard"
+									category="sakit"
+									story={story}
+									storyStructure={storyStructure}
+									onSave={(html, structure) => {
+										setStory(html);
+										setStoryStructure(structure);
+										setShowStoryEditor(false); // Update local state if needed
 									}}
-								>
-									<Typography sx={{ fontWeight: 600, fontSize: 14, mb: 0.5 }}>
-										Kenapa cerita itu penting?
-									</Typography>
-									<Typography
-										sx={{ fontSize: 12.5, color: "text.secondary", mb: 1.25 }}
-									>
-										Cerita yang lengkap biasanya lebih dipercaya dan peluang
-										donasinya lebih tinggi.
-									</Typography>
-
-									<Button
-										variant="contained"
-										fullWidth
-										onClick={() => setShowStoryEditor(true)}
-										sx={{ borderRadius: 2, fontWeight: 700, py: 1.15 }}
-									>
-										Buat cerita galang dana
-									</Button>
-								</Paper>
-
-								{showStoryEditor && (
-									<Box sx={{ mt: 1.5 }}>
-										<RichTextEditor
-											value={story}
-											onChange={setStory}
-											placeholder="Tulis kronologi, kondisi pasien, kebutuhan biaya, rencana penggunaan dana, dan ajakan..."
-											minHeight={240}
-										/>
-									</Box>
-								)}
+									loaded={storyLoaded}
+									defaultShowEditor={showStoryEditor}
+								/>
 							</Box>
 						)}
 
 						{stepKey === "ajakan" && (
-							<Box>
-								<Typography sx={{ fontWeight: 600, fontSize: 14, mb: 1 }}>
-									Tulis ajakan singkat untuk donasi di galang dana ini{" "}
-									<span style={{ color: "red" }}>*</span>
-								</Typography>
-
-								<TextField
-									size="small"
-									sx={{
-										"& .MuiInputBase-input": { fontSize: 13.5 },
-										"& .MuiInputLabel-root": { fontSize: 13.5 },
-									}}
-									value={cta}
-									onChange={(e) => setCta(e.target.value.slice(0, 160))}
-									fullWidth
-									multiline
-									minRows={4}
-									placeholder="Contoh: Penghasilan saya hanya Rp20rb/hari, padahal Abi butuh biaya berobat..."
-								/>
-
-								<Typography
-									sx={{
-										mt: 0.75,
-										fontSize: 12.5,
-										color: ctaLeft < 0 ? "error.main" : "text.secondary",
-									}}
-								>
-									{cta.length}/160
-								</Typography>
-							</Box>
+							<AjakanCreationSection
+								value={cta}
+								onChange={setCta}
+								placeholder="Contoh: Penghasilan saya hanya Rp20rb/hari, padahal Abi butuh biaya berobat..."
+								error={ctaLeft < 0}
+							/>
 						)}
 					</>
 				)}
@@ -2768,80 +2822,30 @@ function BuatGalangDanaPageContent() {
 									Tuliskan cerita tentang galang dana ini
 								</Typography>
 
-								<Paper
-									elevation={0}
-									sx={{
-										borderRadius: 3,
-										border: "1px solid",
-										borderColor: "divider",
-										p: 1.25,
+								{/* Loading */}
+								<StoryCreationSection
+									mode="wizard"
+									category="lainnya"
+									story={storyOther}
+									storyStructure={storyStructureOther}
+									onSave={(html, structure) => {
+										setStoryOther(html);
+										setStoryStructureOther(structure);
 									}}
-								>
-									<Typography sx={{ fontWeight: 600, fontSize: 14, mb: 0.5 }}>
-										Kenapa cerita itu penting?
-									</Typography>
-									<Typography
-										sx={{ fontSize: 12.5, color: "text.secondary", mb: 1.25 }}
-									>
-										Cerita yang lengkap biasanya lebih dipercaya dan peluang
-										donasinya lebih tinggi.
-									</Typography>
-
-									<Button
-										variant="contained"
-										fullWidth
-										onClick={() => setShowStoryEditorOther(true)}
-										sx={{ borderRadius: 2, fontWeight: 700, py: 1.15 }}
-									>
-										Buat cerita galang dana
-									</Button>
-								</Paper>
-
-								{showStoryEditorOther && (
-									<Box sx={{ mt: 1.5 }}>
-										<RichTextEditor
-											value={storyOther}
-											onChange={setStoryOther}
-											placeholder="Tulis latar belakang, kondisi, kebutuhan biaya, rencana penggunaan dana, dan ajakan..."
-											minHeight={240}
-										/>
-									</Box>
-								)}
+									loaded={storyOtherLoaded}
+									defaultShowEditor={showStoryEditorOther}
+								/>
 							</Box>
 						)}
 
 						{/* STEP: ajakan */}
 						{stepKey === "ajakan" && (
-							<Box>
-								<Typography sx={{ fontWeight: 600, fontSize: 14, mb: 1 }}>
-									Tulis ajakan singkat untuk donasi di galang dana ini{" "}
-									<span style={{ color: "red" }}>*</span>
-								</Typography>
-
-								<TextField
-									size="small"
-									sx={{
-										"& .MuiInputBase-input": { fontSize: 13.5 },
-										"& .MuiInputLabel-root": { fontSize: 13.5 },
-									}}
-									value={ctaOther}
-									onChange={(e) => setCtaOther(e.target.value.slice(0, 160))}
-									fullWidth
-									multiline
-									minRows={4}
-									placeholder="Contoh: Kami butuh bantuan agar fasilitas bisa dipakai warga kembali..."
-								/>
-
-								<Typography
-									sx={{
-										mt: 0.75,
-										fontSize: 12.5,
-										color: ctaOtherLeft < 0 ? "error.main" : "text.secondary",
-									}}
-								>
-									{ctaOther.length}/160
-								</Typography>
-							</Box>
+							<AjakanCreationSection
+								value={ctaOther}
+								onChange={setCtaOther}
+								placeholder="Contoh: Kami butuh bantuan agar fasilitas bisa dipakai warga kembali..."
+								error={ctaOtherLeft < 0}
+							/>
 						)}
 					</>
 				)}

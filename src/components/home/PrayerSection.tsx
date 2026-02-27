@@ -74,9 +74,9 @@ function HeartIcon({ filled }: { filled: boolean }) {
 			width="18"
 			height="18"
 			viewBox="0 0 24 24"
-			fill={filled ? PRIMARY : "none"}
-			stroke={filled ? PRIMARY : "rgba(15,23,42,.55)"}
-			strokeWidth="2"
+			fill={filled ? "#ffffff" : "none"}
+			stroke={filled ? "#ffffff" : "currentColor"}
+			strokeWidth="2.5"
 			strokeLinecap="round"
 			strokeLinejoin="round"
 			style={{ display: "block" }}
@@ -243,24 +243,6 @@ export default function PrayersSection({
 				>
 					Doa orang baik
 				</Typography>
-
-				<Button
-					size="small"
-					variant="text"
-					sx={{
-						textTransform: "none",
-						fontWeight: 800,
-						fontSize: 12,
-						color: "rgba(15,23,42,.55)",
-						px: 1,
-						borderRadius: 2,
-						"&:hover": { bgcolor: "rgba(15,23,42,.04)", color: "#0f172a" },
-					}}
-					component={Link}
-					href="/galang-dana"
-				>
-					Lihat semua
-				</Button>
 			</Box>
 
 			<Box
@@ -503,29 +485,34 @@ export default function PrayersSection({
 										display: "flex",
 										alignItems: "center",
 										justifyContent: "center",
-										gap: 1,
+										gap: 1.5,
 										borderRadius: 2.5,
-										py: 1,
-										border: isLiked
-											? "1px solid rgba(11,169,118,0.65)"
-											: "1px solid rgba(15,23,42,0.10)",
-										bgcolor: isLiked
-											? "rgba(11,169,118,0.10)"
-											: "rgba(15,23,42,0.02)",
-										color: isLiked ? PRIMARY : "rgba(15,23,42,.75)",
+										py: 1.25,
+										borderWidth: "1px",
+										borderStyle: "solid",
+										borderColor: isLiked
+											? "transparent"
+											: "rgba(15,23,42,0.12)",
+										bgcolor: isLiked ? PRIMARY : "rgba(15,23,42,0.02)",
+										color: isLiked ? "#ffffff" : "rgba(15,23,42,.75)",
 										textTransform: "none",
-										fontWeight: 800,
+										fontWeight: 700,
 										boxShadow: "none",
 										"&:hover": {
-											bgcolor: isLiked
-												? "rgba(11,169,118,0.16)"
-												: "rgba(15,23,42,0.06)",
+											bgcolor: isLiked ? PRIMARY : "rgba(11,169,118,0.08)",
 											boxShadow: "none",
-											border: isLiked
-												? "1px solid rgba(11,169,118,0.80)"
-												: "1px solid rgba(15,23,42,0.12)",
+											borderColor: isLiked
+												? "transparent"
+												: "rgba(11,169,118,0.40)",
+											color: isLiked ? "#ffffff" : PRIMARY,
 										},
-										"&:active": { transform: "scale(0.97)" },
+										"&:active": { transform: "scale(0.98)" },
+										"&.Mui-disabled": {
+											bgcolor: isLiked ? PRIMARY : "rgba(0,0,0,0.12)",
+											color: isLiked ? "#ffffff" : "rgba(0,0,0,0.26)",
+											borderColor: "transparent",
+											opacity: isLiked ? 1 : 0.7,
+										},
 									}}
 								>
 									<Box
@@ -533,7 +520,7 @@ export default function PrayersSection({
 										sx={{
 											display: "flex",
 											alignItems: "center",
-											gap: 1,
+											gap: 1.25,
 											animation: isPulse ? `${pop} 260ms ease` : "none",
 										}}
 									>
@@ -541,9 +528,10 @@ export default function PrayersSection({
 										<Typography
 											component="span"
 											sx={{
-												fontSize: 13,
+												fontSize: 14,
 												fontWeight: "inherit",
 												lineHeight: 1,
+												color: "inherit",
 											}}
 										>
 											Aamiin

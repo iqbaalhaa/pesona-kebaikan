@@ -59,6 +59,7 @@ model User {
   province   Province? @relation(fields: [provinceId], references: [id])
 
   campaignChangeRequests CampaignChangeRequest[]
+  rejectedCampaigns Campaign[] @relation("CampaignRejectedBy")
   regencyId  String?
   regency    Regency?  @relation(fields: [regencyId], references: [id])
   districtId String?
@@ -268,6 +269,7 @@ model CampaignCategory {
   slug      String?  @unique
   icon      String?
   isActive  Boolean  @default(true)
+  order     Int      @default(0)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -327,6 +329,11 @@ model Campaign {
   end         DateTime?
   phone         String?
   foundationFee Decimal   @default(0) @db.Decimal(5, 2) // Percentage fee (0-100)
+  
+  rejectedAt  DateTime?
+  rejectionReason String? @db.Text
+  rejectedById String?
+  rejectedBy   User?   @relation("CampaignRejectedBy", fields: [rejectedById], references: [id])
   metadata      Json?
 
   createdAt DateTime @default(now())
@@ -518,6 +525,14 @@ model CampaignChangeRequest {
   @@index([campaignId])
   @@index([userId])
   @@index([status])
+}
+
+model CategoryIcon {
+  id        String   @id @default(cuid())
+  name      String
+  url       String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model CampaignUpdate {

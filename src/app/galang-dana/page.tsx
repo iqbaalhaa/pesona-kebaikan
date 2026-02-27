@@ -193,7 +193,7 @@ export default function GalangDanaSayaPage() {
 			const mapped: FundraiseMine[] = res.data.map((c: any) => ({
 				id: c.id,
 				title: c.title,
-				status: c.status,
+				status: c.status === "rejected" ? "action" : c.status,
 				type: c.type === "sakit" ? "sakit" : "lainnya",
 				stepsDone: calculateStepsDone(c),
 				stepsTotal: 7,
@@ -227,7 +227,7 @@ export default function GalangDanaSayaPage() {
 
 	const handlePickLainnya = () => {
 		setOpenPick(false);
-		router.push("/galang-dana/kategori");
+		router.push("/galang-dana/kategori?type=non-medis");
 	};
 
 	const handleAgreeMedical = () => {

@@ -121,7 +121,7 @@ export default function KategoriPage() {
 								<Box sx={{ mt: 1.5, height: 16, bgcolor: "action.hover", borderRadius: 1 }} />
 							</Box>
 						))
-					) : rows.map((cat) => {
+					) : rows.filter((c) => c.name !== "Lainnya").map((cat) => {
 						const { icon, color } = getCategoryIcon(cat.name);
 						return (
 						<Box

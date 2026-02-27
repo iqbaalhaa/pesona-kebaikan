@@ -311,7 +311,7 @@ export default function UrgentSection({
 				<Button
 					size="small"
 					component={Link}
-					href="/galang-dana"
+					href="/donasi"
 					variant="text"
 					sx={{
 						textTransform: "none",
