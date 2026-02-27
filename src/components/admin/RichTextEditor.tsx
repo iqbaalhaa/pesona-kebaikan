@@ -48,7 +48,7 @@ export default function RichTextEditor({ value, onChange, placeholder, minHeight
   };
 
   return (
-    <div style={{ borderRadius: "4px", overflow: "hidden" }}>
+    <div style={{ borderRadius: "4px", overflow: "hidden", maxWidth: "100%", width: "100%" }}>
       <SunEditor
         setContents={value}
         onChange={onChange}

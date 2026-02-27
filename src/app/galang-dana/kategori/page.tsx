@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 
 import {
@@ -9,131 +9,32 @@ import {
 	Paper,
 	Typography,
 	IconButton,
-	List,
-	ListItemButton,
-	ListItemIcon,
-	ListItemText,
-	Divider,
-	Drawer,
-	Button,
 	Stack,
 	LinearProgress,
+	Alert,
+	Divider,
+	Grid,
+	Card,
+	CardActionArea,
+	CardContent,
 } from "@mui/material";
 
 import ArrowBackIosNewRoundedIcon from "@mui/icons-material/ArrowBackIosNewRounded";
 import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded";
+import MedicalServicesRoundedIcon from "@mui/icons-material/MedicalServicesRounded";
+import VolunteerActivismRoundedIcon from "@mui/icons-material/VolunteerActivismRounded";
 
-import { getCampaigns } from "@/actions/campaign";
-import { CATEGORY_TITLE } from "@/lib/constants";
-
-import SchoolRoundedIcon from "@mui/icons-material/SchoolRounded";
-import FloodRoundedIcon from "@mui/icons-material/FloodRounded";
-import AccessibleRoundedIcon from "@mui/icons-material/AccessibleRounded";
-import ApartmentRoundedIcon from "@mui/icons-material/ApartmentRounded";
-import LightbulbRoundedIcon from "@mui/icons-material/LightbulbRounded";
-import GroupsRoundedIcon from "@mui/icons-material/GroupsRounded";
-import Diversity3RoundedIcon from "@mui/icons-material/Diversity3Rounded";
-import ParkRoundedIcon from "@mui/icons-material/ParkRounded";
-
-type Example = { title: string; img: string };
-type Cat = {
-	key: string;
-	label: string;
-	desc: string;
-	icon: React.ReactNode;
-	examples: Example[];
-};
+import { getCategoryIcon } from "@/lib/categoryIcons";
+import {
+	processCategories,
+	CategoryData,
+	MEDICAL_SLUG,
+	MEDICAL_TITLE,
+} from "@/lib/categoryUtils";
 
 const BRAND = "#0ba976";
 
-const CATEGORIES: Cat[] = [
-	{
-		key: "pendidikan",
-		label: "Bantuan Pendidikan",
-		desc: "Galang dana bantuan untuk bidang pendidikan, seperti beasiswa, biaya operasional pendidikan, dan pembangunan sekolah.",
-		icon: <SchoolRoundedIcon />,
-		examples: [
-			{
-				title: "Bantu Anisaatul Melanjutkan Kuliah",
-				img: "/mock/pendidikan-1.jpg",
-			},
-			{ title: "Bantu Pelajar Membiaya...", img: "/mock/pendidikan-2.jpg" },
-		],
-	},
-	{
-		key: "bencana",
-		label: "Bencana Alam",
-		desc: "Galang dana untuk penanganan bencana alam di Indonesia.",
-		icon: <FloodRoundedIcon />,
-		examples: [
-			{
-				title: "Selamatkan Nyawa Sesama! #BersamaLawanCorona",
-				img: "/mock/bencana-1.jpg",
-			},
-			{ title: "Bantu Korban Gempa di Donggala", img: "/mock/bencana-2.jpg" },
-		],
-	},
-	{
-		key: "difabel",
-		label: "Difabel",
-		desc: "Galang dana untuk membantu kebutuhan penyandang disabilitas dan aksesibilitas.",
-		icon: <AccessibleRoundedIcon />,
-		examples: [
-			{ title: "Bantu alat bantu difabel", img: "/mock/difabel-1.jpg" },
-			{ title: "Dukung terapi & kebutuhan", img: "/mock/difabel-2.jpg" },
-		],
-	},
-	{
-		key: "infrastruktur",
-		label: "Infrastruktur Umum",
-		desc: "Galang dana untuk perbaikan fasilitas umum seperti jalan, jembatan, dan sarana publik.",
-		icon: <ApartmentRoundedIcon />,
-		examples: [
-			{ title: "Perbaikan jembatan warga", img: "/mock/infrastruktur-1.jpg" },
-			{ title: "Renovasi fasilitas umum", img: "/mock/infrastruktur-2.jpg" },
-		],
-	},
-	{
-		key: "usaha",
-		label: "Karya Kreatif & Modal Usaha",
-		desc: "Galang dana untuk mendukung karya kreatif, UMKM, dan modal usaha produktif.",
-		icon: <LightbulbRoundedIcon />,
-		examples: [
-			{ title: "Dukung modal usaha kecil", img: "/mock/usaha-1.jpg" },
-			{ title: "Bantu produksi karya kreatif", img: "/mock/usaha-2.jpg" },
-		],
-	},
-	{
-		key: "sosial",
-		label: "Kegiatan Sosial",
-		desc: "Galang dana untuk kegiatan sosial, komunitas, dan aksi solidaritas.",
-		icon: <GroupsRoundedIcon />,
-		examples: [
-			{ title: "Paket sembako untuk warga", img: "/mock/sosial-1.jpg" },
-			{ title: "Program sosial komunitas", img: "/mock/sosial-2.jpg" },
-		],
-	},
-	{
-		key: "kemanusiaan",
-		label: "Kemanusiaan",
-		desc: "Galang dana untuk bantuan kemanusiaan dan keadaan darurat.",
-		icon: <Diversity3RoundedIcon />,
-		examples: [
-			{ title: "Bantu keluarga terdampak", img: "/mock/kemanusiaan-1.jpg" },
-			{ title: "Bantuan darurat & logistik", img: "/mock/kemanusiaan-2.jpg" },
-		],
-	},
-	{
-		key: "lingkungan",
-		label: "Lingkungan",
-		desc: "Galang dana untuk penghijauan, konservasi, dan program lingkungan.",
-		icon: <ParkRoundedIcon />,
-		examples: [
-			{ title: "Tanam pohon untuk bumi", img: "/mock/lingkungan-1.jpg" },
-			{ title: "Dukung konservasi alam", img: "/mock/lingkungan-2.jpg" },
-		],
-	},
-];
+type Example = { id: string; title: string; img?: string };
 
 function ExampleCard({ e }: { e: Example }) {
 	return (
@@ -151,7 +52,7 @@ function ExampleCard({ e }: { e: Example }) {
 		>
 			<Box
 				component="img"
-				src="/defaultimg.webp"
+				src={e.img || "/defaultimg.webp"}
 				alt={e.title}
 				sx={{
 					width: "100%",
@@ -161,7 +62,6 @@ function ExampleCard({ e }: { e: Example }) {
 					bgcolor: "background.default",
 				}}
 				onError={(ev: React.SyntheticEvent<HTMLImageElement, Event>) => {
-					// fallback kalau gambar belum ada
 					ev.currentTarget.style.display = "none";
 				}}
 			/>
@@ -179,7 +79,39 @@ function ExampleCard({ e }: { e: Example }) {
 
 export default function GalangDanaKategoriPage() {
 	const router = useRouter();
+	const searchParams = useSearchParams();
 	const { status } = useSession();
+
+	const [categories, setCategories] = React.useState<CategoryData[]>([]);
+	const [loading, setLoading] = React.useState(true);
+	const [error, setError] = React.useState<string | null>(null);
+
+	const isLainnyaCategory = React.useCallback((c: CategoryData) => {
+		const slug = (c.slug || "").trim().toLowerCase();
+		const name = (c.name || "").trim().toLowerCase();
+		return slug === "lainnya" || name === "lainnya";
+	}, []);
+
+	// Parse initial type from query params
+	const initialType = searchParams.get("type");
+	const initialStep =
+		initialType === "medis" || initialType === "non-medis"
+			? "CATEGORY_SELECTION"
+			: "TYPE_SELECTION";
+	const initialSelectedType =
+		initialType === "medis"
+			? "medis"
+			: initialType === "non-medis"
+				? "non-medis"
+				: null;
+
+	// Step: 'TYPE_SELECTION' (Medis vs Non-Medis) or 'CATEGORY_SELECTION' (List of Medis or Non-Medis)
+	const [step, setStep] = React.useState<
+		"TYPE_SELECTION" | "CATEGORY_SELECTION"
+	>(initialStep);
+	const [selectedType, setSelectedType] = React.useState<
+		"medis" | "non-medis" | null
+	>(initialSelectedType);
 
 	React.useEffect(() => {
 		if (status === "unauthenticated") {
@@ -187,200 +119,289 @@ export default function GalangDanaKategoriPage() {
 		}
 	}, [status, router]);
 
-	const [open, setOpen] = React.useState(false);
-	const [selected, setSelected] = React.useState<Cat | null>(null);
-	const [realExamples, setRealExamples] = React.useState<Example[]>([]);
-	const [loadingExamples, setLoadingExamples] = React.useState(false);
-
-	const openSheet = async (cat: Cat) => {
-		setSelected(cat);
-		setOpen(true);
-		setLoadingExamples(true);
-		setRealExamples([]);
-
-		try {
-			const catName = CATEGORY_TITLE[cat.key];
-			if (catName) {
-				const res = await getCampaigns(1, 5, "active", "", undefined, catName);
-				if (res.success && res.data && res.data.length > 0) {
-					const mapped = res.data.map((c: any) => ({
-						title: c.title,
-						img: c.thumbnail || "/defaultimg.webp",
-					}));
-					setRealExamples(mapped);
-				}
+	React.useEffect(() => {
+		const fetchCats = async () => {
+			try {
+				const res = await fetch("/api/campaigns/categories?active=true");
+				if (!res.ok) throw new Error("Gagal memuat kategori");
+				const data = await res.json();
+				const processed = processCategories(data);
+				setCategories(processed);
+			} catch (err: any) {
+				console.error("Fetch categories error:", err);
+				setError(err.message || "Terjadi kesalahan saat memuat kategori");
+			} finally {
+				setLoading(false);
 			}
-		} catch (error) {
-			console.error("Failed to fetch examples", error);
+		};
+
+		if (status === "authenticated") {
+			fetchCats();
 		}
-		setLoadingExamples(false);
+	}, [status]);
+
+	const handleTypeSelect = (type: "medis" | "non-medis") => {
+		setSelectedType(type);
+		setStep("CATEGORY_SELECTION");
 	};
 
-	const chooseThis = () => {
-		if (!selected) return;
-		setOpen(false);
-		router.push(
-			`/galang-dana/buat?type=lainnya&category=${encodeURIComponent(
-				selected.key
-			)}`
-		);
+	const handleCategorySelect = (cat: CategoryData) => {
+		if (cat.slug === MEDICAL_SLUG) {
+			router.push("/galang-dana/buat?type=sakit");
+		} else {
+			router.push(`/galang-dana/buat?type=lainnya&category=${cat.slug}`);
+		}
 	};
 
-	if (status === "loading") {
+	const handleBack = () => {
+		if (step === "CATEGORY_SELECTION") {
+			setStep("TYPE_SELECTION");
+			setSelectedType(null);
+		} else {
+			router.back();
+		}
+	};
+
+	if (status === "loading" || (status === "authenticated" && loading)) {
 		return (
-			<Box sx={{ minHeight: "100dvh", display: "grid", placeItems: "center" }}>
-				<LinearProgress sx={{ width: 120, borderRadius: 99 }} />
+			<Box sx={{ p: 2 }}>
+				<LinearProgress color="success" sx={{ borderRadius: 1, height: 6 }} />
+			</Box>
+		);
+	}
+
+	if (error) {
+		return (
+			<Box sx={{ p: 2 }}>
+				<Alert severity="error">{error}</Alert>
 			</Box>
 		);
 	}
 
 	return (
-		<Box sx={{ pb: "calc(var(--bottom-nav-h, 72px) + 12px)" }}>
-			{/* Header hijau */}
+		<Box sx={{ minHeight: "100vh", bgcolor: "background.default", pb: 10 }}>
+			{/* Header */}
 			<Paper
 				elevation={0}
+				square
 				sx={{
-					borderRadius: 0,
-					bgcolor: BRAND,
-					color: "#fff",
-					px: 1,
-					py: 1.25,
+					position: "sticky",
+					top: 0,
+					zIndex: 1100,
+					borderBottom: "1px solid",
+					borderColor: "divider",
+					bgcolor: "background.paper",
 				}}
 			>
-				<Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-					<IconButton onClick={() => router.back()} sx={{ color: "#fff" }}>
+				<Stack
+					direction="row"
+					alignItems="center"
+					spacing={1}
+					sx={{ height: 56, px: 2 }}
+				>
+					<IconButton
+						onClick={handleBack}
+						edge="start"
+						sx={{ color: "text.primary" }}
+					>
 						<ArrowBackIosNewRoundedIcon fontSize="small" />
 					</IconButton>
-
-					<Typography sx={{ fontWeight: 1000, fontSize: 14.5 }}>
-						Pilih kategori galang dana
+					<Typography sx={{ fontSize: 16, fontWeight: 700 }}>
+						{step === "TYPE_SELECTION" ? "Mulai Galang Dana" : "Pilih Kategori"}
 					</Typography>
-				</Box>
+				</Stack>
 			</Paper>
 
-			{/* List kategori */}
-			<Paper elevation={0} sx={{ borderRadius: 0 }}>
-				<List disablePadding>
-					{CATEGORIES.map((c, idx) => (
-						<React.Fragment key={c.key}>
-							<ListItemButton onClick={() => openSheet(c)} sx={{ py: 1.55 }}>
-								<ListItemIcon sx={{ minWidth: 44, color: BRAND }}>
-									{c.icon}
-								</ListItemIcon>
-
-								<ListItemText
-									primary={
-										<Typography sx={{ fontWeight: 900, fontSize: 13.5 }}>
-											{c.label}
-										</Typography>
-									}
-								/>
-
-								<ChevronRightRoundedIcon sx={{ color: "text.disabled" }} />
-							</ListItemButton>
-
-							{idx !== CATEGORIES.length - 1 ? <Divider /> : null}
-						</React.Fragment>
-					))}
-				</List>
-			</Paper>
-
-			{/* Bottom-sheet modal preview */}
-			<Drawer
-				anchor="bottom"
-				open={open}
-				onClose={() => setOpen(false)}
-				ModalProps={{ hideBackdrop: true }}
-				PaperProps={{
-					sx: {
-						bottom: "var(--bottom-nav-h, 72px)",
-						maxHeight: "calc(100dvh - var(--bottom-nav-h, 72px))",
-						borderTopLeftRadius: 14,
-						borderTopRightRadius: 14,
-						overflow: "hidden",
-						maxWidth: 480,
-						mx: "auto",
-						width: "100%",
-						bgcolor: "#fff",
-					},
-				}}
-			>
-				<Box sx={{ px: 2, pt: 1.5, pb: 1.25 }}>
-					<Typography sx={{ fontWeight: 1000, fontSize: 14 }}>
-						{selected?.label ?? "-"}
-					</Typography>
-
-					<Typography sx={{ mt: 0.5, fontSize: 12.5, color: "text.secondary" }}>
-						{selected?.desc ?? ""}
-					</Typography>
-
-					<Typography sx={{ mt: 1.25, fontSize: 12.5, fontWeight: 1000 }}>
-						Contoh penggalangan {selected?.label?.toLowerCase() ?? ""}
-					</Typography>
-
-					<Box
-						sx={{
-							mt: 1,
-							display: "flex",
-							gap: 1,
-							overflowX: "auto",
-							pb: 1,
-							"&::-webkit-scrollbar": { height: 8 },
-							"&::-webkit-scrollbar-thumb": {
-								background: "rgba(15,23,42,.25)",
-								borderRadius: 999,
-							},
-							"&::-webkit-scrollbar-track": {
-								background: "rgba(15,23,42,.08)",
-								borderRadius: 999,
-							},
-						}}
-					>
-						{loadingExamples ? (
-							<Typography sx={{ fontSize: 13, color: "text.secondary", py: 2 }}>
-								Memuat contoh...
-							</Typography>
-						) : (
-							(realExamples.length > 0
-								? realExamples
-								: selected?.examples ?? []
-							).map((e) => <ExampleCard key={e.title} e={e} />)
-						)}
-					</Box>
-
-					<Stack spacing={1} sx={{ mt: 1 }}>
-						<Button
-							variant="contained"
-							fullWidth
-							onClick={chooseThis}
-							sx={{
-								borderRadius: 2.5,
-								fontWeight: 1000,
-								py: 1.15,
-								bgcolor: BRAND,
-								"&:hover": { bgcolor: BRAND },
-							}}
-						>
-							Pilih kategori galang dana ini
-						</Button>
-
-						<Button
-							variant="outlined"
-							fullWidth
-							onClick={() => setOpen(false)}
-							sx={{
-								borderRadius: 2.5,
-								fontWeight: 900,
-								py: 1.05,
-								borderColor: BRAND,
-								color: BRAND,
-							}}
-						>
-							Pilih kategori lain
-						</Button>
-					</Stack>
+			{step === "TYPE_SELECTION" ? (
+				<Box sx={{ p: 2 }}>
+					<Grid container spacing={2}>
+						<Grid item xs={6}>
+							<Card variant="outlined" sx={{ borderRadius: 3, height: "100%" }}>
+								<CardActionArea
+									onClick={() => handleTypeSelect("medis")}
+									sx={{
+										height: "100%",
+										p: 2,
+										display: "flex",
+										flexDirection: "column",
+										alignItems: "center",
+										justifyContent: "center",
+										textAlign: "center",
+									}}
+								>
+									<Box
+										sx={{
+											width: 64,
+											height: 64,
+											borderRadius: "50%",
+											bgcolor: "rgba(11, 169, 118, 0.1)",
+											color: BRAND,
+											display: "flex",
+											alignItems: "center",
+											justifyContent: "center",
+											mb: 2,
+										}}
+									>
+										<MedicalServicesRoundedIcon sx={{ fontSize: 32 }} />
+									</Box>
+									<Typography
+										variant="h6"
+										sx={{ fontSize: 15, fontWeight: 700, mb: 1 }}
+									>
+										Bantuan Medis
+									</Typography>
+									<Typography
+										variant="body2"
+										color="text.secondary"
+										sx={{ fontSize: 12, lineHeight: 1.4 }}
+									>
+										Galang dana untuk biaya pengobatan, rawat inap, atau
+										kebutuhan medis lainnya.
+									</Typography>
+								</CardActionArea>
+							</Card>
+						</Grid>
+						<Grid item xs={6}>
+							<Card variant="outlined" sx={{ borderRadius: 3, height: "100%" }}>
+								<CardActionArea
+									onClick={() => handleTypeSelect("non-medis")}
+									sx={{
+										height: "100%",
+										p: 2,
+										display: "flex",
+										flexDirection: "column",
+										alignItems: "center",
+										justifyContent: "center",
+										textAlign: "center",
+									}}
+								>
+									<Box
+										sx={{
+											width: 64,
+											height: 64,
+											borderRadius: "50%",
+											bgcolor: "rgba(240, 98, 146, 0.1)",
+											color: "#f06292",
+											display: "flex",
+											alignItems: "center",
+											justifyContent: "center",
+											mb: 2,
+										}}
+									>
+										<VolunteerActivismRoundedIcon sx={{ fontSize: 32 }} />
+									</Box>
+									<Typography
+										variant="h6"
+										sx={{ fontSize: 15, fontWeight: 700, mb: 1 }}
+									>
+										Non Medis
+									</Typography>
+									<Typography
+										variant="body2"
+										color="text.secondary"
+										sx={{ fontSize: 12, lineHeight: 1.4 }}
+									>
+										Untuk pendidikan, bencana alam, rumah ibadah, panti asuhan,
+										dan sosial.
+									</Typography>
+								</CardActionArea>
+							</Card>
+						</Grid>
+					</Grid>
 				</Box>
-			</Drawer>
+			) : (
+				<Stack spacing={0} divider={<Divider />}>
+					{categories
+						.filter((c) => {
+							if (selectedType === "medis") return c.slug === MEDICAL_SLUG;
+							return c.slug !== MEDICAL_SLUG && !isLainnyaCategory(c);
+						})
+						.map((cat) => {
+							const { icon, color } = getCategoryIcon(cat.icon || cat.slug);
+							const hasExamples =
+								Array.isArray(cat.examples) && cat.examples.length > 0;
+
+							return (
+								<Box
+									key={cat.id || cat.slug}
+									sx={{ bgcolor: "background.paper" }}
+								>
+									<Stack
+										component="div"
+										onClick={() => handleCategorySelect(cat)}
+										direction="row"
+										alignItems="center"
+										justifyContent="space-between"
+										sx={{
+											p: 2,
+											cursor: "pointer",
+											"&:active": { bgcolor: "action.hover" },
+										}}
+									>
+										<Stack direction="row" spacing={2} alignItems="center">
+											{/* Icon Wrapper */}
+											<Box
+												sx={{
+													width: 40,
+													height: 40,
+													borderRadius: "50%",
+													display: "flex",
+													alignItems: "center",
+													justifyContent: "center",
+													color: color || BRAND,
+													bgcolor: (theme) =>
+														theme.palette.mode === "dark"
+															? "rgba(255,255,255,0.05)"
+															: "rgba(0,0,0,0.04)",
+												}}
+											>
+												{icon}
+											</Box>
+											<Box>
+												<Typography sx={{ fontSize: 14.5, fontWeight: 700 }}>
+													{cat.name}
+												</Typography>
+												{cat.desc && (
+													<Typography
+														sx={{
+															fontSize: 12,
+															color: "text.secondary",
+															mt: 0.5,
+															lineHeight: 1.4,
+														}}
+													>
+														{cat.desc}
+													</Typography>
+												)}
+											</Box>
+										</Stack>
+										<ChevronRightRoundedIcon
+											sx={{ color: "text.disabled", fontSize: 20 }}
+										/>
+									</Stack>
+
+									{/* Horizontal Scroll Examples */}
+									{hasExamples && (
+										<Box
+											sx={{
+												display: "flex",
+												gap: 1.5,
+												overflowX: "auto",
+												px: 2,
+												pb: 2,
+												"&::-webkit-scrollbar": { display: "none" },
+											}}
+										>
+											{cat.examples!.map((ex: any) => (
+												<ExampleCard key={ex.id || ex.title} e={ex} />
+											))}
+										</Box>
+									)}
+								</Box>
+							);
+						})}
+				</Stack>
+			)}
 		</Box>
 	);
 }

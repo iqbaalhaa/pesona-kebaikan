@@ -200,6 +200,9 @@ export default function AdminCampaignVerifikasiPage() {
 		row?: CampaignVerifyRow;
 	}>({ open: false });
 
+	const [reason, setReason] = React.useState("");
+	const [actionLoading, setActionLoading] = React.useState(false);
+
 	const [snackbar, setSnackbar] = React.useState<{
 		open: boolean;
 		message: string;
@@ -312,6 +315,7 @@ export default function AdminCampaignVerifikasiPage() {
 
 	const onApprove = async () => {
 		if (!confirm.row) return;
+		setActionLoading(true);
 		try {
 			const res = await updateCampaignStatus(confirm.row.id, "ACTIVE");
 			if (res.success) {
@@ -324,16 +328,31 @@ export default function AdminCampaignVerifikasiPage() {
 		} catch (error) {
 			console.error(error);
 			showSnackbar("Terjadi kesalahan saat approve", "error");
+		} finally {
+			setActionLoading(false);
 		}
 	};
 
 	const onReject = async () => {
 		if (!confirm.row) return;
+
+		// Validation
+		if (!reason || reason.trim().length < 10) {
+			showSnackbar("Alasan penolakan minimal 10 karakter", "error");
+			return;
+		}
+
+		setActionLoading(true);
 		try {
-			const res = await updateCampaignStatus(confirm.row.id, "REJECTED");
+			const res = await updateCampaignStatus(
+				confirm.row.id,
+				"REJECTED",
+				reason,
+			);
 			if (res.success) {
 				setRows((prev) => prev.filter((x) => x.id !== confirm.row?.id));
 				setConfirm({ open: false });
+				setReason("");
 				showSnackbar("Campaign berhasil ditolak", "success");
 			} else {
 				showSnackbar(res.error || "Gagal reject", "error");
@@ -341,6 +360,8 @@ export default function AdminCampaignVerifikasiPage() {
 		} catch (error) {
 			console.error(error);
 			showSnackbar("Terjadi kesalahan saat reject", "error");
+		} finally {
+			setActionLoading(false);
 		}
 	};
 
@@ -1148,30 +1169,58 @@ export default function AdminCampaignVerifikasiPage() {
 				</Paper>
 			</Box>
 
-			{/* Confirm Dialog (dummy) */}
+			{/* Confirm Dialog */}
 			<Dialog
 				open={confirm.open}
-				onClose={() => setConfirm({ open: false })}
+				onClose={() => {
+					if (!actionLoading) {
+						setConfirm({ open: false });
+						setReason("");
+					}
+				}}
 				maxWidth="xs"
 				fullWidth
 			>
 				<DialogTitle sx={{ fontWeight: 1000 }}>
-					{confirm.mode === "approve"
-						? "Approve campaign?"
-						: "Reject campaign?"}
+					{confirm.mode === "approve" ? "Approve campaign?" : "Tolak campaign?"}
 				</DialogTitle>
 				<DialogContent>
-					<DialogContentText>
+					<DialogContentText sx={{ mb: 2 }}>
 						{confirm.mode === "approve"
-							? "Campaign akan dipindahkan dari antrian review. (Dummy)"
-							: "Campaign akan ditolak dan dipindahkan dari antrian review. (Dummy)"}
+							? "Campaign akan dipindahkan ke status Aktif dan mulai menggalang dana."
+							: "Campaign akan ditolak dan user perlu memperbaikinya."}
 					</DialogContentText>
+
+					{confirm.mode === "reject" && (
+						<TextField
+							autoFocus
+							label="Alasan Penolakan"
+							multiline
+							rows={4}
+							fullWidth
+							value={reason}
+							onChange={(e) => setReason(e.target.value)}
+							placeholder="Jelaskan alasan penolakan agar user dapat memperbaiki..."
+							variant="outlined"
+							error={reason.length > 0 && reason.trim().length < 10}
+							helperText={
+								reason.length > 0 && reason.trim().length < 10
+									? "Minimal 10 karakter"
+									: "Wajib diisi (min. 10 karakter)"
+							}
+							disabled={actionLoading}
+						/>
+					)}
 				</DialogContent>
 				<DialogActions sx={{ p: 2, pt: 0 }}>
 					<Button
-						onClick={() => setConfirm({ open: false })}
+						onClick={() => {
+							setConfirm({ open: false });
+							setReason("");
+						}}
 						variant="outlined"
 						sx={{ borderRadius: 999, fontWeight: 900 }}
+						disabled={actionLoading}
 					>
 						Batal
 					</Button>
@@ -1184,8 +1233,16 @@ export default function AdminCampaignVerifikasiPage() {
 						variant="contained"
 						color={confirm.mode === "approve" ? "primary" : "error"}
 						sx={{ borderRadius: 999, fontWeight: 900, boxShadow: "none" }}
+						disabled={
+							actionLoading ||
+							(confirm.mode === "reject" && reason.trim().length < 10)
+						}
 					>
-						{confirm.mode === "approve" ? "Approve" : "Reject"}
+						{actionLoading
+							? "Memproses..."
+							: confirm.mode === "approve"
+								? "Approve"
+								: "Tolak Campaign"}
 					</Button>
 				</DialogActions>
 			</Dialog>

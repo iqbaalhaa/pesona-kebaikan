@@ -2,6 +2,7 @@ import React from "react";
 import ReactDOMServer from "react-dom/server";
 import CampaignCard from "@/components/common/CampaignCard";
 import { normalizeCampaignToCard } from "@/lib/normalizeCampaign";
+import { dashboardTests } from "./dashboard.test";
 
 function assert(condition: any, message: string) {
 	if (!condition) {
@@ -27,7 +28,10 @@ async function unitTests() {
 	assert(card.title === "Tanpa Judul", "fallback title");
 	assert(card.category === "Lainnya", "fallback category");
 	assert(card.ownerName === "Udin", "owner name mapping");
-	assert(card.target === 0 && card.collected === 0 && card.daysLeft === 0, "non-negative numbers");
+	assert(
+		card.target === 0 && card.collected === 0 && card.daysLeft === 0,
+		"non-negative numbers",
+	);
 	assert(card.thumbnail === "/defaultimg.webp", "thumbnail fallback");
 	log("normalizeCampaignToCard handles fallbacks and clamps values");
 }
@@ -56,6 +60,8 @@ async function run() {
 	try {
 		console.log("Running unit tests...");
 		await unitTests();
+		console.log("Running dashboard tests...");
+		await dashboardTests();
 		console.log("Running integration tests...");
 		await integrationTests();
 		console.log("All tests passed.");
@@ -66,4 +72,3 @@ async function run() {
 }
 
 run();
-

@@ -45,10 +45,17 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 	const campaignUrl = `${siteUrl}/donasi/${res.data.slug || res.data.id}`;
 
 	const plainTextDescription = res.data.description.replace(/<[^>]*>?/gm, "");
+
+	const meta = (res.data as any).metadata || {};
+	const shortInvite =
+		res.data.type === "sakit" ? meta.cta : meta.ctaOther;
+
 	const description =
-		plainTextDescription.length > 160
-			? `${plainTextDescription.substring(0, 157)}...`
-			: plainTextDescription;
+		shortInvite && shortInvite.trim().length > 0
+			? shortInvite
+			: plainTextDescription.length > 160
+				? `${plainTextDescription.substring(0, 157)}...`
+				: plainTextDescription;
 
 	const imagesFromField =
 		Array.isArray(res.data.images) && res.data.images.length > 0

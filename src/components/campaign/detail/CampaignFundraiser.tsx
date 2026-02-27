@@ -8,6 +8,7 @@ import AccountBalanceWalletOutlinedIcon from "@mui/icons-material/AccountBalance
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import NoteAddOutlinedIcon from "@mui/icons-material/NoteAddOutlined";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import VolunteerActivismRoundedIcon from "@mui/icons-material/VolunteerActivismRounded";
 
 interface CampaignFundraiserProps {
   data: any;
@@ -195,6 +196,48 @@ export default function CampaignFundraiser({
           </Box>
           <NavigateNextIcon sx={{ color: "#94a3b8" }} />
         </Box>
+
+        <Divider />
+
+        {/* Jadi Fundraiser Integration */}
+        <Link
+          href={
+            data.slug
+              ? `/donasi/${data.slug}/create-fundraiser`
+              : "/donasi/fundraiser"
+          }
+          style={{ textDecoration: "none" }}
+        >
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              p: 2,
+              bgcolor: "#f0fdf4",
+              cursor: "pointer",
+              transition: "all 0.2s",
+              "&:hover": { bgcolor: "#dcfce7" },
+            }}
+          >
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+              <VolunteerActivismRoundedIcon
+                sx={{ color: "#16a34a", fontSize: 22 }}
+              />
+              <Box>
+                <Typography
+                  sx={{ fontSize: 14, fontWeight: 700, color: "#166534" }}
+                >
+                  Jadi Fundraiser
+                </Typography>
+                <Typography sx={{ fontSize: 12, color: "#15803d" }}>
+                  Bantu sebarkan campaign ini
+                </Typography>
+              </Box>
+            </Box>
+            <NavigateNextIcon sx={{ color: "#16a34a" }} />
+          </Box>
+        </Link>
       </Box>
     </Box>
   );

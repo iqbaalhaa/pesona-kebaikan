@@ -56,7 +56,7 @@ import AccessTimeRoundedIcon from "@mui/icons-material/AccessTimeRounded";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import PersonRoundedIcon from "@mui/icons-material/PersonRounded";
 
-function fmtIDR(n: number) {
+export function fmtIDR(n: number) {
 	const s = Math.round(n || 0).toString();
 	return "Rp" + s.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 }
@@ -107,12 +107,12 @@ function ToneDot({
 		tone === "success"
 			? t.palette.success.main
 			: tone === "warning"
-			? t.palette.warning.main
-			: tone === "error"
-			? t.palette.error.main
-			: tone === "info"
-			? t.palette.info.main
-			: t.palette.primary.main;
+				? t.palette.warning.main
+				: tone === "error"
+					? t.palette.error.main
+					: tone === "info"
+						? t.palette.info.main
+						: t.palette.primary.main;
 
 	return (
 		<Box
@@ -165,7 +165,7 @@ function KpiCard({
 					borderRadius: 999,
 					background: `radial-gradient(circle, ${alpha(
 						toneColor,
-						0.16
+						0.16,
 					)} 0%, transparent 70%)`,
 					filter: "blur(24px)",
 					pointerEvents: "none",
@@ -193,7 +193,7 @@ function KpiCard({
 							icon as React.ReactElement,
 							{
 								fontSize: "small",
-							} as any
+							} as any,
 						)}
 					</Box>
 
@@ -473,7 +473,7 @@ function MapIndonesia({
 				setFeatureNames(
 					Array.isArray(geojson.features)
 						? geojson.features.map((f: any) => f.properties?.name ?? "")
-						: []
+						: [],
 				);
 
 				// Initialize chart
@@ -519,7 +519,7 @@ function MapIndonesia({
 						theme.palette.grey[200],
 						theme.palette.success.main,
 						theme.palette.error.main,
-				  ]
+					]
 				: [
 						alpha(baseColor, 0.08),
 						alpha(baseColor, 0.25),
@@ -527,7 +527,7 @@ function MapIndonesia({
 						alpha(baseColor, 0.65),
 						alpha(baseColor, 0.85),
 						baseColor,
-				  ];
+					];
 
 		const featureValues = featureNames.map((n) => getVal(n));
 		const min = featureValues.length ? Math.min(...featureValues) : 0;
@@ -545,11 +545,11 @@ function MapIndonesia({
 				? featureNames.map((n) => ({
 						name: n,
 						value: getVal(n),
-				  }))
+					}))
 				: provinceStats.map((p) => ({
 						name: p.name,
 						value: mapMetric === "users" ? p.users : p.donation,
-				  }));
+					}));
 
 		// Handle Click Event
 		chartRef.current.off("click");
@@ -601,7 +601,7 @@ function MapIndonesia({
 					return `<div style="font-size:13px; font-weight:800; margin-bottom:4px; color:${textColor}">${
 						params.name
 					}</div><div style="font-size:12px; color:${textColor}">${valText} • ${freq.toLocaleString(
-						"id-ID"
+						"id-ID",
 					)} donasi</div>`;
 				},
 				borderRadius: 8,
@@ -649,7 +649,7 @@ function MapIndonesia({
 									fontWeight: 700,
 									fontSize: 11,
 								},
-						  }
+							}
 						: {
 								left: "left",
 								bottom: "bottom",
@@ -669,7 +669,7 @@ function MapIndonesia({
 									fontSize: 11,
 								},
 								calculable: true,
-						  }
+							}
 					: {
 							left: "left",
 							bottom: "bottom",
@@ -684,7 +684,7 @@ function MapIndonesia({
 								fontSize: 11,
 							},
 							calculable: true,
-					  },
+						},
 			series: [
 				{
 					type: "map",
@@ -955,7 +955,7 @@ function MapIndonesia({
 													color="success.main"
 												>
 													{fmtIDR(
-														Math.floor(selectedProvince.donation * (0.1 / i))
+														Math.floor(selectedProvince.donation * (0.1 / i)),
 													)}
 												</Typography>
 											</ListItem>
@@ -997,63 +997,18 @@ export default function DashboardClient({
 	const theme = useTheme();
 
 	// --- SAMPLE DATA (ganti dari backend nanti kalau sudah ada) ---
-	const donation7d = kpi?.donation7d ?? [
-		{ name: "Sen", value: 2500000 },
-		{ name: "Sel", value: 3800000 },
-		{ name: "Rab", value: 1200000 },
-		{ name: "Kam", value: 5600000 },
-		{ name: "Jum", value: 4100000 },
-		{ name: "Sab", value: 8900000 },
-		{ name: "Min", value: 6700000 },
-	];
+	const donation7d = kpi?.donation7d ?? [];
 
-	const categoryDist = kpi?.categoryDist ?? [
-		{ name: "Pendidikan", value: 85 },
-		{ name: "Bencana", value: 65 },
-		{ name: "Kesehatan", value: 45 },
-		{ name: "Masjid", value: 30 },
-		{ name: "Yatim", value: 20 },
-	];
+	const categoryDist = kpi?.categoryDist ?? [];
 
-	const payMethodDist = kpi?.payMethodDist ?? [
-		{ name: "QRIS", value: 42 },
-		{ name: "Transfer", value: 28 },
-		{ name: "E-Wallet", value: 20 },
-		{ name: "Lainnya", value: 10 },
-	];
+	const payMethodDist = kpi?.payMethodDist ?? [];
 
-	const campaignCreated14d = kpi?.campaignCreated14d ?? [
-		{ day: "D-13", value: 2 },
-		{ day: "D-12", value: 3 },
-		{ day: "D-11", value: 1 },
-		{ day: "D-10", value: 4 },
-		{ day: "D-9", value: 2 },
-		{ day: "D-8", value: 5 },
-		{ day: "D-7", value: 3 },
-		{ day: "D-6", value: 2 },
-		{ day: "D-5", value: 6 },
-		{ day: "D-4", value: 4 },
-		{ day: "D-3", value: 5 },
-		{ day: "D-2", value: 3 },
-		{ day: "D-1", value: 7 },
-		{ day: "Hari ini", value: 4 },
-	];
+	const campaignCreated14d = kpi?.campaignCreated14d ?? [];
 
-	const provinceStats: ProvinceStat[] = kpi?.provinceStats ?? [
-		{ name: "DKI Jakarta", users: 12450, donation: 215000000 },
-		{ name: "Jawa Barat", users: 18230, donation: 175000000 },
-		{ name: "Jawa Timur", users: 16890, donation: 189000000 },
-		{ name: "Jawa Tengah", users: 14210, donation: 132000000 },
-		{ name: "Banten", users: 9200, donation: 86000000 },
-		{ name: "DI Yogyakarta", users: 5100, donation: 48000000 },
-		{ name: "Sumatera Utara", users: 7600, donation: 72000000 },
-		{ name: "Aceh", users: 4300, donation: 38000000 },
-		{ name: "Kalimantan Timur", users: 5200, donation: 69000000 },
-		{ name: "Bali", users: 6100, donation: 54000000 },
-	];
+	const provinceStats: ProvinceStat[] = kpi?.provinceStats ?? [];
 
 	const [mapMetric, setMapMetric] = React.useState<"users" | "donation">(
-		"users"
+		"users",
 	);
 
 	function normalizeProvName(s: string) {
@@ -1071,14 +1026,14 @@ export default function DashboardClient({
 				(p) =>
 					normalizeProvName(p.name) === norm ||
 					normalizeProvName(p.name).includes(norm) ||
-					norm.includes(normalizeProvName(p.name))
+					norm.includes(normalizeProvName(p.name)),
 			) ?? null;
 		if (!found) return 0;
 		return mapMetric === "users" ? found.users : found.donation;
 	}
 
 	const metricValues = provinceStats.map((p: ProvinceStat) =>
-		mapMetric === "users" ? p.users : p.donation
+		mapMetric === "users" ? p.users : p.donation,
 	);
 	const metricMin = Math.min(...metricValues);
 	const metricMax = Math.max(...metricValues);
@@ -1119,7 +1074,7 @@ export default function DashboardClient({
 							borderRadius: 999,
 							background: `radial-gradient(circle, ${alpha(
 								theme.palette.primary.main,
-								0.12
+								0.12,
 							)} 0%, transparent 70%)`,
 							filter: "blur(22px)",
 							pointerEvents: "none",
@@ -1253,7 +1208,7 @@ export default function DashboardClient({
 							icon={<CampaignRoundedIcon />}
 							chip={{
 								label: `Total: ${(kpi?.campaignTotal ?? 0).toLocaleString(
-									"id-ID"
+									"id-ID",
 								)}`,
 							}}
 							tone="success"
@@ -1294,7 +1249,7 @@ export default function DashboardClient({
 					<Grid size={{ xs: 12, md: 8 }}>
 						<ChartCard
 							title="Trend Donasi"
-							subtitle="7 hari terakhir (placeholder, bisa diganti dari backend)"
+							subtitle="7 hari terakhir"
 							right={
 								<Chip
 									label="Weekly"
@@ -1382,7 +1337,7 @@ export default function DashboardClient({
 					<Grid size={{ xs: 12, md: 4 }}>
 						<ChartCard
 							title="Metode Pembayaran"
-							subtitle="Komposisi donasi (contoh data)"
+							subtitle="Komposisi donasi"
 							right={
 								<Chip
 									label="Last 30d"
@@ -1492,7 +1447,7 @@ export default function DashboardClient({
 										flex: 1,
 										background: `linear-gradient(90deg, ${alpha(
 											theme.palette.primary.main,
-											0.18
+											0.18,
 										)}, ${alpha(theme.palette.primary.main, 0.62)})`,
 										border: "1px solid",
 										borderColor: alpha(theme.palette.divider, 0.12),
@@ -1501,8 +1456,8 @@ export default function DashboardClient({
 								<Typography sx={{ fontSize: 12, color: "text.secondary" }}>
 									{mapMetric === "users"
 										? `${metricMin.toLocaleString(
-												"id-ID"
-										  )} → ${metricMax.toLocaleString("id-ID")} User`
+												"id-ID",
+											)} → ${metricMax.toLocaleString("id-ID")} User`
 										: `${fmtIDR(metricMin)} → ${fmtIDR(metricMax)}`}
 								</Typography>
 							</Stack>
@@ -1512,7 +1467,7 @@ export default function DashboardClient({
 					<Grid size={{ xs: 12, md: 6 }}>
 						<ChartCard
 							title="Sebaran Kategori"
-							subtitle="Campaign per kategori (contoh)"
+							subtitle="Campaign per kategori"
 							height={300}
 						>
 							<ResponsiveContainer width="100%" height="100%">
@@ -1573,7 +1528,7 @@ export default function DashboardClient({
 					<Grid size={{ xs: 12, md: 6 }}>
 						<ChartCard
 							title="Campaign Dibuat"
-							subtitle="14 hari terakhir (contoh)"
+							subtitle="14 hari terakhir"
 							right={
 								<Chip
 									label="Daily"

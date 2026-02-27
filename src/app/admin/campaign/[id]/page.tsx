@@ -28,6 +28,7 @@ import {
 	Checkbox,
 	FormControlLabel,
 	InputAdornment,
+	Avatar,
 } from "@mui/material";
 
 import ArrowBackIosNewRoundedIcon from "@mui/icons-material/ArrowBackIosNewRounded";
@@ -197,7 +198,9 @@ function nowLabel() {
 	)}:${pad(d.getMinutes())}`;
 }
 
-export default function AdminCampaignDetailPage() {
+export default function AdminCampaignDetailPage(props: {
+	params: Promise<{ id: string }>;
+}) {
 	const theme = useTheme();
 	const router = useRouter();
 	const params = useParams<{ id: string }>();
@@ -442,11 +445,7 @@ export default function AdminCampaignDetailPage() {
 						((c as any).metadata && (c as any).metadata.restartInfo) || null,
 					daysLeft: daysLeft > 0 ? daysLeft : 0,
 					foundationFee: (c as any).foundationFee ?? 0,
-					shortInvite:
-						plainStory.length > 0
-							? plainStory.substring(0, 100) +
-								(plainStory.length > 100 ? "..." : "")
-							: "",
+					shortInvite: (type === "sakit" ? meta.cta : meta.ctaOther) || "",
 					story: c.description,
 					meta: {
 						sakit: sakitMeta,
@@ -582,6 +581,7 @@ export default function AdminCampaignDetailPage() {
 		targetOk: false,
 		categoryOk: true,
 		phoneOk: true,
+		feeOk: false,
 	});
 	const [rejectReason, setRejectReason] = React.useState("");
 	const [confirmApprove, setConfirmApprove] = React.useState(false);
@@ -627,7 +627,8 @@ export default function AdminCampaignDetailPage() {
 					color: theme.palette.info.main,
 				}
 			: {
-					label: "Lainnya",
+					label:
+						data?.category && data.category !== "-" ? data.category : "Lainnya",
 					icon: <CategoryRoundedIcon fontSize="small" />,
 					color: theme.palette.success.main,
 				};
@@ -683,9 +684,10 @@ export default function AdminCampaignDetailPage() {
 			identityOk: c.identityOk || hasKtp,
 			storyOk: c.storyOk || (data.story?.trim().length ?? 0) >= 80,
 			targetOk: c.targetOk || (data.target ?? 0) > 0,
+			feeOk: c.feeOk || (feeValue !== "" && !Number.isNaN(Number(feeValue))),
 		}));
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [docs, data?.story, data?.target]);
+	}, [docs, data?.story, data?.target, feeValue]);
 
 	if (loading) {
 		return (
@@ -709,7 +711,8 @@ export default function AdminCampaignDetailPage() {
 		check.storyOk &&
 		check.targetOk &&
 		check.categoryOk &&
-		check.phoneOk;
+		check.phoneOk &&
+		check.feeOk;
 
 	const handleUpload = async (key: DocKey, file?: File | null) => {
 		if (!file) return;
@@ -1015,11 +1018,16 @@ export default function AdminCampaignDetailPage() {
 	};
 
 	const onSaveStory = async () => {
-		const res = await updateCampaignStory(id, data.title, data.story);
+		const res = await updateCampaignStory(
+			id,
+			data.title,
+			data.story,
+			data.shortInvite,
+		);
 		if (res.success) {
 			pushAudit({
 				title: "Konten campaign disimpan",
-				meta: "Judul/Cerita diperbarui.",
+				meta: "Judul/Cerita/Ajakan diperbarui.",
 				tone: "info",
 			});
 			setSnack({ open: true, msg: "Disimpan.", type: "success" });
@@ -1029,6 +1037,21 @@ export default function AdminCampaignDetailPage() {
 	};
 
 	const requiredMissing = docs.filter((d) => d.required && !d.uploaded).length;
+
+	if (loading || !data) {
+		return (
+			<Box
+				sx={{
+					display: "flex",
+					justifyContent: "center",
+					alignItems: "center",
+					minHeight: "50vh",
+				}}
+			>
+				<CircularProgress />
+			</Box>
+		);
+	}
 
 	return (
 		<Box sx={{ display: "grid", gap: 2 }}>
@@ -1235,7 +1258,10 @@ export default function AdminCampaignDetailPage() {
 				sx={{
 					display: "grid",
 					gap: 2,
-					gridTemplateColumns: { xs: "1fr", lg: "1.6fr 1fr" },
+					gridTemplateColumns: {
+						xs: "minmax(0, 1fr)",
+						lg: "minmax(0, 1.6fr) minmax(0, 1fr)",
+					},
 					alignItems: "start",
 				}}
 			>
@@ -1290,16 +1316,86 @@ export default function AdminCampaignDetailPage() {
 									</Typography>
 								</Box>
 							</Box>
+						</Stack>
+					</Paper>
 
-							<Stack
-								direction="row"
-								spacing={1}
-								sx={{ flexWrap: "wrap", justifyContent: "flex-end" }}
-							>
-								<QuickPill label="Owner" value={data.ownerName} />
-								<QuickPill label="Email" value={data.ownerEmail} />
-								<QuickPill label="HP" value={data.phone} />
-								<QuickPill label="Kategori" value={data.category} />
+					{/* Fee Yayasan - Prominent Section */}
+					<Paper
+						elevation={0}
+						sx={{
+							...shellSx,
+							p: 2,
+							border: "2px solid",
+							borderColor: theme.palette.warning.main,
+							position: "relative",
+							overflow: "hidden",
+						}}
+					>
+						<Box
+							sx={{
+								position: "absolute",
+								top: 0,
+								right: 0,
+								px: 1.5,
+								py: 0.5,
+								bgcolor: theme.palette.warning.main,
+								borderBottomLeftRadius: 12,
+								color: theme.palette.warning.contrastText,
+								fontWeight: "bold",
+								fontSize: 12,
+							}}
+						>
+							Wajib Diisi
+						</Box>
+
+						<Stack spacing={2}>
+							<Box sx={{ pr: 10 }}>
+								<Typography sx={{ fontWeight: 1000, fontSize: 15 }}>
+									Fee Yayasan
+								</Typography>
+								<Typography sx={{ fontSize: 13, color: "text.secondary" }}>
+									Tentukan persentase potongan donasi untuk operasional yayasan.
+								</Typography>
+							</Box>
+
+							<Stack direction="row" spacing={2} alignItems="center">
+								<TextField
+									label="Persentase Fee (%)"
+									type="number"
+									value={feeValue}
+									onChange={(e) => {
+										const val = e.target.value;
+										const num = Number(val);
+										if (Number.isNaN(num)) {
+											setFeeValue(val);
+											return;
+										}
+										if (num > 100 || num < 0) return;
+										setFeeValue(val);
+									}}
+									inputProps={{ step: 0.1 }}
+									InputProps={{
+										endAdornment: (
+											<InputAdornment position="end">%</InputAdornment>
+										),
+									}}
+									sx={{ flex: 1, ...fieldSx(theme) }}
+									error={!feeValue}
+								/>
+								<Button
+									variant="contained"
+									onClick={onSaveFee}
+									disabled={feeLoading}
+									sx={{
+										height: 40,
+										borderRadius: 999,
+										fontWeight: 900,
+										boxShadow: "none",
+										whiteSpace: "nowrap",
+									}}
+								>
+									{feeLoading ? "..." : "Simpan"}
+								</Button>
 							</Stack>
 						</Stack>
 					</Paper>
@@ -1329,11 +1425,6 @@ export default function AdminCampaignDetailPage() {
 								label="Dokumen"
 								active={tab === "docs"}
 								onClick={() => setTab("docs")}
-							/>
-							<SegTab
-								label="Fee Yayasan"
-								active={tab === "fee"}
-								onClick={() => setTab("fee")}
 							/>
 							<SegTab
 								label="Verifikasi"
@@ -1397,7 +1488,7 @@ export default function AdminCampaignDetailPage() {
 							<Stack spacing={1} sx={{ mt: 1 }}>
 								<InfoRow k="Nama" v={data.ownerName} />
 								<InfoRow k="Email" v={data.ownerEmail} />
-								<InfoRow k="No. HP" v={data.ownerPhone} />
+								<InfoRow k="No. HP" v={data.phone} />
 							</Stack>
 
 							{data.type === "sakit" && metaSakit && (
@@ -1614,6 +1705,12 @@ export default function AdminCampaignDetailPage() {
 									minRows={3}
 									sx={fieldSx(theme)}
 								/>
+								<Typography
+									sx={{ mt: 0.75, fontSize: 12, color: "text.secondary" }}
+								>
+									Berguna untuk share (link preview) dan tidak tampil pada
+									konten cerita utama.
+								</Typography>
 							</FormBlock>
 						</Paper>
 					)}
@@ -1669,92 +1766,6 @@ export default function AdminCampaignDetailPage() {
 						</Paper>
 					)}
 
-					{tab === "fee" && (
-						<Paper elevation={0} sx={{ ...shellSx, p: 1.5 }}>
-							<Stack
-								direction="row"
-								alignItems="center"
-								justifyContent="space-between"
-								sx={{ gap: 1, flexWrap: "wrap" }}
-							>
-								<Box>
-									<Typography sx={{ fontWeight: 1000, fontSize: 14 }}>
-										Fee Yayasan
-									</Typography>
-									<Typography
-										sx={{ mt: 0.5, fontSize: 12.5, color: "text.secondary" }}
-									>
-										Atur persentase fee operasional yayasan khusus untuk
-										campaign ini.
-									</Typography>
-								</Box>
-
-								<Chip
-									label={`${Number(feeValue || "0")} %`}
-									variant="outlined"
-									sx={{
-										borderRadius: 999,
-										fontWeight: 900,
-										borderColor: alpha(theme.palette.primary.main, 0.3),
-										bgcolor: alpha(
-											theme.palette.primary.main,
-											theme.palette.mode === "dark" ? 0.16 : 0.08,
-										),
-										color: theme.palette.primary.main,
-									}}
-								/>
-							</Stack>
-
-							<Divider sx={{ my: 1.25 }} />
-
-							<Stack spacing={1.5}>
-								<TextField
-									label="Fee Yayasan (%)"
-									type="number"
-									fullWidth
-									value={feeValue}
-									onChange={(e) => {
-										const val = e.target.value;
-										const num = Number(val);
-										if (Number.isNaN(num)) {
-											setFeeValue(val);
-											return;
-										}
-										if (num > 100 || num < 0) return;
-										setFeeValue(val);
-									}}
-									inputProps={{ step: 0.1 }}
-									InputProps={{
-										endAdornment: (
-											<InputAdornment position="end">%</InputAdornment>
-										),
-									}}
-									helperText="Rentang 0-100%. Nilai ini akan digunakan untuk semua donasi campaign ini."
-								/>
-
-								<Stack
-									direction={{ xs: "column", sm: "row" }}
-									spacing={1}
-									sx={{ mt: 0.5 }}
-								>
-									<Button
-										variant="contained"
-										onClick={onSaveFee}
-										disabled={feeLoading}
-										startIcon={<SaveRoundedIcon />}
-										sx={{
-											borderRadius: 999,
-											fontWeight: 900,
-											boxShadow: "none",
-										}}
-									>
-										{feeLoading ? "Menyimpan..." : "Simpan Fee"}
-									</Button>
-								</Stack>
-							</Stack>
-						</Paper>
-					)}
-
 					{tab === "verify" && (
 						<Paper elevation={0} sx={{ ...shellSx, p: 1.5 }}>
 							<Stack
@@ -1802,6 +1813,12 @@ export default function AdminCampaignDetailPage() {
 							<Divider sx={{ my: 1.25 }} />
 
 							<Stack spacing={0.5}>
+								<VerifyItem
+									label="Fee Yayasan sudah diatur"
+									checked={check.feeOk}
+									onChange={(v) => setCheck((c) => ({ ...c, feeOk: v }))}
+									hint={`Fee saat ini: ${feeValue}%`}
+								/>
 								<VerifyItem
 									label="Identitas/KTP valid"
 									checked={check.identityOk}
@@ -1978,7 +1995,7 @@ export default function AdminCampaignDetailPage() {
 				<Stack spacing={2}>
 					<Paper elevation={0} sx={{ ...shellSx, p: 1.5 }}>
 						<Typography sx={{ fontWeight: 1000, fontSize: 14 }}>
-							Informasi
+							Informasi User
 						</Typography>
 						<Typography
 							sx={{ mt: 0.5, fontSize: 12.5, color: "text.secondary" }}
@@ -1989,11 +2006,62 @@ export default function AdminCampaignDetailPage() {
 						<Divider sx={{ my: 1.25 }} />
 
 						<Stack spacing={1}>
-							<MiniStat label="Pemilik" value={data.ownerName} />
+							<Stack alignItems="center" spacing={1} sx={{ mb: 1, mt: 1 }}>
+								<Avatar
+									src={data.ownerAvatar}
+									sx={{
+										width: 64,
+										height: 64,
+										fontSize: 24,
+										fontWeight: "bold",
+										bgcolor: theme.palette.primary.main,
+									}}
+								>
+									{!data.ownerAvatar && data.ownerName
+										? data.ownerName.charAt(0).toUpperCase()
+										: ""}
+								</Avatar>
+								<Box sx={{ textAlign: "center" }}>
+									<Typography
+										sx={{
+											fontWeight: 1000,
+											fontSize: 15,
+											color: "text.primary",
+										}}
+									>
+										{data.ownerName}
+									</Typography>
+									<Typography
+										sx={{ fontSize: 12, color: "text.secondary", mt: 0.5 }}
+									>
+										Pemilik Campaign
+									</Typography>
+								</Box>
+							</Stack>
+
+							<Divider sx={{ my: 1 }} />
+
 							<MiniStat label="Email" value={data.ownerEmail} />
-							<MiniStat label="No. HP" value={data.ownerPhone} />
-							<MiniStat label="Kategori" value={data.category} />
-							<MiniStat label="Status" value={statusMeta.label} />
+							<MiniStat
+								label="No. HP"
+								value={
+									data.ownerPhone && data.ownerPhone !== "-"
+										? data.ownerPhone
+										: data.phone
+								}
+							/>
+							{/* <MiniStat label="Kategori" value={data.category} /> */}
+							{/* <MiniStat label="Status" value={statusMeta.label} /> */}
+							<MiniStat
+								label="Verifikasi Akun"
+								value={
+									data.ownerVerifiedAs === "organization"
+										? "Organisasi"
+										: data.ownerVerifiedAs === "personal"
+											? "Personal"
+											: "Belum Terverifikasi"
+								}
+							/>
 						</Stack>
 					</Paper>
 
@@ -2274,28 +2342,16 @@ export default function AdminCampaignDetailPage() {
 					<DialogContentText>
 						Status akan menjadi <b>Aktif</b>. Pastikan checklist sudah benar.
 					</DialogContentText>
-					<Box sx={{ mt: 2 }}>
-						<TextField
-							label="Fee Yayasan (%)"
-							type="number"
-							fullWidth
-							value={feeValue}
-							onChange={(e) => {
-								const val = e.target.value;
-								const num = Number(val);
-								if (Number.isNaN(num)) {
-									setFeeValue(val);
-									return;
-								}
-								if (num > 100 || num < 0) return;
-								setFeeValue(val);
-							}}
-							inputProps={{ step: 0.1 }}
-							InputProps={{
-								endAdornment: <InputAdornment position="end">%</InputAdornment>,
-							}}
-							helperText="Atur persentase fee operasional yayasan untuk campaign ini (0-100%)."
-						/>
+					<Box sx={{ mt: 2, p: 2, bgcolor: "action.hover", borderRadius: 2 }}>
+						<Typography variant="body2" color="text.secondary">
+							Fee Yayasan
+						</Typography>
+						<Typography variant="h6" fontWeight={900}>
+							{feeValue}%
+						</Typography>
+						<Typography variant="caption" color="text.secondary">
+							Pastikan fee sudah sesuai sebelum melanjutkan.
+						</Typography>
 					</Box>
 				</DialogContent>
 				<DialogActions sx={{ p: 2, pt: 0 }}>
@@ -2459,32 +2515,46 @@ function QuickPill({ label, value }: { label: string; value: string }) {
 	);
 }
 
-function MiniStat({ label, value }: { label: string; value: string }) {
+function MiniStat({
+	label,
+	value,
+	avatar,
+}: {
+	label: string;
+	value: string;
+	avatar?: string;
+}) {
 	const theme = useTheme();
 	return (
 		<Paper
 			variant="outlined"
 			sx={{
 				borderRadius: 2.5,
-				p: 1,
+				p: 1.25,
 				borderColor: alpha(theme.palette.divider, 1),
 				bgcolor: alpha(
 					theme.palette.background.default,
 					theme.palette.mode === "dark" ? 0.2 : 1,
 				),
+				display: "flex",
+				alignItems: "center",
+				gap: 1.5,
 			}}
 		>
-			<Typography
-				sx={{ fontSize: 11.5, color: "text.secondary", fontWeight: 900 }}
-			>
-				{label}
-			</Typography>
-			<Typography
-				sx={{ mt: 0.2, fontSize: 12.5, fontWeight: 1000 }}
-				className="line-clamp-2"
-			>
-				{value}
-			</Typography>
+			{avatar && <Avatar src={avatar} sx={{ width: 36, height: 36 }} />}
+			<Box sx={{ flex: 1, minWidth: 0 }}>
+				<Typography
+					sx={{ fontSize: 11.5, color: "text.secondary", fontWeight: 900 }}
+				>
+					{label}
+				</Typography>
+				<Typography
+					sx={{ mt: 0.2, fontSize: 12.5, fontWeight: 1000 }}
+					className="line-clamp-2"
+				>
+					{value}
+				</Typography>
+			</Box>
 		</Paper>
 	);
 }
@@ -2607,18 +2677,20 @@ function DocRow({
 							{doc.title}
 						</Typography>
 
-						<Chip
-							size="small"
-							label={doc.required ? "Required" : "Opsional"}
-							variant="outlined"
-							sx={{
-								borderRadius: 999,
-								fontWeight: 900,
-								height: 22,
-								borderColor: alpha(theme.palette.divider, 1),
-								color: "text.secondary",
-							}}
-						/>
+						{doc.required && (
+							<Chip
+								size="small"
+								label="Required"
+								variant="outlined"
+								sx={{
+									borderRadius: 999,
+									fontWeight: 900,
+									height: 22,
+									borderColor: alpha(theme.palette.divider, 1),
+									color: "text.secondary",
+								}}
+							/>
+						)}
 
 						<Chip
 							size="small"

@@ -6,6 +6,14 @@ export default auth((req) => {
   const isLoggedIn = !!req.auth;
   const userRole = req.auth?.user?.role;
 
+  const buildLoginRedirect = () => {
+    const loginUrl = nextUrl.clone();
+    loginUrl.pathname = "/auth/login";
+    const callbackUrl = `${nextUrl.pathname}${nextUrl.search}`;
+    loginUrl.searchParams.set("callbackUrl", callbackUrl);
+    return NextResponse.redirect(loginUrl);
+  };
+
   const publicProfileRoutes = [
     "/profil/tentang",
     "/profil/syarat-ketentuan",
@@ -24,7 +32,7 @@ export default auth((req) => {
 
   if (isAdminRoute) {
     if (!isLoggedIn) {
-      return NextResponse.redirect(new URL("/auth/login", nextUrl));
+      return buildLoginRedirect();
     }
     if (userRole !== "ADMIN") {
       return NextResponse.redirect(new URL("/profil", nextUrl));
@@ -34,7 +42,7 @@ export default auth((req) => {
 
   if (isPrivateRoute) {
     if (!isLoggedIn) {
-      return NextResponse.redirect(new URL("/auth/login", nextUrl));
+      return buildLoginRedirect();
     }
     return NextResponse.next();
   }

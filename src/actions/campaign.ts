@@ -7,6 +7,7 @@ import { CampaignStatus, Prisma, NotificationType } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { CATEGORY_TITLE } from "@/lib/constants";
 import { createNotification } from "@/actions/notification";
+import { validateCampaignType } from "@/lib/campaignValidation";
 
 const QUICK_DONATION_SLUG = "donasi-cepat";
 
@@ -64,7 +65,14 @@ export async function createCampaign(formData: FormData) {
 		}
 
 		const categoryKey = formData.get("category") as string;
-		// const type = formData.get("type") as string; // 'sakit' or 'lainnya'
+		const type = formData.get("type") as string; // 'sakit' or 'lainnya'
+
+		// Validate type & category
+		const validation = validateCampaignType(type, categoryKey);
+		if (!validation.valid) {
+			return { success: false, error: validation.error };
+		}
+
 		const targetStr = formData.get("target") as string;
 		const duration = formData.get("duration") as string;
 		let story = formData.get("story") as string;
@@ -354,12 +362,20 @@ export async function getCampaigns(
 			const donors = validDonations.length;
 			const thumbnail =
 				c.media.find((m) => m.isThumbnail)?.url || c.media[0]?.url || "";
-			const daysLeft = c.end
-				? Math.ceil(
+			let daysLeft = 0;
+			if (c.end) {
+				if (c.status === "PENDING" && c.start) {
+					daysLeft = Math.ceil(
+						(new Date(c.end).getTime() - new Date(c.start).getTime()) /
+							(1000 * 60 * 60 * 24),
+					);
+				} else {
+					daysLeft = Math.ceil(
 						(new Date(c.end).getTime() - new Date().getTime()) /
 							(1000 * 60 * 60 * 24),
-					)
-				: 0;
+					);
+				}
+			}
 
 			return {
 				id: c.id,
@@ -475,12 +491,21 @@ export async function getCampaignById(id: string) {
 			campaign.media.find((m) => m.isThumbnail)?.url ||
 			campaign.media[0]?.url ||
 			"";
-		const daysLeft = campaign.end
-			? Math.ceil(
+		let daysLeft = 0;
+		if (campaign.end) {
+			if (campaign.status === "PENDING" && campaign.start) {
+				daysLeft = Math.ceil(
+					(new Date(campaign.end).getTime() -
+						new Date(campaign.start).getTime()) /
+						(1000 * 60 * 60 * 24),
+				);
+			} else {
+				daysLeft = Math.ceil(
 					(new Date(campaign.end).getTime() - new Date().getTime()) /
 						(1000 * 60 * 60 * 24),
-				)
-			: 0;
+				);
+			}
+		}
 
 		const timeline = [
 			...campaign.updates.map((u) => ({
@@ -550,6 +575,8 @@ export async function getCampaignById(id: string) {
 				campaign.status === "COMPLETED"
 					? "ended"
 					: campaign.status.toLowerCase(),
+			rejectionReason: campaign.rejectionReason,
+			rejectedAt: campaign.rejectedAt,
 			metadata: campaign.metadata,
 			description: campaign.story,
 			createdAt: campaign.createdAt,
@@ -632,11 +659,21 @@ export async function finishCampaign(campaignId: string) {
 export async function updateCampaignStatus(
 	campaignId: string,
 	status: "ACTIVE" | "REJECTED" | "COMPLETED" | "PAUSED",
+	reason?: string,
 ) {
 	try {
 		const session = await auth();
 		if (!session?.user?.id) {
 			return { success: false, error: "Unauthorized" };
+		}
+
+		if (status === "REJECTED") {
+			if (!reason || reason.trim().length < 10) {
+				return {
+					success: false,
+					error: "Alasan penolakan wajib diisi (minimal 10 karakter)",
+				};
+			}
 		}
 
 		const prev = await prisma.campaign.findUnique({
@@ -660,6 +697,12 @@ export async function updateCampaignStatus(
 		}
 
 		const updateData: Prisma.CampaignUpdateInput = { status };
+
+		if (status === "REJECTED") {
+			updateData.rejectionReason = reason;
+			updateData.rejectedAt = new Date();
+			updateData.rejectedBy = { connect: { id: session.user.id } };
+		}
 
 		if (
 			status === "ACTIVE" &&
@@ -710,6 +753,15 @@ export async function updateCampaignStatus(
 				prev.createdById,
 				"Campaign Disetujui",
 				`Campaign "${prev.title}" telah disetujui dan sekarang aktif.`,
+				NotificationType.KABAR,
+			);
+		}
+
+		if (status === "REJECTED" && prev?.createdById) {
+			await createNotification(
+				prev.createdById,
+				"Campaign Ditolak",
+				`Campaign "${prev.title}" ditolak. Alasan: ${reason}`,
 				NotificationType.KABAR,
 			);
 		}
@@ -1211,6 +1263,7 @@ export async function updateCampaignStory(
 	id: string,
 	title: string,
 	story: string,
+	cta?: string,
 ) {
 	try {
 		const session = await auth();
@@ -1218,11 +1271,34 @@ export async function updateCampaignStory(
 			return { success: false, error: "Unauthorized" };
 		}
 
+		const campaign = await prisma.campaign.findUnique({
+			where: { id },
+			select: { metadata: true, category: true },
+		});
+
+		if (!campaign) {
+			return { success: false, error: "Campaign not found" };
+		}
+
+		let metadata: any = campaign.metadata || {};
+		if (cta !== undefined) {
+			const isSakit =
+				campaign.category.name === "Bantuan Medis & Kesehatan" ||
+				metadata.type === "sakit"; // fallback check
+
+			if (isSakit) {
+				metadata = { ...metadata, cta };
+			} else {
+				metadata = { ...metadata, ctaOther: cta };
+			}
+		}
+
 		await prisma.campaign.update({
 			where: { id },
 			data: {
 				title,
 				story,
+				metadata,
 			},
 		});
 
@@ -1722,12 +1798,20 @@ function mapCampaignsToTypes(campaigns: CampaignWithRelations[]) {
 			(acc, d) => acc + Number(d.amount),
 			0,
 		);
-		const daysLeft = c.end
-			? Math.ceil(
+		let daysLeft = 0;
+		if (c.end) {
+			if (c.status === "PENDING" && c.start) {
+				daysLeft = Math.ceil(
+					(new Date(c.end).getTime() - new Date(c.start).getTime()) /
+						(1000 * 60 * 60 * 24),
+				);
+			} else {
+				daysLeft = Math.ceil(
 					(new Date(c.end).getTime() - new Date().getTime()) /
 						(1000 * 60 * 60 * 24),
-				)
-			: 0;
+				);
+			}
+		}
 		const slugKey =
 			c.category.slug ||
 			Object.entries(CATEGORY_TITLE).find(
@@ -1742,10 +1826,7 @@ function mapCampaignsToTypes(campaigns: CampaignWithRelations[]) {
 			organizerVerifiedAs: (c.createdBy as any).verifiedAs || null,
 			categorySlug: slugKey || undefined,
 			category: c.category.name,
-			cover:
-				c.media.find((m) => m.isThumbnail)?.url ||
-				c.media[0]?.url ||
-				"",
+			cover: c.media.find((m) => m.isThumbnail)?.url || c.media[0]?.url || "",
 			target: Number(c.target),
 			collected,
 			donors: validDonations.length,
