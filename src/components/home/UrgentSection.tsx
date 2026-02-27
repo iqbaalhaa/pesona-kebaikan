@@ -90,7 +90,13 @@ function ProgressBarDual({
 	);
 }
 
-function UrgentCard({ item }: { item: Campaign }) {
+function UrgentCard({
+	item,
+	priority = false,
+}: {
+	item: Campaign;
+	priority?: boolean;
+}) {
 	const router = useRouter();
 	const [imgSrc, setImgSrc] = React.useState(item.cover || "/defaultimg.webp");
 
@@ -129,6 +135,8 @@ function UrgentCard({ item }: { item: Campaign }) {
 					src={imgSrc}
 					alt={item.title}
 					fill
+					priority={priority}
+					unoptimized
 					sizes="200px"
 					style={{ objectFit: "cover" }}
 					className="group-hover:scale-105 transition-transform duration-500"
@@ -182,6 +190,7 @@ function UrgentCard({ item }: { item: Campaign }) {
 							src="/brand/logo.png"
 							alt={item.organizer}
 							fill
+							unoptimized
 							sizes="16px"
 							style={{ objectFit: "cover" }}
 						/>
@@ -350,8 +359,8 @@ export default function UrgentSection({
 					scrollbarWidth: "none",
 				}}
 			>
-				{campaigns.map((item) => (
-					<UrgentCard key={item.id} item={item} />
+				{campaigns.map((item, i) => (
+					<UrgentCard key={item.id} item={item} priority={i === 0} />
 				))}
 			</Box>
 		</Box>

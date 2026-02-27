@@ -82,7 +82,13 @@ function ProgressMini({ pct }: { pct: number }) {
 	);
 }
 
-function PopularCard({ c }: { c: Campaign }) {
+function PopularCard({
+	c,
+	priority = false,
+}: {
+	c: Campaign;
+	priority?: boolean;
+}) {
 	const router = useRouter();
 	const [imgSrc, setImgSrc] = React.useState(c.cover || "/defaultimg.webp");
 	const rawPct = c.target ? Math.round((c.collected / c.target) * 100) : 0;
@@ -120,6 +126,8 @@ function PopularCard({ c }: { c: Campaign }) {
 					src={imgSrc}
 					alt={c.title}
 					fill
+					priority={priority}
+					unoptimized
 					sizes="200px"
 					style={{ objectFit: "cover" }}
 					onError={() => setImgSrc("/defaultimg.webp")}
@@ -411,8 +419,8 @@ export default function PopularSection({
 						scrollbarWidth: "none",
 					}}
 				>
-					{campaigns.map((c) => (
-						<PopularCard key={c.id} c={c} />
+					{campaigns.map((c, i) => (
+						<PopularCard key={c.id} c={c} priority={i === 0} />
 					))}
 				</Box>
 			</Box>

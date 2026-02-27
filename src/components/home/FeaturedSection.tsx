@@ -82,7 +82,7 @@ function ProgressMini({ pct }: { pct: number }) {
 	);
 }
 
-function FeaturedCard({ c }: { c: Campaign }) {
+function FeaturedCard({ c, priority = false }: { c: Campaign; priority?: boolean }) {
 	const router = useRouter();
 	const [imgSrc, setImgSrc] = React.useState(c.cover || "/defaultimg.webp");
 	const rawPct = c.target ? Math.round((c.collected / c.target) * 100) : 0;
@@ -115,6 +115,8 @@ function FeaturedCard({ c }: { c: Campaign }) {
 					src={imgSrc}
 					alt={c.title}
 					fill
+					priority={priority}
+					unoptimized
 					sizes="240px"
 					style={{ objectFit: "cover" }}
 					onError={() => setImgSrc("/defaultimg.webp")}
@@ -235,7 +237,15 @@ function FeaturedCard({ c }: { c: Campaign }) {
 	);
 }
 
-function FeaturedRow({ c, last = false }: { c: Campaign; last?: boolean }) {
+function FeaturedRow({
+	c,
+	last = false,
+	priority = false,
+}: {
+	c: Campaign;
+	last?: boolean;
+	priority?: boolean;
+}) {
 	const router = useRouter();
 	const [imgSrc, setImgSrc] = React.useState(c.cover || "/defaultimg.webp");
 	const rawPct = c.target ? Math.round((c.collected / c.target) * 100) : 0;
@@ -266,7 +276,9 @@ function FeaturedRow({ c, last = false }: { c: Campaign; last?: boolean }) {
 					src={imgSrc}
 					alt={c.title}
 					fill
+					priority={priority}
 					sizes="180px"
+					unoptimized
 					style={{ objectFit: "cover" }}
 					onError={() => setImgSrc("/defaultimg.webp")}
 				/>

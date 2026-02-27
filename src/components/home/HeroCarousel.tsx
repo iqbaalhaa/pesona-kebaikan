@@ -18,7 +18,7 @@ const defaultSlides: CarouselItem[] = [
 	{ id: "def2", image: "/brand/carousel2.webp" },
 ];
 
-function SlideImage({ src }: { src: string }) {
+function SlideImage({ src, priority }: { src: string; priority: boolean }) {
 	const [imgSrc, setImgSrc] = React.useState(src);
 
 	return (
@@ -26,7 +26,8 @@ function SlideImage({ src }: { src: string }) {
 			src={imgSrc}
 			alt="slide"
 			fill
-			priority
+			priority={priority}
+			unoptimized
 			sizes="420px"
 			style={{ objectFit: "cover" }}
 			onError={() => setImgSrc("/defaultimg.webp")}
@@ -61,7 +62,7 @@ export default function HeroCarousel({
 			{displaySlides.map((s, i) => {
 				const Content = (
 					<>
-						<SlideImage src={s.image} />
+						<SlideImage src={s.image} priority={i === 0} />
 						<div className="absolute inset-0 bg-gradient-to-b from-black/92 via-black/75 to-transparent to-58% from-0% via-24%" />
 					</>
 				);

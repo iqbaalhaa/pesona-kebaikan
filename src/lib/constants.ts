@@ -1,6 +1,8 @@
 export const CATEGORY_TITLE: Record<string, string> = {
 	pendidikan: "Bantuan Pendidikan",
 	bencana: "Bencana Alam",
+	"bencana-alam": "Bencana Alam",
+	bencana_alam: "Bencana Alam",
 	difabel: "Difabel",
 	infrastruktur: "Infrastruktur Umum",
 	usaha: "Karya Kreatif & Modal Usaha",
@@ -8,5 +10,6 @@ export const CATEGORY_TITLE: Record<string, string> = {
 	kemanusiaan: "Kemanusiaan",
 	lingkungan: "Lingkungan",
 	rumah_ibadah: "Rumah Ibadah",
+	"rumah-ibadah": "Rumah Ibadah",
 	medis: "Bantuan Medis & Kesehatan",
 };

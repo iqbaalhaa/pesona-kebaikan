@@ -9,6 +9,29 @@ interface CampaignHeroProps {
 	title: string;
 }
 
+const HeroImage = ({
+	src,
+	alt,
+	priority,
+}: {
+	src: string;
+	alt: string;
+	priority: boolean;
+}) => {
+	const [imgSrc, setImgSrc] = React.useState(src);
+	return (
+		<Image
+			src={imgSrc}
+			alt={alt}
+			fill
+			unoptimized
+			style={{ objectFit: "cover" }}
+			priority={priority}
+			onError={() => setImgSrc("/defaultimg.webp")}
+		/>
+	);
+};
+
 export default function CampaignHero({ images, title }: CampaignHeroProps) {
 	const [currentImageIndex, setCurrentImageIndex] = React.useState(0);
 	const carouselRef = React.useRef<HTMLDivElement>(null);
@@ -63,11 +86,9 @@ export default function CampaignHero({ images, title }: CampaignHeroProps) {
 							position: "relative",
 						}}
 					>
-						<Image
+						<HeroImage
 							src={img}
 							alt={`${title} - ${index + 1}`}
-							fill
-							style={{ objectFit: "cover" }}
 							priority={index === 0}
 						/>
 					</Box>

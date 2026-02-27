@@ -159,17 +159,19 @@ export default function SimpleAppBar({ variant = "solid" }: SimpleAppBarProps) {
 						<Image
 							src={logoSrc}
 							alt="Pesona Kebaikan"
-							width={140}
-							height={32}
+							width={0}
+							height={0}
+							sizes="100vw"
 							priority
 							style={{
-								height: 32,
 								width: "auto",
+								height: "32px",
 								objectFit: "contain",
 								display: "block",
 								filter: "none",
 							}}
 							onError={() => setLogoSrc("/defaultimg.webp")}
+							unoptimized
 						/>
 					</Link>
 				</Box>

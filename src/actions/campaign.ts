@@ -330,8 +330,18 @@ export async function getCampaigns(
 				include: {
 					category: true,
 					createdBy: true,
-					donations: true,
-					media: true,
+					donations: {
+						select: {
+							amount: true,
+							status: true,
+						},
+					},
+					media: {
+						select: {
+							url: true,
+							isThumbnail: true,
+						},
+					},
 				},
 			}),
 			prisma.campaign.count({ where }),
@@ -397,7 +407,7 @@ export async function getCampaigns(
 				}),
 				thumbnail,
 				isEmergency: c.isEmergency,
-				verifiedAt: c.verifiedAt,
+				verifiedAt: c.verifiedAt ? new Date(c.verifiedAt).toISOString() : null,
 				metadata: c.metadata,
 				description: c.story,
 			};
@@ -442,17 +452,32 @@ export async function getCampaignById(id: string) {
 			include: {
 				category: true,
 				createdBy: true,
-				donations: {
-					orderBy: { createdAt: "desc" },
+				media: {
+					select: {
+						url: true,
+						isThumbnail: true,
+					},
 				},
-				media: true,
 				updates: {
-					include: { media: true },
+					include: {
+						media: {
+							select: {
+								url: true,
+							},
+						},
+					},
 					orderBy: { createdAt: "desc" },
 				},
 				withdrawals: {
 					where: { status: "COMPLETED" },
 					orderBy: { updatedAt: "desc" },
+					select: {
+						id: true,
+						amount: true,
+						notes: true,
+						updatedAt: true,
+						proofUrl: true,
+					},
 				},
 			},
 		});
@@ -460,6 +485,31 @@ export async function getCampaignById(id: string) {
 		if (!campaign) {
 			return { success: false, error: "Campaign not found" };
 		}
+
+		// Optimized: Fetch donation stats and list separately to avoid loading all donations
+		const validStatuses = ["PAID", "paid", "SETTLED", "COMPLETED"];
+
+		const [donationStats, recentDonations] = await Promise.all([
+			prisma.donation.aggregate({
+				where: {
+					campaignId: id,
+					status: { in: validStatuses },
+				},
+				_sum: {
+					amount: true,
+					fee: true,
+				},
+				_count: true,
+			}),
+			prisma.donation.findMany({
+				where: {
+					campaignId: id,
+					status: { in: validStatuses },
+				},
+				orderBy: { createdAt: "desc" },
+				take: 50, // Limit to 50 recent donations
+			}),
+		]);
 
 		if (
 			campaign.end &&
@@ -474,19 +524,10 @@ export async function getCampaignById(id: string) {
 			}
 		}
 
-		const validDonations = campaign.donations.filter((d) =>
-			["PAID", "paid", "SETTLED", "COMPLETED"].includes(d.status),
-		);
+		const collected = Number(donationStats._sum.amount) || 0;
+		const totalFees = Number(donationStats._sum.fee) || 0;
+		const donors = donationStats._count;
 
-		const collected = validDonations.reduce(
-			(acc, d) => acc + Number(d.amount),
-			0,
-		);
-		const totalFees = validDonations.reduce(
-			(acc, d) => acc + (Number(d.fee) || 0),
-			0,
-		);
-		const donors = validDonations.length;
 		const thumbnail =
 			campaign.media.find((m) => m.isThumbnail)?.url ||
 			campaign.media[0]?.url ||
@@ -560,12 +601,14 @@ export async function getCampaignById(id: string) {
 			ownerEmail: campaign.createdBy.email || "-",
 			ownerPhone: campaign.createdBy.phone || "-",
 			ownerAvatar: campaign.createdBy.image || "",
-			ownerVerifiedAt: campaign.createdBy.verifiedAt || null,
+			ownerVerifiedAt: campaign.createdBy.verifiedAt
+				? new Date(campaign.createdBy.verifiedAt).toISOString()
+				: null,
 			ownerVerifiedAs: (campaign.createdBy as any).verifiedAs || null,
 			phone: campaign.phone || "-",
 			target: Number(campaign.target),
-			start: campaign.start,
-			end: campaign.end,
+			start: campaign.start ? new Date(campaign.start).toISOString() : null,
+			end: campaign.end ? new Date(campaign.end).toISOString() : null,
 			collected,
 			totalFees,
 			foundationFee: Number(campaign.foundationFee),
@@ -576,21 +619,26 @@ export async function getCampaignById(id: string) {
 					? "ended"
 					: campaign.status.toLowerCase(),
 			rejectionReason: campaign.rejectionReason,
-			rejectedAt: campaign.rejectedAt,
+			rejectedAt: campaign.rejectedAt
+				? new Date(campaign.rejectedAt).toISOString()
+				: null,
 			metadata: campaign.metadata,
 			description: campaign.story,
-			createdAt: campaign.createdAt,
-			updatedAt: campaign.updatedAt,
+			createdAt: new Date(campaign.createdAt).toISOString(),
+			updatedAt: new Date(campaign.updatedAt).toISOString(),
 			thumbnail,
 			images: campaign.media.map((m) => m.url),
-			donations: validDonations.map((d) => ({
+			donations: recentDonations.map((d) => ({
 				id: d.id,
 				name: d.donorName || "Hamba Allah",
 				amount: Number(d.amount),
-				date: d.createdAt,
+				date: new Date(d.createdAt).toISOString(),
 				comment: d.message,
 			})),
-			updates: timeline,
+			updates: timeline.map((t) => ({
+				...t,
+				date: new Date(t.date).toISOString(),
+			})),
 			fundraisers: fundraisers.map((f) => ({
 				id: f.id,
 				title: f.title,
