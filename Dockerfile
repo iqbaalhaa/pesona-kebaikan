@@ -32,4 +32,4 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next ./.next
 COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
 USER nextjs
 EXPOSE 3000
-CMD ["sh", "-c", "npx prisma db push --skip-generate && yarn start"]
+CMD ["sh", "-c", "npx prisma db push --accept-data-loss --skip-generate && yarn start"]

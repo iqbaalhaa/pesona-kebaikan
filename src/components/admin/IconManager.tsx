@@ -530,7 +530,7 @@ export default function IconManager({
 													},
 												}}
 											>
-												{React.cloneElement(item.icon, {
+												{React.cloneElement(item.icon as React.ReactElement<any>, {
 													sx: { fontSize: 32 },
 												})}
 											</Box>

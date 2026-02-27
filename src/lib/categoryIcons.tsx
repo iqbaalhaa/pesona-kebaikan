@@ -104,7 +104,7 @@ export function getCategoryIcon(rawName?: string) {
 	// Check if it's a known system icon
 	if (SYSTEM_ICONS_MAP[key]) {
 		return {
-			icon: React.cloneElement(SYSTEM_ICONS_MAP[key].icon, {
+			icon: React.cloneElement(SYSTEM_ICONS_MAP[key].icon as React.ReactElement<any>, {
 				sx: { fontSize: 28 },
 			}),
 			color: colorOverride || "inherit",

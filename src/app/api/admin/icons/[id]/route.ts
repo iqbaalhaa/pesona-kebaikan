@@ -6,9 +6,10 @@ import { existsSync } from "fs";
 
 export async function DELETE(
 	request: Request,
-	{ params }: { params: { id: string } },
+	props: { params: Promise<{ id: string }> },
 ) {
 	try {
+		const params = await props.params;
 		const { id } = params;
 
 		const icon = await prisma.categoryIcon.findUnique({
@@ -60,9 +61,10 @@ export async function DELETE(
 
 export async function PUT(
 	request: Request,
-	{ params }: { params: { id: string } },
+	props: { params: Promise<{ id: string }> },
 ) {
 	try {
+		const params = await props.params;
 		const { id } = params;
 		const body = await request.json();
 		const { name } = body;

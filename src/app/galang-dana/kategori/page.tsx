@@ -215,7 +215,7 @@ export default function GalangDanaKategoriPage() {
 			{step === "TYPE_SELECTION" ? (
 				<Box sx={{ p: 2 }}>
 					<Grid container spacing={2}>
-						<Grid item xs={6}>
+						<Grid size={6}>
 							<Card variant="outlined" sx={{ borderRadius: 3, height: "100%" }}>
 								<CardActionArea
 									onClick={() => handleTypeSelect("medis")}
@@ -261,7 +261,7 @@ export default function GalangDanaKategoriPage() {
 								</CardActionArea>
 							</Card>
 						</Grid>
-						<Grid item xs={6}>
+						<Grid size={6}>
 							<Card variant="outlined" sx={{ borderRadius: 3, height: "100%" }}>
 								<CardActionArea
 									onClick={() => handleTypeSelect("non-medis")}

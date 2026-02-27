@@ -19,7 +19,7 @@ interface StoryCreationSectionProps {
 	storyStructure?: any;
 	onSave: (html: string, structure?: any) => void;
 	loaded: boolean;
-	category?: string; // for StoryBuilder
+	category?: "sakit" | "lainnya"; // for StoryBuilder
 	defaultShowEditor?: boolean;
 }
 
