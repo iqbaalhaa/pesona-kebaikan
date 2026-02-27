@@ -4,7 +4,12 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
-        DATABASE_URL: "postgresql://postgres:postgres@db-host:5432/pesonakebaikan?schema=public"
+        DATABASE_URL: "postgresql://vpsdepati:Vpsdepati.123!@db-host:5432/pesonakebaikan?schema=public"
+        NEXT_PUBLIC_MIDTRANS_CLIENT_KEY: Mid-client-GwHI6mxfn6YYfQEF
+        MIDTRANS_SERVER_KEY: Mid-server-J3eNBWCHo6Ps_J9V9O6lOpK3
+        MIDTRANS_IS_PRODUCTION: true # gunakan true saat production
+        NEXT_PUBLIC_MIDTRANS_IS_PRODUCTION: true # sinkron dengan setting di atas
+        NEXT_PUBLIC_MIN_DONATION: 10
     container_name: pesonakebaikan-app
     ports:
       - "9000:3000"
@@ -16,5 +21,5 @@ services:
 
     environment:
       NODE_ENV: production
-      DATABASE_URL: "postgresql://postgres:postgres@db-host:5432/pesonakebaikan?schema=public"
+      DATABASE_URL: "postgresql://vpsdepati:Vpsdepati.123!@db-host:5432/pesonakebaikan?schema=public"
     restart: unless-stopped
