@@ -548,21 +548,6 @@ export default function StoryBuilder({
 				</DialogContent>
 				<DialogActions>
 					<Button onClick={() => setExampleOpen(false)}>Tutup</Button>
-					<Button
-						variant="contained"
-						onClick={() => {
-							// Find which field this example belongs to
-							const field = currentStep.fields.find(
-								(f) => f.example === currentExample,
-							);
-							if (field) {
-								handleChange(field.key, currentExample);
-							}
-							setExampleOpen(false);
-						}}
-					>
-						Gunakan Contoh
-					</Button>
 				</DialogActions>
 			</Dialog>
 		</Box>

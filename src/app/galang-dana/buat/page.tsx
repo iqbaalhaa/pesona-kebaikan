@@ -119,7 +119,11 @@ type Purpose = {
 };
 
 function getFallbackPurposes(category: string): Purpose[] {
-	if (category === "bencana") {
+	if (
+		category === "bencana" ||
+		category === "bencana-alam" ||
+		category === "bencana_alam"
+	) {
 		return [
 			{
 				key: "acara",
@@ -183,7 +187,7 @@ function BuatGalangDanaPageContent() {
 	}, [status, router, sp]);
 
 	const type = sp.get("type") ?? "lainnya";
-	const category = sp.get("category") ?? "";
+	const category = (sp.get("category") ?? "").trim();
 	const draftId = sp.get("draft");
 	const mode = sp.get("mode") ?? "";
 	const isEdit = !!draftId;

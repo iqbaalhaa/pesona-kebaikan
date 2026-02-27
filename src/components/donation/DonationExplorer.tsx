@@ -45,7 +45,7 @@ export default function DonationExplorer({
 	const onlyUrgent = searchParams.get("urgent") === "true";
 
 	// Local state for search input
-	const [searchVal, setSearchVal] = React.useState("");
+	const [searchVal, setSearchVal] = React.useState(q);
 	const inputRef = React.useRef<HTMLInputElement>(null);
 
 	// Keep input independent from URL/query changes

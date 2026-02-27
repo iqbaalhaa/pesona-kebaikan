@@ -153,6 +153,7 @@ function CampaignRowCard({ item }: { item: Campaign }) {
 						src={imgSrc}
 						alt={item.title}
 						fill
+						unoptimized
 						sizes="(max-width: 768px) 100vw, 400px"
 						style={{ objectFit: "cover" }}
 						onError={() => setImgSrc("/defaultimg.webp")}
@@ -403,9 +404,9 @@ export default function CategoryChips({
 							scrollbarWidth: "none",
 						}}
 					>
-						{filtered.map((item) => (
+						{filtered.map((item, i) => (
 							<Box key={item.id} sx={{ scrollSnapAlign: "start" }}>
-								<CampaignRowCard item={item} />
+								<CampaignRowCard item={item} priority={i === 0} />
 							</Box>
 						))}
 					</Box>
