@@ -1,4 +1,5 @@
 import { getCampaigns } from "@/actions/campaign";
+import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import ProfileHeader from "@/components/profile/ProfileHeader";
 import {

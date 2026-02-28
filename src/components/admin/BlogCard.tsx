@@ -15,7 +15,6 @@ import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
 import UpdateIcon from "@mui/icons-material/Update";
 import MenuBookIcon from "@mui/icons-material/MenuBook";
 import ArticleIcon from "@mui/icons-material/Article";
-import Image from "next/image";
 
 /* ================= TYPES ================= */
 
@@ -73,12 +72,14 @@ export default function BlogCard({
     >
       {/* ===== IMAGE ===== */}
       <div className="relative h-36 w-full overflow-hidden bg-slate-100">
-        <Image
+        <img
           src={data.image || "/defaultimg.webp"}
           alt={data.title}
-          fill
-          sizes="400px"
-          className="object-cover"
+          className="h-full w-full object-cover"
+          loading="lazy"
+          onError={(e) => {
+            (e.currentTarget as HTMLImageElement).src = "/defaultimg.webp";
+          }}
         />
 
         {/* category badge */}

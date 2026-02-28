@@ -406,7 +406,7 @@ export default function CategoryChips({
 					>
 						{filtered.map((item, i) => (
 							<Box key={item.id} sx={{ scrollSnapAlign: "start" }}>
-								<CampaignRowCard item={item} priority={i === 0} />
+								<CampaignRowCard item={item} />
 							</Box>
 						))}
 					</Box>

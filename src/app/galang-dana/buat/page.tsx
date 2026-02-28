@@ -257,7 +257,7 @@ function BuatGalangDanaPageContent() {
 						setT4(m.terms.t4);
 					}
 
-					const startDate = new Date(c.start);
+					const startDate = new Date(c.start || new Date());
 					const endDate = new Date(c.end || new Date());
 					const diffTime = Math.abs(endDate.getTime() - startDate.getTime());
 					const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
@@ -332,7 +332,7 @@ function BuatGalangDanaPageContent() {
 						setAgreeB(m.agree.agreeB);
 					}
 
-					const startDate = new Date(c.start);
+					const startDate = new Date(c.start || new Date());
 					const endDate = new Date(c.end || new Date());
 					const diffTime = Math.abs(endDate.getTime() - startDate.getTime());
 					const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
