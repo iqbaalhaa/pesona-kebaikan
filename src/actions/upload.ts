@@ -1,7 +1,9 @@
 "use server";
 
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
-import sharp from "sharp";
+// import sharp from "sharp"; // Remove static import to avoid crash if module is missing/broken
+
+const MAX_IMAGE_BYTES = 3 * 1024 * 1024;
 
 const s3Client = new S3Client({
 	region: process.env.S3_REGION,
@@ -14,6 +16,10 @@ const s3Client = new S3Client({
 });
 
 async function bufferToWebP(input: Buffer) {
+	// Dynamically import sharp to prevent crashes if module is missing/broken on server
+	const sharpModule = await import("sharp");
+	const sharp = sharpModule.default || sharpModule;
+	// @ts-ignore
 	return sharp(input).webp({ quality: 80 }).toBuffer();
 }
 
@@ -25,37 +31,84 @@ export async function uploadFile(formData: FormData) {
 	try {
 		const file = formData.get("file") as File;
 		if (!file) {
+			console.error("Upload error: No file provided in form data");
 			throw new Error("No file uploaded");
 		}
 
-		const bytes = await file.arrayBuffer();
-		const originalBuffer = Buffer.from(bytes);
+		console.log(
+			`Processing upload: ${file.name} (${file.type}, ${file.size} bytes)`,
+		);
+
+		// Check environment variables
+		if (!process.env.S3_BUCKET_NAME) {
+			console.error("Upload error: S3_BUCKET_NAME is not set");
+			throw new Error("Server configuration error: S3_BUCKET_NAME missing");
+		}
+		if (!process.env.S3_ACCESS_KEY_ID || !process.env.S3_SECRET_ACCESS_KEY) {
+			console.error("Upload error: S3 credentials are incomplete");
+			throw new Error("Server configuration error: S3 credentials missing");
+		}
 
 		const isImage =
 			typeof (file as any).type === "string" &&
 			(file as any).type.startsWith("image/");
 
-		const buffer = isImage ? await bufferToWebP(originalBuffer) : originalBuffer;
+		if (isImage && typeof (file as any).size === "number") {
+			if ((file as any).size > MAX_IMAGE_BYTES) {
+				return { success: false, error: "Ukuran gambar maksimal 3MB" };
+			}
+		}
+
+		const bytes = await file.arrayBuffer();
+		const originalBuffer = Buffer.from(bytes);
+
+		let buffer: any = originalBuffer;
+		let contentType = (file as any).type || "application/octet-stream";
+		let extension = file.name.split(".").pop();
+
+		// Try to convert to WebP using sharp, fallback to original if fails
+		if (isImage) {
+			try {
+				console.log("Attempting to convert image to WebP...");
+				buffer = (await bufferToWebP(originalBuffer)) as Buffer;
+				contentType = "image/webp";
+				extension = "webp";
+				console.log("Image converted to WebP successfully");
+			} catch (sharpError) {
+				console.error(
+					"Sharp conversion failed, using original file:",
+					sharpError,
+				);
+				// Fallback to original buffer
+				buffer = originalBuffer;
+				// Keep original content type and extension
+			}
+		}
+
+		if (isImage && buffer.length > MAX_IMAGE_BYTES) {
+			return { success: false, error: "Ukuran gambar maksimal 3MB" };
+		}
 
 		const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-		const baseName = file.name.replace(/\.[^/.]+$/, "").replace(/[^a-zA-Z0-9]/g, "-");
-		const ext = isImage ? "webp" : file.name.split(".").pop();
-		const filename = `${baseName}-${uniqueSuffix}.${ext}`;
+		const baseName = file.name
+			.replace(/\.[^/.]+$/, "")
+			.replace(/[^a-zA-Z0-9]/g, "-");
+		const filename = `${baseName}-${uniqueSuffix}.${extension}`;
 
 		const rootDir = process.env.S3_ROOT_DIR || "";
-		const key = rootDir ? `${rootDir.replace(/\/$/, "")}/${filename}` : filename;
+		const key = rootDir
+			? `${rootDir.replace(/\/$/, "")}/${filename}`
+			: filename;
 
-		const bucket = process.env.S3_BUCKET_NAME;
-		if (!bucket) {
-			throw new Error("S3 bucket is not configured");
-		}
+		// Bucket is already checked above, but safe to use variable
+		const bucket = process.env.S3_BUCKET_NAME as string;
 
 		await s3Client.send(
 			new PutObjectCommand({
 				Bucket: bucket,
 				Key: key,
 				Body: buffer,
-				ContentType: isImage ? "image/webp" : (file as any).type || "application/octet-stream",
+				ContentType: contentType,
 				ACL: "public-read",
 			}),
 		);
@@ -68,8 +121,9 @@ export async function uploadFile(formData: FormData) {
 		const url = `${base}/${bucket}/${key}`;
 
 		return { success: true, url };
-	} catch (error) {
+	} catch (error: any) {
 		console.error("Upload error:", error);
-		return { success: false, error: "Upload failed" };
+		// Return detailed error in dev/test for debugging
+		return { success: false, error: error.message || "Upload failed" };
 	}
 }

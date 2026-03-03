@@ -77,6 +77,15 @@ export async function createCampaign(formData: FormData) {
 		const duration = formData.get("duration") as string;
 		let story = formData.get("story") as string;
 
+		if (status !== "DRAFT") {
+			if (!story || story.trim().length < 50) {
+				return {
+					success: false,
+					error: "Cerita campaign harus diisi minimal 50 karakter",
+				};
+			}
+		}
+
 		if (status === "DRAFT" && !story) {
 			story = "";
 		}
@@ -97,42 +106,67 @@ export async function createCampaign(formData: FormData) {
 		const suratRsFile = formData.get("surat_rs") as File;
 		let medicalDocs = (metadata as any)?.medicalDocs || {};
 
+		// Parallel upload promises
+		const uploadPromises: Promise<{
+			type: "resume" | "exam" | "cover";
+			res: any;
+		}>[] = [];
+
 		if (resumeMedisFile && (resumeMedisFile as any).size > 0) {
-			const uploadFormData = new FormData();
-			uploadFormData.append("file", resumeMedisFile);
-			const uploadRes = await uploadFile(uploadFormData);
-			if (uploadRes.success && uploadRes.url) {
-				medicalDocs = { ...medicalDocs, resume_medis: uploadRes.url };
-			}
+			const fd = new FormData();
+			fd.append("file", resumeMedisFile);
+			uploadPromises.push(
+				uploadFile(fd).then((res) => ({ type: "resume", res })),
+			);
 		}
 
 		if (suratRsFile && (suratRsFile as any).size > 0) {
-			const uploadFormData = new FormData();
-			uploadFormData.append("file", suratRsFile);
-			const uploadRes = await uploadFile(uploadFormData);
-			if (uploadRes.success && uploadRes.url) {
-				medicalDocs = { ...medicalDocs, surat_rs: uploadRes.url };
+			const fd = new FormData();
+			fd.append("file", suratRsFile);
+			uploadPromises.push(
+				uploadFile(fd).then((res) => ({ type: "exam", res })),
+			);
+		}
+
+		// File upload
+		const coverFile = formData.get("cover") as File;
+		if (coverFile && coverFile.size > 0) {
+			const fd = new FormData();
+			fd.append("file", coverFile);
+			uploadPromises.push(
+				uploadFile(fd).then((res) => ({ type: "cover", res })),
+			);
+		}
+
+		const results = await Promise.all(uploadPromises);
+
+		let coverUrl = "";
+
+		for (const result of results) {
+			if (result.res.success && result.res.url) {
+				if (result.type === "resume")
+					medicalDocs = { ...medicalDocs, resume_medis: result.res.url };
+				if (result.type === "exam")
+					medicalDocs = { ...medicalDocs, surat_rs: result.res.url };
+				if (result.type === "cover") coverUrl = result.res.url;
+			} else {
+				if (result.type === "cover") {
+					return {
+						success: false,
+						error: result.res.error || "Gagal mengupload cover image",
+					};
+				}
+				// For medical docs, we might want to log error but proceed?
+				// Or fail? The original code would have failed if await threw or returned error (though uploadFile catches).
+				// But uploadFile returns { success: false } on error.
+				// The original code checks `if (uploadRes.success && uploadRes.url)` and assigns.
+				// It didn't return error for medical docs failure, just skipped assignment.
+				// So we maintain that behavior for docs.
 			}
 		}
 
 		if (Object.keys(medicalDocs || {}).length > 0) {
 			metadata = { ...(metadata || {}), medicalDocs };
-		}
-
-		// File upload
-		const coverFile = formData.get("cover") as File;
-		let coverUrl = "";
-
-		if (coverFile && coverFile.size > 0) {
-			const uploadFormData = new FormData();
-			uploadFormData.append("file", coverFile);
-			const uploadRes = await uploadFile(uploadFormData);
-
-			if (uploadRes.success && uploadRes.url) {
-				coverUrl = uploadRes.url;
-			} else {
-				return { success: false, error: "Failed to upload cover image" };
-			}
 		}
 
 		// Category
@@ -1189,21 +1223,47 @@ export async function updateCampaign(id: string, formData: FormData) {
 		const suratRsFile = formData.get("surat_rs") as File;
 		let medicalDocs = (metadata as any)?.medicalDocs || {};
 
+		// Parallel upload promises
+		const uploadPromises: Promise<{
+			type: "resume" | "exam" | "cover";
+			res: any;
+		}>[] = [];
+
 		if (resumeMedisFile && (resumeMedisFile as any).size > 0) {
-			const uploadFormData = new FormData();
-			uploadFormData.append("file", resumeMedisFile);
-			const uploadRes = await uploadFile(uploadFormData);
-			if (uploadRes.success && uploadRes.url) {
-				medicalDocs = { ...medicalDocs, resume_medis: uploadRes.url };
-			}
+			const fd = new FormData();
+			fd.append("file", resumeMedisFile);
+			uploadPromises.push(
+				uploadFile(fd).then((res) => ({ type: "resume", res })),
+			);
 		}
 
 		if (suratRsFile && (suratRsFile as any).size > 0) {
-			const uploadFormData = new FormData();
-			uploadFormData.append("file", suratRsFile);
-			const uploadRes = await uploadFile(uploadFormData);
-			if (uploadRes.success && uploadRes.url) {
-				medicalDocs = { ...medicalDocs, surat_rs: uploadRes.url };
+			const fd = new FormData();
+			fd.append("file", suratRsFile);
+			uploadPromises.push(
+				uploadFile(fd).then((res) => ({ type: "exam", res })),
+			);
+		}
+
+		const coverFile = formData.get("cover") as File;
+		if (coverFile && coverFile.size > 0) {
+			const fd = new FormData();
+			fd.append("file", coverFile);
+			uploadPromises.push(
+				uploadFile(fd).then((res) => ({ type: "cover", res })),
+			);
+		}
+
+		const results = await Promise.all(uploadPromises);
+		let coverUploadRes: any = null;
+
+		for (const result of results) {
+			if (result.res.success && result.res.url) {
+				if (result.type === "resume")
+					medicalDocs = { ...medicalDocs, resume_medis: result.res.url };
+				if (result.type === "exam")
+					medicalDocs = { ...medicalDocs, surat_rs: result.res.url };
+				if (result.type === "cover") coverUploadRes = result.res;
 			}
 		}
 
@@ -1239,30 +1299,23 @@ export async function updateCampaign(id: string, formData: FormData) {
 			return { success: false, error: "Invalid category" };
 		}
 
-		// File upload
-		const coverFile = formData.get("cover") as File;
-		if (coverFile && coverFile.size > 0) {
-			const uploadFormData = new FormData();
-			uploadFormData.append("file", coverFile);
-			const uploadRes = await uploadFile(uploadFormData);
+		// File upload (Cover)
+		if (coverUploadRes && coverUploadRes.success && coverUploadRes.url) {
+			// Unset existing thumbnails
+			await prisma.campaignMedia.updateMany({
+				where: { campaignId: id },
+				data: { isThumbnail: false },
+			});
 
-			if (uploadRes.success && uploadRes.url) {
-				// Unset existing thumbnails
-				await prisma.campaignMedia.updateMany({
-					where: { campaignId: id },
-					data: { isThumbnail: false },
-				});
-
-				// Create new thumbnail
-				await prisma.campaignMedia.create({
-					data: {
-						campaignId: id,
-						type: "IMAGE",
-						url: uploadRes.url,
-						isThumbnail: true,
-					},
-				});
-			}
+			// Create new thumbnail
+			await prisma.campaignMedia.create({
+				data: {
+					campaignId: id,
+					type: "IMAGE",
+					url: coverUploadRes.url,
+					isThumbnail: true,
+				},
+			});
 		}
 
 		let mergedMetadata = metadata;

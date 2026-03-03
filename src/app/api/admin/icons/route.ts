@@ -27,10 +27,10 @@ export async function POST(request: Request) {
       );
     }
 
-    // Validate file size (2MB)
-    if (file.size > 2 * 1024 * 1024) {
+    // Validate file size (3MB)
+    if (file.size > 3 * 1024 * 1024) {
       return NextResponse.json(
-        { success: false, message: "File size exceeds 2MB" },
+        { success: false, message: "File size exceeds 3MB" },
         { status: 400 }
       );
     }

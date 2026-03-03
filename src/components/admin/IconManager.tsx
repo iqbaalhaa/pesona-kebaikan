@@ -194,8 +194,8 @@ export default function IconManager({
 		if (!e.target.files || e.target.files.length === 0) return;
 		const file = e.target.files[0];
 
-		if (file.size > 2 * 1024 * 1024) {
-			onNotify("File too large (max 2MB)", "error");
+		if (file.size > 3 * 1024 * 1024) {
+			onNotify("File too large (max 3MB)", "error");
 			return;
 		}
 
