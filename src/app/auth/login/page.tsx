@@ -255,7 +255,7 @@ export default function LoginPage() {
 										Password
 									</Typography>
 									<MuiLink
-										href="#"
+										href="/auth/forgot-password"
 										underline="hover"
 										sx={{
 											fontSize: 11,

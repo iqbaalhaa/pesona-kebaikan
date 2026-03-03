@@ -325,3 +325,217 @@ export const sendVerificationEmail = async (email: string, token: string) => {
 		};
 	}
 };
+
+export const sendPasswordResetEmail = async (email: string, token: string) => {
+	try {
+		type AttemptLog = {
+			phase: string;
+			ok: boolean;
+			message: string;
+			options?: {
+				host?: string;
+				port?: number;
+				secure?: boolean;
+				requireTLS?: boolean;
+			};
+		};
+		type SendLog =
+			| {
+					ok: true;
+					messageId?: string;
+					options: { host?: string; port?: number; secure?: boolean };
+					envelope?: unknown;
+					fallback?: boolean;
+			  }
+			| {
+					ok: false;
+					error: string;
+					options: { host?: string; port?: number; secure?: boolean };
+			  };
+		const debug: { attempts: AttemptLog[]; send: SendLog | null } = {
+			attempts: [],
+			send: null,
+		};
+		const config = await getMailConfig();
+
+		let currentOptions = baseOptions(config);
+		let t = nodemailer.createTransport(currentOptions);
+		try {
+			await t.verify();
+			debug.attempts.push({
+				phase: "verify-587",
+				ok: true,
+				message: "ok",
+				options: {
+					host: currentOptions.host,
+					port: currentOptions.port,
+					secure: currentOptions.secure,
+					requireTLS: (currentOptions as SMTPTransport.Options).requireTLS,
+				},
+			});
+		} catch (e: unknown) {
+			const msg = e instanceof Error ? e.message : "";
+			debug.attempts.push({
+				phase: "verify-587",
+				ok: false,
+				message: msg,
+				options: {
+					host: currentOptions.host,
+					port: currentOptions.port,
+					secure: currentOptions.secure,
+					requireTLS: (currentOptions as SMTPTransport.Options).requireTLS,
+				},
+			});
+			if (/Greeting never received|timeout|ETIMEDOUT|ECONNREFUSED/i.test(msg)) {
+				currentOptions = { ...baseOptions(config), port: 465, secure: true };
+				t = nodemailer.createTransport(currentOptions);
+				await t.verify();
+				debug.attempts.push({
+					phase: "verify-465",
+					ok: true,
+					message: "ok",
+					options: {
+						host: currentOptions.host,
+						port: currentOptions.port,
+						secure: currentOptions.secure,
+						requireTLS: (currentOptions as SMTPTransport.Options).requireTLS,
+					},
+				});
+			} else {
+				debug.attempts.push({
+					phase: "verify-465",
+					ok: false,
+					message: "skip",
+				});
+				throw e as unknown;
+			}
+		}
+
+		const resetLink = `${process.env.NEXT_PUBLIC_APP_URL}/auth/new-password?token=${token}`;
+		const htmlContent = `
+      <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+        <h2>Reset Password</h2>
+        <p>Anda menerima email ini karena kami menerima permintaan reset password untuk akun Anda.</p>
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${resetLink}" style="background-color: #0ba976; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold; display: inline-block;">Reset Password</a>
+        </div>
+        <p>Atau salin link berikut: <br><a href="${resetLink}">${resetLink}</a></p>
+        <p>Link ini akan kedaluwarsa dalam 1 jam.</p>
+        <p>Jika Anda tidak meminta reset password, silakan abaikan email ini.</p>
+      </div>
+      `;
+
+		const message: Mail.Options = {
+			from: config.sender,
+			to: email,
+			subject: "Reset Password - Pesona Kebaikan",
+			envelope: {
+				from: config.sender.match(/<(.+)>/)?.[1] || config.sender,
+				to: [email],
+			},
+			html: htmlContent,
+		};
+
+		try {
+			const info: SentMessageInfo = await t.sendMail(message);
+			debug.send = {
+				ok: true,
+				messageId: info?.messageId,
+				options: {
+					host: currentOptions.host,
+					port: currentOptions.port,
+					secure: currentOptions.secure,
+				},
+				envelope: info?.envelope,
+			};
+			return { ok: true, debug };
+		} catch (sendErr: unknown) {
+			const sendMsg = sendErr instanceof Error ? sendErr.message : "";
+			debug.send = {
+				ok: false,
+				error: sendMsg,
+				options: {
+					host: currentOptions.host,
+					port: currentOptions.port,
+					secure: currentOptions.secure,
+				},
+			};
+			if (
+				/ETIMEDOUT|ECONNRESET|EHOSTUNREACH|ENOTFOUND|timeout|Greeting never received/i.test(
+					sendMsg,
+				)
+			) {
+				const altOptions: SMTPTransport.Options =
+					currentOptions.port === 465
+						? {
+								...baseOptions(config),
+								port: 587,
+								secure: false,
+								requireTLS: true,
+							}
+						: { ...baseOptions(config), port: 465, secure: true };
+				const tAlt = nodemailer.createTransport(altOptions);
+				try {
+					await tAlt.verify();
+					debug.attempts.push({
+						phase:
+							currentOptions.port === 465
+								? "fallback-verify-587"
+								: "fallback-verify-465",
+						ok: true,
+						message: "ok",
+						options: {
+							host: altOptions.host,
+							port: altOptions.port,
+							secure: altOptions.secure,
+							requireTLS: (altOptions as SMTPTransport.Options).requireTLS,
+						},
+					});
+					const info2: SentMessageInfo = await tAlt.sendMail(message);
+					debug.send = {
+						ok: true,
+						messageId: info2?.messageId,
+						options: {
+							host: altOptions.host,
+							port: altOptions.port,
+							secure: altOptions.secure,
+						},
+						envelope: info2?.envelope,
+						fallback: true,
+					};
+					return { ok: true, debug };
+				} catch (altErr: unknown) {
+					debug.attempts.push({
+						phase:
+							currentOptions.port === 465
+								? "fallback-verify-587"
+								: "fallback-verify-465",
+						ok: false,
+						message:
+							altErr instanceof Error ? altErr.message : "fallback failed",
+						options: {
+							host: altOptions.host,
+							port: altOptions.port,
+							secure: altOptions.secure,
+							requireTLS: (altOptions as SMTPTransport.Options).requireTLS,
+						},
+					});
+					return {
+						ok: false,
+						message:
+							(altErr instanceof Error ? altErr.message : undefined) ||
+							sendMsg,
+						debug,
+					};
+				}
+			}
+			return { ok: false, message: sendMsg || "Send email failed", debug };
+		}
+	} catch (e: unknown) {
+		return {
+			ok: false,
+			message: e instanceof Error ? e.message : "Send email failed",
+			debug: undefined,
+		};
+	}
+};

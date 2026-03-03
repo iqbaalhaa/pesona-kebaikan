@@ -68,9 +68,32 @@ export default function SecurityPage() {
 		event: React.FormEvent<HTMLFormElement>,
 	) => {
 		event.preventDefault();
-		setIsSubmitting(true);
 		const formData = new FormData(event.currentTarget);
+		const newPassword = (formData.get("newPassword") as string) || "";
 
+		const passwordCriteria = {
+			minLength: newPassword.length >= 8,
+			hasUppercase: /[A-Z]/.test(newPassword),
+			hasNumber: /[0-9]/.test(newPassword),
+			hasSymbol: /[!@#$%^&*(),.?":{}|<>]|[^a-zA-Z0-9]/.test(newPassword),
+		};
+
+		if (
+			!passwordCriteria.minLength ||
+			!passwordCriteria.hasUppercase ||
+			!passwordCriteria.hasNumber ||
+			!passwordCriteria.hasSymbol
+		) {
+			setSnackbar({
+				open: true,
+				message:
+					"Password harus minimal 8 karakter, mengandung huruf besar, angka, dan simbol",
+				severity: "error",
+			});
+			return;
+		}
+
+		setIsSubmitting(true);
 		try {
 			const result = await changePassword(null, formData);
 			if (result?.error) {
@@ -503,7 +526,8 @@ export default function SecurityPage() {
 								}}
 							/>
 							<Alert severity="info" sx={{ fontSize: 12 }}>
-								Password harus terdiri dari minimal 8 karakter.
+								Password harus minimal 8 karakter, mengandung huruf besar, angka,
+								dan simbol.
 							</Alert>
 						</Stack>
 					</DialogContent>

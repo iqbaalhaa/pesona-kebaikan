@@ -50,7 +50,7 @@ import {
 } from "@/actions/campaign";
 import AdminCampaignTable from "@/components/admin/AdminCampaignTable";
 
-const PAGE_SIZE = 9;
+const PAGE_SIZE = 8;
 
 type CampaignStatus =
 	| "draft"
@@ -574,7 +574,7 @@ export default function AdminCampaignPage() {
 								size="small"
 								value={q}
 								onChange={(e) => setQ(e.target.value)}
-								placeholder="Cari campaign, user, kategori, ID…"
+								placeholder="Cari campaign, user, kategori…"
 								InputProps={{
 									startAdornment: (
 										<InputAdornment position="start">

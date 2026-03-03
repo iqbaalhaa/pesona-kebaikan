@@ -773,12 +773,14 @@ export default function AdminCampaignKategoriPage() {
 																color: color,
 															}}
 														>
-															{React.cloneElement(
-																icon as React.ReactElement<any>,
-																{
-																	sx: { fontSize: 18 },
-																},
-															)}
+															{React.isValidElement(icon)
+																? React.cloneElement(
+																		icon as React.ReactElement<any>,
+																		{
+																			sx: { fontSize: 18 },
+																		},
+																	)
+																: null}
 														</Box>
 														<Box sx={{ flex: 1, minWidth: 0 }}>
 															<Typography
@@ -1135,18 +1137,20 @@ export default function AdminCampaignKategoriPage() {
 															const { icon, color } = getCategoryIcon(
 																selected.icon,
 															);
-															return React.cloneElement(
-																icon as React.ReactElement<any>,
-																{
-																	sx: {
-																		fontSize: 32,
-																		color,
-																		width: 32,
-																		height: 32,
-																		objectFit: "contain",
-																	},
-																},
-															);
+															return React.isValidElement(icon)
+																? React.cloneElement(
+																		icon as React.ReactElement<any>,
+																		{
+																			sx: {
+																				fontSize: 32,
+																				color,
+																				width: 32,
+																				height: 32,
+																				objectFit: "contain",
+																			},
+																		},
+																	)
+																: null;
 														})()}
 													</Box>
 													<Button

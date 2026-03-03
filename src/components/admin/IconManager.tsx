@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo, useRef } from "react";
+import * as React from "react";
 import {
 	Dialog,
 	DialogTitle,
@@ -35,7 +36,6 @@ import {
 	Check as CheckIcon,
 } from "@mui/icons-material";
 import { CATEGORY_ICON_MAP } from "@/lib/categoryIcons";
-import React from "react";
 import { Chip } from "@mui/material";
 
 import { SYSTEM_ICONS } from "@/lib/systemIcons";
@@ -530,9 +530,14 @@ export default function IconManager({
 													},
 												}}
 											>
-												{React.cloneElement(item.icon as React.ReactElement<any>, {
-													sx: { fontSize: 32 },
-												})}
+												{React.isValidElement(item.icon)
+													? React.cloneElement(
+															item.icon as React.ReactElement<any>,
+															{
+																sx: { fontSize: 32 },
+															},
+														)
+													: null}
 											</Box>
 										</Tooltip>
 									))}

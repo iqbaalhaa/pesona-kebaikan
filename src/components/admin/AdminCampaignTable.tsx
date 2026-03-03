@@ -134,6 +134,17 @@ function statusChip(status: CampaignStatus) {
 	}
 }
 
+function formatDate(dateString: string) {
+	if (!dateString) return "-";
+	const date = new Date(dateString);
+	if (isNaN(date.getTime())) return dateString;
+	return new Intl.DateTimeFormat("id-ID", {
+		day: "numeric",
+		month: "long",
+		year: "numeric",
+	}).format(date);
+}
+
 export default function AdminCampaignTable({
 	rows,
 	loading,
@@ -655,7 +666,7 @@ export default function AdminCampaignTable({
 										<Typography
 											sx={{ fontSize: 12, color: "rgba(15,23,42,.70)" }}
 										>
-											{row.updatedAt}
+											{formatDate(row.updatedAt)}
 										</Typography>
 									</TableCell>
 
