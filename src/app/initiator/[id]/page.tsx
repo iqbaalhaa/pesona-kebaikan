@@ -54,7 +54,9 @@ export default async function InitiatorPage({
 	);
 
 	const campaigns =
-		campaignsRes.success && campaignsRes.data ? campaignsRes.data : [];
+		campaignsRes.success && campaignsRes.data
+			? campaignsRes.data.filter((c) => c !== null)
+			: [];
 
 	const avatarInitial = (user.name?.trim()?.[0] ?? "?").toUpperCase();
 
@@ -147,63 +149,131 @@ export default async function InitiatorPage({
 				</Typography>
 
 				<Grid container spacing={3}>
-					{campaigns.map((campaign) => (
-						<Grid key={campaign.id} size={{ xs: 12, sm: 6, md: 4 }}>
-							<Link
-								href={`/donasi/${campaign.slug || campaign.id}`}
-								style={{ textDecoration: "none" }}
-							>
-								<Card
-									sx={{
-										height: "100%",
-										display: "flex",
-										flexDirection: "column",
-										borderRadius: 3,
-										overflow: "hidden",
-										border: "1px solid #e2e8f0",
-										boxShadow: "none",
-										transition: "all 0.2s",
-										"&:hover": {
-											transform: "translateY(-4px)",
-											boxShadow: "0 12px 24px -10px rgba(0,0,0,0.1)",
-										},
-									}}
+					{campaigns.map((campaign) => {
+						if (!campaign) return null;
+						return (
+							<Grid key={campaign.id} size={{ xs: 12, sm: 6, md: 4 }}>
+								<Link
+									href={`/donasi/${campaign.slug || campaign.id}`}
+									style={{ textDecoration: "none" }}
 								>
-									{/* Image */}
-									<Box
-										sx={{ position: "relative", pt: "56.25%", bgcolor: "#eee" }}
+									<Card
+										sx={{
+											height: "100%",
+											display: "flex",
+											flexDirection: "column",
+											borderRadius: 3,
+											overflow: "hidden",
+											border: "1px solid #e2e8f0",
+											boxShadow: "none",
+											transition: "all 0.2s",
+											"&:hover": {
+												transform: "translateY(-4px)",
+												boxShadow: "0 12px 24px -10px rgba(0,0,0,0.1)",
+											},
+										}}
 									>
-										<Image
-											src={campaign.thumbnail || "/defaultimg.webp"}
-											alt={campaign.title}
-											fill
-											sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-											style={{ objectFit: "cover" }}
-											unoptimized
-										/>
-									</Box>
-
-									<CardContent sx={{ flexGrow: 1, p: 2 }}>
-										<Typography
-											variant="subtitle1"
-											fontWeight="700"
-											color="text.primary"
+										{/* Image */}
+										<Box
 											sx={{
-												lineHeight: 1.4,
-												display: "-webkit-box",
-												WebkitLineClamp: 2,
-												WebkitBoxOrient: "vertical",
-												overflow: "hidden",
-												minHeight: "2.8em",
+												position: "relative",
+												pt: "56.25%",
+												bgcolor: "#eee",
 											}}
 										>
-											{campaign.title}
-										</Typography>
-									</CardContent>
-								</Card>
-							</Link>
-						</Grid>
-					))}
+											<Image
+												src={campaign.thumbnail || "/defaultimg.webp"}
+												alt={campaign.title}
+												fill
+												sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+												style={{ objectFit: "cover" }}
+												unoptimized
+											/>
+										</Box>
+
+										<CardContent sx={{ flexGrow: 1, p: 2 }}>
+											<Typography
+												variant="subtitle1"
+												fontWeight="700"
+												color="text.primary"
+												sx={{
+													lineHeight: 1.4,
+													display: "-webkit-box",
+													WebkitLineClamp: 2,
+													WebkitBoxOrient: "vertical",
+													overflow: "hidden",
+													minHeight: "2.8em",
+												}}
+											>
+												{campaign.title}
+											</Typography>
+
+											<Box
+												sx={{
+													display: "flex",
+													justifyContent: "space-between",
+													alignItems: "center",
+													mt: 2,
+												}}
+											>
+												<Typography variant="caption" color="text.secondary">
+													Terkumpul
+												</Typography>
+												<Typography
+													variant="caption"
+													fontWeight="700"
+													color="primary"
+												>
+													Rp {campaign.collected?.toLocaleString("id-ID") || 0}
+												</Typography>
+											</Box>
+
+											{/* Progress Bar */}
+											<Box
+												sx={{
+													width: "100%",
+													height: 4,
+													bgcolor: "#e2e8f0",
+													borderRadius: 2,
+													mt: 1,
+													overflow: "hidden",
+												}}
+											>
+												<Box
+													sx={{
+														width: `${Math.min(
+															((campaign.collected || 0) /
+																(campaign.target || 1)) *
+																100,
+															100,
+														)}%`,
+														height: "100%",
+														bgcolor: "primary.main",
+														borderRadius: 2,
+													}}
+												/>
+											</Box>
+
+											<Box
+												sx={{
+													display: "flex",
+													justifyContent: "space-between",
+													mt: 1,
+												}}
+											>
+												<Typography variant="caption" color="text.secondary">
+													Sisa hari
+												</Typography>
+												<Typography variant="caption" fontWeight="700">
+													{campaign.daysLeft} hari
+												</Typography>
+											</Box>
+										</CardContent>
+									</Card>
+								</Link>
+							</Grid>
+						);
+					})}
 
 					{campaigns.length === 0 && (
 						<Grid size={12}>

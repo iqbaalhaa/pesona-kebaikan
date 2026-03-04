@@ -8,7 +8,6 @@ import { authConfig } from "./auth.config";
 
 export const authOptions: NextAuthConfig = {
   ...authConfig,
-  // Casting due to adapter type differences across versions
   adapter: PrismaAdapter(prisma) as Adapter,
   providers: [
     Credentials({
@@ -46,8 +45,4 @@ export const authOptions: NextAuthConfig = {
       },
     }),
   ],
-  session: {
-    strategy: "jwt",
-    maxAge: 30 * 24 * 60 * 60,
-  },
 };

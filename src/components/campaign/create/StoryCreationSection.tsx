@@ -33,6 +33,7 @@ export default function StoryCreationSection({
 	defaultShowEditor = false,
 }: StoryCreationSectionProps) {
 	const [showEditor, setShowEditor] = React.useState(defaultShowEditor);
+	const [hasSaved, setHasSaved] = React.useState(false);
 
 	// Update showEditor when defaultShowEditor changes, but only if it becomes true?
 	// Or just trust the initial value.
@@ -57,8 +58,11 @@ export default function StoryCreationSection({
 		);
 	}
 
-	// If no story and not editing, show "Create" card
-	if (!story && !showEditor) {
+	// If not editing and not yet saved, show "Create" card
+	// Also show if story exists but we want to allow editing (logic above handles preview)
+	// Actually, if story exists, we show preview AND button to edit.
+	// But the logic below:
+	if (!showEditor && !hasSaved && !story) {
 		return (
 			<Paper
 				elevation={0}
@@ -85,7 +89,7 @@ export default function StoryCreationSection({
 					sx={{ borderRadius: 2, fontWeight: 700, py: 1.15 }}
 					data-testid="btn-create-story"
 				>
-					Buat cerita galang dana
+					{story ? "Edit cerita galang dana" : "Buat cerita galang dana"}
 				</Button>
 			</Paper>
 		);
@@ -97,46 +101,47 @@ export default function StoryCreationSection({
 			<>
 				{/* Preview if story exists */}
 				{story && (
-					<Box
-						sx={{
-							mt: 2,
-							p: 2,
-							border: "1px solid",
-							borderColor: "divider",
-							borderRadius: 2,
-							bgcolor: "background.paper",
-						}}
-						data-testid="story-preview"
-					>
-						<Typography
+					<Box sx={{ mb: 3 }}>
+						<Paper
+							variant="outlined"
 							sx={{
-								mb: 1,
-								fontSize: 12,
-								color: "text.secondary",
-								fontWeight: 600,
+								p: 2,
+								borderRadius: 3,
+								bgcolor: "grey.50",
+								maxHeight: 400,
+								overflow: "auto",
 							}}
 						>
-							Preview Cerita:
-						</Typography>
-						<Box
-							sx={{
-								"& p": { fontSize: 14, mb: 1, lineHeight: 1.6 },
-								"& img": {
-									maxWidth: "100%",
-									height: "auto",
-									borderRadius: 8,
-								},
-							}}
-							dangerouslySetInnerHTML={{ __html: story }}
-						/>
-						<Button
-							size="small"
-							onClick={() => setShowEditor(true)}
-							sx={{ mt: 1, fontWeight: 700 }}
-							data-testid="btn-edit-story"
-						>
-							Edit Cerita
-						</Button>
+							<Typography
+								sx={{
+									mb: 1,
+									fontSize: 12,
+									color: "text.secondary",
+									fontWeight: 600,
+								}}
+							>
+								Preview Cerita:
+							</Typography>
+							<Box
+								sx={{
+									"& p": { fontSize: 14, mb: 1, lineHeight: 1.6 },
+									"& img": {
+										maxWidth: "100%",
+										height: "auto",
+										borderRadius: 8,
+									},
+								}}
+								dangerouslySetInnerHTML={{ __html: story }}
+							/>
+							<Button
+								size="small"
+								onClick={() => setShowEditor(true)}
+								sx={{ mt: 1, fontWeight: 700 }}
+								data-testid="btn-edit-story"
+							>
+								Edit Cerita
+							</Button>
+						</Paper>
 					</Box>
 				)}
 
@@ -169,7 +174,11 @@ export default function StoryCreationSection({
 								width: "100%",
 							}}
 						>
-							<IconButton edge="start" onClick={() => setShowEditor(false)}>
+							<IconButton
+								edge="start"
+								autoFocus
+								onClick={() => setShowEditor(false)}
+							>
 								<CloseRoundedIcon />
 							</IconButton>
 							<Typography sx={{ fontWeight: 700, fontSize: 16 }}>
@@ -184,13 +193,19 @@ export default function StoryCreationSection({
 					<Box sx={{ p: 3, maxWidth: 600, mx: "auto", width: "100%" }}>
 						<StoryBuilder
 							category={category}
-							initialData={{
-								html: story,
-								structure: storyStructure,
-							}}
+							// Always pass initialData if we have structure
+							initialData={
+								storyStructure
+									? {
+											html: story,
+											structure: storyStructure,
+										}
+									: undefined
+							}
 							onComplete={(html, structure) => {
 								onSave(html, structure);
 								setShowEditor(false);
+								setHasSaved(true);
 							}}
 							onBack={() => setShowEditor(false)}
 						/>
@@ -208,7 +223,10 @@ export default function StoryCreationSection({
 					<Box sx={{ mt: 1.5 }} data-testid="story-editor-inline">
 						<RichTextEditor
 							value={story}
-							onChange={(val) => onSave(val)}
+							onChange={(val) => {
+								onSave(val);
+								setHasSaved(true);
+							}}
 							placeholder="Tulis latar belakang, kondisi, kebutuhan biaya, rencana penggunaan dana, dan ajakan..."
 							minHeight={240}
 						/>
@@ -224,7 +242,7 @@ export default function StoryCreationSection({
 					</Box>
 				)}
 
-				{story && !showEditor && (
+				{story && !showEditor && hasSaved && (
 					<Box
 						sx={{
 							mt: 2,

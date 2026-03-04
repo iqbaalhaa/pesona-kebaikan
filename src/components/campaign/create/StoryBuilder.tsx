@@ -267,6 +267,20 @@ export default function StoryBuilder({
 	const [data, setData] = React.useState<StoryData>(
 		initialData?.structure || {},
 	);
+
+	// Only load initialData if explicitly provided, but we want to force empty for new creation
+	// The parent component controls this via key or by not passing initialData
+	React.useEffect(() => {
+		if (initialData?.structure) {
+			setData(initialData.structure);
+		} else if (initialData === undefined) {
+			// If explicitly undefined, clear data (only if we want to support reset)
+			// But careful, if we just mounted, initialData might be undefined for a split second?
+			// No, props are passed from parent immediately.
+			setData({});
+			setActiveStep(0);
+		}
+	}, [initialData]);
 	const [uploading, setUploading] = React.useState<Record<string, boolean>>({});
 	const [exampleOpen, setExampleOpen] = React.useState(false);
 	const [currentExample, setCurrentExample] = React.useState("");
@@ -286,6 +300,12 @@ export default function StoryBuilder({
 	) => {
 		const file = e.target.files?.[0];
 		if (!file) return;
+
+		if (file.size > 3 * 1024 * 1024) {
+			alert("Ukuran gambar maksimal 3MB");
+			e.target.value = "";
+			return;
+		}
 
 		setUploading((prev) => ({ ...prev, [key]: true }));
 
@@ -308,8 +328,16 @@ export default function StoryBuilder({
 	};
 
 	const handleNext = () => {
-		// Basic validation: Check if required fields are filled?
-		// For now, let's make it optional or lenient
+		// Validation: Check if required fields are filled
+		const missingFields = currentStep.fields.filter(
+			(field) => !data[field.key] || !data[field.key].trim(),
+		);
+
+		if (missingFields.length > 0) {
+			alert("Mohon lengkapi semua kolom isian sebelum melanjutkan.");
+			return;
+		}
+
 		if (isLastStep) {
 			const html = generateHtml(data, steps);
 			onComplete(html, data);
@@ -410,6 +438,13 @@ export default function StoryBuilder({
 								placeholder={field.placeholder}
 								value={data[field.key] || ""}
 								onChange={(e) => handleChange(field.key, e.target.value)}
+								autoComplete="off"
+								inputProps={{
+									autoComplete: "off",
+									form: {
+										autoComplete: "off",
+									},
+								}}
 								sx={{
 									"& .MuiInputBase-root": {
 										fontSize: 14,
@@ -427,7 +462,7 @@ export default function StoryBuilder({
 							</Typography>
 							<Typography sx={{ fontSize: 12, color: "text.secondary", mb: 1 }}>
 								Ceritamu bisa lebih meyakinkan donatur jika dilengkapi foto
-								pendukung di bagian ini.
+								pendukung di bagian ini. (Maksimal 3MB)
 							</Typography>
 
 							{data[currentStep.photoKey] ? (

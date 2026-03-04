@@ -111,9 +111,17 @@ export default function VerificationDialog({
 
 	const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
 		if (e.target.files && e.target.files[0]) {
+			const file = e.target.files[0];
+			const isImage = typeof file.type === "string" && file.type.startsWith("image/");
+			if (isImage && file.size > 3 * 1024 * 1024) {
+				showSnackbar("Ukuran gambar maksimal 3MB", "error");
+				e.target.value = "";
+				return;
+			}
+
 			setUploading(true);
 			const formData = new FormData();
-			formData.append("file", e.target.files[0]);
+			formData.append("file", file);
 
 			try {
 				const res = await uploadFile(formData);
@@ -773,7 +781,7 @@ export default function VerificationDialog({
 																}`}
 													</Typography>
 													<Typography sx={{ fontSize: 12, color: "#94a3b8" }}>
-														Format: JPG, PDF (Max 5MB)
+														Format: JPG (Max 3MB), PDF
 													</Typography>
 												</>
 											)}

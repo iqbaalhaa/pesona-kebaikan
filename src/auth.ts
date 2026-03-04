@@ -85,7 +85,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 					id: user.id,
 					email: user.email,
 					name: user.name,
-					image: user.image,
+					// Avoid sending image in token to prevent cookie bloat if base64
+					image: user.image?.startsWith("http") ? user.image : null,
 					role: user.role,
 					phone: user.phone,
 					emailVerified: user.emailVerified,
@@ -99,9 +100,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 			if (user) {
 				token.role = user.role as Role;
 				token.id = user.id as string;
-				token.phone = user.phone;
-				token.emailVerified = user.emailVerified;
-				token.phoneVerified = user.phoneVerified;
+				// Explicitly delete picture from token if it comes from default user object
+				// to ensure we don't carry large base64 strings
+				if (user.image && !user.image.startsWith("http")) {
+					delete token.picture;
+				}
 			}
 
 			if (trigger === "update") {
@@ -109,9 +112,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 					where: { id: token.id as string },
 				});
 				if (freshUser) {
-					token.phone = freshUser.phone;
-					token.emailVerified = freshUser.emailVerified;
-					token.phoneVerified = freshUser.phoneVerified;
 					token.role = freshUser.role;
 				}
 			}
@@ -119,19 +119,25 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 			return token;
 		},
 		async session({ session, token }) {
-			if (session.user) {
-				if (token.sub) {
-					session.user.id = token.sub;
-				} else if (token.id) {
-					session.user.id = token.id as string;
-				}
-				session.user.phone = token.phone as string | null | undefined;
-				session.user.emailVerified = (token.emailVerified as Date | null) || null;
-				session.user.phoneVerified = (token.phoneVerified as Date | null) || null;
-			}
-
-			if (token.role && session.user) {
-				session.user.role = token.role as Role;
+			if (!session.user?.email) return session;
+			const user = await prisma.user.findUnique({
+				where: { email: session.user.email },
+				select: {
+					id: true,
+					role: true,
+					phone: true,
+					emailVerified: true,
+					phoneVerified: true,
+				},
+			});
+			if (user && session.user) {
+				session.user.id = user.id;
+				session.user.role = user.role as Role;
+				session.user.phone = user.phone;
+				session.user.emailVerified = user.emailVerified;
+				session.user.phoneVerified = user.phoneVerified;
+			} else if (token?.sub && session.user) {
+				session.user.id = token.sub;
 			}
 			return session;
 		},

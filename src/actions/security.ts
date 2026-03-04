@@ -18,8 +18,23 @@ export async function changePassword(prevState: any, formData: FormData) {
 		return { error: "Konfirmasi password tidak cocok" };
 	}
 
-	if (newPassword.length < 8) {
-		return { error: "Password baru minimal 8 karakter" };
+	const passwordCriteria = {
+		minLength: newPassword.length >= 8,
+		hasUppercase: /[A-Z]/.test(newPassword),
+		hasNumber: /[0-9]/.test(newPassword),
+		hasSymbol: /[!@#$%^&*(),.?":{}|<>]|[^a-zA-Z0-9]/.test(newPassword),
+	};
+
+	if (
+		!passwordCriteria.minLength ||
+		!passwordCriteria.hasUppercase ||
+		!passwordCriteria.hasNumber ||
+		!passwordCriteria.hasSymbol
+	) {
+		return {
+			error:
+				"Password harus minimal 8 karakter, mengandung huruf besar, angka, dan simbol",
+		};
 	}
 
 	const session = await auth();

@@ -52,7 +52,13 @@ export default function CampaignBottomNav({
 					color="primary"
 					fullWidth
 					disabled={data.status === "ended" || data.status === "rejected"}
-					onClick={() => router.push(`/donasi/${data.slug || data.id}/payment`)}
+					onClick={() => {
+						if (data.fundraiserSlug) {
+							router.push(`/donasi/fundraiser/${data.fundraiserSlug}/payment`);
+						} else {
+							router.push(`/donasi/${data.slug || data.id}/payment`);
+						}
+					}}
 					sx={{
 						borderRadius: "12px",
 						fontWeight: 700,

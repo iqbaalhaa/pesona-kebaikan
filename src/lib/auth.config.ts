@@ -5,6 +5,9 @@ export const authConfig = {
 	pages: {
 		signIn: "/auth/login",
 	},
+	session: {
+		strategy: "jwt",
+	},
 	callbacks: {
 		authorized() {
 			// Middleware logic is handled in middleware.ts

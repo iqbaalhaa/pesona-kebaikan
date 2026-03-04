@@ -50,6 +50,7 @@ export default async function FundraiserDonationPaymentPage({ params }: Props) {
       campaignTitle={res.data.title}
       campaignSlug={res.data.slug || slug}
       fundraiserId={(res.data as any).fundraiserId}
+      fundraiserSlug={(res.data as any).fundraiserSlug}
     />
   );
 }

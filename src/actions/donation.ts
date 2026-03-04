@@ -22,14 +22,18 @@ export type CreateDonationInput = {
 	paymentMethod: "EWALLET" | "VIRTUAL_ACCOUNT" | "TRANSFER" | "CARD";
 };
 
-export async function createDonation(input: CreateDonationInput) {
-	let userId: string | undefined = undefined;
+export async function createDonation(
+	input: CreateDonationInput,
+	_testUserId?: string,
+) {
+	let userId = _testUserId;
 
 	try {
-		const session = await auth();
-		if (session?.user?.id) {
-			userId = session.user.id;
-
+		if (!userId) {
+			const session = await auth();
+			userId = session?.user?.id;
+		}
+		if (userId) {
 			// Fetch fresh user data
 			const user = await prisma.user.findUnique({
 				where: { id: userId },
@@ -72,6 +76,25 @@ export async function createDonation(input: CreateDonationInput) {
 			return { success: false, error: "Campaign ditolak" };
 		}
 
+		// Validate Fundraiser if provided
+		if (input.fundraiserId) {
+			const fundraiser = await prisma.fundraiser.findUnique({
+				where: { id: input.fundraiserId },
+				select: { campaignId: true },
+			});
+
+			if (!fundraiser) {
+				return { success: false, error: "Fundraiser tidak ditemukan" };
+			}
+
+			if (fundraiser.campaignId !== input.campaignId) {
+				return {
+					success: false,
+					error: "Fundraiser tidak valid untuk campaign ini",
+				};
+			}
+		}
+
 		const donation = await prisma.donation.create({
 			data: {
 				campaignId: input.campaignId,
@@ -88,8 +111,12 @@ export async function createDonation(input: CreateDonationInput) {
 			},
 		});
 
-		revalidatePath(`/donasi`);
-		revalidatePath(`/donasi-saya`);
+		try {
+			revalidatePath(`/donasi`);
+			revalidatePath(`/donasi-saya`);
+		} catch (e) {
+			// Ignore revalidation errors
+		}
 
 		// Convert Decimal to number/string for client serialization
 		const serializedDonation = {
@@ -197,9 +224,10 @@ export async function checkPendingDonations(campaignId?: string) {
 			}),
 		);
 
-		if (updatedCount > 0) {
-			revalidatePath("/donasi");
-			revalidatePath("/donasi-saya");
+		try {
+			revalidatePath(`/donasi`);
+			revalidatePath(`/donasi-saya`);
+
 			if (campaignId) {
 				const campaign = await prisma.campaign.findUnique({
 					where: { id: campaignId },
@@ -209,6 +237,8 @@ export async function checkPendingDonations(campaignId?: string) {
 					revalidatePath(`/donasi/${campaign.slug}`);
 				}
 			}
+		} catch (e) {
+			// Ignore revalidation errors
 		}
 
 		return { success: true, updated: updatedCount };

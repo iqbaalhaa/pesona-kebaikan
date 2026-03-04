@@ -77,6 +77,15 @@ export async function createCampaign(formData: FormData) {
 		const duration = formData.get("duration") as string;
 		let story = formData.get("story") as string;
 
+		if (status !== "DRAFT") {
+			if (!story || story.trim().length < 50) {
+				return {
+					success: false,
+					error: "Cerita campaign harus diisi minimal 50 karakter",
+				};
+			}
+		}
+
 		if (status === "DRAFT" && !story) {
 			story = "";
 		}
@@ -97,42 +106,67 @@ export async function createCampaign(formData: FormData) {
 		const suratRsFile = formData.get("surat_rs") as File;
 		let medicalDocs = (metadata as any)?.medicalDocs || {};
 
+		// Parallel upload promises
+		const uploadPromises: Promise<{
+			type: "resume" | "exam" | "cover";
+			res: any;
+		}>[] = [];
+
 		if (resumeMedisFile && (resumeMedisFile as any).size > 0) {
-			const uploadFormData = new FormData();
-			uploadFormData.append("file", resumeMedisFile);
-			const uploadRes = await uploadFile(uploadFormData);
-			if (uploadRes.success && uploadRes.url) {
-				medicalDocs = { ...medicalDocs, resume_medis: uploadRes.url };
-			}
+			const fd = new FormData();
+			fd.append("file", resumeMedisFile);
+			uploadPromises.push(
+				uploadFile(fd).then((res) => ({ type: "resume", res })),
+			);
 		}
 
 		if (suratRsFile && (suratRsFile as any).size > 0) {
-			const uploadFormData = new FormData();
-			uploadFormData.append("file", suratRsFile);
-			const uploadRes = await uploadFile(uploadFormData);
-			if (uploadRes.success && uploadRes.url) {
-				medicalDocs = { ...medicalDocs, surat_rs: uploadRes.url };
+			const fd = new FormData();
+			fd.append("file", suratRsFile);
+			uploadPromises.push(
+				uploadFile(fd).then((res) => ({ type: "exam", res })),
+			);
+		}
+
+		// File upload
+		const coverFile = formData.get("cover") as File;
+		if (coverFile && coverFile.size > 0) {
+			const fd = new FormData();
+			fd.append("file", coverFile);
+			uploadPromises.push(
+				uploadFile(fd).then((res) => ({ type: "cover", res })),
+			);
+		}
+
+		const results = await Promise.all(uploadPromises);
+
+		let coverUrl = "";
+
+		for (const result of results) {
+			if (result.res.success && result.res.url) {
+				if (result.type === "resume")
+					medicalDocs = { ...medicalDocs, resume_medis: result.res.url };
+				if (result.type === "exam")
+					medicalDocs = { ...medicalDocs, surat_rs: result.res.url };
+				if (result.type === "cover") coverUrl = result.res.url;
+			} else {
+				if (result.type === "cover") {
+					return {
+						success: false,
+						error: result.res.error || "Gagal mengupload cover image",
+					};
+				}
+				// For medical docs, we might want to log error but proceed?
+				// Or fail? The original code would have failed if await threw or returned error (though uploadFile catches).
+				// But uploadFile returns { success: false } on error.
+				// The original code checks `if (uploadRes.success && uploadRes.url)` and assigns.
+				// It didn't return error for medical docs failure, just skipped assignment.
+				// So we maintain that behavior for docs.
 			}
 		}
 
 		if (Object.keys(medicalDocs || {}).length > 0) {
 			metadata = { ...(metadata || {}), medicalDocs };
-		}
-
-		// File upload
-		const coverFile = formData.get("cover") as File;
-		let coverUrl = "";
-
-		if (coverFile && coverFile.size > 0) {
-			const uploadFormData = new FormData();
-			uploadFormData.append("file", coverFile);
-			const uploadRes = await uploadFile(uploadFormData);
-
-			if (uploadRes.success && uploadRes.url) {
-				coverUrl = uploadRes.url;
-			} else {
-				return { success: false, error: "Failed to upload cover image" };
-			}
 		}
 
 		// Category
@@ -271,6 +305,7 @@ export async function getCampaigns(
 		where.OR = [
 			{ title: { contains: search, mode: "insensitive" } },
 			{ createdBy: { name: { contains: search, mode: "insensitive" } } },
+			{ category: { name: { contains: search, mode: "insensitive" } } },
 		];
 	}
 
@@ -321,6 +356,54 @@ export async function getCampaigns(
 	}
 
 	try {
+		// Fetch fundraisers if this is a public list (no userId filter) and no specific category filter
+		let fundraisers: any[] = [];
+		let totalFundraisers = 0;
+
+		// Only fetch fundraisers if we are in public view (not my campaigns)
+		if (!userId) {
+			const frWhere: any = {};
+			if (search) {
+				frWhere.title = { contains: search, mode: "insensitive" };
+			}
+			if (provinceId) {
+				frWhere.createdBy = { provinceId };
+			}
+			// Fundraisers don't have categories directly, they inherit from campaign.
+			// Complex filtering might be needed if category is selected.
+			
+			// For simplicity, we fetch fundraisers and campaigns separately and merge them.
+			// But pagination is tricky. 
+			// Strategy: Fetch campaigns normally. Fetch fundraisers separately. 
+			// Merge and slice? Or just append?
+			
+			// If we want them mixed in, we need to fetch enough of both and sort.
+			// Let's try fetching fundraisers and merging them into the results.
+			
+			const frLimit = Math.ceil(limit / 2); // Fetch some fundraisers
+			
+			[fundraisers, totalFundraisers] = await Promise.all([
+				prisma.fundraiser.findMany({
+					where: frWhere,
+					take: limit, // Fetch up to limit to allow mixing
+					orderBy: { createdAt: "desc" },
+					include: {
+						campaign: {
+							include: {
+								category: true,
+								createdBy: true,
+								media: true,
+								donations: true
+							}
+						},
+						createdBy: true,
+						donations: true
+					}
+				}),
+				prisma.fundraiser.count({ where: frWhere })
+			]);
+		}
+
 		const [campaigns, total] = await Promise.all([
 			prisma.campaign.findMany({
 				where,
@@ -359,9 +442,8 @@ export async function getCampaigns(
 			});
 		}
 
-		// Map to simplified structure if needed, or return as is.
-		// UI expects: id, title, category, type, ownerName, target, collected, donors, status, updatedAt
-		const rows = campaigns.map((c) => {
+		// Map campaigns
+		const campaignRows = campaigns.map((c) => {
 			const validDonations = c.donations.filter((d) =>
 				["PAID", "paid", "SETTLED", "COMPLETED"].includes(d.status),
 			);
@@ -369,9 +451,6 @@ export async function getCampaigns(
 				(acc, d) => acc + Number(d.amount),
 				0,
 			);
-			const donors = validDonations.length;
-			const thumbnail =
-				c.media.find((m) => m.isThumbnail)?.url || c.media[0]?.url || "";
 			let daysLeft = 0;
 			if (c.end) {
 				if (c.status === "PENDING" && c.start) {
@@ -387,39 +466,123 @@ export async function getCampaigns(
 				}
 			}
 
+			const thumbnail =
+				c.media.find((m) => m.isThumbnail)?.url || c.media[0]?.url || "";
+
+			const slugKey =
+				c.category.slug ||
+				Object.entries(CATEGORY_TITLE).find(
+					([, name]) => name === c.category.name,
+				)?.[0];
+
 			return {
 				id: c.id,
-				slug: c.slug,
+				slug: c.slug || c.id,
 				title: c.title,
 				category: c.category.name,
 				type:
-					c.category.name === "Bantuan Medis & Kesehatan" ? "sakit" : "lainnya", // Simple heuristic
+					c.category.name === "Bantuan Medis & Kesehatan" ? "sakit" : "lainnya",
 				ownerName: c.createdBy.name || "Unknown",
 				target: Number(c.target),
 				collected,
-				donors,
+				donors: validDonations.length,
+				status: c.status.toLowerCase(),
+				updatedAt: new Date(c.updatedAt).toISOString(),
+				createdAt: new Date(c.createdAt).toISOString(),
+				categorySlug: slugKey || "lainnya",
 				daysLeft: daysLeft > 0 ? daysLeft : 0,
-				status: c.status === "COMPLETED" ? "ended" : c.status.toLowerCase(),
-				updatedAt: c.updatedAt.toLocaleDateString("id-ID", {
-					day: "numeric",
-					month: "short",
-					year: "numeric",
-				}),
-				thumbnail,
-				isEmergency: c.isEmergency,
+				isVerified: !!c.verifiedAt,
 				verifiedAt: c.verifiedAt ? new Date(c.verifiedAt).toISOString() : null,
+				verifiedAs: (c.createdBy as any).verifiedAs || null,
+				isEmergency: c.isEmergency,
+				thumbnail,
 				metadata: c.metadata,
 				description: c.story,
 			};
 		});
 
+		// Map fundraisers to campaign-like structure
+		const fundraiserRows = fundraisers.map((fr) => {
+			const c = fr.campaign;
+			if (!c) return null; // Should not happen due to DB constraints but safe check
+
+			// Calculate specific fundraiser collected amount
+			const validDonations = fr.donations.filter((d: any) =>
+				["PAID", "paid", "SETTLED", "COMPLETED"].includes(d.status),
+			);
+			const collected = validDonations.reduce(
+				(acc: number, d: any) => acc + Number(d.amount),
+				0,
+			);
+
+			// Days left (same as campaign)
+			let daysLeft = 0;
+			if (c.end) {
+				daysLeft = Math.ceil(
+					(new Date(c.end).getTime() - new Date().getTime()) /
+						(1000 * 60 * 60 * 24),
+				);
+			}
+
+			const thumbnail =
+				c.media.find((m: any) => m.isThumbnail)?.url || c.media[0]?.url || "";
+
+			const slugKey =
+				c.category.slug ||
+				Object.entries(CATEGORY_TITLE).find(
+					([, name]) => name === c.category.name,
+				)?.[0];
+
+			return {
+				id: fr.id,
+				slug: `fundraiser/${fr.slug}`, // Special slug format for frontend routing if needed, or handle in component
+				title: fr.title, // Use fundraiser title
+				category: c.category.name,
+				type:
+					c.category.name === "Bantuan Medis & Kesehatan" ? "sakit" : "lainnya",
+				ownerName: fr.createdBy.name || "Fundraiser", // Fundraiser creator
+				target: Number(fr.target), // Fundraiser target
+				collected,
+				donors: validDonations.length,
+				status: c.status.toLowerCase(), // Inherit status from campaign
+				updatedAt: new Date(fr.updatedAt).toISOString(),
+				createdAt: new Date(fr.createdAt).toISOString(),
+				categorySlug: slugKey || "lainnya",
+				daysLeft: daysLeft > 0 ? daysLeft : 0,
+				isVerified: false, // Fundraisers themselves aren't verified in the same way? Or maybe check user verification
+				verifiedAt: null,
+				verifiedAs: null,
+				isEmergency: false,
+				thumbnail,
+				metadata: null,
+				description: `Fundraiser untuk: ${c.title}`,
+				isFundraiser: true, // Flag to identify
+				fundraiserSlug: fr.slug
+			};
+		}).filter(Boolean);
+
+		// Merge and sort
+		// Note: This simple merge breaks strict pagination but satisfies the requirement to show them.
+		// A proper solution would require a union query or advanced search engine (Elasticsearch/Algolia).
+		// For now, we mix them.
+		
+		let mixedRows = [...campaignRows, ...fundraiserRows];
+		
+		// Sort again
+		if (sortBy === "newest") {
+			mixedRows.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+		}
+		
+		// Re-slice to limit if needed, or just return all (might be slightly more than limit)
+		// Returning all fetched helps populate the grid.
+
 		return {
 			success: true,
-			data: rows,
-			total,
+			data: mixedRows,
+			total: total + totalFundraisers,
 			page,
 			limit,
-			totalPages: Math.ceil(total / limit),
+			totalPages: Math.ceil((total + totalFundraisers) / limit),
 		};
 	} catch (error) {
 		console.error("Get campaigns error:", error);
@@ -1189,21 +1352,47 @@ export async function updateCampaign(id: string, formData: FormData) {
 		const suratRsFile = formData.get("surat_rs") as File;
 		let medicalDocs = (metadata as any)?.medicalDocs || {};
 
+		// Parallel upload promises
+		const uploadPromises: Promise<{
+			type: "resume" | "exam" | "cover";
+			res: any;
+		}>[] = [];
+
 		if (resumeMedisFile && (resumeMedisFile as any).size > 0) {
-			const uploadFormData = new FormData();
-			uploadFormData.append("file", resumeMedisFile);
-			const uploadRes = await uploadFile(uploadFormData);
-			if (uploadRes.success && uploadRes.url) {
-				medicalDocs = { ...medicalDocs, resume_medis: uploadRes.url };
-			}
+			const fd = new FormData();
+			fd.append("file", resumeMedisFile);
+			uploadPromises.push(
+				uploadFile(fd).then((res) => ({ type: "resume", res })),
+			);
 		}
 
 		if (suratRsFile && (suratRsFile as any).size > 0) {
-			const uploadFormData = new FormData();
-			uploadFormData.append("file", suratRsFile);
-			const uploadRes = await uploadFile(uploadFormData);
-			if (uploadRes.success && uploadRes.url) {
-				medicalDocs = { ...medicalDocs, surat_rs: uploadRes.url };
+			const fd = new FormData();
+			fd.append("file", suratRsFile);
+			uploadPromises.push(
+				uploadFile(fd).then((res) => ({ type: "exam", res })),
+			);
+		}
+
+		const coverFile = formData.get("cover") as File;
+		if (coverFile && coverFile.size > 0) {
+			const fd = new FormData();
+			fd.append("file", coverFile);
+			uploadPromises.push(
+				uploadFile(fd).then((res) => ({ type: "cover", res })),
+			);
+		}
+
+		const results = await Promise.all(uploadPromises);
+		let coverUploadRes: any = null;
+
+		for (const result of results) {
+			if (result.res.success && result.res.url) {
+				if (result.type === "resume")
+					medicalDocs = { ...medicalDocs, resume_medis: result.res.url };
+				if (result.type === "exam")
+					medicalDocs = { ...medicalDocs, surat_rs: result.res.url };
+				if (result.type === "cover") coverUploadRes = result.res;
 			}
 		}
 
@@ -1239,30 +1428,23 @@ export async function updateCampaign(id: string, formData: FormData) {
 			return { success: false, error: "Invalid category" };
 		}
 
-		// File upload
-		const coverFile = formData.get("cover") as File;
-		if (coverFile && coverFile.size > 0) {
-			const uploadFormData = new FormData();
-			uploadFormData.append("file", coverFile);
-			const uploadRes = await uploadFile(uploadFormData);
+		// File upload (Cover)
+		if (coverUploadRes && coverUploadRes.success && coverUploadRes.url) {
+			// Unset existing thumbnails
+			await prisma.campaignMedia.updateMany({
+				where: { campaignId: id },
+				data: { isThumbnail: false },
+			});
 
-			if (uploadRes.success && uploadRes.url) {
-				// Unset existing thumbnails
-				await prisma.campaignMedia.updateMany({
-					where: { campaignId: id },
-					data: { isThumbnail: false },
-				});
-
-				// Create new thumbnail
-				await prisma.campaignMedia.create({
-					data: {
-						campaignId: id,
-						type: "IMAGE",
-						url: uploadRes.url,
-						isThumbnail: true,
-					},
-				});
-			}
+			// Create new thumbnail
+			await prisma.campaignMedia.create({
+				data: {
+					campaignId: id,
+					type: "IMAGE",
+					url: coverUploadRes.url,
+					isThumbnail: true,
+				},
+			});
 		}
 
 		let mergedMetadata = metadata;

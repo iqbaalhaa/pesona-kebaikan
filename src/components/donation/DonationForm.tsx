@@ -31,6 +31,7 @@ type Props = {
 	campaignTitle: string;
 	campaignSlug: string;
 	fundraiserId?: string;
+	fundraiserSlug?: string;
 };
 
 function formatIDR(numStr: string) {
@@ -44,6 +45,7 @@ export default function DonationForm({
 	campaignTitle,
 	campaignSlug,
 	fundraiserId,
+	fundraiserSlug,
 }: Props) {
 	const router = useRouter();
 	const theme = useTheme();
@@ -127,7 +129,13 @@ export default function DonationForm({
 								donation_amount: amountParam,
 								donation_method: methodLabel,
 							});
-							router.push(`/donasi/${campaignSlug}?${qs.toString()}`);
+							if (fundraiserSlug) {
+								router.push(
+									`/donasi/fundraiser/${fundraiserSlug}?${qs.toString()}`,
+								);
+							} else {
+								router.push(`/donasi/${campaignSlug}?${qs.toString()}`);
+							}
 						},
 						onPending: () => {
 							const qs = new URLSearchParams({
@@ -136,7 +144,13 @@ export default function DonationForm({
 								donation_amount: amountParam,
 								donation_method: methodLabel,
 							});
-							router.push(`/donasi/${campaignSlug}?${qs.toString()}`);
+							if (fundraiserSlug) {
+								router.push(
+									`/donasi/fundraiser/${fundraiserSlug}?${qs.toString()}`,
+								);
+							} else {
+								router.push(`/donasi/${campaignSlug}?${qs.toString()}`);
+							}
 						},
 						onError: () => {
 							setError("Pembayaran gagal");

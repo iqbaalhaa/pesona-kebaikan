@@ -221,10 +221,7 @@ function BuatGalangDanaPageContent() {
 						setSlugTouched(true);
 					}
 					setTarget(c.target.toString());
-					setStory(c.description);
-					if (isContentEdit) {
-						setShowStoryEditor(true);
-					}
+					setStory(c.description || "");
 					setPhone(c.phone || "");
 
 					setWho(m.who || "other");
@@ -307,10 +304,7 @@ function BuatGalangDanaPageContent() {
 						setSlugOtherTouched(true);
 					}
 					setTargetOther(c.target.toString());
-					setStoryOther(c.description);
-					if (isContentEdit) {
-						setShowStoryEditorOther(true);
-					}
+					setStoryOther(c.description || "");
 					setPhoneOther(c.phone || "");
 
 					setPurposeKey(m.purposeKey || "program");
@@ -849,7 +843,138 @@ function BuatGalangDanaPageContent() {
 
 		if (stepKey === "ajakan") {
 			setSubmitting(true);
+			try {
+				const formData = new FormData();
+
+				if (isSakit) {
+					formData.append("title", title);
+					formData.append("slug", slug);
+					formData.append("category", "medis");
+					formData.append("type", "sakit");
+					formData.append("target", target);
+					formData.append("duration", duration);
+					if (duration === "custom") {
+						formData.append("customStart", customStart);
+						formData.append("customEnd", customEnd);
+					}
+					formData.append("phone", phone);
+
+					if (medicalResumeFile) {
+						formData.append("resume_medis", medicalResumeFile);
+					}
+					if (medicalExamFile) {
+						formData.append("surat_rs", medicalExamFile);
+					}
+
+					if (coverFile) formData.append("cover", coverFile);
+
+					formData.append("story", story);
+				} else {
+					formData.append("title", titleOther);
+					formData.append("slug", slugOther);
+					formData.append("category", category); // "pendidikan", "bencana", etc.
+					formData.append("type", "lainnya");
+					formData.append("target", targetOther);
+					formData.append("duration", durationOther);
+					if (durationOther === "custom") {
+						formData.append("customStart", customStartOther);
+						formData.append("customEnd", customEndOther);
+					}
+					formData.append("phone", phoneOther);
+
+					if (coverFileOther) formData.append("cover", coverFileOther);
+
+					formData.append("story", storyOther);
+				}
+
+				const metadata = isSakit
+					? {
+							who,
+							whoOther,
+							bank,
+							patientName,
+							patientAge,
+							patientGender,
+							patientCity,
+							treatment,
+							hospital,
+							inpatient,
+							bpjs,
+							prevCost,
+							usage,
+							cta,
+							terms: { t1, t2, t3, t4 },
+							medicalDocs: {
+								resume_medis: medicalResumeUrl,
+								surat_rs: medicalExamUrl,
+							},
+							storyStructure,
+						}
+					: {
+							purposeKey,
+							ktpName,
+							receiverName,
+							goal,
+							location,
+							usageOther,
+							ctaOther,
+							job,
+							workplace,
+							soc,
+							socHandle,
+							beneficiaries,
+							agree: { agreeA, agreeB },
+						};
+				formData.append("metadata", JSON.stringify(metadata));
+
+				let res;
+				if (isEdit) {
+					formData.append("status", "PENDING");
+					res = await updateCampaign(draftId!, formData);
+				} else {
+					res = await createCampaign(formData);
+				}
+
+				if (res.success) {
+					setSnack({
+						open: true,
+						msg: isEdit
+							? "Campaign berhasil diperbarui!"
+							: "Campaign berhasil dibuat!",
+						type: "success",
+					});
+					// Redirect
+					setTimeout(() => {
+						router.push("/galang-dana");
+					}, 1500);
+				} else {
+					setSnack({
+						open: true,
+						msg: res.error || "Gagal membuat campaign",
+						type: "error",
+					});
+				}
+			} catch (error: any) {
+				console.error("Failed to create/update campaign:", error);
+				setSnack({
+					open: true,
+					msg: error.message || "Terjadi kesalahan saat menyimpan campaign",
+					type: "error",
+				});
+			} finally {
+				setSubmitting(false);
+			}
+			return;
+		}
+
+		goNext();
+	};
+
+	const handleSaveDraft = async () => {
+		setSubmitting(true);
+		try {
 			const formData = new FormData();
+			formData.append("status", "DRAFT");
 
 			if (isSakit) {
 				formData.append("title", title);
@@ -877,7 +1002,7 @@ function BuatGalangDanaPageContent() {
 			} else {
 				formData.append("title", titleOther);
 				formData.append("slug", slugOther);
-				formData.append("category", category); // "pendidikan", "bencana", etc.
+				formData.append("category", category);
 				formData.append("type", "lainnya");
 				formData.append("target", targetOther);
 				formData.append("duration", durationOther);
@@ -892,6 +1017,7 @@ function BuatGalangDanaPageContent() {
 				formData.append("story", storyOther);
 			}
 
+			// Prepare metadata
 			const metadata = isSakit
 				? {
 						who,
@@ -913,7 +1039,6 @@ function BuatGalangDanaPageContent() {
 							resume_medis: medicalResumeUrl,
 							surat_rs: medicalExamUrl,
 						},
-						storyStructure,
 					}
 				: {
 						purposeKey,
@@ -934,149 +1059,36 @@ function BuatGalangDanaPageContent() {
 
 			let res;
 			if (isEdit) {
-				formData.append("status", "PENDING");
 				res = await updateCampaign(draftId!, formData);
 			} else {
 				res = await createCampaign(formData);
 			}
 
-			setSubmitting(false);
-
 			if (res.success) {
 				setSnack({
 					open: true,
-					msg: isEdit
-						? "Campaign berhasil diperbarui!"
-						: "Campaign berhasil dibuat!",
+					msg: "Draft berhasil disimpan!",
 					type: "success",
 				});
-				// Redirect
 				setTimeout(() => {
 					router.push("/galang-dana");
 				}, 1500);
 			} else {
 				setSnack({
 					open: true,
-					msg: res.error || "Gagal membuat campaign",
+					msg: res.error || "Gagal menyimpan draft",
 					type: "error",
 				});
 			}
-			return;
-		}
-
-		goNext();
-	};
-
-	const handleSaveDraft = async () => {
-		setSubmitting(true);
-		const formData = new FormData();
-		formData.append("status", "DRAFT");
-
-		if (isSakit) {
-			formData.append("title", title);
-			formData.append("slug", slug);
-			formData.append("category", "medis");
-			formData.append("type", "sakit");
-			formData.append("target", target);
-			formData.append("duration", duration);
-			if (duration === "custom") {
-				formData.append("customStart", customStart);
-				formData.append("customEnd", customEnd);
-			}
-			formData.append("phone", phone);
-
-			if (medicalResumeFile) {
-				formData.append("resume_medis", medicalResumeFile);
-			}
-			if (medicalExamFile) {
-				formData.append("surat_rs", medicalExamFile);
-			}
-
-			if (coverFile) formData.append("cover", coverFile);
-
-			formData.append("story", story);
-		} else {
-			formData.append("title", titleOther);
-			formData.append("slug", slugOther);
-			formData.append("category", category);
-			formData.append("type", "lainnya");
-			formData.append("target", targetOther);
-			formData.append("duration", durationOther);
-			if (durationOther === "custom") {
-				formData.append("customStart", customStartOther);
-				formData.append("customEnd", customEndOther);
-			}
-			formData.append("phone", phoneOther);
-
-			if (coverFileOther) formData.append("cover", coverFileOther);
-
-			formData.append("story", storyOther);
-		}
-
-		// Prepare metadata
-		const metadata = isSakit
-			? {
-					who,
-					whoOther,
-					bank,
-					patientName,
-					patientAge,
-					patientGender,
-					patientCity,
-					treatment,
-					hospital,
-					inpatient,
-					bpjs,
-					prevCost,
-					usage,
-					cta,
-					terms: { t1, t2, t3, t4 },
-					medicalDocs: {
-						resume_medis: medicalResumeUrl,
-						surat_rs: medicalExamUrl,
-					},
-				}
-			: {
-					purposeKey,
-					ktpName,
-					receiverName,
-					goal,
-					location,
-					usageOther,
-					ctaOther,
-					job,
-					workplace,
-					soc,
-					socHandle,
-					beneficiaries,
-					agree: { agreeA, agreeB },
-				};
-		formData.append("metadata", JSON.stringify(metadata));
-
-		let res;
-		if (isEdit) {
-			res = await updateCampaign(draftId!, formData);
-		} else {
-			res = await createCampaign(formData);
-		}
-
-		setSubmitting(false);
-
-		if (res.success) {
+		} catch (error: any) {
+			console.error("Failed to save draft:", error);
 			setSnack({
 				open: true,
-				msg: "Draft berhasil disimpan!",
-				type: "success",
-			});
-			setTimeout(() => {
-				router.push("/galang-dana");
-			}, 1500);
-		} else {
-			setSnack({
-				open: true,
-				msg: res.error || "Gagal menyimpan draft",
+				msg: error.message || "Terjadi kesalahan saat menyimpan draft",
 				type: "error",
 			});
+		} finally {
+			setSubmitting(false);
 		}
 	};
 
@@ -1612,7 +1624,7 @@ function BuatGalangDanaPageContent() {
 									>
 										Surat keterangan medis dengan diagnosis/penyakit dan hasil
 										pemeriksaan (lab, rontgen, dsb.) sangat membantu proses
-										verifikasi.
+										verifikasi. (Maksimal ukuran file 3MB)
 									</Typography>
 
 									<Stack spacing={1.25}>
@@ -1778,8 +1790,10 @@ function BuatGalangDanaPageContent() {
 																start={customStart}
 																end={customEnd}
 																onChange={(start, end) => {
-																	setCustomStart(start || "");
-																	setCustomEnd(end || "");
+																	if (start !== customStart)
+																		setCustomStart(start || "");
+																	if (end !== customEnd)
+																		setCustomEnd(end || "");
 																}}
 															/>
 														</Box>
@@ -1933,6 +1947,16 @@ function BuatGalangDanaPageContent() {
 										>
 											Upload foto galang dana{" "}
 											<span style={{ color: "red" }}>*</span>
+											<span
+												style={{
+													color: "rgba(15,23,42,.55)",
+													fontSize: 12,
+													fontWeight: 400,
+													marginLeft: 4,
+												}}
+											>
+												(Max 3MB)
+											</span>
 										</Typography>
 
 										<Paper
@@ -2525,8 +2549,10 @@ function BuatGalangDanaPageContent() {
 																start={customStartOther}
 																end={customEndOther}
 																onChange={(start, end) => {
-																	setCustomStartOther(start || "");
-																	setCustomEndOther(end || "");
+																	if (start !== customStartOther)
+																		setCustomStartOther(start || "");
+																	if (end !== customEndOther)
+																		setCustomEndOther(end || "");
 																}}
 															/>
 														</Box>
@@ -2727,6 +2753,16 @@ function BuatGalangDanaPageContent() {
 										>
 											Upload foto galang dana{" "}
 											<span style={{ color: "red" }}>*</span>
+											<span
+												style={{
+													color: "rgba(15,23,42,.55)",
+													fontSize: 12,
+													fontWeight: 400,
+													marginLeft: 4,
+												}}
+											>
+												(Max 3MB)
+											</span>
 										</Typography>
 
 										<Paper
