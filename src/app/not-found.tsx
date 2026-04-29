@@ -1,147 +1,35 @@
-"use client";
-
 import Link from "next/link";
-import { Button, Typography, Box, Container } from "@mui/material";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import { ArrowLeft } from "lucide-react";
 
 export default function NotFound() {
 	return (
-		<Container
-			maxWidth="sm"
-			sx={{
-				height: "100%",
-				display: "flex",
-				flexDirection: "column",
-				alignItems: "center",
-				justifyContent: "center",
-				textAlign: "center",
-				p: 4,
-				minHeight: "70vh",
-			}}
-		>
-			<Box
-				sx={{
-					mb: 4,
-					position: "relative",
-					display: "inline-flex",
-					alignItems: "center",
-					justifyContent: "center",
-				}}
-			>
-				<Box
-					sx={{
-						position: "absolute",
-						width: "140%",
-						height: "140%",
-						borderRadius: "50%",
-						background: (theme) =>
-							`radial-gradient(circle, ${theme.palette.primary.light} 0%, ${theme.palette.background.default} 70%)`,
-						opacity: 0.2,
-						filter: "blur(30px)",
-						zIndex: 0,
-					}}
-				/>
-				<Typography
-					variant="h1"
-					component="h1"
-					sx={{
-						fontSize: "8rem",
-						fontWeight: 800,
-						color: "text.primary",
-						opacity: 0.05,
-						lineHeight: 1,
-						position: "absolute",
-						top: "50%",
-						left: "50%",
-						transform: "translate(-50%, -50%)",
-						userSelect: "none",
-						zIndex: 0,
-					}}
-				>
+		<div className="flex min-h-[70vh] flex-col items-center justify-center p-4 text-center">
+			<div className="relative mb-4 inline-flex items-center justify-center">
+				<div className="absolute h-[140%] w-[140%] rounded-full bg-primary/20 blur-[30px]" />
+				<span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 select-none text-[8rem] font-extrabold leading-none text-foreground/5">
 					404
-				</Typography>
-				<Box
-					sx={{
-						position: "relative",
-						zIndex: 1,
-						color: "primary.main",
-						display: "flex",
-						flexDirection: "column",
-						alignItems: "center",
-					}}
-				>
-					<Typography
-						variant="h1"
-						sx={{
-							fontWeight: 800,
-							fontSize: "5rem",
-							background: (theme) =>
-								`linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
-							WebkitBackgroundClip: "text",
-							WebkitTextFillColor: "transparent",
-							lineHeight: 1,
-							mb: 1,
-						}}
-					>
-						404
-					</Typography>
-				</Box>
-			</Box>
+				</span>
+				<span className="relative z-1 bg-gradient-to-br from-primary to-primary-dark bg-clip-text text-[5rem] font-extrabold leading-none text-transparent">
+					404
+				</span>
+			</div>
 
-			<Typography
-				variant="h5"
-				component="h2"
-				sx={{
-					fontWeight: 700,
-					color: "text.primary",
-					mb: 2,
-					position: "relative",
-					zIndex: 1,
-				}}
-			>
+			<h2 className="relative z-1 mb-2 text-xl font-bold text-foreground">
 				Halaman Tidak Ditemukan
-			</Typography>
+			</h2>
 
-			<Typography
-				variant="body1"
-				color="text.secondary"
-				sx={{
-					mb: 5,
-					maxWidth: "320px",
-					mx: "auto",
-					lineHeight: 1.6,
-				}}
-			>
+			<p className="mx-auto mb-5 max-w-xs leading-relaxed text-text-secondary">
 				Maaf, halaman yang Anda cari tidak dapat ditemukan. Mungkin telah
 				dipindahkan atau dihapus.
-			</Typography>
+			</p>
 
-			<Link href="/" style={{ textDecoration: "none" }}>
-				<Button
-					component="span"
-					variant="contained"
-					size="large"
-					startIcon={<ArrowBackIcon />}
-					sx={{
-						borderRadius: "50px",
-						textTransform: "none",
-						px: 5,
-						py: 1.5,
-						fontWeight: 700,
-						fontSize: "1rem",
-						boxShadow: (theme) =>
-							`0 10px 20px -5px ${theme.palette.primary.light}`,
-						"&:hover": {
-							boxShadow: (theme) =>
-								`0 15px 25px -5px ${theme.palette.primary.main}`,
-							transform: "translateY(-2px)",
-						},
-						transition: "all 0.3s ease",
-					}}
-				>
-					Kembali ke Beranda
-				</Button>
+			<Link
+				href="/"
+				className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-3 font-bold text-white shadow-[0_10px_20px_-5px_var(--color-primary-light)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_15px_25px_-5px_var(--color-primary)]"
+			>
+				<ArrowLeft size={20} />
+				Kembali ke Beranda
 			</Link>
-		</Container>
+		</div>
 	);
 }

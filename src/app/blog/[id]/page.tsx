@@ -1,18 +1,7 @@
-import Box from "@mui/material/Box";
-import Typography from "@mui/material/Typography";
-import Chip from "@mui/material/Chip";
-import Stack from "@mui/material/Stack";
-import Card from "@mui/material/Card";
-import CardMedia from "@mui/material/CardMedia";
-import Divider from "@mui/material/Divider";
-import Button from "@mui/material/Button";
-import IconButton from "@mui/material/IconButton";
-import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
-import FacebookIcon from "@mui/icons-material/Facebook";
-import InstagramIcon from "@mui/icons-material/Instagram";
-import WhatsAppIcon from "@mui/icons-material/WhatsApp";
-import XIcon from "@mui/icons-material/X";
+import Image from "next/image";
+import Link from "next/link";
 import { Metadata } from "next";
+import { ChevronLeft, Facebook, Instagram, Twitter } from "lucide-react";
 import { blogService } from "@/services/blogService";
 import { CopyLinkButton } from "@/components/blog/CopyLinkButton";
 
@@ -27,10 +16,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 	if (!blog) {
 		return {
 			title: "Artikel tidak ditemukan | Pesona Kebaikan",
-			robots: {
-				index: false,
-				follow: false,
-			},
+			robots: { index: false, follow: false },
 		};
 	}
 
@@ -65,14 +51,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 			type: "article",
 			url: postUrl,
 			siteName: "Pesona Kebaikan",
-			images: [
-				{
-					url: cover,
-					width: 1200,
-					height: 630,
-					alt: blog.title,
-				},
-			],
+			images: [{ url: cover, width: 1200, height: 630, alt: blog.title }],
 		},
 		twitter: {
 			card: "summary_large_image",
@@ -80,10 +59,17 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 			description,
 			images: [cover],
 		},
-		alternates: {
-			canonical: postUrl,
-		},
+		alternates: { canonical: postUrl },
 	};
+}
+
+// WhatsApp icon not in lucide — inline SVG
+function WhatsAppIcon() {
+	return (
+		<svg viewBox="0 0 24 24" width={18} height={18} fill="currentColor">
+			<path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
+		</svg>
+	);
 }
 
 export default async function BlogDetailPage({ params }: Props) {
@@ -92,23 +78,19 @@ export default async function BlogDetailPage({ params }: Props) {
 
 	if (!blog) {
 		return (
-			<Box sx={{ px: 2, py: 4 }}>
-				<Typography sx={{ fontWeight: 900, fontSize: 18 }}>
-					Tidak ditemukan
-				</Typography>
-				<Button
-					component="a"
+			<div className="px-2 py-4">
+				<p className="text-lg font-black">Tidak ditemukan</p>
+				<Link
 					href="/blog"
-					startIcon={<ArrowBackIosNewIcon fontSize="small" />}
-					sx={{ mt: 2 }}
+					className="mt-2 inline-flex items-center gap-1 text-sm font-extrabold text-primary"
 				>
+					<ChevronLeft size={16} />
 					Kembali
-				</Button>
-			</Box>
+				</Link>
+			</div>
 		);
 	}
 
-	// Map data
 	const contentImageMatch = blog.content.match(
 		/<img[^>]+src=["']([^"']+)["']/i,
 	);
@@ -142,231 +124,120 @@ export default async function BlogDetailPage({ params }: Props) {
 		image: cover,
 		datePublished: new Date(blog.createdAt).toISOString(),
 		dateModified: new Date(blog.updatedAt || blog.createdAt).toISOString(),
-		author: {
-			"@type": "Organization",
-			name: "Pesona Kebaikan",
-		},
+		author: { "@type": "Organization", name: "Pesona Kebaikan" },
 		publisher: {
 			"@type": "Organization",
 			name: "Pesona Kebaikan",
-			logo: {
-				"@type": "ImageObject",
-				url: `${baseUrl}/brand/logo.png`,
-			},
+			logo: { "@type": "ImageObject", url: `${baseUrl}/brand/logo.png` },
 		},
-		mainEntityOfPage: {
-			"@type": "WebPage",
-			"@id": postUrl,
-		},
+		mainEntityOfPage: { "@type": "WebPage", "@id": postUrl },
 	};
 
+	const socialLinks = [
+		{
+			href: `https://twitter.com/intent/tweet?text=${encodeURIComponent(blog.title)}&url=${encodeURIComponent(postUrl)}`,
+			icon: <Twitter size={18} />,
+			label: "Share on X",
+		},
+		{
+			href: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(postUrl)}`,
+			icon: <Facebook size={18} />,
+			label: "Share on Facebook",
+		},
+		{
+			href: "https://www.instagram.com/",
+			icon: <Instagram size={18} />,
+			label: "Share on Instagram",
+		},
+		{
+			href: `https://wa.me/?text=${encodeURIComponent(blog.title + " " + postUrl)}`,
+			icon: <WhatsAppIcon />,
+			label: "Share on WhatsApp",
+		},
+	];
+
 	return (
-		<Box sx={{ px: 2, pt: 2.5, pb: 4, maxWidth: 800, mx: "auto" }}>
+		<div className="mx-auto max-w-[800px] px-2 pb-4 pt-2.5">
 			<script
 				type="application/ld+json"
 				dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
 			/>
-			<Box
-				sx={{
-					display: "flex",
-					alignItems: "center",
-					justifyContent: "space-between",
-					mb: 2,
-				}}
-			>
-				<Button
-					component="a"
-					href="/blog"
-					startIcon={<ArrowBackIosNewIcon fontSize="small" />}
-					sx={{ textTransform: "none", fontWeight: 800 }}
-				>
-					Kembali
-				</Button>
-			</Box>
 
-			<Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-				<Stack direction="row" spacing={1} alignItems="center">
-					<Chip
-						label={blog.category?.name || "Uncategorized"}
-						size="small"
-						sx={{ borderRadius: 1 }}
-					/>
-					<Typography
-						sx={{ fontSize: 12, fontWeight: 800, color: "rgba(15,23,42,.55)" }}
-					>
+			<div className="mb-2 flex items-center justify-between">
+				<Link
+					href="/blog"
+					className="inline-flex items-center gap-1 text-sm font-extrabold text-primary"
+				>
+					<ChevronLeft size={16} />
+					Kembali
+				</Link>
+			</div>
+
+			<div className="flex flex-col gap-1">
+				<div className="flex flex-row items-center gap-1">
+					<span className="rounded bg-foreground/8 px-2 py-0.5 text-xs font-bold">
+						{blog.category?.name || "Uncategorized"}
+					</span>
+					<span className="text-xs font-extrabold text-foreground/55">
 						{new Date(blog.createdAt).toLocaleDateString("id-ID", {
 							day: "2-digit",
 							month: "short",
 							year: "numeric",
 						})}
-					</Typography>
-				</Stack>
-				<Typography
-					sx={{
-						fontSize: { xs: 22, md: 32 },
-						fontWeight: 900,
-						color: "#0f172a",
-						lineHeight: 1.2,
-					}}
-				>
+					</span>
+				</div>
+				<h1 className="text-[22px] font-black leading-tight text-foreground md:text-[32px]">
 					{blog.title}
-				</Typography>
-			</Box>
+				</h1>
+			</div>
 
-			<Card
-				variant="outlined"
-				sx={{
-					mt: 2,
-					borderRadius: 2,
-					overflow: "hidden",
-					borderColor: "rgba(0,0,0,0.08)",
-				}}
-			>
-				<CardMedia
-					component="img"
-					image={cover}
+			<div className="mt-2 overflow-hidden rounded-2xl border border-foreground/8">
+				<img
+					src={cover}
 					alt={blog.title}
-					sx={{ height: { xs: 220, md: 420 }, objectFit: "cover" }}
+					className="h-[220px] w-full object-cover md:h-[420px]"
 				/>
-			</Card>
+			</div>
 
-			<Box sx={{ mt: 4 }}>
-				{/* CONTENT */}
-				<Box
-					sx={{
-						"& img": {
-							maxWidth: "100%",
-							height: "auto",
-							borderRadius: 2,
-							my: 2,
-						},
-						"& p": {
-							fontSize: 16,
-							lineHeight: 1.8,
-							color: "rgba(15,23,42,.80)",
-							mb: 2,
-						},
-						"& h1, & h2, & h3, & h4, & h5, & h6": {
-							color: "#0f172a",
-							fontWeight: 800,
-							mt: 3,
-							mb: 1,
-						},
-						"& ul, & ol": {
-							pl: 3,
-							mb: 2,
-							color: "rgba(15,23,42,.80)",
-						},
-						"& li": {
-							mb: 0.5,
-						},
-						"& a": {
-							color: "primary.main",
-							textDecoration: "underline",
-						},
-					}}
+			<div className="mt-4">
+				<div
+					className="prose prose-slate max-w-none [&_a]:text-primary [&_a]:underline [&_h1]:font-extrabold [&_h2]:font-extrabold [&_h3]:font-extrabold [&_img]:my-2 [&_img]:max-w-full [&_img]:rounded-2xl [&_p]:mb-2 [&_p]:leading-relaxed [&_p]:text-foreground/80"
 					dangerouslySetInnerHTML={{ __html: blog.content }}
 				/>
 
 				{video && (
-					<Card
-						variant="outlined"
-						sx={{
-							mt: 3,
-							borderRadius: 2,
-							overflow: "hidden",
-							borderColor: "rgba(0,0,0,0.08)",
-						}}
-					>
-						<CardMedia
-							component="video"
+					<div className="mt-3 overflow-hidden rounded-2xl border border-foreground/8">
+						<video
 							src={video}
 							controls
-							sx={{
-								width: "100%",
-								height: { xs: 220, md: 360 },
-								backgroundColor: "black",
-							}}
+							className="h-[220px] w-full bg-black md:h-[360px]"
 						/>
-					</Card>
+					</div>
 				)}
-			</Box>
+			</div>
 
-			<Divider sx={{ my: 4 }} />
+			<hr className="my-4 border-foreground/8" />
 
-			{/* SHARE BUTTONS */}
-			<Box>
-				<Typography
-					sx={{ fontSize: 14, fontWeight: 700, color: "#0f172a", mb: 1.5 }}
-				>
+			<div>
+				<p className="mb-1.5 text-sm font-bold text-foreground">
 					Bagikan Artikel
-				</Typography>
-				<Stack direction="row" spacing={1.5}>
-					<IconButton
-						href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(
-							blog.title,
-						)}&url=${encodeURIComponent(postUrl)}`}
-						component="a"
-						target="_blank"
-						rel="noopener noreferrer"
-						sx={{
-							border: "1px solid rgba(0,0,0,0.12)",
-							borderRadius: 2,
-							color: "rgba(15,23,42,.7)",
-							"&:hover": { bgcolor: "rgba(15,23,42,.05)" },
-						}}
-					>
-						<XIcon fontSize="small" />
-					</IconButton>
-					<IconButton
-						href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(
-							postUrl,
-						)}`}
-						component="a"
-						target="_blank"
-						rel="noopener noreferrer"
-						sx={{
-							border: "1px solid rgba(0,0,0,0.12)",
-							borderRadius: 2,
-							color: "rgba(15,23,42,.7)",
-							"&:hover": { bgcolor: "rgba(15,23,42,.05)" },
-						}}
-					>
-						<FacebookIcon fontSize="small" />
-					</IconButton>
-					<IconButton
-						href="https://www.instagram.com/"
-						component="a"
-						target="_blank"
-						rel="noopener noreferrer"
-						sx={{
-							border: "1px solid rgba(0,0,0,0.12)",
-							borderRadius: 2,
-							color: "rgba(15,23,42,.7)",
-							"&:hover": { bgcolor: "rgba(15,23,42,.05)" },
-						}}
-					>
-						<InstagramIcon fontSize="small" />
-					</IconButton>
-					<IconButton
-						href={`https://wa.me/?text=${encodeURIComponent(
-							blog.title + " " + postUrl,
-						)}`}
-						component="a"
-						target="_blank"
-						rel="noopener noreferrer"
-						sx={{
-							border: "1px solid rgba(0,0,0,0.12)",
-							borderRadius: 2,
-							color: "rgba(15,23,42,.7)",
-							"&:hover": { bgcolor: "rgba(15,23,42,.05)" },
-						}}
-					>
-						<WhatsAppIcon fontSize="small" />
-					</IconButton>
+				</p>
+				<div className="flex flex-row gap-1.5">
+					{socialLinks.map((s) => (
+						<a
+							key={s.label}
+							href={s.href}
+							target="_blank"
+							rel="noopener noreferrer"
+							aria-label={s.label}
+							className="grid h-9 w-9 place-items-center rounded-lg border border-foreground/12 text-foreground/70 transition-colors hover:bg-foreground/5"
+						>
+							{s.icon}
+						</a>
+					))}
 					<CopyLinkButton url={postUrl} />
-				</Stack>
-			</Box>
-		</Box>
+				</div>
+			</div>
+		</div>
 	);
 }

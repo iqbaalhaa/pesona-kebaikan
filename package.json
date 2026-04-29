@@ -18,6 +18,7 @@
 		"@emotion/react": "^11.14.0",
 		"@emotion/styled": "^11.14.1",
 		"@fontsource/roboto": "^5.2.9",
+		"@headlessui/react": "^2.2.10",
 		"@mui/icons-material": "^7.3.6",
 		"@mui/material": "^7.3.6",
 		"@mui/material-nextjs": "^7.3.6",
@@ -33,6 +34,7 @@
 		"jsdom": "^27.3.0",
 		"jspdf": "^4.1.0",
 		"jspdf-autotable": "^5.0.2",
+		"lucide-react": "^1.13.0",
 		"next": "^16.1.6",
 		"next-auth": "5.0.0-beta.30",
 		"nodemailer": "^7.0.13",
@@ -42,11 +44,10 @@
 		"react-datepicker": "^9.1.0",
 		"react-dom": "19.2.1",
 		"react-easy-crop": "^5.5.6",
-		"recharts": "^3.6.0",
+		"sharp": "^0.33.5",
 		"suneditor": "^2.47.8",
 		"suneditor-react": "^3.6.1",
-		"xlsx": "^0.18.5",
-		"sharp": "^0.33.5"
+		"xlsx": "^0.18.5"
 	},
 	"devDependencies": {
 		"@faker-js/faker": "^10.1.0",
