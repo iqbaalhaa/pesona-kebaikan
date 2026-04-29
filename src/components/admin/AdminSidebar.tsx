@@ -185,7 +185,7 @@ export default function AdminSidebar({
 										key={m.href}
 										href={m.href}
 										className={`
-                      group flex items-start gap-3
+                      group flex items-center gap-3
                       rounded-xl px-3 py-1.5
                       transition-colors
                       ${
