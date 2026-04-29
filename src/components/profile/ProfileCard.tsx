@@ -1,17 +1,7 @@
 "use client";
 
-import * as React from "react";
 import { useRouter } from "next/navigation";
-import Paper from "@mui/material/Paper";
-import Avatar from "@mui/material/Avatar";
-import Box from "@mui/material/Box";
-import Stack from "@mui/material/Stack";
-import Typography from "@mui/material/Typography";
-import IconButton from "@mui/material/IconButton";
-import Tooltip from "@mui/material/Tooltip";
-import Chip from "@mui/material/Chip";
-import EditIcon from "@mui/icons-material/Edit";
-import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
+import { Pencil, ShieldCheck } from "lucide-react";
 
 type UserCardData = {
 	name?: string | null;
@@ -31,107 +21,65 @@ export default function ProfileCard({ user }: { user: UserCardData }) {
 		: isPending
 			? "Menunggu Verifikasi"
 			: "Belum Terverifikasi";
+
+	const statusColor = isVerified
+		? "text-primary"
+		: isPending
+			? "text-amber-500"
+			: "text-slate-500";
+
+	const dotColor = isVerified
+		? "bg-primary"
+		: isPending
+			? "bg-amber-500"
+			: "bg-slate-200";
+
 	return (
-		<Paper
-			elevation={0}
-			variant="outlined"
-			sx={{
-				p: 2.5,
-				mb: 3,
-				borderRadius: 4,
-				display: "flex",
-				alignItems: "center",
-				gap: 2,
-				bgcolor: "#fff",
-				borderColor: "rgba(0,0,0,0.08)",
-				position: "relative",
-				overflow: "hidden",
-			}}
-		>
-			<Avatar
-				src={user?.image || "/avatar-placeholder.jpg"}
-				sx={{
-					width: 72,
-					height: 72,
-					bgcolor: "#0ba976",
-					fontSize: 28,
-					fontWeight: 800,
-					border: "3px solid #fff",
-					boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-				}}
-			>
-				{user?.name?.[0]?.toUpperCase() || "A"}
-			</Avatar>
-			<Box
-				sx={{ flex: 1, cursor: "pointer" }}
+		<div className="relative mb-3 flex items-center gap-2 overflow-hidden rounded-2xl border border-foreground/8 bg-white p-2.5 dark:bg-surface">
+			{user?.image ? (
+				<img
+					src={user.image}
+					alt={user.name || ""}
+					className="h-[72px] w-[72px] shrink-0 rounded-full border-3 border-white bg-primary object-cover shadow-md"
+				/>
+			) : (
+				<div className="grid h-[72px] w-[72px] shrink-0 place-items-center rounded-full border-3 border-white bg-primary text-[28px] font-extrabold text-white shadow-md">
+					{user?.name?.[0]?.toUpperCase() || "A"}
+				</div>
+			)}
+
+			<div
+				className="flex-1 cursor-pointer"
 				onClick={() => router.push("/profil/akun")}
 			>
-				<Stack direction="row" alignItems="center" gap={0.5}>
-					<Typography sx={{ fontSize: 18, fontWeight: 900, color: "#0f172a" }}>
+				<div className="flex items-center gap-0.5">
+					<span className="text-lg font-black text-foreground">
 						{user?.name || "User"}
-					</Typography>
-					{isVerified ? (
-						<Tooltip title="Terverifikasi">
-							<VerifiedUserIcon sx={{ fontSize: 18, color: "#3b82f6" }} />
-						</Tooltip>
-					) : null}
-					{isVerified && user?.verifiedAs === "organization" ? (
-						<Chip
-							label="ORG"
-							size="small"
-							sx={{
-								height: 20,
-								fontSize: 10,
-								fontWeight: 800,
-								borderRadius: 1,
-								ml: 0.5,
-								bgcolor: "#eff6ff",
-								color: "#1d4ed8",
-								border: "1px solid #bfdbfe",
-							}}
-						/>
-					) : null}
-				</Stack>
-				<Typography sx={{ fontSize: 14, color: "rgba(15,23,42,0.6)" }}>
-					{user?.email}
-				</Typography>
-				<Box sx={{ mt: 0.5, display: "flex", alignItems: "center", gap: 0.5 }}>
-					<Box
-						sx={{
-							width: 8,
-							height: 8,
-							borderRadius: "50%",
-							bgcolor: isVerified
-								? "#0ba976"
-								: isPending
-									? "#f59e0b"
-									: "#e2e8f0",
-						}}
-					/>
-					<Typography
-						sx={{
-							fontSize: 12,
-							fontWeight: 700,
-							color: isVerified ? "#0ba976" : isPending ? "#f59e0b" : "#64748b",
-						}}
-					>
+					</span>
+					{isVerified && (
+						<ShieldCheck size={18} className="text-blue-500" title="Terverifikasi" />
+					)}
+					{isVerified && user?.verifiedAs === "organization" && (
+						<span className="ml-0.5 rounded border border-blue-200 bg-blue-50 px-1.5 py-px text-[10px] font-extrabold text-blue-700">
+							ORG
+						</span>
+					)}
+				</div>
+				<p className="text-sm text-foreground/60">{user?.email}</p>
+				<div className="mt-0.5 flex items-center gap-0.5">
+					<span className={`h-2 w-2 rounded-full ${dotColor}`} />
+					<span className={`text-xs font-bold ${statusColor}`}>
 						{statusLabel}
-					</Typography>
-				</Box>
-			</Box>
-			<IconButton
-				sx={{
-					bgcolor: "#f8fafc",
-					color: "#334155",
-					borderRadius: 3,
-					p: 1.5,
-					border: "1px solid #e2e8f0",
-					"&:hover": { bgcolor: "#f1f5f9" },
-				}}
+					</span>
+				</div>
+			</div>
+
+			<button
 				onClick={() => router.push("/profil/akun")}
+				className="rounded-xl border border-slate-200 bg-slate-50 p-1.5 text-slate-700 transition-colors hover:bg-slate-100"
 			>
-				<EditIcon />
-			</IconButton>
-		</Paper>
+				<Pencil size={18} />
+			</button>
+		</div>
 	);
 }

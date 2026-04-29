@@ -2,21 +2,14 @@
 
 import * as React from "react";
 import { usePathname, useRouter } from "next/navigation";
-import BottomNavigation from "@mui/material/BottomNavigation";
-import BottomNavigationAction from "@mui/material/BottomNavigationAction";
-import Paper from "@mui/material/Paper";
-import HomeRoundedIcon from "@mui/icons-material/HomeRounded";
-import ArticleIcon from "@mui/icons-material/Article";
-import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
-import CampaignIcon from "@mui/icons-material/Campaign";
-import PersonIcon from "@mui/icons-material/Person";
+import { Home, FileText, Receipt, Megaphone, User } from "lucide-react";
 
 const menus = [
-	{ label: "Home", path: "/", icon: <HomeRoundedIcon /> },
-	{ label: "Blog", path: "/blog", icon: <ArticleIcon /> },
-	{ label: "Donasi Saya", path: "/donasi-saya", icon: <ReceiptLongIcon /> },
-	{ label: "Galang Dana", path: "/galang-dana", icon: <CampaignIcon /> },
-	{ label: "Profil", path: "/profil", icon: <PersonIcon /> },
+	{ label: "Home", path: "/", icon: Home },
+	{ label: "Blog", path: "/blog", icon: FileText },
+	{ label: "Donasi Saya", path: "/donasi-saya", icon: Receipt },
+	{ label: "Galang Dana", path: "/galang-dana", icon: Megaphone },
+	{ label: "Profil", path: "/profil", icon: User },
 ];
 
 function isActive(pathname: string, path: string) {
@@ -27,15 +20,8 @@ function isActive(pathname: string, path: string) {
 export default function SimpleBottomNavigation() {
 	const router = useRouter();
 	const pathname = usePathname();
-
 	const ref = React.useRef<HTMLDivElement | null>(null);
 
-	const currentIndex = React.useMemo(() => {
-		const idx = menus.findIndex((m) => isActive(pathname, m.path));
-		return idx === -1 ? 0 : idx;
-	}, [pathname]);
-
-	// ✅ ukur tinggi navbar & simpan ke CSS var global: --bottom-nav-h
 	React.useLayoutEffect(() => {
 		const el = ref.current;
 		if (!el) return;
@@ -44,15 +30,13 @@ export default function SimpleBottomNavigation() {
 			const h = el.getBoundingClientRect().height || 64;
 			document.documentElement.style.setProperty(
 				"--bottom-nav-h",
-				`${Math.ceil(h)}px`
+				`${Math.ceil(h)}px`,
 			);
 		};
 
 		setVar();
-
 		const ro = new ResizeObserver(() => setVar());
 		ro.observe(el);
-
 		window.addEventListener("resize", setVar);
 		return () => {
 			ro.disconnect();
@@ -61,34 +45,38 @@ export default function SimpleBottomNavigation() {
 	}, []);
 
 	return (
-		<Paper
+		<div
 			ref={ref}
-			elevation={0}
-			className="fixed left-1/2 -translate-x-1/2 bottom-0 w-full max-w-[480px] overflow-hidden pb-[env(safe-area-inset-bottom)]"
-			sx={{
-				// ✅ jangan 1300 biar gak tabrakan sama modal MUI (modal default 1300)
-				zIndex: 1100,
-				borderTop: "none",
-				borderTopLeftRadius: 0,
-				borderTopRightRadius: 0,
-				bgcolor: "#ffffff",
-				boxShadow: "none",
-			}}
+			className="fixed bottom-0 left-1/2 z-[1100] w-full max-w-[480px] -translate-x-1/2 overflow-hidden bg-white pb-[env(safe-area-inset-bottom)]"
 		>
-			<BottomNavigation
-				showLabels
-				value={currentIndex}
-				onChange={(_, newValue) => router.push(menus[newValue].path)}
-				className="bottom-nav"
-			>
-				{menus.map((menu) => (
-					<BottomNavigationAction
-						key={menu.path}
-						label={menu.label}
-						icon={menu.icon}
-					/>
-				))}
-			</BottomNavigation>
-		</Paper>
+			<nav className="flex h-[72px] items-center justify-around px-2">
+				{menus.map((menu) => {
+					const active = isActive(pathname, menu.path);
+					const Icon = menu.icon;
+					return (
+						<button
+							key={menu.path}
+							onClick={() => router.push(menu.path)}
+							className={[
+								"flex cursor-pointer flex-col items-center gap-0.5 rounded-full px-2 py-1.5 transition-all duration-150",
+								active
+									? "text-primary"
+									: "text-foreground/60 hover:bg-foreground/4",
+							].join(" ")}
+						>
+							<Icon
+								size={24}
+								className={`transition-transform duration-150 ${active ? "scale-105 drop-shadow-[0_10px_18px_var(--color-primary-shadow)]" : ""}`}
+							/>
+							<span
+								className={`text-[10px] ${active ? "font-bold text-primary" : ""}`}
+							>
+								{menu.label}
+							</span>
+						</button>
+					);
+				})}
+			</nav>
+		</div>
 	);
 }

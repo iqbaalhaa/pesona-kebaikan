@@ -5,6 +5,7 @@ import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import Paper from "@mui/material/Paper";
 import List from "@mui/material/List";
+import ListItem from "@mui/material/ListItem";
 import ListItemButton from "@mui/material/ListItemButton";
 import ListItemText from "@mui/material/ListItemText";
 import ListItemIcon from "@mui/material/ListItemIcon";
@@ -418,7 +419,7 @@ export default function SecurityPage() {
 							);
 							return (
 								<React.Fragment key={activity.id}>
-									<ListItemButton sx={{ py: 2 }}>
+									<ListItem sx={{ py: 2, px: 2 }}>
 										<ListItemIcon
 											sx={{ minWidth: 40, color: "rgba(15,23,42,0.6)" }}
 										>
@@ -437,7 +438,7 @@ export default function SecurityPage() {
 												color: index === 0 ? "#166534" : "text.secondary",
 											}}
 										/>
-									</ListItemButton>
+									</ListItem>
 									{index < activities.length - 1 && <Divider component="li" />}
 								</React.Fragment>
 							);

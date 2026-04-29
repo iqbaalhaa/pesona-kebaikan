@@ -1,59 +1,31 @@
 "use client";
 
-import * as React from "react";
-import Paper from "@mui/material/Paper";
-import Box from "@mui/material/Box";
-import Typography from "@mui/material/Typography";
-import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
-import ChevronRightIcon from "@mui/icons-material/ChevronRight";
+import { ShieldCheck, ChevronRight } from "lucide-react";
 
-export default function VerificationBanner({ onClick }: { onClick: () => void }) {
-  return (
-    <Paper
-      elevation={0}
-      variant="outlined"
-      sx={{
-        p: 2,
-        mb: 3,
-        borderRadius: 2,
-        bgcolor: "#f0fdf4",
-        borderColor: "#bbf7d0",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        cursor: "pointer",
-        transition: "all 0.2s",
-        "&:hover": { bgcolor: "#dcfce7" },
-      }}
-      onClick={onClick}
-    >
-      <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-        <Box
-          sx={{
-            width: 44,
-            height: 44,
-            borderRadius: "50%",
-            bgcolor: "white",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            border: "1px solid #bbf7d0",
-            boxShadow: "0 2px 4px rgba(0,0,0,0.05)",
-          }}
-        >
-          <VerifiedUserIcon sx={{ color: "#0ba976" }} />
-        </Box>
-        <Box>
-          <Typography sx={{ fontWeight: 800, fontSize: 14, color: "#166534" }}>
-            Verifikasi Akun
-          </Typography>
-          <Typography sx={{ fontSize: 12, color: "#15803d" }}>
-            Lengkapi data diri Anda
-          </Typography>
-        </Box>
-      </Box>
-      <ChevronRightIcon sx={{ fontSize: 20, color: "#15803d" }} />
-    </Paper>
-  );
+export default function VerificationBanner({
+	onClick,
+}: {
+	onClick: () => void;
+}) {
+	return (
+		<button
+			onClick={onClick}
+			className="mb-3 flex w-full cursor-pointer items-center justify-between rounded-2xl border border-green-200 bg-green-50 p-2 transition-colors hover:bg-green-100"
+		>
+			<div className="flex items-center gap-2">
+				<span className="grid h-11 w-11 place-items-center rounded-full border border-green-200 bg-white shadow-sm">
+					<ShieldCheck size={22} className="text-primary" />
+				</span>
+				<div className="text-left">
+					<p className="text-sm font-extrabold text-green-800">
+						Verifikasi Akun
+					</p>
+					<p className="text-xs text-green-700">
+						Lengkapi data diri Anda
+					</p>
+				</div>
+			</div>
+			<ChevronRight size={20} className="text-green-700" />
+		</button>
+	);
 }
-

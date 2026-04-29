@@ -1,35 +1,47 @@
 "use client";
 
-import * as React from "react";
 import { useRouter } from "next/navigation";
-import Box from "@mui/material/Box";
-import Typography from "@mui/material/Typography";
-import IconButton from "@mui/material/IconButton";
-import Container from "@mui/material/Container";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import { ArrowLeft } from "lucide-react";
 
 type Props = {
-  title: string;
-  container?: boolean;
-  maxWidth?: "sm" | "md" | "lg" | "xl" | false;
+	title: string;
+	container?: boolean;
+	maxWidth?: "sm" | "md" | "lg" | "xl" | false;
 };
 
-export default function ProfileHeader({ title, container = false, maxWidth = "md" }: Props) {
-  const router = useRouter();
-  const content = (
-    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-      <IconButton onClick={() => router.back()} edge="start" sx={{ color: "#0f172a" }}>
-        <ArrowBackIcon />
-      </IconButton>
-      <Typography sx={{ fontSize: 20, fontWeight: 900, color: "#0f172a" }}>{title}</Typography>
-    </Box>
-  );
-  if (container) {
-    return (
-      <Container maxWidth={maxWidth} sx={{ pt: 2.5, pb: 2 }}>
-        {content}
-      </Container>
-    );
-  }
-  return <Box sx={{ mb: 3 }}>{content}</Box>;
+const maxWidthMap = {
+	sm: "max-w-sm",
+	md: "max-w-2xl",
+	lg: "max-w-4xl",
+	xl: "max-w-6xl",
+};
+
+export default function ProfileHeader({
+	title,
+	container = false,
+	maxWidth = "md",
+}: Props) {
+	const router = useRouter();
+	const content = (
+		<div className="flex items-center gap-1">
+			<button
+				onClick={() => router.back()}
+				className="grid h-9 w-9 place-items-center rounded-lg text-foreground transition-colors hover:bg-foreground/5"
+			>
+				<ArrowLeft size={20} />
+			</button>
+			<h2 className="text-xl font-black text-foreground">{title}</h2>
+		</div>
+	);
+
+	if (container) {
+		return (
+			<div
+				className={`mx-auto px-2 pb-2 pt-2.5 ${maxWidth ? maxWidthMap[maxWidth] : ""}`}
+			>
+				{content}
+			</div>
+		);
+	}
+	return <div className="mb-3">{content}</div>;
 }
