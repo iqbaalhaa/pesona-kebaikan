@@ -77,15 +77,21 @@ export default function CampaignCard(props: CampaignCardProps) {
 						)}
 					</div>
 
-					<p className="mb-[1px] line-clamp-2 min-h-[34px] text-[13px] font-extrabold leading-tight text-foreground">
-						{x.title}
-					</p>
-
-					<p className="mb-auto text-[11px] text-text-secondary">
+					<p className="mb-[2px] text-[11px] text-text-secondary">
 						{x.ownerName}
 					</p>
 
+					<p className="mb-auto line-clamp-2 min-h-[34px] text-[13px] font-extrabold leading-tight text-foreground">
+						{x.title}
+					</p>
+
 					<div className="mt-1.5">
+						<p className="mb-1 text-[10px] font-medium text-text-secondary">
+							Terkumpul{" "}
+							<span className="text-xs font-extrabold text-primary">
+								Rp{rupiah(x.collected)}
+							</span>
+						</p>
 						{!isQuickDonate && (
 							<div className="h-[5px] overflow-hidden rounded-full bg-primary/10">
 								<div
@@ -94,24 +100,6 @@ export default function CampaignCard(props: CampaignCardProps) {
 								/>
 							</div>
 						)}
-						<div className="mt-[3px] flex items-end justify-between">
-							<div>
-								<p className="text-[10px] font-medium text-text-secondary">
-									Terkumpul
-								</p>
-								<p className="text-xs font-extrabold text-primary">
-									Rp{rupiah(x.collected)}
-								</p>
-							</div>
-							<div className="text-right">
-								<p className="text-[10px] font-medium text-text-secondary">
-									{isQuickDonate ? "Tanpa Batas" : "Sisa Hari"}
-								</p>
-								<p className="text-xs font-bold text-foreground">
-									{isQuickDonate ? "∞" : x.daysLeft}
-								</p>
-							</div>
-						</div>
 					</div>
 				</div>
 			</div>

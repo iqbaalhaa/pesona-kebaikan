@@ -33,7 +33,7 @@ function ScrollCard({ item, priority = false }: { item: Campaign; priority?: boo
 	return (
 		<div
 			onClick={() => router.push(`/donasi/${item.slug || item.id}`)}
-			className="w-[200px] min-w-[200px] shrink-0 cursor-pointer snap-start overflow-hidden bg-white transition-transform duration-200 hover:-translate-y-1"
+			className="w-[240px] min-w-[240px] shrink-0 cursor-pointer snap-start overflow-hidden bg-white transition-transform duration-200 hover:-translate-y-1"
 		>
 			<div className="relative h-35 overflow-hidden bg-slate-100">
 				<Image
@@ -60,14 +60,7 @@ function ScrollCard({ item, priority = false }: { item: Campaign; priority?: boo
 			</div>
 
 			<div className="p-3">
-				<p className="line-clamp-2 min-h-10 text-[13px] font-bold leading-snug text-foreground">
-					{item.title}
-				</p>
-
-				<div className="mt-2 mb-3 flex items-center gap-1.5">
-					<div className="relative h-4 w-4 shrink-0 overflow-hidden rounded-full bg-slate-200">
-						<Image src="/brand/logo.png" alt={item.organizer} fill unoptimized sizes="16px" style={{ objectFit: "cover" }} />
-					</div>
+				<div className="mb-1 flex items-center gap-1.5">
 					<span className="truncate text-[10px] font-medium text-foreground/50">
 						{item.organizer}
 					</span>
@@ -78,22 +71,19 @@ function ScrollCard({ item, priority = false }: { item: Campaign; priority?: boo
 					)}
 				</div>
 
+				<p className="mb-3 line-clamp-2 min-h-10 text-[13px] font-bold leading-snug text-foreground">
+					{item.title}
+				</p>
+
+				<p className="mb-1 text-[10px] text-slate-500">
+					Terkumpul{" "}
+					<span className="text-xs font-bold text-primary">Rp {rupiah(item.collected)}</span>
+				</p>
 				{!isQuickDonate && (
 					<div className="flex h-1.5 overflow-hidden rounded-full bg-slate-100">
 						<div className="rounded-full bg-primary transition-all duration-300" style={{ width: `${pct}%` }} />
 					</div>
 				)}
-
-				<div className="mt-2 flex items-center justify-between text-[10px]">
-					<div>
-						<span className="block text-slate-500">Terkumpul</span>
-						<span className="font-bold text-slate-800">Rp {rupiah(item.collected)}</span>
-					</div>
-					<div className="text-right">
-						<span className="block text-slate-500">Donatur</span>
-						<span className="font-bold text-slate-800">{item.donors}</span>
-					</div>
-				</div>
 			</div>
 		</div>
 	);

@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { Box, Typography, Avatar, Chip, Divider } from "@mui/material";
+import { Box, Typography, Chip, Divider } from "@mui/material";
 import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
 import AccountBalanceWalletOutlinedIcon from "@mui/icons-material/AccountBalanceWalletOutlined";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
@@ -79,12 +79,6 @@ export default function CampaignFundraiser({
 								"&:hover": data.ownerId ? { opacity: 0.9 } : undefined,
 							}}
 						>
-							<Avatar
-								sx={{ width: 48, height: 48, border: "1px solid #f1f5f9" }}
-								src={data.ownerAvatar}
-							>
-								{data.ownerName.charAt(0)}
-							</Avatar>
 							<Box>
 								<Box
 									sx={{

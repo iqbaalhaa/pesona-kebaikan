@@ -79,7 +79,8 @@ export default function SearchDropdown({
 			<div className="relative">
 				<Search
 					size={18}
-					className={`absolute left-3 top-1/2 -translate-y-1/2 ${overlay ? "text-white/90" : "text-foreground/50"}`}
+					className={`pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 ${overlay ? "text-white/90" : "text-foreground/40"}`}
+					strokeWidth={2.5}
 				/>
 				<input
 					type="text"

@@ -2,17 +2,9 @@
 
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
-import Paper from "@mui/material/Paper";
 import Container from "@mui/material/Container";
-import Stack from "@mui/material/Stack";
-import Chip from "@mui/material/Chip";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import LightbulbOutlinedIcon from "@mui/icons-material/LightbulbOutlined";
-import CampaignOutlinedIcon from "@mui/icons-material/CampaignOutlined";
-import FavoriteBorderOutlinedIcon from "@mui/icons-material/FavoriteBorderOutlined";
-import SecurityOutlinedIcon from "@mui/icons-material/SecurityOutlined";
 import { getPageContent } from "@/actions/cms";
-import type { ReactElement } from "react";
 
 export default async function FundraiseGuidePage() {
 	const content = await getPageContent("fundraise_guide");
@@ -29,35 +21,22 @@ export default async function FundraiseGuidePage() {
     <p>Bagikan campaign ke WhatsApp, media sosial, dan komunitas untuk menjangkau lebih banyak orang baik.</p>
   `;
 
-	const tips: {
-		icon: ReactElement;
-		title: string;
-		desc: string;
-		color: string;
-	}[] = [
+	const tips = [
 		{
-			icon: <LightbulbOutlinedIcon />,
 			title: "Tulis judul yang spesifik",
 			desc: "Judul yang jelas memudahkan orang memahami tujuan galang dana.",
-			color: "#10b981",
 		},
 		{
-			icon: <CampaignOutlinedIcon />,
 			title: "Gunakan visual yang kuat",
 			desc: "Foto/Video yang relevan meningkatkan kepercayaan dan empati.",
-			color: "#0ea5e9",
 		},
 		{
-			icon: <FavoriteBorderOutlinedIcon />,
 			title: "Update secara berkala",
 			desc: "Cerita perkembangan membuat donatur merasa terlibat.",
-			color: "#f59e0b",
 		},
 		{
-			icon: <SecurityOutlinedIcon />,
 			title: "Transparansi penggunaan dana",
 			desc: "Jelaskan rencana penggunaan dana dan bukti penyaluran.",
-			color: "#8b5cf6",
 		},
 	];
 
@@ -72,153 +51,98 @@ export default async function FundraiseGuidePage() {
 	return (
 		<Box sx={{ bgcolor: "background.default" }}>
 			<Container maxWidth="md" sx={{ px: 2, pt: 3, pb: 8 }}>
-				<Paper
-					elevation={0}
-					sx={{
-						p: 3,
-						borderRadius: 3,
-						border: "1px solid",
-						borderColor: "divider",
-						bgcolor: "background.paper",
-					}}
+				<Typography
+					sx={{ fontWeight: 900, fontSize: 24, color: "text.primary" }}
 				>
-					<Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-						<Chip
-							label="Panduan"
-							size="small"
-							sx={{ borderRadius: 1, fontWeight: 700 }}
-							color="success"
-							variant="outlined"
-						/>
-					</Box>
-					<Typography
-						sx={{ fontWeight: 900, fontSize: 22, mt: 1, color: "text.primary" }}
-					>
-						{title}
-					</Typography>
-					<Typography sx={{ fontSize: 13, color: "text.secondary", mt: 0.5 }}>
-						Tips agar campaign kamu lebih sukses, informatif, dan dipercaya
-					</Typography>
-				</Paper>
+					{title}
+				</Typography>
+				<Typography sx={{ fontSize: 14, color: "text.secondary", mt: 0.5, mb: 4 }}>
+					Tips agar campaign kamu lebih sukses, informatif, dan dipercaya
+				</Typography>
 
-				<Box sx={{ mt: 3 }}>
-					<Stack spacing={2}>
-						{tips.map((t, i) => (
-							<Paper
-								key={i}
-								elevation={0}
-								sx={{
-									p: 2,
-									borderRadius: 3,
-									border: "1px solid",
-									borderColor: "divider",
-									display: "flex",
-									gap: 1.5,
-									alignItems: "flex-start",
-								}}
-							>
-								<Box
-									sx={{
-										width: 36,
-										height: 36,
-										borderRadius: 2,
-										display: "grid",
-										placeItems: "center",
-										bgcolor: `${t.color}20`,
-										color: t.color,
-										flexShrink: 0,
-									}}
-								>
-									{t.icon}
-								</Box>
-								<Box sx={{ flex: 1, minWidth: 0 }}>
-									<Typography
-										sx={{
-											fontWeight: 800,
-											fontSize: 14,
-											color: "text.primary",
-										}}
-									>
-										{t.title}
-									</Typography>
-									<Typography
-										sx={{ fontSize: 13, color: "text.secondary", mt: 0.3 }}
-									>
-										{t.desc}
-									</Typography>
-								</Box>
-							</Paper>
-						))}
-					</Stack>
-				</Box>
-
-				<Paper
-					elevation={0}
-					sx={{
-						mt: 3,
-						p: 3,
-						borderRadius: 3,
-						border: "1px solid",
-						borderColor: "divider",
-						bgcolor: "background.paper",
-					}}
-				>
-					<Typography sx={{ fontWeight: 800, fontSize: 16, mb: 1 }}>
-						Langkah-langkah
-					</Typography>
-					<Stack spacing={1.2}>
-						{steps.map((s, i) => (
-							<Box
-								key={i}
-								sx={{ display: "flex", alignItems: "center", gap: 1 }}
-							>
-								<CheckCircleIcon sx={{ fontSize: 18, color: "success.main" }} />
-								<Typography sx={{ fontSize: 13, color: "text.secondary" }}>
-									{s}
-								</Typography>
-							</Box>
-						))}
-					</Stack>
-				</Paper>
-
-				<Paper
-					elevation={0}
-					sx={{
-						mt: 3,
-						p: 3,
-						borderRadius: 3,
-						border: "1px solid",
-						borderColor: "divider",
-						bgcolor: "background.paper",
-					}}
-				>
+				{/* Langkah-langkah */}
+				<Typography sx={{ fontWeight: 800, fontSize: 18, mb: 2, color: "text.primary" }}>
+					Langkah-langkah
+				</Typography>
+				{steps.map((s, i) => (
 					<Box
+						key={i}
 						sx={{
-							"& img": {
-								maxWidth: "100%",
-								height: "auto",
-								borderRadius: 2,
-								my: 1.5,
-							},
-							"& p": {
-								fontSize: 15,
-								lineHeight: 1.8,
-								color: "text.secondary",
-								mb: 2,
-							},
-							"& h1, & h2, & h3": {
-								color: "text.primary",
-								fontWeight: 800,
-								mt: 2,
-								mb: 1,
-							},
-							"& ul, & ol": { pl: 3, mb: 2 },
-							"& li": { mb: 0.5 },
-							"& a": { color: "primary.main", textDecoration: "underline" },
+							display: "flex",
+							gap: 1.5,
+							alignItems: "flex-start",
+							mb: 2,
 						}}
-						dangerouslySetInnerHTML={{ __html: html }}
-					/>
-				</Paper>
+					>
+						<Box
+							sx={{
+								width: 28,
+								height: 28,
+								borderRadius: "50%",
+								bgcolor: "#0ba976",
+								color: "#fff",
+								display: "grid",
+								placeItems: "center",
+								fontSize: 13,
+								fontWeight: 800,
+								flexShrink: 0,
+								mt: 0.2,
+							}}
+						>
+							{i + 1}
+						</Box>
+						<Typography sx={{ fontSize: 14, color: "text.secondary", lineHeight: 1.7 }}>
+							{s}
+						</Typography>
+					</Box>
+				))}
+
+				{/* Tips */}
+				<Typography sx={{ fontWeight: 800, fontSize: 18, mt: 4, mb: 2, color: "text.primary" }}>
+					Tips Sukses
+				</Typography>
+				{tips.map((t, i) => (
+					<Box key={i} sx={{ display: "flex", gap: 1.5, alignItems: "flex-start", mb: 2 }}>
+						<CheckCircleIcon sx={{ fontSize: 20, color: "#0ba976", mt: 0.2, flexShrink: 0 }} />
+						<Box>
+							<Typography sx={{ fontWeight: 700, fontSize: 14, color: "text.primary" }}>
+								{t.title}
+							</Typography>
+							<Typography sx={{ fontSize: 13, color: "text.secondary", mt: 0.3 }}>
+								{t.desc}
+							</Typography>
+						</Box>
+					</Box>
+				))}
+
+				{/* CMS Content */}
+				<Box
+					sx={{
+						mt: 4,
+						"& img": {
+							maxWidth: "100%",
+							height: "auto",
+							borderRadius: 2,
+							my: 1.5,
+						},
+						"& p": {
+							fontSize: 15,
+							lineHeight: 1.8,
+							color: "text.secondary",
+							mb: 2,
+						},
+						"& h1, & h2, & h3": {
+							color: "text.primary",
+							fontWeight: 800,
+							mt: 3,
+							mb: 1,
+						},
+						"& ul, & ol": { pl: 3, mb: 2 },
+						"& li": { mb: 0.5, fontSize: 14, color: "text.secondary" },
+						"& a": { color: "primary.main", textDecoration: "underline" },
+					}}
+					dangerouslySetInnerHTML={{ __html: html }}
+				/>
 			</Container>
 		</Box>
 	);

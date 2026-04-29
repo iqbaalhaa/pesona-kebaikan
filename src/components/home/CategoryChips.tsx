@@ -68,7 +68,7 @@ function CampaignRowCard({ item }: { item: Campaign }) {
 	return (
 		<div
 			onClick={() => router.push(`/donasi/${item.slug || item.id}`)}
-			className="w-[200px] min-w-[200px] shrink-0 cursor-pointer select-none snap-start overflow-hidden transition-transform active:scale-[0.99]"
+			className="w-[240px] min-w-[240px] shrink-0 cursor-pointer select-none snap-start overflow-hidden transition-transform active:scale-[0.99]"
 		>
 			<div className="relative h-[120px] overflow-hidden bg-slate-100">
 				<Image

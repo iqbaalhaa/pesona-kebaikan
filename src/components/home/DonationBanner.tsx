@@ -49,7 +49,7 @@ export default function DonationBanner() {
 					<p className="mb-2 text-sm font-bold text-slate-800">
 						Metode Pembayaran Lengkap
 					</p>
-					<div className="no-scrollbar -mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1">
+					<div className="-mx-1 flex flex-wrap gap-1.5 px-1 pb-1">
 						<PayChip label="E-Wallet" icon={Wallet} />
 						<PayChip label="Virtual Account" icon={Receipt} />
 						<PayChip label="Bank Transfer" icon={Building2} />

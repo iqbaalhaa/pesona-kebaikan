@@ -317,32 +317,20 @@ export default function PrayersSection({
 											</Typography>
 										</Box>
 
-										<Box
+										<Typography
 											sx={{
 												mt: 0.55,
-												display: "inline-flex",
+												fontSize: 10.5,
+												fontWeight: 900,
+												color: "#0ba976",
+												whiteSpace: "nowrap",
+												overflow: "hidden",
+												textOverflow: "ellipsis",
 												maxWidth: "100%",
-												px: 1,
-												py: "2px",
-												borderRadius: 999,
-												border: "1px solid rgba(11,169,118,0.18)",
-												bgcolor: "rgba(11,169,118,0.06)",
 											}}
 										>
-											<Typography
-												sx={{
-													fontSize: 10.5,
-													fontWeight: 900,
-													color: "rgba(15,23,42,.70)",
-													whiteSpace: "nowrap",
-													overflow: "hidden",
-													textOverflow: "ellipsis",
-													maxWidth: "100%",
-												}}
-											>
-												{p.campaignTitle}
-											</Typography>
-										</Box>
+											{p.campaignTitle}
+										</Typography>
 									</Box>
 
 									<Box

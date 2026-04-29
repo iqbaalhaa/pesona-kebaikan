@@ -88,7 +88,19 @@ export async function getLatestDonations(limit: number = 10) {
 		const data = donations.map((d) => ({
 			id: d.id,
 			name: d.isAnonymous ? "Hamba Allah" : d.donorName,
-			time: new Date(d.createdAt).toLocaleDateString("id-ID"),
+			time: (() => {
+				const now = Date.now();
+				const diff = now - new Date(d.createdAt).getTime();
+				const mins = Math.floor(diff / 60000);
+				if (mins < 1) return "Baru saja";
+				if (mins < 60) return `${mins} menit yang lalu`;
+				const hours = Math.floor(mins / 60);
+				if (hours < 24) return `${hours} jam yang lalu`;
+				const days = Math.floor(hours / 24);
+				if (days < 30) return `${days} hari yang lalu`;
+				const months = Math.floor(days / 30);
+				return `${months} bulan yang lalu`;
+			})(),
 			campaignTitle: d.campaign.title,
 			message: d.message || "Semoga berkah",
 			amiinCount: (d as any).amiinCount ?? 0,

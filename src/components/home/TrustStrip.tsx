@@ -31,8 +31,8 @@ function TrustItem({
 	desc: string;
 }) {
 	return (
-		<div className="group flex w-full gap-2 rounded-xl border border-transparent p-2 text-left transition-all hover:-translate-y-0.5 hover:border-primary/20 hover:bg-primary/4 hover:shadow-[0_4px_12px_rgba(11,169,118,0.08)]">
-			<div className="grid h-12 w-12 shrink-0 place-items-center rounded-[14px] bg-primary/10 text-primary transition-all group-hover:scale-110 group-hover:bg-primary group-hover:text-white">
+		<div className="flex w-full gap-2 rounded-xl border border-transparent p-2 text-left">
+			<div className="grid h-12 w-12 shrink-0 place-items-center rounded-[14px] bg-primary/10 text-primary">
 				<Icon size={24} />
 			</div>
 			<div className="flex min-w-0 flex-col justify-center">

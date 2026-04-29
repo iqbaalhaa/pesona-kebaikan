@@ -526,7 +526,7 @@ export default function QuickDonate() {
 							py: 1.2,
 							border: "1px solid rgba(11,169,118,0.35)",
 							bgcolor: isValid ? PRIMARY : "rgba(15,23,42,0.08)",
-							color: isValid ? "#0b1220" : "rgba(15,23,42,.40)",
+							color: isValid ? "#ffffff" : "rgba(15,23,42,.40)",
 							fontWeight: 900,
 							fontSize: 13.5,
 							cursor: isValid ? "pointer" : "not-allowed",

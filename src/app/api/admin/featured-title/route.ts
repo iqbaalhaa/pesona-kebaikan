@@ -11,7 +11,7 @@ export async function GET() {
     const key = await prisma.notifyKey.findUnique({
       where: { key: "home_featured_title" },
     });
-    return NextResponse.json({ title: key?.value || "Pilihan Kitabisa" });
+    return NextResponse.json({ title: key?.value || "Pilihan Pesona Kebaikan" });
   } catch (error) {
     console.error("Featured Title API Error:", error);
     return new NextResponse("Internal Server Error", { status: 500 });

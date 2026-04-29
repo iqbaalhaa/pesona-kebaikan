@@ -90,7 +90,7 @@ export default async function Home() {
 
 	// Category chips will handle its own category icons and defaults
 	const featuredTitle =
-		(featuredTitleRes as any)?.value?.trim() || "Pilihan Kitabisa";
+		(featuredTitleRes as any)?.value?.trim() || "Pilihan Pesona Kebaikan";
 
 	return (
 		<Box sx={{ pb: 2 }}>

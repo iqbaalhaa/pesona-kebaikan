@@ -64,7 +64,7 @@ export default function AdminFeaturedPage() {
 				const featRaw: any[] = featRes.ok ? await featRes.json() : [];
 				const titleJson = titleRes.ok
 					? await titleRes.json()
-					: { title: "Pilihan Kitabisa" };
+					: { title: "Pilihan Pesona Kebaikan" };
 				setAllCampaigns(list);
 				const mapped = featRaw.map((f, idx) => ({
 					id: f.id,
@@ -75,7 +75,7 @@ export default function AdminFeaturedPage() {
 				}));
 				setFeatured(mapped);
 				originalRef.current = mapped;
-				setFeaturedTitle(titleJson.title || "Pilihan Kitabisa");
+				setFeaturedTitle(titleJson.title || "Pilihan Pesona Kebaikan");
 			} catch (e) {
 				console.error(e);
 				showSnackbar("Gagal memuat data", "error");
