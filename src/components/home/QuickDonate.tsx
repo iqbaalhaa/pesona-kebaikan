@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { createPortal } from "react-dom";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Script from "next/script";
@@ -79,6 +80,7 @@ export default function QuickDonate() {
 
 	// bottom sheet state
 	const [open, setOpen] = React.useState(false);
+	const [mounted, setMounted] = React.useState(false);
 	const [campaignId, setCampaignId] = React.useState<string>("");
 	const [currentDonationId, setCurrentDonationId] = React.useState<
 		string | undefined
@@ -92,6 +94,8 @@ export default function QuickDonate() {
 
 	// Fetch quick donation campaign ID on mount
 	React.useEffect(() => {
+		setMounted(true);
+
 		const fetchId = async () => {
 			const id = await getQuickDonationCampaignId();
 			if (id) {
@@ -100,6 +104,21 @@ export default function QuickDonate() {
 		};
 		fetchId();
 	}, []);
+
+	React.useEffect(() => {
+		if (!mounted || !open) return;
+
+		const previousOverflow = document.body.style.overflow;
+		const previousPaddingRight = document.body.style.paddingRight;
+
+		document.body.style.overflow = "hidden";
+		document.body.style.paddingRight = "0px";
+
+		return () => {
+			document.body.style.overflow = previousOverflow;
+			document.body.style.paddingRight = previousPaddingRight;
+		};
+	}, [mounted, open]);
 
 	// Fix body scroll issue after Midtrans Snap success and auto-close success message
 	React.useEffect(() => {
@@ -540,8 +559,10 @@ export default function QuickDonate() {
 			</Box>
 
 			{/* Bottom sheet */}
-			{open && (
-				<Box sx={{ position: "fixed", inset: 0, zIndex: 2500 }}>
+			{mounted &&
+				open &&
+				createPortal(
+					<Box sx={{ position: "fixed", inset: 0, zIndex: 15000 }}>
 					{/* Backdrop */}
 					<Box
 						onClick={() => setOpen(false)}
@@ -577,7 +598,7 @@ export default function QuickDonate() {
 								md: "400px",
 							},
 							maxHeight: {
-								xs: "85vh",
+								xs: "min(85vh, calc(100dvh - 20px))",
 								md: "auto",
 							},
 							display: "flex",
@@ -739,7 +760,14 @@ export default function QuickDonate() {
 						</Box>
 
 						{/* Footer actions */}
-						<Box sx={{ px: 3, pb: 4, display: "grid", gap: 1.5 }}>
+						<Box
+							sx={{
+								px: 3,
+								pb: "calc(16px + env(safe-area-inset-bottom))",
+								display: "grid",
+								gap: 1.5,
+							}}
+						>
 							<Button
 								variant="contained"
 								fullWidth
@@ -797,8 +825,9 @@ export default function QuickDonate() {
 							</Button>
 						</Box>
 					</Box>
-				</Box>
-			)}
+				</Box>,
+					document.body,
+				)}
 			<Snackbar
 				open={!!error}
 				autoHideDuration={6000}
