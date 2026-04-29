@@ -17,7 +17,10 @@ import {
 } from "@mui/material";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import ArrowBackIosNewRoundedIcon from "@mui/icons-material/ArrowBackIosNewRounded";
+import dynamic from "next/dynamic";
 import { updateCampaign, getCampaignById } from "@/actions/campaign";
+
+const RichTextEditor = dynamic(() => import("@/components/admin/RichTextEditor"), { ssr: false });
 
 function formatIDR(numStr: string) {
 	const n = numStr.toString().replace(/\D/g, "");
@@ -36,6 +39,7 @@ export default function AdminEditCampaignPage() {
 	const [coverPreview, setCoverPreview] = React.useState<string>("");
 	const [target, setTarget] = React.useState<string>("");
 	const [campaign, setCampaign] = React.useState<any>(null);
+	const [storyHtml, setStoryHtml] = React.useState<string>("");
 	const [featured, setFeatured] = React.useState<boolean>(false);
 
 	const [snackbar, setSnackbar] = React.useState<{
@@ -77,6 +81,7 @@ export default function AdminEditCampaignPage() {
 					setCampaign(res.data);
 					setTarget(formatIDR(res.data.target.toString()));
 					setCoverPreview(res.data.thumbnail);
+					setStoryHtml(res.data.description || "");
 				} else {
 					showSnackbar("Campaign tidak ditemukan", "error");
 					router.push("/admin/campaign");
@@ -198,15 +203,18 @@ export default function AdminEditCampaignPage() {
 						defaultValue={campaign.phone}
 					/>
 
-					<TextField
-						name="story"
-						label="Cerita Lengkap"
-						required
-						fullWidth
-						multiline
-						rows={6}
-						defaultValue={campaign.description}
-					/>
+					<Box>
+						<Typography sx={{ mb: 1, fontWeight: 600, fontSize: 14 }}>
+							Cerita Lengkap *
+						</Typography>
+						<input type="hidden" name="story" value={storyHtml} />
+						<RichTextEditor
+							value={storyHtml}
+							onChange={(val) => setStoryHtml(val)}
+							placeholder="Tulis cerita lengkap campaign..."
+							minHeight={200}
+						/>
+					</Box>
 
 					<Box>
 						<Typography sx={{ mb: 1, fontWeight: 500 }}>Cover Image</Typography>

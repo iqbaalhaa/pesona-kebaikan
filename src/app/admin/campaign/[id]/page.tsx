@@ -1055,6 +1055,8 @@ export default function AdminCampaignDetailPage(props: {
 		);
 	}
 
+	const isReviewMode = ["pending", "review", "draft"].includes(data.status);
+
 	return (
 		<Box sx={{ display: "grid", gap: 2 }}>
 			{/* TOP HEADER */}
@@ -1403,13 +1405,12 @@ export default function AdminCampaignDetailPage(props: {
 					</Paper>
 
 					{/* Tabs */}
-					<Paper elevation={0} sx={{ ...shellSx, p: 1.25 }}>
+					<Paper elevation={0} sx={{ ...shellSx, px: 1.25, py: 0, borderBottom: "1px solid", borderColor: "divider" }}>
 						<Stack
 							direction="row"
-							spacing={1}
+							spacing={0}
 							sx={{
 								overflowX: "auto",
-								pb: 0.25,
 								"&::-webkit-scrollbar": { display: "none" },
 							}}
 						>
@@ -2033,12 +2034,7 @@ export default function AdminCampaignDetailPage(props: {
 									>
 										{data.ownerName}
 									</Typography>
-									<Typography
-										sx={{ fontSize: 12, color: "text.secondary", mt: 0.5 }}
-									>
-										Pemilik Campaign
-									</Typography>
-								</Box>
+										</Box>
 							</Stack>
 
 							<Divider sx={{ my: 1 }} />
@@ -2067,96 +2063,7 @@ export default function AdminCampaignDetailPage(props: {
 						</Stack>
 					</Paper>
 
-					<Paper elevation={0} sx={{ ...shellSx, p: 1.5 }}>
-						<Typography sx={{ fontWeight: 1000, fontSize: 14 }}>
-							Quick Actions
-						</Typography>
-						<Typography
-							sx={{ mt: 0.5, fontSize: 12.5, color: "text.secondary" }}
-						>
-							Aksi cepat untuk admin.
-						</Typography>
 
-						<Divider sx={{ my: 1.25 }} />
-
-						<Stack spacing={1}>
-							<Button
-								variant="outlined"
-								startIcon={<UploadFileRoundedIcon />}
-								onClick={() => setTab("docs")}
-								sx={{
-									borderRadius: 999,
-									fontWeight: 900,
-									justifyContent: "flex-start",
-								}}
-							>
-								Cek Dokumen
-							</Button>
-
-							<Button
-								variant="outlined"
-								startIcon={<VerifiedRoundedIcon />}
-								onClick={() => setTab("verify")}
-								disabled={!canVerify}
-								sx={{
-									borderRadius: 999,
-									fontWeight: 900,
-									justifyContent: "flex-start",
-								}}
-							>
-								Buka Verifikasi
-							</Button>
-
-							<Button
-								href={data.publicUrl}
-								target="_blank"
-								variant="contained"
-								endIcon={<OpenInNewRoundedIcon />}
-								sx={{
-									borderRadius: 999,
-									fontWeight: 900,
-									boxShadow: "none",
-									justifyContent: "flex-start",
-								}}
-							>
-								Buka Public Page
-							</Button>
-
-							<Button
-								variant="outlined"
-								startIcon={<ContentCopyRoundedIcon />}
-								onClick={() => copy(data.publicUrl)}
-								sx={{
-									borderRadius: 999,
-									fontWeight: 900,
-									justifyContent: "flex-start",
-								}}
-							>
-								Copy Public URL
-							</Button>
-						</Stack>
-					</Paper>
-
-					<Paper elevation={0} sx={{ ...shellSx, p: 1.5 }}>
-						<Typography sx={{ fontWeight: 1000, fontSize: 14 }}>
-							Public URL
-						</Typography>
-						<Typography
-							sx={{ mt: 0.5, fontSize: 12.5, color: "text.secondary" }}
-						>
-							Pakai untuk cek halaman publik atau kirim ke tim.
-						</Typography>
-
-						<Divider sx={{ my: 1.25 }} />
-
-						<TextField
-							size="small"
-							value={data.publicUrl}
-							fullWidth
-							InputProps={{ readOnly: true }}
-							sx={fieldSx(theme)}
-						/>
-					</Paper>
 				</Stack>
 			</Box>
 
@@ -2454,36 +2361,29 @@ function SegTab({
 }) {
 	const theme = useTheme();
 	return (
-		<Chip
-			label={label}
-			clickable
+		<Box
+			component="button"
 			onClick={onClick}
-			variant="outlined"
 			sx={{
-				borderRadius: 999,
-				fontWeight: 1000,
-				px: 0.5,
-				borderColor: active
-					? alpha(theme.palette.primary.main, 0.35)
-					: alpha(theme.palette.divider, 1),
-				bgcolor: active
-					? alpha(
-							theme.palette.primary.main,
-							theme.palette.mode === "dark" ? 0.18 : 0.08,
-						)
-					: "transparent",
-				color: active
-					? theme.palette.primary.main
-					: theme.palette.text.secondary,
+				px: 1.5,
+				py: 0.75,
+				fontSize: 13,
+				fontWeight: active ? 900 : 700,
+				color: active ? theme.palette.primary.main : theme.palette.text.secondary,
+				borderBottom: active ? `2px solid ${theme.palette.primary.main}` : "2px solid transparent",
+				background: "none",
+				border: "none",
+				borderBottomStyle: "solid",
+				cursor: "pointer",
+				whiteSpace: "nowrap",
 				transition: "all 140ms ease",
 				"&:hover": {
-					bgcolor: alpha(
-						theme.palette.primary.main,
-						theme.palette.mode === "dark" ? 0.14 : 0.06,
-					),
+					color: theme.palette.primary.main,
 				},
 			}}
-		/>
+		>
+			{label}
+		</Box>
 	);
 }
 
@@ -2526,38 +2426,30 @@ function MiniStat({
 	value: string;
 	avatar?: string;
 }) {
-	const theme = useTheme();
 	return (
-		<Paper
-			variant="outlined"
+		<Box
 			sx={{
-				borderRadius: 2.5,
-				p: 1.25,
-				borderColor: alpha(theme.palette.divider, 1),
-				bgcolor: alpha(
-					theme.palette.background.default,
-					theme.palette.mode === "dark" ? 0.2 : 1,
-				),
 				display: "flex",
 				alignItems: "center",
 				gap: 1.5,
+				py: 0.75,
 			}}
 		>
 			{avatar && <Avatar src={avatar} sx={{ width: 36, height: 36 }} />}
 			<Box sx={{ flex: 1, minWidth: 0 }}>
 				<Typography
-					sx={{ fontSize: 11.5, color: "text.secondary", fontWeight: 900 }}
+					sx={{ fontSize: 11.5, color: "text.secondary", fontWeight: 700 }}
 				>
 					{label}
 				</Typography>
 				<Typography
-					sx={{ mt: 0.2, fontSize: 12.5, fontWeight: 1000 }}
+					sx={{ mt: 0.2, fontSize: 12.5, fontWeight: 900 }}
 					className="line-clamp-2"
 				>
 					{value}
 				</Typography>
 			</Box>
-		</Paper>
+		</Box>
 	);
 }
 

@@ -107,7 +107,7 @@ export function getCategoryIcon(rawName?: string) {
 			icon: React.cloneElement(SYSTEM_ICONS_MAP[key].icon as React.ReactElement<any>, {
 				sx: { fontSize: 28 },
 			}),
-			color: colorOverride || "inherit",
+			color: colorOverride || "#64748b",
 		};
 	}
 
