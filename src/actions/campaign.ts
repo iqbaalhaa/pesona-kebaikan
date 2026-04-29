@@ -521,7 +521,7 @@ export async function getCampaigns(
 			};
 		}).filter(Boolean);
 
-		let mixedRows = [...campaignRows, ...fundraiserRows];
+		let mixedRows = [...campaignRows];
 
 		if (sortBy === "newest") {
 			mixedRows.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
@@ -530,7 +530,7 @@ export async function getCampaigns(
 		return {
 			success: true,
 			data: mixedRows,
-			total: total + totalFundraisers,
+			total,
 			page,
 			limit,
 			totalPages: Math.ceil((total + totalFundraisers) / limit),

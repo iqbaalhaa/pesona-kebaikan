@@ -1,4 +1,5 @@
 import { getCampaigns } from "@/actions/campaign";
+import { getActiveFundraisers } from "@/actions/fundraiser";
 import DonationExplorer, {
 	CampaignItem,
 } from "@/components/donation/DonationExplorer";
@@ -46,13 +47,13 @@ export default async function DonationPage({
 	const isVerified = params.verified === "true";
 	const sort = typeof params.sort === "string" ? params.sort : "newest";
 
-	const [res, categoriesData] = await Promise.all([
+	const [res, categoriesData, fundraiserRes] = await Promise.all([
 		getCampaigns(
 			page,
 			limit,
-			"active", // status filter: only show active campaigns
+			"active",
 			search,
-			undefined, // userId
+			undefined,
 			category,
 			isEmergency,
 			isVerified,
@@ -61,10 +62,12 @@ export default async function DonationPage({
 		prisma.campaignCategory.findMany({
 			orderBy: { name: "asc" },
 		}),
+		getActiveFundraisers(50),
 	]);
 
 	const campaigns = (res.success && res.data ? res.data : []) as CampaignItem[];
 	const categories = categoriesData.map((c) => c.name);
+	const fundraisers = (fundraiserRes.success && fundraiserRes.data ? fundraiserRes.data : []) as CampaignItem[];
 
-	return <DonationExplorer initialData={campaigns} categories={categories} />;
+	return <DonationExplorer initialData={campaigns} categories={categories} fundraisers={fundraisers} />;
 }

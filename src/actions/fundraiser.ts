@@ -146,6 +146,67 @@ export async function checkFundraiserSlug(slug: string) {
 	return { success: true, available: !exists, slug: s };
 }
 
+export async function getActiveFundraisers(limit = 50) {
+	try {
+		const fundraisers = await prisma.fundraiser.findMany({
+			take: limit,
+			orderBy: { createdAt: "desc" },
+			include: {
+				campaign: {
+					select: {
+						id: true,
+						title: true,
+						slug: true,
+						status: true,
+						target: true,
+						end: true,
+						category: { select: { name: true } },
+						media: { where: { isThumbnail: true }, take: 1 },
+						donations: {
+							where: { status: { in: ["PAID", "paid", "SETTLED", "COMPLETED"] } },
+						},
+					},
+				},
+				createdBy: { select: { name: true, image: true, verifiedAt: true } },
+				donations: {
+					where: { status: { in: ["PAID", "paid", "SETTLED", "COMPLETED"] } },
+				},
+			},
+		});
+
+		const data = fundraisers
+			.filter((fr) => fr.campaign && fr.campaign.status === "ACTIVE")
+			.map((fr) => {
+				const c = fr.campaign!;
+				const collected = fr.donations.reduce((acc, d) => acc + Number(d.amount), 0);
+				const daysLeft = c.end
+					? Math.ceil((new Date(c.end).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+					: 0;
+				return {
+					id: fr.id,
+					slug: `fundraiser/${fr.slug}`,
+					title: fr.title,
+					category: c.category.name,
+					ownerName: fr.createdBy?.name || "Anonim",
+					target: Number(fr.target),
+					collected,
+					donors: fr.donations.length,
+					daysLeft: daysLeft > 0 ? daysLeft : 0,
+					status: "active",
+					updatedAt: fr.createdAt.toISOString(),
+					thumbnail: c.media[0]?.url || "",
+					verifiedAt: fr.createdBy?.verifiedAt || null,
+					campaignTitle: c.title,
+				};
+			});
+
+		return { success: true, data };
+	} catch (error) {
+		console.error("getActiveFundraisers error:", error);
+		return { success: false, data: [] };
+	}
+}
+
 export async function getFundraiserCampaign(slug: string) {
 	try {
 		const fr = await prisma.fundraiser.findUnique({

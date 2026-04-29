@@ -77,11 +77,13 @@ export default function BlogListClient({
 	];
 
 	return (
-		<div className="mx-auto max-w-[800px] px-2 pt-2.5">
-			<div className="mb-2 flex items-center justify-between">
-				<h1 className="text-2xl font-black text-foreground">Blog</h1>
+		<div className="mx-auto max-w-[800px]">
+			<div className="sticky top-0 z-10 border-b border-divider bg-white px-4 pb-2 pt-4 dark:bg-background">
+				<h1 className="text-lg font-black text-foreground">Blog</h1>
+				<p className="mt-0.5 text-xs text-text-secondary">Artikel inspiratif seputar donasi dan kebaikan</p>
 			</div>
 
+			<div className="px-4">
 			{/* Category filters */}
 			<div className="mt-2 mb-3 flex gap-1 overflow-x-auto pb-0.5">
 				{["Semua", ...categories].map((tag) => (
@@ -206,6 +208,7 @@ export default function BlogListClient({
 					}
 				}
 			`}</style>
+		</div>
 		</div>
 	);
 }

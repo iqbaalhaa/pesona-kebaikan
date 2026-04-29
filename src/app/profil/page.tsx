@@ -61,9 +61,9 @@ export default function ProfilePage() {
 	}, [status, loadProfile]);
 
 	return (
-		<div className="px-2 pb-10 pt-2.5">
+		<div className="px-4 pb-10 pt-4">
 			<div className="mb-3">
-				<h1 className="text-2xl font-black text-foreground">Profil Saya</h1>
+				<h1 className="text-lg font-black text-foreground">Profil Saya</h1>
 			</div>
 
 			{status === "loading" ? (

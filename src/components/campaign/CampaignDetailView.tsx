@@ -401,7 +401,7 @@ export default function CampaignDetailView({
 				}}
 			>
 				<IconButton
-					onClick={() => router.push("/donasi")}
+					onClick={() => router.back()}
 					sx={{
 						color: "white",
 						bgcolor: "rgba(0,0,0,0.3)",

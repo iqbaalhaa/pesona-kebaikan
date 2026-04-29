@@ -30,15 +30,16 @@ export type CampaignItem = {
 export default function DonationExplorer({
 	initialData,
 	categories = [],
+	fundraisers = [],
 }: {
 	initialData: CampaignItem[];
 	categories?: string[];
+	fundraisers?: CampaignItem[];
 }) {
 	const router = useRouter();
 	const searchParams = useSearchParams();
-	// Theme usage moved into card component
 
-	// URL State
+	const tab = searchParams.get("tab") || "campaign";
 	const q = searchParams.get("q") || "";
 	const category = searchParams.get("category") || "Semua";
 	const onlyVerified = searchParams.get("verified") === "true";
@@ -80,11 +81,11 @@ export default function DonationExplorer({
 	const categoryList = ["Semua", ...categories];
 
 	return (
-		<Container maxWidth="xl" sx={{ py: 4 }}>
+		<Container maxWidth="xl" sx={{ pt: 2, pb: 4, px: 2 }}>
 			{/* Header & Search */}
 			<Box
 				sx={{
-					mb: 4,
+					mb: 3,
 					display: "flex",
 					flexDirection: { xs: "column", md: "row" },
 					gap: 2,
@@ -93,10 +94,10 @@ export default function DonationExplorer({
 				}}
 			>
 				<Box>
-					<Typography variant="h4" fontWeight={800} sx={{ mb: 1 }}>
+					<Typography sx={{ fontSize: 18, fontWeight: 900, color: "#0f172a", mb: 0.5 }}>
 						Jelajahi Donasi
 					</Typography>
-					<Typography variant="body1" color="text.secondary">
+					<Typography sx={{ fontSize: 13, color: "text.secondary" }}>
 						Temukan kampanye yang sesuai dengan kepedulian Anda.
 					</Typography>
 				</Box>
@@ -125,80 +126,140 @@ export default function DonationExplorer({
 				</Box>
 			</Box>
 
-			{/* Filters */}
-			<Stack
-				direction="row"
-				spacing={1}
-				sx={{ mb: 3, overflowX: "auto", pb: 1 }}
-				alignItems="center"
-			>
-				{categoryList.map((cat) => (
-					<Chip
-						key={cat}
-						label={cat}
-						onClick={() =>
-							updateParam("category", cat === "Semua" ? null : cat)
-						}
-						color={category === cat ? "primary" : "default"}
-						variant={category === cat ? "filled" : "outlined"}
-						clickable
-						sx={{ fontWeight: 600 }}
-					/>
-				))}
-
-				<Box sx={{ flexGrow: 1 }} />
-
+			{/* Tabs */}
+			<Stack direction="row" spacing={1} sx={{ mb: 2 }}>
 				<Chip
-					label="Mendesak"
-					onClick={toggleUrgent}
-					color={onlyUrgent ? "error" : "default"}
-					variant={onlyUrgent ? "filled" : "outlined"}
+					label="Campaign"
+					onClick={() => updateParam("tab", null)}
+					color={tab === "campaign" ? "primary" : "default"}
+					variant={tab === "campaign" ? "filled" : "outlined"}
 					clickable
+					sx={{ fontWeight: 700 }}
 				/>
 				<Chip
-					label="Terverifikasi"
-					onClick={toggleVerified}
-					color={onlyVerified ? "info" : "default"}
-					variant={onlyVerified ? "filled" : "outlined"}
-					icon={onlyVerified ? <VerifiedUserIcon /> : undefined}
+					label={`Fundraiser${fundraisers.length > 0 ? ` (${fundraisers.length})` : ""}`}
+					onClick={() => updateParam("tab", "fundraiser")}
+					color={tab === "fundraiser" ? "primary" : "default"}
+					variant={tab === "fundraiser" ? "filled" : "outlined"}
 					clickable
+					sx={{ fontWeight: 700 }}
 				/>
 			</Stack>
 
-			{/* List Grid */}
-			<Box
-				sx={{
-					mt: 2,
-					display: "grid",
-					gridTemplateColumns: "repeat(2, minmax(0, 1fr))", // ✅ selalu 2 kolom
-					gap: 1.25, // ✅ lebih rapat (sebelumnya 2)
-				}}
-			>
-				{initialData.length === 0 && (
-					<Box sx={{ gridColumn: "1 / -1", textAlign: "center", py: 6 }}>
-						<Typography variant="body1" color="text.secondary">
-							Belum ada donasi yang sesuai kriteria.
-						</Typography>
-					</Box>
-				)}
+			{tab === "campaign" && (
+				<>
+					{/* Filters */}
+					<Stack
+						direction="row"
+						spacing={1}
+						sx={{ mb: 3, overflowX: "auto", pb: 1 }}
+						alignItems="center"
+					>
+						{categoryList.map((cat) => (
+							<Chip
+								key={cat}
+								label={cat}
+								onClick={() =>
+									updateParam("category", cat === "Semua" ? null : cat)
+								}
+								color={category === cat ? "primary" : "default"}
+								variant={category === cat ? "filled" : "outlined"}
+								clickable
+								sx={{ fontWeight: 600 }}
+							/>
+						))}
 
-				{initialData.map((x) => (
-					<ErrorBoundary key={x.id} fallback={<CampaignCardSkeleton />}>
-						<CampaignCard
-							id={x.id}
-							slug={x.slug}
-							title={x.title}
-							category={x.category}
-							ownerName={x.ownerName}
-							target={x.target}
-							collected={x.collected}
-							daysLeft={x.daysLeft}
-							thumbnail={x.thumbnail}
-							verifiedAt={x.verifiedAt}
+						<Box sx={{ flexGrow: 1 }} />
+
+						<Chip
+							label="Mendesak"
+							onClick={toggleUrgent}
+							color={onlyUrgent ? "error" : "default"}
+							variant={onlyUrgent ? "filled" : "outlined"}
+							clickable
 						/>
-					</ErrorBoundary>
-				))}
-			</Box>
+						<Chip
+							label="Terverifikasi"
+							onClick={toggleVerified}
+							color={onlyVerified ? "info" : "default"}
+							variant={onlyVerified ? "filled" : "outlined"}
+							icon={onlyVerified ? <VerifiedUserIcon /> : undefined}
+							clickable
+						/>
+					</Stack>
+
+					{/* Campaign Grid */}
+					<Box
+						sx={{
+							mt: 2,
+							display: "grid",
+							gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+							gap: 1.25,
+						}}
+					>
+						{initialData.length === 0 && (
+							<Box sx={{ gridColumn: "1 / -1", textAlign: "center", py: 6 }}>
+								<Typography variant="body1" color="text.secondary">
+									Belum ada donasi yang sesuai kriteria.
+								</Typography>
+							</Box>
+						)}
+
+						{initialData.map((x) => (
+							<ErrorBoundary key={x.id} fallback={<CampaignCardSkeleton />}>
+								<CampaignCard
+									id={x.id}
+									slug={x.slug}
+									title={x.title}
+									category={x.category}
+									ownerName={x.ownerName}
+									target={x.target}
+									collected={x.collected}
+									daysLeft={x.daysLeft}
+									thumbnail={x.thumbnail}
+									verifiedAt={x.verifiedAt}
+								/>
+							</ErrorBoundary>
+						))}
+					</Box>
+				</>
+			)}
+
+			{tab === "fundraiser" && (
+				<Box
+					sx={{
+						mt: 2,
+						display: "grid",
+						gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+						gap: 1.25,
+					}}
+				>
+					{fundraisers.length === 0 ? (
+						<Box sx={{ gridColumn: "1 / -1", textAlign: "center", py: 6 }}>
+							<Typography variant="body1" color="text.secondary">
+								Belum ada fundraiser aktif.
+							</Typography>
+						</Box>
+					) : (
+						fundraisers.map((x) => (
+							<ErrorBoundary key={x.id} fallback={<CampaignCardSkeleton />}>
+								<CampaignCard
+									id={x.id}
+									slug={x.slug}
+									title={x.title}
+									category={x.category}
+									ownerName={x.ownerName}
+									target={x.target}
+									collected={x.collected}
+									daysLeft={x.daysLeft}
+									thumbnail={x.thumbnail}
+									verifiedAt={x.verifiedAt}
+								/>
+							</ErrorBoundary>
+						))
+					)}
+				</Box>
+			)}
 		</Container>
 	);
 }

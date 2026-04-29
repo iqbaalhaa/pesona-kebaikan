@@ -474,7 +474,7 @@ export default function MyDonationPage() {
 
 	if (loading) {
 		return (
-			<Box sx={{ px: 2, pt: 2.5, maxWidth: 600, mx: "auto" }}>
+			<Box sx={{ px: 2, pt: 2, maxWidth: 600, mx: "auto" }}>
 				<Skeleton variant="text" width="50%" height={40} sx={{ mb: 2 }} />
 				<Skeleton
 					variant="rectangular"
@@ -503,14 +503,14 @@ export default function MyDonationPage() {
 
 	if (error) {
 		return (
-			<Box sx={{ px: 2, pt: 2.5, maxWidth: 600, mx: "auto" }}>
+			<Box sx={{ px: 2, pt: 2, maxWidth: 600, mx: "auto" }}>
 				<Alert severity="error">{error}</Alert>
 			</Box>
 		);
 	}
 
 	return (
-		<Box sx={{ px: 2, pt: 2.5, pb: 12, maxWidth: 600, mx: "auto" }}>
+		<Box sx={{ pb: 12, maxWidth: 600, mx: "auto" }}>
 			<Script
 				src={
 					process.env.NEXT_PUBLIC_MIDTRANS_IS_PRODUCTION === "true"
@@ -522,16 +522,25 @@ export default function MyDonationPage() {
 			/>
 			<Box
 				sx={{
-					display: "flex",
-					alignItems: "center",
-					justifyContent: "space-between",
-					mb: 3,
+					pt: 2,
+					pb: 1,
+					px: 2,
+					bgcolor: "background.paper",
+					borderBottom: "1px solid",
+					borderColor: "divider",
+					position: "sticky",
+					top: 0,
+					zIndex: 10,
 				}}
 			>
-				<Typography sx={{ fontSize: 20, fontWeight: 900, color: "#0f172a" }}>
+				<Typography sx={{ fontSize: 18, fontWeight: 900, color: "#0f172a" }}>
 					Donasi Saya
 				</Typography>
+				<Typography sx={{ fontSize: 12, color: "text.secondary", mt: 0.5 }}>
+					Riwayat dan status donasi kamu
+				</Typography>
 			</Box>
+			<Box sx={{ px: 2 }}>
 
 			{missingPhone && donations.length === 0 && (
 				<Alert severity="warning" sx={{ borderRadius: 2, mb: 3 }}>
