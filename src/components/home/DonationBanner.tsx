@@ -19,7 +19,7 @@ export default function DonationBanner() {
 	const MIN_DONATION = Number(process.env.NEXT_PUBLIC_MIN_DONATION ?? 1);
 
 	return (
-		<div className="mt-5 px-4">
+		<div className="mt-7 px-4">
 			<div className="relative overflow-hidden border border-slate-100 bg-white p-3 shadow-[0_10px_40px_-10px_rgba(0,0,0,0.05)]">
 				<div className="pointer-events-none absolute -right-5 -top-5 h-[100px] w-[100px] rounded-full bg-primary/3" />
 

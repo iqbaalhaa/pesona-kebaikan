@@ -61,10 +61,12 @@ export default function ProfilePage() {
 	}, [status, loadProfile]);
 
 	return (
-		<div className="px-4 pb-10 pt-4">
-			<div className="mb-3">
-				<h1 className="text-lg font-black text-foreground">Profil Saya</h1>
+		<div className="pb-10">
+			<div className="sticky top-0 z-10 border-b border-divider bg-white px-4 pb-2 pt-4 dark:bg-background">
+				<h1 className="text-xl font-black text-foreground">Profil Saya</h1>
+				<p className="mt-0.5 text-xs text-text-secondary">Kelola akun dan pengaturan kamu</p>
 			</div>
+			<div className="px-4 pt-3">
 
 			{status === "loading" ? (
 				<div className="flex justify-center p-4">
@@ -143,6 +145,7 @@ export default function ProfilePage() {
 				userEmail={user?.email}
 				onSuccess={loadProfile}
 			/>
+		</div>
 		</div>
 	);
 }

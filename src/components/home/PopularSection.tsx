@@ -9,7 +9,7 @@ export default function PopularSection({ campaigns = [] }: { campaigns?: Campaig
 			campaigns={campaigns}
 			showAllHref="/donasi"
 			header={
-				<h2 className="text-base font-extrabold text-foreground">
+				<h2 className="text-[15px] font-black text-foreground">
 					Populer Saat Ini
 				</h2>
 			}

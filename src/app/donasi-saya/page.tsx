@@ -533,7 +533,7 @@ export default function MyDonationPage() {
 					zIndex: 10,
 				}}
 			>
-				<Typography sx={{ fontSize: 18, fontWeight: 900, color: "#0f172a" }}>
+				<Typography sx={{ fontSize: 20, fontWeight: 900, color: "#0f172a" }}>
 					Donasi Saya
 				</Typography>
 				<Typography sx={{ fontSize: 12, color: "text.secondary", mt: 0.5 }}>
@@ -1370,6 +1370,7 @@ export default function MyDonationPage() {
 					</Stack>
 				</DialogContent>
 			</Dialog>
+		</Box>
 		</Box>
 	);
 }

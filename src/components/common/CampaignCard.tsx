@@ -3,6 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { ShieldCheck } from "lucide-react";
+import CategoryPill from "./CategoryPill";
 
 export type CampaignCardProps = {
 	id: string;
@@ -67,9 +68,7 @@ export default function CampaignCard(props: CampaignCardProps) {
 				/>
 				<div className="flex flex-1 flex-col p-[5px]">
 					<div className="mb-[3px] flex flex-wrap items-center gap-0.5">
-						<span className="rounded-md bg-primary/8 px-1.5 py-px text-[10px] font-semibold text-primary">
-							{x.category}
-						</span>
+						<CategoryPill label={x.category} />
 						{x.verifiedAt && (
 							<span className="inline-flex items-center gap-0.5 rounded-md border border-primary/30 px-1.5 py-px text-[10px] text-primary">
 								<ShieldCheck size={12} />

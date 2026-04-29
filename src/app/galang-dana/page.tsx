@@ -290,7 +290,7 @@ export default function GalangDanaSayaPage() {
 			>
 				<Typography
 					variant="h5"
-					sx={{ fontWeight: 900, fontSize: 18, color: "text.primary" }}
+					sx={{ fontWeight: 900, fontSize: 20, color: "text.primary" }}
 				>
 					Galang Dana Saya
 				</Typography>

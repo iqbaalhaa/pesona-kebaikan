@@ -276,9 +276,10 @@ export default function QuickDonate() {
 			>
 				<Box
 					sx={{
-						borderRadius: 0,
+						borderRadius: "20px",
 						bgcolor: "#fff",
-						boxShadow: "none",
+						boxShadow: "0 4px 24px rgba(0,0,0,0.08)",
+						mx: 2,
 						p: 3,
 						position: "relative",
 						overflow: "hidden",
@@ -342,8 +343,9 @@ export default function QuickDonate() {
 		<Box
 			sx={{
 				px: 0,
-				mt: 3,
+				mt: "-40px",
 				position: "relative",
+				zIndex: 2,
 			}}
 		>
 			<Script
@@ -357,9 +359,10 @@ export default function QuickDonate() {
 			/>
 			<Box
 				sx={{
-					borderRadius: 0,
+					borderRadius: "20px",
 					bgcolor: "#fff",
-					boxShadow: "none",
+					boxShadow: "0 4px 24px rgba(0,0,0,0.08)",
+					mx: 2,
 					p: 2,
 					position: "relative",
 					overflow: "hidden",
@@ -404,12 +407,6 @@ export default function QuickDonate() {
 
 				{/* Amount */}
 				<Box sx={{ position: "relative", mt: 1.4 }}>
-					<Typography
-						sx={{ fontSize: 12, fontWeight: 1000, color: "rgba(15,23,42,.80)" }}
-					>
-						Nominal
-					</Typography>
-
 					<Box
 						sx={{
 							mt: 1,

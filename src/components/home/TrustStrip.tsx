@@ -47,11 +47,11 @@ function TrustItem({
 
 export default function TrustStrip() {
 	return (
-		<div className="mt-5 px-4">
+		<div className="mt-7 px-4">
 			<div className="border border-slate-100 bg-white p-2 shadow-[0_10px_40px_-10px_rgba(0,0,0,0.05)]">
 				<div className="mb-2 flex items-center gap-1.5 px-1">
 					<div className="h-6 w-1 rounded bg-primary" />
-					<h3 className="text-base font-extrabold tracking-tight text-foreground">
+					<h3 className="text-[15px] font-black tracking-tight text-foreground">
 						Aman & Transparan
 					</h3>
 				</div>

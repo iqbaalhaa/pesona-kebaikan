@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Box, Container, Typography, Chip, Stack, TextField, InputAdornment } from "@mui/material";
+import { Box, Typography, Chip, Stack, TextField, InputAdornment } from "@mui/material";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
@@ -81,31 +81,31 @@ export default function DonationExplorer({
 	const categoryList = ["Semua", ...categories];
 
 	return (
-		<Container maxWidth="xl" sx={{ pt: 2, pb: 4, px: 2 }}>
-			{/* Header & Search */}
+		<Box sx={{ pb: 4 }}>
+			{/* Sticky Header */}
 			<Box
 				sx={{
-					mb: 3,
-					display: "flex",
-					flexDirection: { xs: "column", md: "row" },
-					gap: 2,
-					alignItems: "center",
-					justifyContent: "space-between",
+					pt: 2,
+					pb: 1.5,
+					px: 2,
+					bgcolor: "background.paper",
+					borderBottom: "1px solid",
+					borderColor: "divider",
+					position: "sticky",
+					top: 0,
+					zIndex: 10,
 				}}
 			>
-				<Box>
-					<Typography sx={{ fontSize: 18, fontWeight: 900, color: "#0f172a", mb: 0.5 }}>
-						Jelajahi Donasi
-					</Typography>
-					<Typography sx={{ fontSize: 13, color: "text.secondary" }}>
-						Temukan kampanye yang sesuai dengan kepedulian Anda.
-					</Typography>
-				</Box>
-
+				<Typography sx={{ fontSize: 20, fontWeight: 900, color: "#0f172a" }}>
+					Jelajahi Donasi
+				</Typography>
+				<Typography sx={{ fontSize: 12, color: "text.secondary", mt: 0.5 }}>
+					Temukan kampanye yang sesuai dengan kepedulian Anda
+				</Typography>
 				<Box
 					component="form"
 					onSubmit={handleSearch}
-					sx={{ width: { xs: "100%", md: 400 } }}
+					sx={{ mt: 1.5 }}
 				>
 					<TextField
 						fullWidth
@@ -119,13 +119,14 @@ export default function DonationExplorer({
 									<SearchRoundedIcon />
 								</InputAdornment>
 							),
-							sx: { borderRadius: 3, bgcolor: "background.paper" },
+							sx: { borderRadius: 3, bgcolor: "background.default" },
 						}}
 						size="small"
 					/>
 				</Box>
 			</Box>
 
+			<Box sx={{ px: 2, mt: 2 }}>
 			{/* Tabs */}
 			<Stack direction="row" spacing={1} sx={{ mb: 2 }}>
 				<Chip
@@ -260,6 +261,7 @@ export default function DonationExplorer({
 					)}
 				</Box>
 			)}
-		</Container>
+		</Box>
+		</Box>
 	);
 }

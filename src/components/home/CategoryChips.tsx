@@ -3,6 +3,7 @@
 import * as React from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import CategoryPill from "@/components/common/CategoryPill";
 import { LayoutGrid } from "lucide-react";
 import { Category, Campaign } from "@/types";
 import { CATEGORY_TITLE } from "@/lib/constants";
@@ -81,8 +82,8 @@ function CampaignRowCard({ item }: { item: Campaign }) {
 					onError={() => setImgSrc("/defaultimg.webp")}
 				/>
 				<div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/55 to-transparent to-70%" />
-				<span className="absolute left-2.5 top-2.5 rounded bg-white/92 px-1 py-px text-[11px] font-black backdrop-blur-lg">
-					{item.category}
+				<span className="absolute left-2.5 top-2.5">
+					<CategoryPill label={item.category} variant="overlay" />
 				</span>
 				<span className="absolute bottom-2.5 left-2.5 rounded-full bg-foreground/72 px-1 py-px text-[10px] font-black text-white backdrop-blur-lg">
 					{item.daysLeft} hari
@@ -165,9 +166,9 @@ export default function CategoryChips({
 	}, [activeId, campaigns, categoriesList]);
 
 	return (
-		<div className="mt-5 px-4">
+		<div className="mt-7 px-4">
 			<div className="mb-2 flex items-center justify-between">
-				<h2 className="text-base font-black text-foreground">Kategori Pilihan</h2>
+				<h2 className="text-[15px] font-black text-foreground">Kategori Pilihan</h2>
 			</div>
 
 			<div className="grid grid-cols-4 gap-2">

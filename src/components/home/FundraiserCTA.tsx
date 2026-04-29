@@ -5,7 +5,7 @@ import { Megaphone, ArrowRight, Heart } from "lucide-react";
 
 export default function FundraiserCTA() {
 	return (
-		<div className="mt-5 mb-4 px-4">
+		<div className="mt-7 mb-4 px-4">
 			<div className="group relative overflow-hidden border border-primary/15 bg-gradient-to-br from-white to-green-50 p-2.5 shadow-[0_10px_30px_-10px_rgba(11,169,118,0.15)] transition-all hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-[0_20px_40px_-12px_rgba(11,169,118,0.25)]">
 				{/* Decorative blobs */}
 				<div className="pointer-events-none absolute -right-5 -top-5 h-[120px] w-[120px] rounded-full bg-[radial-gradient(circle,rgba(11,169,118,0.1)_0%,transparent_70%)]" />
@@ -17,7 +17,7 @@ export default function FundraiserCTA() {
 					</div>
 
 					<div className="min-w-0 flex-1">
-						<h3 className="mb-0.5 text-base font-extrabold leading-tight tracking-tight text-slate-800">
+						<h3 className="mb-0.5 text-[15px] font-black leading-tight tracking-tight text-slate-800">
 							Jadi Fundraiser
 						</h3>
 						<p className="flex items-center gap-0.5 text-[13px] text-slate-500">

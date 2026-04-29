@@ -46,33 +46,33 @@ export default function QuickMenu() {
 
 	return (
 		<div className="relative z-2 mt-5 px-4">
-			<h2 className="mb-1.5 text-base font-extrabold text-foreground">
+			<h2 className="mb-3 text-[15px] font-black text-foreground">
 				Mau berbuat baik apa hari ini?
 			</h2>
 
-			<div className="grid grid-cols-4 gap-[5px]">
+			<div className="grid grid-cols-2 gap-2.5">
 				{MENUS.map((m) => {
 					const Icon = m.icon;
 					const inner = (
 						<button
 							onClick={() => handleActivate(m)}
-							className="relative block w-full cursor-pointer rounded-lg py-1 text-center transition-transform active:scale-[0.98]"
+							className="relative flex w-full cursor-pointer flex-col items-center justify-center rounded-2xl border border-divider bg-white py-5 text-center transition-all active:scale-[0.98]"
 						>
-							<div className="mx-auto grid h-[58px] w-[58px] place-items-center overflow-hidden rounded-full border border-primary/12 bg-primary/8 shadow-[0_4px_12px_rgba(11,169,118,0.08)]">
-								<Icon size={34} className="text-primary" />
+							<div className="grid h-14 w-14 place-items-center rounded-2xl bg-primary/10">
+								<Icon size={26} className="text-primary" />
 							</div>
+
+							<span className="mt-2 text-[12px] font-bold leading-tight text-foreground">
+								{m.label}
+							</span>
 
 							{m.status && (
 								<span
-									className={`absolute right-2.5 top-1 z-2 rounded px-[2px] py-px text-[0.5rem] font-black text-white shadow ${m.status === "soon" ? "bg-red-500" : "bg-green-500"}`}
+									className={`absolute right-2.5 top-2.5 rounded px-1 py-px text-[8px] font-black text-white ${m.status === "soon" ? "bg-red-500" : "bg-green-500"}`}
 								>
 									{m.status === "soon" ? "SOON" : "NEW"}
 								</span>
 							)}
-
-							<p className="mt-[3px] line-clamp-2 px-0.5 text-[11px] font-bold leading-tight text-foreground">
-								{m.label}
-							</p>
 						</button>
 					);
 

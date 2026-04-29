@@ -14,7 +14,7 @@ export default function UrgentSection({ campaigns = [] }: { campaigns?: Campaign
 						<span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-rose-400 opacity-75" />
 						<span className="relative inline-flex h-3 w-3 rounded-full bg-rose-600" />
 					</span>
-					<h2 className="text-base font-extrabold text-foreground">
+					<h2 className="text-[15px] font-black text-foreground">
 						Mendesak & Darurat
 					</h2>
 				</div>

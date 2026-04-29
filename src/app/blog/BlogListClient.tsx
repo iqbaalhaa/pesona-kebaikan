@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Share2, Copy, X } from "lucide-react";
 import { TwitterIcon, FacebookIcon, WhatsAppIcon } from "@/components/ui/SocialIcons";
+import CategoryPill from "@/components/common/CategoryPill";
 
 type BlogPost = {
 	id: string;
@@ -79,7 +80,7 @@ export default function BlogListClient({
 	return (
 		<div className="mx-auto max-w-[800px]">
 			<div className="sticky top-0 z-10 border-b border-divider bg-white px-4 pb-2 pt-4 dark:bg-background">
-				<h1 className="text-lg font-black text-foreground">Blog</h1>
+				<h1 className="text-xl font-black text-foreground">Blog</h1>
 				<p className="mt-0.5 text-xs text-text-secondary">Artikel inspiratif seputar donasi dan kebaikan</p>
 			</div>
 
@@ -119,21 +120,19 @@ export default function BlogListClient({
 								/>
 								<div className="flex flex-1 flex-col justify-center">
 									<div className="mb-1.5 flex items-center gap-1">
-										<button
+										<CategoryPill
+											label={post.tag}
 											onClick={(e) => {
 												e.preventDefault();
 												e.stopPropagation();
 												handleFilterChange(post.tag);
 											}}
-											className="cursor-pointer rounded bg-primary px-2 py-0.5 text-[11px] font-bold text-white"
-										>
-											{post.tag}
-										</button>
+										/>
 										<span className="text-[11.5px] font-bold text-foreground/55">
 											{post.date}
 										</span>
 									</div>
-									<h2 className="mb-1 line-clamp-2 text-lg font-extrabold leading-tight text-foreground">
+									<h2 className="mb-1 line-clamp-2 text-sm font-bold leading-snug text-foreground">
 										{post.title}
 									</h2>
 									<p className="mb-2 line-clamp-2 text-[14.5px] leading-relaxed text-foreground/70">

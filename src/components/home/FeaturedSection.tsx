@@ -15,7 +15,7 @@ export default function FeaturedSection({
 			campaigns={campaigns}
 			showAllHref="/donasi"
 			header={
-				<h2 className="text-base font-extrabold text-foreground">{title}</h2>
+				<h2 className="text-[15px] font-black text-foreground">{title}</h2>
 			}
 		/>
 	);

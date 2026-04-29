@@ -134,7 +134,7 @@ export default function CampaignScroller({ campaigns, header, showAllHref }: Cam
 	if (!campaigns || campaigns.length === 0) return null;
 
 	return (
-		<div className="group relative mt-5 px-4">
+		<div className="group relative mt-7 px-4">
 			<div className="mb-4 flex items-center justify-between">
 				{header}
 				{showAllHref && (

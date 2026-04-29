@@ -42,7 +42,7 @@ export default function HeroCarousel({ items = [] }: { items?: CarouselItem[] })
 	}, [displaySlides.length]);
 
 	return (
-		<div role="region" aria-roledescription="carousel" aria-label="Banner kampanye" className="relative h-[360px] w-full overflow-hidden bg-[#0b1220] md:rounded-b">
+		<div role="region" aria-roledescription="carousel" aria-label="Banner kampanye" className="relative z-0 h-[420px] w-full overflow-hidden bg-[#0b1220] md:rounded-b">
 			{displaySlides.map((s, i) => {
 				const Content = (
 					<>
