@@ -41,6 +41,7 @@ import FundDetailsModal from "./detail/modals/FundDetailsModal";
 import DonorsModal from "./detail/modals/DonorsModal";
 import ReportModal from "./detail/modals/ReportModal";
 import MedicalModal from "./detail/modals/MedicalModal";
+import CreateFundraiserDialog from "./detail/modals/CreateFundraiserDialog";
 import PatientModal from "./detail/modals/PatientModal";
 
 interface TabPanelProps {
@@ -125,6 +126,7 @@ export default function CampaignDetailView({
 	const [openReportModal, setOpenReportModal] = React.useState(false);
 	const [reportSuccessOpen, setReportSuccessOpen] = React.useState(false);
 	const [openFundraiserModal, setOpenFundraiserModal] = React.useState(false);
+	const [openCreateFundraiser, setOpenCreateFundraiser] = React.useState(false);
 
 	// Prefill report form with session data
 	React.useEffect(() => {
@@ -441,6 +443,7 @@ export default function CampaignDetailView({
 							setOpenFundDetailsModal={setOpenFundDetailsModal}
 							setOpenPatientModal={setOpenPatientModal}
 							setOpenFundraiserModal={setOpenFundraiserModal}
+							setOpenCreateFundraiser={setOpenCreateFundraiser}
 						/>
 					)}
 
@@ -676,9 +679,7 @@ export default function CampaignDetailView({
 							<Box
 								onClick={() => {
 									setOpenFundraiserModal(false);
-									if (data.slug)
-										router.push(`/donasi/${data.slug}/create-fundraiser`);
-									else router.push("/donasi/fundraiser");
+									setOpenCreateFundraiser(true);
 								}}
 								sx={{
 									bgcolor: "primary.main",
@@ -691,26 +692,7 @@ export default function CampaignDetailView({
 									"&:hover": { opacity: 0.9 },
 								}}
 							>
-								Jadi fundraiser
-							</Box>
-							<Box
-								onClick={() => {
-									setOpenFundraiserModal(false);
-									if (data.slug)
-										router.push(`/donasi/${data.slug}/create-fundraiser`);
-									else router.push("/donasi/fundraiser");
-								}}
-								sx={{
-									color: "primary.main",
-									borderRadius: 2,
-									textAlign: "center",
-									fontWeight: 800,
-									py: 1.25,
-									cursor: "pointer",
-									"&:hover": { bgcolor: "#f8fafc" },
-								}}
-							>
-								Undang fundraiser
+								Jadi Fundraiser
 							</Box>
 						</Box>
 					</Box>
@@ -776,6 +758,14 @@ export default function CampaignDetailView({
 						: "Terima kasih! Donasi Anda berhasil dibuat. Silakan lakukan pembayaran."}
 				</Alert>
 			</Snackbar>
+
+			<CreateFundraiserDialog
+				open={openCreateFundraiser}
+				onClose={() => setOpenCreateFundraiser(false)}
+				campaignSlug={data.slug || data.id}
+				campaignTitle={data.title}
+				campaignTarget={Number(data.target)}
+			/>
 		</Box>
 	);
 }

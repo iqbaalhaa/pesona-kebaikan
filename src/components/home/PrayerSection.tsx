@@ -224,7 +224,7 @@ export default function PrayersSection({
 	};
 
 	return (
-		<Box sx={{ px: 2, mt: 2.5 }}>
+		<Box sx={{ px: 2, mt: 5 }}>
 			<Box
 				sx={{
 					display: "flex",

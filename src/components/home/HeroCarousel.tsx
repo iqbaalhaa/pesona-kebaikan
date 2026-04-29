@@ -16,12 +16,12 @@ const defaultSlides: CarouselItem[] = [
 	{ id: "def2", image: "/brand/carousel2.webp" },
 ];
 
-function SlideImage({ src, priority }: { src: string; priority: boolean }) {
+function SlideImage({ src, alt, priority }: { src: string; alt: string; priority: boolean }) {
 	const [imgSrc, setImgSrc] = React.useState(src);
 	return (
 		<Image
 			src={imgSrc}
-			alt="slide"
+			alt={alt}
 			fill
 			priority={priority}
 			unoptimized
@@ -42,11 +42,11 @@ export default function HeroCarousel({ items = [] }: { items?: CarouselItem[] })
 	}, [displaySlides.length]);
 
 	return (
-		<div className="relative h-[360px] w-full overflow-hidden bg-[#0b1220] md:rounded-b">
+		<div role="region" aria-roledescription="carousel" aria-label="Banner kampanye" className="relative h-[360px] w-full overflow-hidden bg-[#0b1220] md:rounded-b">
 			{displaySlides.map((s, i) => {
 				const Content = (
 					<>
-						<SlideImage src={s.image} priority={i === 0} />
+						<SlideImage src={s.image} alt={s.title || "Banner kampanye donasi"} priority={i === 0} />
 						<div className="absolute inset-0 bg-gradient-to-b from-black/92 via-black/75 to-transparent to-58% from-0% via-24%" />
 					</>
 				);
@@ -56,7 +56,7 @@ export default function HeroCarousel({ items = [] }: { items?: CarouselItem[] })
 						className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${i === active ? "z-10 opacity-100" : "pointer-events-none z-0 opacity-0"}`}
 					>
 						{s.link ? (
-							<Link href={s.link} className="relative block h-full w-full">{Content}</Link>
+							<Link href={s.link} aria-label={s.title || "Lihat kampanye"} className="relative block h-full w-full">{Content}</Link>
 						) : (
 							<div className="relative h-full w-full">{Content}</div>
 						)}

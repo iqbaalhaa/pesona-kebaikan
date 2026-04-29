@@ -165,7 +165,7 @@ export default function CategoryChips({
 	}, [activeId, campaigns, categoriesList]);
 
 	return (
-		<div className="mt-3 px-2">
+		<div className="mt-5 px-4">
 			<div className="mb-2 flex items-center justify-between">
 				<h2 className="text-base font-black text-foreground">Kategori Pilihan</h2>
 			</div>

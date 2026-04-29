@@ -47,7 +47,7 @@ function TrustItem({
 
 export default function TrustStrip() {
 	return (
-		<div className="mt-3 px-2">
+		<div className="mt-5 px-4">
 			<div className="border border-slate-100 bg-white p-2 shadow-[0_10px_40px_-10px_rgba(0,0,0,0.05)]">
 				<div className="mb-2 flex items-center gap-1.5 px-1">
 					<div className="h-6 w-1 rounded bg-primary" />

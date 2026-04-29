@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { Box, Typography, Chip, Divider } from "@mui/material";
+import { Avatar, Box, Typography, Chip, Divider } from "@mui/material";
 import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
 import AccountBalanceWalletOutlinedIcon from "@mui/icons-material/AccountBalanceWalletOutlined";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
@@ -15,6 +15,7 @@ interface CampaignFundraiserProps {
 	setOpenFundDetailsModal: (open: boolean) => void;
 	setOpenPatientModal: (open: boolean) => void;
 	setOpenFundraiserModal: (open: boolean) => void;
+	setOpenCreateFundraiser: (open: boolean) => void;
 }
 
 export default function CampaignFundraiser({
@@ -22,6 +23,7 @@ export default function CampaignFundraiser({
 	setOpenFundDetailsModal,
 	setOpenPatientModal,
 	setOpenFundraiserModal,
+	setOpenCreateFundraiser,
 }: CampaignFundraiserProps) {
 	const isMedical = React.useMemo(() => {
 		const slug = (data.categorySlug || "").toLowerCase();
@@ -79,6 +81,13 @@ export default function CampaignFundraiser({
 								"&:hover": data.ownerId ? { opacity: 0.9 } : undefined,
 							}}
 						>
+							<Avatar
+								sx={{ width: 48, height: 48, border: "1px solid #f1f5f9" }}
+								src={data.ownerAvatar}
+								alt={data.ownerName}
+							>
+								{data.ownerName.charAt(0)}
+							</Avatar>
 							<Box>
 								<Box
 									sx={{
@@ -194,40 +203,36 @@ export default function CampaignFundraiser({
 				<Divider />
 
 				{/* Jadi Fundraiser Integration */}
-				<Link
-					href={`/donasi/${data.slug || data.id}/create-fundraiser`}
-					style={{ textDecoration: "none" }}
+				<Box
+					onClick={() => setOpenCreateFundraiser(true)}
+					sx={{
+						display: "flex",
+						alignItems: "center",
+						justifyContent: "space-between",
+						p: 2,
+						bgcolor: "#f0fdf4",
+						cursor: "pointer",
+						transition: "all 0.2s",
+						"&:hover": { bgcolor: "#dcfce7" },
+					}}
 				>
-					<Box
-						sx={{
-							display: "flex",
-							alignItems: "center",
-							justifyContent: "space-between",
-							p: 2,
-							bgcolor: "#f0fdf4",
-							cursor: "pointer",
-							transition: "all 0.2s",
-							"&:hover": { bgcolor: "#dcfce7" },
-						}}
-					>
-						<Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-							<VolunteerActivismRoundedIcon
-								sx={{ color: "#16a34a", fontSize: 22 }}
-							/>
-							<Box>
-								<Typography
-									sx={{ fontSize: 14, fontWeight: 700, color: "#166534" }}
-								>
-									Jadi Fundraiser
-								</Typography>
-								<Typography sx={{ fontSize: 12, color: "#15803d" }}>
-									Bantu sebarkan campaign ini
-								</Typography>
-							</Box>
+					<Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+						<VolunteerActivismRoundedIcon
+							sx={{ color: "#16a34a", fontSize: 22 }}
+						/>
+						<Box>
+							<Typography
+								sx={{ fontSize: 14, fontWeight: 700, color: "#166534" }}
+							>
+								Jadi Fundraiser
+							</Typography>
+							<Typography sx={{ fontSize: 12, color: "#15803d" }}>
+								Bantu sebarkan campaign ini dengan halaman milikmu
+							</Typography>
 						</Box>
-						<NavigateNextIcon sx={{ color: "#16a34a" }} />
 					</Box>
-				</Link>
+					<NavigateNextIcon sx={{ color: "#16a34a" }} />
+				</Box>
 			</Box>
 		</Box>
 	);

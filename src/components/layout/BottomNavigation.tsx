@@ -49,13 +49,15 @@ export default function SimpleBottomNavigation() {
 			ref={ref}
 			className="fixed bottom-0 left-1/2 z-[1100] w-full max-w-[480px] -translate-x-1/2 overflow-hidden bg-white pb-[env(safe-area-inset-bottom)]"
 		>
-			<nav className="flex h-[72px] items-center justify-around px-2">
+			<nav aria-label="Navigasi utama" className="flex h-[72px] items-center justify-around px-2">
 				{menus.map((menu) => {
 					const active = isActive(pathname, menu.path);
 					const Icon = menu.icon;
 					return (
 						<button
 							key={menu.path}
+							aria-label={menu.label}
+							aria-current={active ? "page" : undefined}
 							onClick={() => router.push(menu.path)}
 							className={[
 								"flex cursor-pointer flex-col items-center gap-0.5 rounded-full px-2 py-1.5 transition-all duration-150",

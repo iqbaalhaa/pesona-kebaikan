@@ -18,12 +18,12 @@ function TikTokIcon({ size = 20 }: { size?: number }) {
 }
 
 const SOCIALS = [
-	{ icon: FacebookIcon, href: "#" },
-	{ icon: TwitterIcon, href: "#" },
-	{ icon: InstagramIcon, href: "#" },
-	{ icon: YoutubeIcon, href: "#" },
-	{ icon: TikTokIcon, href: "#" },
-	{ icon: LinkedinIcon, href: "#" },
+	{ icon: FacebookIcon, href: "#", label: "Facebook" },
+	{ icon: TwitterIcon, href: "#", label: "Twitter" },
+	{ icon: InstagramIcon, href: "#", label: "Instagram" },
+	{ icon: YoutubeIcon, href: "#", label: "YouTube" },
+	{ icon: TikTokIcon, href: "#", label: "TikTok" },
+	{ icon: LinkedinIcon, href: "#", label: "LinkedIn" },
 ];
 
 const LINKS = [
@@ -34,7 +34,7 @@ const LINKS = [
 
 export default function MiniFooter() {
 	return (
-		<footer className="mt-auto border-t border-foreground/6 bg-white px-2 py-6">
+		<footer className="mt-auto border-t border-foreground/6 bg-white px-4 py-6">
 			<div className="flex flex-col items-center gap-4">
 				<div className="flex flex-wrap items-center justify-center gap-0.5">
 					{LINKS.map((link, i) => (
@@ -57,9 +57,10 @@ export default function MiniFooter() {
 						<a
 							key={i}
 							href={social.href}
+							aria-label={`Ikuti kami di ${social.label}`}
 							className="grid h-10 w-10 place-items-center rounded-full bg-slate-100 text-slate-600 transition-all hover:-translate-y-0.5 hover:bg-slate-200 hover:text-slate-900"
 						>
-							<social.icon size={20} />
+							<social.icon size={20} aria-hidden="true" />
 						</a>
 					))}
 				</div>

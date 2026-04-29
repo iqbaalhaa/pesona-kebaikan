@@ -77,6 +77,9 @@ export default async function RootLayout({
 	return (
 		<html lang="id" suppressHydrationWarning>
 			<body className={`${plusJakartaSans.className} antialiased`} suppressHydrationWarning>
+				<a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:left-2 focus:top-2 focus:z-[9999] focus:rounded-lg focus:bg-primary focus:px-4 focus:py-2 focus:text-white focus:outline-none">
+					Langsung ke konten utama
+				</a>
 				<NextAuthProvider session={session}>
 					<AppRouterCacheProvider options={{ enableCssLayer: true }}>
 						<ThemeWrapper>

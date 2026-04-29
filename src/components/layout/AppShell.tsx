@@ -30,7 +30,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 		<div className="relative mx-auto flex min-h-dvh w-full max-w-[480px] flex-col bg-background sm:max-w-[480px]">
 			{!shouldHideNav && <SimpleAppBar variant={appBarVariant} />}
 
-			<div
+			<main
+				id="main-content"
 				className="no-scrollbar flex-1 bg-[#F8FAFC] dark:bg-background"
 				style={{
 					paddingBottom: shouldHideNav ? 0 : "6rem",
@@ -38,7 +39,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 				}}
 			>
 				{children}
-			</div>
+			</main>
 
 			{!shouldHideNav && <SimpleBottomNavigation />}
 		</div>

@@ -55,6 +55,7 @@ export default function CampaignCard(props: CampaignCardProps) {
 	return (
 		<Link
 			href={`/donasi/${x.slug || x.id}`}
+			aria-label={`Donasi: ${x.title}`}
 			className="block h-full no-underline"
 		>
 			<div className="flex h-full flex-col overflow-hidden rounded-lg border border-divider bg-surface transition-all duration-200 hover:-translate-y-1 hover:border-transparent hover:shadow-[0_12px_32px_rgba(0,0,0,0.08)]">

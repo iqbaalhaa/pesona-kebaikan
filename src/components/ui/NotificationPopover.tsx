@@ -48,12 +48,14 @@ export default function NotificationPopover({ overlay = false }: NotificationPop
 	return (
 		<div ref={ref} className="relative shrink-0">
 			<button
+				aria-label={unreadCount > 0 ? `Notifikasi, ${unreadCount} belum dibaca` : "Notifikasi"}
+				aria-expanded={open}
 				onClick={() => { setOpen(!open); if (!open) fetchNotifications(); }}
 				className={`relative grid h-10 w-10 place-items-center rounded-xl border backdrop-blur-lg ${iconBorder} ${iconBg} ${iconColor}`}
 			>
-				<Bell size={20} />
+				<Bell size={20} aria-hidden="true" />
 				{unreadCount > 0 && (
-					<span className="absolute -right-1 -top-1 grid h-4 min-w-4 place-items-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
+					<span aria-hidden="true" className="absolute -right-1 -top-1 grid h-4 min-w-4 place-items-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
 						{unreadCount > 9 ? "9+" : unreadCount}
 					</span>
 				)}

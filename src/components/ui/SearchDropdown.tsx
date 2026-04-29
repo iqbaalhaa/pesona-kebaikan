@@ -83,7 +83,11 @@ export default function SearchDropdown({
 					strokeWidth={2.5}
 				/>
 				<input
-					type="text"
+					type="search"
+					aria-label={placeholder}
+					role="combobox"
+					aria-expanded={open}
+					aria-autocomplete="list"
 					placeholder={placeholder}
 					value={query}
 					onChange={(e) => setQuery(e.target.value)}
@@ -113,7 +117,7 @@ export default function SearchDropdown({
 									className={`flex w-full items-center gap-3 px-3 py-2.5 text-left transition-colors ${overlay ? "hover:bg-white/8" : "hover:bg-foreground/4"}`}
 								>
 									{r.image && (
-										<img src={r.image} alt="" className="h-12 w-12 shrink-0 rounded-lg object-cover" />
+										<img src={r.image} alt={r.title} className="h-12 w-12 shrink-0 rounded-lg object-cover" />
 									)}
 									<div className="min-w-0 flex-1">
 										<p className={`line-clamp-2 text-sm font-bold leading-tight ${overlay ? "text-white" : "text-foreground"}`}>

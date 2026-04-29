@@ -45,7 +45,7 @@ export default function QuickMenu() {
 	);
 
 	return (
-		<div className="relative z-2 mt-2 px-2">
+		<div className="relative z-2 mt-5 px-4">
 			<h2 className="mb-1.5 text-base font-extrabold text-foreground">
 				Mau berbuat baik apa hari ini?
 			</h2>

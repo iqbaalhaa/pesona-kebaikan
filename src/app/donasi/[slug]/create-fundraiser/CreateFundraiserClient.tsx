@@ -251,7 +251,7 @@ export default function CreateFundraiserClient({
 			<Container maxWidth="sm" sx={{ py: 4 }}>
 				<Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
 					<Button
-						onClick={() => router.back()}
+						onClick={() => router.push(`/donasi/${campaignSlug}`)}
 						sx={{
 							minWidth: 40,
 							width: 40,
@@ -266,7 +266,7 @@ export default function CreateFundraiserClient({
 							zIndex: 10,
 							"&:hover": { bgcolor: "#f8fafc" },
 						}}
-						aria-label="Kembali"
+						aria-label="Kembali ke campaign"
 					>
 						<ArrowBackIcon />
 					</Button>
@@ -280,9 +280,27 @@ export default function CreateFundraiserClient({
 							textAlign: "center",
 						}}
 					>
-						Buat Fundraiser
+						Buat Fundraising
 					</Typography>
 				</Box>
+
+				<Paper elevation={0} sx={{ p: 2.5, borderRadius: 3, mb: 2, bgcolor: "#f0fdf4", border: "1px solid #bbf7d0" }}>
+					<Typography sx={{ fontWeight: 800, fontSize: 15, color: "#166534", mb: 1 }}>
+						Apa itu Fundraising?
+					</Typography>
+					<Typography sx={{ fontSize: 13, color: "#15803d", lineHeight: 1.7 }}>
+						Fundraising memungkinkan kamu membantu menyebarkan campaign ini dengan halaman penggalangan dana milikmu sendiri. Setiap donasi yang masuk melalui halamanmu akan tercatat sebagai kontribusimu.
+					</Typography>
+					<Typography sx={{ fontWeight: 700, fontSize: 13, color: "#166534", mt: 1.5, mb: 0.5 }}>
+						Keuntungan menjadi Fundraiser:
+					</Typography>
+					<Box component="ul" sx={{ m: 0, pl: 2.5, fontSize: 13, color: "#15803d", lineHeight: 1.8 }}>
+						<li>Dapatkan halaman fundraising dengan link unik milikmu</li>
+						<li>Pantau jumlah donasi yang terkumpul dari kontribusimu</li>
+						<li>Bantu campaign menjangkau lebih banyak donatur</li>
+						<li>Jadilah jembatan kebaikan bagi sesama</li>
+					</Box>
+				</Paper>
 
 				<Paper elevation={0} sx={{ p: 3, borderRadius: 3 }}>
 					<Box
@@ -291,9 +309,14 @@ export default function CreateFundraiserClient({
 						sx={{ display: "grid", gap: 2 }}
 					>
 						<TextField
-							label="Judul Fundraiser"
+							label="Judul Fundraising"
 							value={title}
-							onChange={(e) => setTitle(e.target.value)}
+							onChange={(e) => {
+								setTitle(e.target.value);
+								if (!slug.trim()) {
+									setSlugNormalized(localSlugify(e.target.value));
+								}
+							}}
 							required
 							fullWidth
 						/>
@@ -393,7 +416,7 @@ export default function CreateFundraiserClient({
 								? "Membuat..."
 								: slugChecking
 									? "Memeriksa slug..."
-									: "Buat Fundraiser"}
+									: "Buat Fundraising"}
 						</Button>
 					</Box>
 				</Paper>

@@ -342,7 +342,7 @@ export default function QuickDonate() {
 		<Box
 			sx={{
 				px: 0,
-				mt: 2,
+				mt: 3,
 				position: "relative",
 			}}
 		>
@@ -518,6 +518,7 @@ export default function QuickDonate() {
 					<Box
 						component="button"
 						type="button"
+						aria-label={`Donasi sekarang Rp${rupiah(finalAmount || 0)}`}
 						onClick={openSheet}
 						disabled={!isValid}
 						sx={{
@@ -533,6 +534,7 @@ export default function QuickDonate() {
 							boxShadow: "none",
 							transition: "transform 120ms ease, filter 120ms ease",
 							"&:active": { transform: isValid ? "scale(0.99)" : "none" },
+							"&:focus-visible": { outline: "2px solid #0ba976", outlineOffset: "2px" },
 						}}
 					>
 						Donasi Sekarang • Rp{rupiah(finalAmount || 0)}

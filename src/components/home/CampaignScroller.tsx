@@ -32,7 +32,11 @@ function ScrollCard({ item, priority = false }: { item: Campaign; priority?: boo
 
 	return (
 		<div
+			role="link"
+			tabIndex={0}
+			aria-label={`Donasi: ${item.title}`}
 			onClick={() => router.push(`/donasi/${item.slug || item.id}`)}
+			onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); router.push(`/donasi/${item.slug || item.id}`); } }}
 			className="w-[240px] min-w-[240px] shrink-0 cursor-pointer snap-start overflow-hidden bg-white transition-transform duration-200 hover:-translate-y-1"
 		>
 			<div className="relative h-35 overflow-hidden bg-slate-100">
@@ -130,7 +134,7 @@ export default function CampaignScroller({ campaigns, header, showAllHref }: Cam
 	if (!campaigns || campaigns.length === 0) return null;
 
 	return (
-		<div className="group relative mt-6 px-4">
+		<div className="group relative mt-5 px-4">
 			<div className="mb-4 flex items-center justify-between">
 				{header}
 				{showAllHref && (
