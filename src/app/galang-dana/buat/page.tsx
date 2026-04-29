@@ -32,6 +32,7 @@ import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import PhotoCameraRoundedIcon from "@mui/icons-material/PhotoCameraRounded";
 import StepProgress from "@/components/ui/StepProgress";
+import FileUploadField from "@/components/ui/FileUploadField";
 
 import {
 	createCampaign,
@@ -83,6 +84,17 @@ const STEPS_LAINNYA: { key: StepKeyLainnya; label: string }[] = [
 	{ key: "cerita", label: "Cerita" },
 	{ key: "ajakan", label: "Ajakan" },
 ];
+
+const MAX_FILE_MB = 3;
+const MAX_FILE_BYTES = MAX_FILE_MB * 1024 * 1024;
+
+function validateFileSize(file: File, label: string, setSnack: (s: any) => void): boolean {
+	if (file.size > MAX_FILE_BYTES) {
+		setSnack({ open: true, msg: `${label}: Ukuran file maksimal ${MAX_FILE_MB}MB (${(file.size / 1024 / 1024).toFixed(1)}MB)`, type: "error" });
+		return false;
+	}
+	return true;
+}
 
 function onlyDigits(v: string) {
 	return v.replace(/[^\d]/g, "");
@@ -773,7 +785,7 @@ function BuatGalangDanaPageContent() {
 				!!titleOther && !!slugOther && !!coverPreviewOther && !slugOtherError
 			);
 		if (stepKey === "cerita") return textLen(storyOther) >= 30;
-		if (stepKey === "ajakan") return ctaOther.trim().length >= 10;
+		if (stepKey === "ajakan") return ctaOther.trim().length >= 10 && agreeA && agreeB;
 		return false;
 	}, [
 		isSakit,
@@ -1876,111 +1888,22 @@ function BuatGalangDanaPageContent() {
 										)}
 									</Box>
 
-									<Box>
-										<Typography
-											sx={{ fontWeight: 600, fontSize: 14, mb: 0.75 }}
-										>
-											Upload foto galang dana{" "}
-											<span style={{ color: "red" }}>*</span>
-											<span
-												style={{
-													color: "rgba(15,23,42,.55)",
-													fontSize: 12,
-													fontWeight: 400,
-													marginLeft: 4,
-												}}
-											>
-												(Max 3MB)
-											</span>
-										</Typography>
+									<FileUploadField
+										label="Upload foto galang dana *"
+										accept="image/*"
+										value={coverPreview}
+										onUploaded={(url) => {
+											setCoverPreview(url);
+											setCoverFile(null);
+										}}
+										onClear={() => {
+											setCoverPreview("");
+											setCoverFile(null);
+											setCoverName("");
+										}}
+									/>
 
-										<Paper
-											variant="outlined"
-											sx={{ borderRadius: 3, p: 1.25, textAlign: "center" }}
-										>
-											<input
-												id="cover-upload"
-												type="file"
-												accept="image/*"
-												hidden
-												onChange={(e) => {
-													const f = e.target.files?.[0];
-													if (f) {
-														setCoverName(f.name);
-														setCoverFile(f);
-														setCoverPreview(URL.createObjectURL(f));
-													} else {
-														setCoverName("");
-														setCoverFile(null);
-														setCoverPreview("");
-													}
-												}}
-											/>
-											<Button
-												component="label"
-												htmlFor="cover-upload"
-												startIcon={<PhotoCameraRoundedIcon />}
-												variant="text"
-												sx={{ fontWeight: 700 }}
-											>
-												Upload Foto
-											</Button>
-
-											{coverPreview ? (
-												<Box
-													component="img"
-													src={coverPreview}
-													alt="Preview"
-													sx={{
-														width: "100%",
-														height: 200,
-														objectFit: "cover",
-														borderRadius: 2,
-														mt: 1,
-													}}
-												/>
-											) : null}
-
-											{coverName && !coverPreview ? (
-												<Typography
-													sx={{
-														mt: 0.75,
-														fontSize: 12.5,
-														color: "text.secondary",
-													}}
-												>
-													Terpilih: <b>{coverName}</b>
-												</Typography>
-											) : null}
-										</Paper>
-
-										<Paper
-											elevation={0}
-											sx={{
-												mt: 1.25,
-												p: 1,
-												borderRadius: 2,
-												bgcolor: "rgba(2,132,199,.06)",
-												display: "flex",
-												gap: 1,
-												alignItems: "flex-start",
-											}}
-										>
-											<InfoOutlinedIcon fontSize="small" sx={{ mt: "2px" }} />
-											<Box>
-												<Typography sx={{ fontSize: 12.5, fontWeight: 600 }}>
-													Tips
-												</Typography>
-												<Typography
-													sx={{ fontSize: 12.5, color: "text.secondary" }}
-												>
-													Upload foto yang menggambarkan keadaan pasien saat
-													ini.
-												</Typography>
-											</Box>
-										</Paper>
-									</Box>
-								</Stack>
+									</Stack>
 							</Box>
 						)}
 
@@ -2013,6 +1936,8 @@ function BuatGalangDanaPageContent() {
 								onChange={setCta}
 								placeholder="Contoh: Penghasilan saya hanya Rp20rb/hari, padahal Abi butuh biaya berobat..."
 								error={ctaLeft < 0}
+								campaignTitle={title}
+								coverUrl={coverPreview}
 							/>
 						)}
 					</>
@@ -2025,82 +1950,48 @@ function BuatGalangDanaPageContent() {
 					<>
 						{/* STEP: tujuan */}
 						{stepKey === "tujuan" && (
-							<Box>
-								<Typography sx={{ fontWeight: 600, fontSize: 14, mb: 1 }}>
-									Untuk apa galang dana ini?{" "}
-									<span style={{ color: "red" }}>*</span>
-								</Typography>
-
-								{/* kalau belum pilih tujuan, tampil list */}
-								{!purposeKey ? (
-									<Stack spacing={1}>
-										{purposes.map((p) => (
-											<Paper
+							<div>
+								<p className="mb-2 text-sm font-semibold text-foreground">
+									Untuk apa galang dana ini? <span className="text-red-500">*</span>
+								</p>
+								<div className="flex flex-col gap-2">
+									{purposes.map((p) => {
+										const selected = purposeKey === p.key;
+										return (
+											<button
 												key={p.key}
-												variant="outlined"
-												sx={{ borderRadius: 3, p: 1.25 }}
+												type="button"
+												onClick={() => setPurposeKey(selected ? "" : p.key)}
+												className={[
+													"flex w-full cursor-pointer items-start gap-3 rounded-xl border p-3 text-left transition-all",
+													selected
+														? "border-primary bg-primary/5"
+														: "border-foreground/10 bg-white hover:border-foreground/20",
+												].join(" ")}
 											>
-												<Box
-													sx={{
-														display: "flex",
-														gap: 1,
-														alignItems: "flex-start",
-													}}
-												>
-													<Box sx={{ flex: 1 }}>
-														<Typography
-															sx={{ fontWeight: 700, fontSize: 13.5 }}
-														>
-															{p.title}
-														</Typography>
-														<Typography
-															sx={{
-																mt: 0.4,
-																fontSize: 12.5,
-																color: "text.secondary",
-															}}
-														>
-															{p.desc}
-														</Typography>
-													</Box>
-
-													<Button
-														variant="text"
-														onClick={() => setPurposeKey(p.key)}
-														sx={{ fontWeight: 700 }}
-													>
-														Pilih
-													</Button>
-												</Box>
-											</Paper>
-										))}
-									</Stack>
-								) : (
-									<Box>
-										<Paper variant="outlined" sx={{ borderRadius: 3, p: 1.25 }}>
-											<Box
-												sx={{
-													display: "flex",
-													justifyContent: "space-between",
-													gap: 1,
-												}}
-											>
-												<Typography sx={{ fontWeight: 700, fontSize: 13.5 }}>
-													{purposes.find((x) => x.key === purposeKey)?.title ??
-														"-"}
-												</Typography>
-												<Button
-													variant="text"
-													onClick={() => setPurposeKey("")}
-													sx={{ fontWeight: 700 }}
-												>
-													Ubah
-												</Button>
-											</Box>
-										</Paper>
-									</Box>
-								)}
-							</Box>
+												<span className={[
+													"mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded border-2 transition-colors",
+													selected
+														? "border-primary bg-primary text-white"
+														: "border-foreground/20 bg-white",
+												].join(" ")}>
+													{selected && (
+														<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+															<path d="M20 6 9 17l-5-5" />
+														</svg>
+													)}
+												</span>
+												<div className="min-w-0 flex-1">
+													<p className="text-[13.5px] font-bold text-foreground">{p.title}</p>
+													{p.desc && (
+														<p className="mt-0.5 text-xs text-foreground/55">{p.desc}</p>
+													)}
+												</div>
+											</button>
+										);
+									})}
+								</div>
+							</div>
 						)}
 
 						{/* STEP: data diri */}
@@ -2253,7 +2144,7 @@ function BuatGalangDanaPageContent() {
 												value={socHandle}
 												onChange={(e) => setSocHandle(e.target.value)}
 												fullWidth
-												placeholder={`Link/username ${soc} (opsional)`}
+												placeholder={`Link/username ${soc}`}
 											/>
 										) : null}
 									</Box>
@@ -2764,6 +2655,7 @@ function BuatGalangDanaPageContent() {
 								<StoryCreationSection
 									mode="wizard"
 									category="lainnya"
+									purposeKey={purposeKey}
 									story={storyOther}
 									storyStructure={storyStructureOther}
 									onSave={(html, structure) => {
@@ -2784,34 +2676,40 @@ function BuatGalangDanaPageContent() {
 									onChange={setCtaOther}
 									placeholder="Contoh: Kami butuh bantuan agar fasilitas bisa dipakai warga kembali..."
 									error={ctaOtherLeft < 0}
+									campaignTitle={titleOther}
+									coverUrl={coverPreviewOther}
 								/>
 
-								<Box sx={{ mt: 3 }}>
-									<Typography sx={{ fontWeight: 600, fontSize: 14, mb: 1 }}>
+								<div className="mt-4">
+									<p className="mb-1.5 text-xs font-semibold text-foreground/60">
 										Syarat penggalangan dana
-									</Typography>
-									<Paper variant="outlined" sx={{ borderRadius: 3, p: 1 }}>
-										<FormControlLabel
-											control={
-												<Checkbox
-													checked={agreeA}
-													onChange={(e) => setAgreeA(e.target.checked)}
-												/>
-											}
-											label="Pemilik rekening bertanggung jawab atas penggunaan dana yang diterima dari galang dana ini."
-										/>
-										<Divider sx={{ my: 1 }} />
-										<FormControlLabel
-											control={
-												<Checkbox
-													checked={agreeB}
-													onChange={(e) => setAgreeB(e.target.checked)}
-												/>
-											}
-											label="Kamu sebagai penggalang dana bertanggung jawab atas permintaan pencairan dan pelaporan penggunaan dana."
-										/>
-									</Paper>
-								</Box>
+									</p>
+									<div className="rounded-xl border border-foreground/10 p-2.5">
+										<label className="flex cursor-pointer items-start gap-2">
+											<input
+												type="checkbox"
+												checked={agreeA}
+												onChange={(e) => setAgreeA(e.target.checked)}
+												className="mt-0.5 h-4 w-4 shrink-0 accent-primary"
+											/>
+											<span className="text-xs leading-relaxed text-foreground/70">
+												Pemilik rekening bertanggung jawab atas penggunaan dana yang diterima dari galang dana ini.
+											</span>
+										</label>
+										<hr className="my-2 border-foreground/8" />
+										<label className="flex cursor-pointer items-start gap-2">
+											<input
+												type="checkbox"
+												checked={agreeB}
+												onChange={(e) => setAgreeB(e.target.checked)}
+												className="mt-0.5 h-4 w-4 shrink-0 accent-primary"
+											/>
+											<span className="text-xs leading-relaxed text-foreground/70">
+												Kamu sebagai penggalang dana bertanggung jawab atas permintaan pencairan dan pelaporan penggunaan dana.
+											</span>
+										</label>
+									</div>
+								</div>
 							</>
 						)}
 					</>
@@ -2820,12 +2718,12 @@ function BuatGalangDanaPageContent() {
 
 			{/* Bottom actions */}
 			<div className="fixed inset-x-0 bottom-0 z-[99] mx-auto max-w-[480px] border-t border-divider bg-white pb-[env(safe-area-inset-bottom)]">
-				<div className="mx-auto max-w-[480px] px-4 py-[5px]">
-					<div className="flex items-center gap-1">
+				<div className="mx-auto max-w-[480px] px-4 py-3">
+					<div className="flex items-center gap-3">
 						<button
 							onClick={goPrev}
 							disabled={step === 0}
-							className="flex items-center gap-0.5 rounded-lg px-2 py-2 text-sm font-semibold text-foreground/70 transition-colors hover:bg-foreground/5 disabled:opacity-30"
+							className="flex items-center gap-1 rounded-xl px-3 py-2.5 text-sm font-semibold text-foreground/70 transition-colors hover:bg-foreground/5 disabled:opacity-30"
 						>
 							<ChevronLeftRoundedIcon fontSize="small" />
 							Sebelumnya
@@ -2836,7 +2734,7 @@ function BuatGalangDanaPageContent() {
 						<button
 							onClick={onClickNext}
 							disabled={!canNext || submitting}
-							className="flex items-center gap-0.5 rounded-lg bg-primary px-4 py-2 text-sm font-bold text-white shadow-sm transition-all hover:bg-primary/90 disabled:opacity-40"
+							className="flex items-center gap-1 rounded-xl bg-primary px-5 py-2.5 text-sm font-bold text-white shadow-sm transition-all hover:bg-primary/90 disabled:opacity-40"
 						>
 							{submitting
 								? "Menyimpan..."
@@ -2853,7 +2751,7 @@ function BuatGalangDanaPageContent() {
 						<button
 							onClick={handleSaveDraft}
 							disabled={submitting}
-							className="mt-0.5 w-full rounded-lg py-2 text-sm font-semibold text-foreground/50 transition-colors hover:bg-foreground/5 disabled:opacity-30"
+							className="mt-2 w-full rounded-xl py-2.5 text-sm font-semibold text-foreground/50 transition-colors hover:bg-foreground/5 disabled:opacity-30"
 						>
 							Simpan dan lanjutkan nanti
 						</button>

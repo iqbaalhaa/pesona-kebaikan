@@ -164,84 +164,74 @@ export const MEDICAL_STEPS: StepConfig[] = [
 	},
 ];
 
-export const NON_MEDICAL_STEPS: StepConfig[] = [
-	{
-		title: "Ceritakan tentang dirimu dan penyelenggara acara yang akan dibantu",
-		fields: [
-			{
+const PURPOSE_LABELS: Record<string, { subject: string; activity: string; photo: string }> = {
+	program: { subject: "kegiatan/program", activity: "menyelenggarakan kegiatan", photo: "kegiatan atau tim penyelenggara" },
+	operasional: { subject: "lembaga/yayasan", activity: "menjalankan operasional", photo: "lembaga atau aktivitas operasional" },
+	infrastruktur: { subject: "pembangunan/perbaikan", activity: "melakukan pembangunan/perbaikan", photo: "kondisi infrastruktur saat ini" },
+	penerima: { subject: "penerima manfaat", activity: "membantu penerima manfaat", photo: "penerima manfaat" },
+};
+
+export function getNonMedicalSteps(purposeKey?: string): StepConfig[] {
+	const ctx = PURPOSE_LABELS[purposeKey || ""] || PURPOSE_LABELS.program;
+
+	return [
+		{
+			title: `Ceritakan tentang dirimu dan ${ctx.subject} yang akan dibantu`,
+			fields: [{
 				key: "intro",
 				label: "",
-				placeholder: "Saya adalah... Saya mengadakan acara ini untuk...",
+				placeholder: `Saya adalah... Saya ingin ${ctx.activity} untuk...`,
 				minRows: 6,
-				example:
-					"Halo #OrangBaik, saya Budi, ketua panitia acara santunan anak yatim di Desa Sukamaju. Kami adalah kumpulan pemuda yang peduli terhadap kesejahteraan anak-anak di lingkungan kami.",
-			},
-		],
-	},
-	{
-		title:
-			"Sebutkan nama acara, masalah yang ingin diatasi, serta target penerima manfaat dari acara tersebut",
-		fields: [
-			{
+			}],
+		},
+		{
+			title: `Jelaskan detail ${ctx.subject}, masalah yang ingin diatasi, serta target penerima manfaat`,
+			fields: [{
 				key: "event_info",
 				label: "",
-				placeholder: "Nama acara adalah... Masalah yang ingin diatasi...",
+				placeholder: `Detail tentang ${ctx.subject}... Masalah yang ingin diatasi...`,
 				minRows: 6,
-				example:
-					"Kami berencana mengadakan acara 'Berbagi Senyum' untuk 50 anak yatim. Saat ini, panti asuhan tempat mereka tinggal sedang mengalami kesulitan biaya operasional dan renovasi atap yang bocor.",
-			},
-		],
-		photoKey: "organizerPhoto",
-		photoLabel: "Upload foto penyelenggara acara tersebut",
-	},
-	{
-		title:
-			"Jelaskan mengenai teknis penyelenggaraan, waktu dan lokasi, serta dampak yang ingin dihasilkan dari acara tersebut",
-		fields: [
-			{
+			}],
+			photoKey: "organizerPhoto",
+			photoLabel: `Upload foto ${ctx.photo}`,
+		},
+		{
+			title: "Jelaskan rencana pelaksanaan, waktu, lokasi, serta dampak yang diharapkan",
+			fields: [{
 				key: "technical_details",
 				label: "",
-				placeholder: "Acara akan dilaksanakan pada... Lokasinya di...",
+				placeholder: "Rencana pelaksanaan... Lokasi... Dampak yang diharapkan...",
 				minRows: 6,
-				example:
-					"Acara akan dilaksanakan pada tanggal 20 Agustus 2024 di Aula Balai Desa Sukamaju. Kami berharap acara ini dapat memberikan kebahagiaan dan bantuan materiil bagi anak-anak panti.",
-			},
-		],
-	},
-	{
-		title: "Upload foto acara atau penerima manfaat dari acara tersebut",
-		fields: [],
-		photoKey: "eventPhoto",
-		photoLabel: "", // Empty to rely on main title
-	},
-	{
-		title: "Berapa biaya yang dibutuhkan dan bagaimana rencana penggunaannya?",
-		fields: [
-			{
+			}],
+		},
+		{
+			title: `Upload foto ${ctx.photo}`,
+			fields: [],
+			photoKey: "eventPhoto",
+			photoLabel: "",
+		},
+		{
+			title: "Berapa biaya yang dibutuhkan dan bagaimana rencana penggunaannya?",
+			fields: [{
 				key: "cost_usage",
 				label: "",
-				placeholder:
-					"Dana yang dibutuhkan sebesar Rp... Rencananya akan digunakan untuk...",
+				placeholder: "Dana yang dibutuhkan sebesar Rp... Rencananya akan digunakan untuk...",
 				minRows: 6,
-				example:
-					"Kami membutuhkan dana sebesar Rp 50.000.000. Dana ini akan digunakan untuk:\n1. Santunan tunai: Rp 25.000.000\n2. Renovasi atap panti: Rp 15.000.000\n3. Konsumsi dan operasional acara: Rp 10.000.000",
-			},
-		],
-	},
-	{
-		title: "Jelaskan alasan galang dana ini sangat dibutuhkan",
-		fields: [
-			{
+			}],
+		},
+		{
+			title: "Jelaskan alasan galang dana ini sangat dibutuhkan",
+			fields: [{
 				key: "reason",
 				label: "",
 				placeholder: "Galang dana ini sangat dibutuhkan karena...",
 				minRows: 6,
-				example:
-					"Bantuan ini sangat dibutuhkan karena kondisi panti yang semakin memprihatinkan, terutama saat hujan turun. Kas swadaya masyarakat belum mencukupi untuk perbaikan segera.",
-			},
-		],
-	},
-];
+			}],
+		},
+	];
+}
+
+export const NON_MEDICAL_STEPS: StepConfig[] = getNonMedicalSteps();
 
 // ----------------------------------------------------------------------
 
@@ -249,6 +239,7 @@ type StoryData = Record<string, string>;
 
 interface Props {
 	category: "sakit" | "lainnya";
+	purposeKey?: string;
 	initialData?: {
 		html: string;
 		structure?: StoryData;
@@ -259,6 +250,7 @@ interface Props {
 
 export default function StoryBuilder({
 	category,
+	purposeKey,
 	initialData,
 	onComplete,
 	onBack,
@@ -285,7 +277,7 @@ export default function StoryBuilder({
 	const [exampleOpen, setExampleOpen] = React.useState(false);
 	const [currentExample, setCurrentExample] = React.useState("");
 
-	const steps = category === "sakit" ? MEDICAL_STEPS : NON_MEDICAL_STEPS;
+	const steps = category === "sakit" ? MEDICAL_STEPS : getNonMedicalSteps(purposeKey);
 
 	const currentStep = steps[activeStep];
 	const isLastStep = activeStep === steps.length - 1;

@@ -34,49 +34,6 @@ import {
 
 const BRAND = "#0ba976";
 
-type Example = { id: string; title: string; img?: string };
-
-function ExampleCard({ e }: { e: Example }) {
-	return (
-		<Paper
-			elevation={0}
-			sx={{
-				width: 168,
-				borderRadius: 2,
-				overflow: "hidden",
-				border: "1px solid",
-				borderColor: "divider",
-				flexShrink: 0,
-				bgcolor: "background.paper",
-			}}
-		>
-			<Box
-				component="img"
-				src={e.img || "/defaultimg.webp"}
-				alt={e.title}
-				sx={{
-					width: "100%",
-					height: 96,
-					objectFit: "cover",
-					display: "block",
-					bgcolor: "background.default",
-				}}
-				onError={(ev: React.SyntheticEvent<HTMLImageElement, Event>) => {
-					ev.currentTarget.style.display = "none";
-				}}
-			/>
-			<Box sx={{ p: 1 }}>
-				<Typography
-					sx={{ fontSize: 12.5, fontWeight: 900 }}
-					className="line-clamp-2"
-				>
-					{e.title}
-				</Typography>
-			</Box>
-		</Paper>
-	);
-}
-
 export default function GalangDanaKategoriPage() {
 	const router = useRouter();
 	const searchParams = useSearchParams();
@@ -318,9 +275,6 @@ export default function GalangDanaKategoriPage() {
 						})
 						.map((cat) => {
 							const { icon, color } = getCategoryIcon(cat.icon || cat.slug);
-							const hasExamples =
-								Array.isArray(cat.examples) && cat.examples.length > 0;
-
 							return (
 								<Box
 									key={cat.id || cat.slug}
@@ -380,23 +334,6 @@ export default function GalangDanaKategoriPage() {
 										/>
 									</Stack>
 
-									{/* Horizontal Scroll Examples */}
-									{hasExamples && (
-										<Box
-											sx={{
-												display: "flex",
-												gap: 1.5,
-												overflowX: "auto",
-												px: 2,
-												pb: 2,
-												"&::-webkit-scrollbar": { display: "none" },
-											}}
-										>
-											{cat.examples!.map((ex: any) => (
-												<ExampleCard key={ex.id || ex.title} e={ex} />
-											))}
-										</Box>
-									)}
 								</Box>
 							);
 						})}

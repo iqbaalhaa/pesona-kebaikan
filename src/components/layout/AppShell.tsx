@@ -22,8 +22,9 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 		isFundraiserGuide;
 
 	const isGalangDanaBuat = pathname === "/galang-dana/buat";
+	const isGalangDanaKategori = pathname === "/galang-dana/kategori";
 	const shouldHideNav =
-		isAuth || isDonasiDetail || isGalangDanaBuat || isFundraiserGuide;
+		isAuth || isDonasiDetail || isGalangDanaBuat || isGalangDanaKategori || isFundraiserGuide;
 	const shouldHideAppBar = shouldHideNav || isIndependentScreen;
 
 	const [scrolled, setScrolled] = React.useState(false);

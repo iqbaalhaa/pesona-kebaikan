@@ -14,12 +14,13 @@ import StoryBuilder from "@/components/campaign/create/StoryBuilder";
 import RichTextEditor from "@/components/admin/RichTextEditor";
 
 interface StoryCreationSectionProps {
-	mode: "wizard" | "editor"; // 'wizard' for medis, 'editor' for others
+	mode: "wizard" | "editor";
 	story: string;
 	storyStructure?: any;
 	onSave: (html: string, structure?: any) => void;
 	loaded: boolean;
-	category?: "sakit" | "lainnya"; // for StoryBuilder
+	category?: "sakit" | "lainnya";
+	purposeKey?: string;
 	defaultShowEditor?: boolean;
 }
 
@@ -30,6 +31,7 @@ export default function StoryCreationSection({
 	onSave,
 	loaded,
 	category = "sakit",
+	purposeKey,
 	defaultShowEditor = false,
 }: StoryCreationSectionProps) {
 	const [showEditor, setShowEditor] = React.useState(defaultShowEditor);
@@ -184,7 +186,7 @@ export default function StoryCreationSection({
 							<Typography sx={{ fontWeight: 700, fontSize: 16 }}>
 								{category === "sakit"
 									? "Bantuan Medis & Kesehatan"
-									: "Cerita Penggalangan Dana"}
+									: "Cerita Galang Dana"}
 							</Typography>
 							<Box sx={{ width: 40 }} /> {/* Spacer */}
 						</Box>
@@ -193,7 +195,7 @@ export default function StoryCreationSection({
 					<Box sx={{ p: 3, maxWidth: 600, mx: "auto", width: "100%" }}>
 						<StoryBuilder
 							category={category}
-							// Always pass initialData if we have structure
+							purposeKey={purposeKey}
 							initialData={
 								storyStructure
 									? {

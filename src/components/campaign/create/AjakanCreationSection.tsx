@@ -1,13 +1,14 @@
 "use client";
 
 import React from "react";
-import { Box, Typography, TextField, Paper } from "@mui/material";
 
 interface AjakanCreationSectionProps {
 	value: string;
 	onChange: (value: string) => void;
 	placeholder?: string;
 	error?: boolean;
+	campaignTitle?: string;
+	coverUrl?: string;
 }
 
 export default function AjakanCreationSection({
@@ -15,188 +16,98 @@ export default function AjakanCreationSection({
 	onChange,
 	placeholder,
 	error,
+	campaignTitle,
+	coverUrl,
 }: AjakanCreationSectionProps) {
 	const maxLength = 160;
 	const remaining = maxLength - value.length;
+	const displayTitle = campaignTitle || "Judul galang dana kamu";
+	const displayCover = coverUrl || "/defaultimg.webp";
+	const displayCta = value || "Ajakan singkat kamu akan muncul di sini...";
 
 	return (
-		<Box>
-			{/* Title & Subtitle */}
-			<Typography sx={{ fontWeight: 600, fontSize: 14, mb: 0.5 }}>
-				Tulis ajakan singkat untuk donasi di galang dana ini{" "}
-				<span style={{ color: "red" }}>*</span>
-			</Typography>
-			<Typography sx={{ fontSize: 12.5, color: "text.secondary", mb: 1.5 }}>
-				Ini akan menjadi ajakan setiap kamu membagikan di media sosial
-			</Typography>
+		<div>
+			<p className="mb-0.5 text-sm font-semibold text-foreground">
+				Tulis ajakan singkat <span className="text-red-500">*</span>
+			</p>
+			<p className="mb-2 text-xs text-foreground/55">
+				Teks ini muncul saat kamu share link campaign ke media sosial
+			</p>
 
-			{/* Textarea */}
-			<TextField
-				size="small"
-				sx={{
-					"& .MuiInputBase-input": { fontSize: 13.5 },
-					"& .MuiInputLabel-root": { fontSize: 13.5 },
-				}}
+			<textarea
 				value={value}
 				onChange={(e) => onChange(e.target.value.slice(0, maxLength))}
-				fullWidth
-				multiline
-				minRows={4}
 				placeholder={placeholder}
-				error={error}
+				rows={4}
+				className={[
+					"w-full rounded-xl border bg-white p-3 text-[13.5px] outline-none transition-colors",
+					"placeholder:text-foreground/40 focus:border-primary focus:ring-2 focus:ring-primary/20",
+					error ? "border-red-400" : "border-foreground/10",
+				].join(" ")}
 			/>
 
-			{/* Counter */}
-			<Typography
-				sx={{
-					mt: 0.75,
-					fontSize: 12.5,
-					textAlign: "right",
-					color: remaining < 0 ? "error.main" : "text.secondary",
-				}}
-			>
+			<p className={`mt-1 text-right text-xs ${remaining < 0 ? "text-red-500" : "text-foreground/50"}`}>
 				{value.length} / {maxLength}
-			</Typography>
+			</p>
 
-			{/* Info Box */}
-			<Paper
-				variant="outlined"
-				sx={{
-					mt: 3,
-					p: 2,
-					borderRadius: 2,
-					bgcolor: "rgba(248,250,252,0.5)",
-					border: "1px solid",
-					borderColor: "divider",
-				}}
-			>
-				<Typography sx={{ fontWeight: 700, fontSize: 13.5, mb: 1 }}>
-					Apa gunanya ajakan singkat?
-				</Typography>
-				<Typography sx={{ fontSize: 13, color: "text.secondary", mb: 2 }}>
-					Ajakan singkat akan digunakan saat kamu membagikan penggalangan kamu
-					ke media sosial
-				</Typography>
+			{/* Live Preview */}
+			<div className="mt-4 rounded-2xl border border-foreground/10 bg-slate-50 p-3">
+				<p className="mb-2 text-xs font-bold uppercase tracking-wider text-foreground/40">
+					Preview saat di-share
+				</p>
 
-				{/* Visual Representation (Mockup) */}
-				<Box
-					sx={{
-						maxWidth: 200,
-						mx: 0, // Align left as per typical info boxes, or center if preferred. User screenshot shows left alignment of text but image seems centered or left. Let's keep it left for now or maybe center.
-						// The screenshot has the image below the text.
-						position: "relative",
-					}}
-				>
-					<Box
-						sx={{
-							border: "4px solid #3b82f6",
-							borderRadius: 2.5,
-							overflow: "hidden",
-							bgcolor: "white",
-							boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
-						}}
-					>
-						{/* Fake Phone Header */}
-						<Box
-							sx={{
-								height: 14,
-								bgcolor: "#3b82f6",
-								display: "flex",
-								justifyContent: "center",
-								alignItems: "center",
-							}}
-						>
-							<Box
-								sx={{
-									width: 30,
-									height: 3,
-									bgcolor: "rgba(255,255,255,0.3)",
-									borderRadius: 99,
-								}}
-							/>
-						</Box>
+				{/* WhatsApp Preview */}
+				<div className="mx-auto max-w-[280px]">
+					<div className="overflow-hidden rounded-2xl border-[3px] border-[#25D366] bg-white shadow-lg">
+						{/* Phone status bar */}
+						<div className="flex h-4 items-center justify-center bg-[#25D366]">
+							<div className="h-[3px] w-8 rounded-full bg-white/30" />
+						</div>
 
-						<Box sx={{ p: 1.5, pb: 3, bgcolor: "#f0f2f5" }}>
-							<Box
-								sx={{
-									width: "fit-content",
-									bgcolor: "#dcf8c6",
-									p: 1,
-									borderRadius: 1.5,
-									borderTopLeftRadius: 0,
-									boxShadow: "0 1px 1px rgba(0,0,0,0.05)",
-									maxWidth: "100%",
-								}}
-							>
-								{/* Link Preview Card */}
-								<Box
-									sx={{
-										bgcolor: "rgba(0,0,0,0.05)",
-										borderRadius: 1,
-										display: "flex",
-										overflow: "hidden",
-										mb: 0.5,
-									}}
-								>
-									<Box
-										sx={{
-											width: 40,
-											height: 40,
-											bgcolor: "#94a3b8",
-											flexShrink: 0,
-										}}
+						{/* Chat area */}
+						<div className="bg-[#e5ddd5] p-2.5">
+							{/* Chat bubble */}
+							<div className="max-w-full rounded-lg rounded-tl-none bg-white p-2 shadow-sm">
+								{/* Link preview card */}
+								<div className="mb-1.5 overflow-hidden rounded-lg border border-foreground/8">
+									<img
+										src={displayCover}
+										alt="Preview"
+										className="h-[100px] w-full object-cover"
+										onError={(e) => { (e.target as HTMLImageElement).src = "/defaultimg.webp"; }}
 									/>
-									<Box
-										sx={{
-											p: 0.5,
-											flex: 1,
-											display: "flex",
-											flexDirection: "column",
-											justifyContent: "center",
-											gap: 0.5,
-										}}
-									>
-										<Box
-											sx={{
-												height: 4,
-												width: "80%",
-												bgcolor: "rgba(0,0,0,0.2)",
-												borderRadius: 1,
-											}}
-										/>
-										<Box
-											sx={{
-												height: 4,
-												width: "50%",
-												bgcolor: "rgba(0,0,0,0.1)",
-												borderRadius: 1,
-											}}
-										/>
-									</Box>
-								</Box>
+									<div className="bg-[#f0f0f0] px-2 py-1.5">
+										<p className="text-[10px] font-bold leading-tight text-foreground line-clamp-2">
+											{displayTitle}
+										</p>
+										<p className="mt-0.5 text-[9px] leading-snug text-foreground/60 line-clamp-2">
+											{displayCta}
+										</p>
+										<p className="mt-0.5 text-[8px] text-foreground/35">
+											pesonakebaikan.id
+										</p>
+									</div>
+								</div>
 
-								{/* Text */}
-								<Typography
-									sx={{
-										fontSize: 9,
-										color: "text.primary",
-										lineHeight: 1.3,
-									}}
-								>
-									Hai Put, apa kabar? Aku mau minta tolong nih. Aku lagi galang
-									dana...
-									<span style={{ color: "#00a884" }}>
-										{" "}
-										pesonakebaikan.id/anak...
-									</span>
+								<p className="text-[11px] leading-relaxed text-foreground/80">
+									Hai, aku mau minta tolong nih. Aku lagi galang dana untuk{" "}
+									<span className="font-semibold">{displayTitle}</span>.{" "}
+									<span className="text-[#25D366]">pesonakebaikan.id/dona...</span>
 									<br />
-									Terima kasih ya put 🙏
-								</Typography>
-							</Box>
-						</Box>
-					</Box>
-				</Box>
-			</Paper>
-		</Box>
+									Terima kasih ya 🙏
+								</p>
+								<p className="mt-1 text-right text-[9px] text-foreground/30">
+									{new Date().toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })}
+								</p>
+							</div>
+						</div>
+					</div>
+
+					<p className="mt-1.5 text-center text-[10px] text-foreground/35">
+						Contoh tampilan di WhatsApp
+					</p>
+				</div>
+			</div>
+		</div>
 	);
 }
