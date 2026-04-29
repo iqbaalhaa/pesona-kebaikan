@@ -20,7 +20,7 @@ async function bufferToWebP(input: Buffer) {
 	const sharpModule = await import("sharp");
 	const sharp = sharpModule.default || sharpModule;
 	// @ts-ignore
-	return sharp(input).webp({ quality: 80 }).toBuffer();
+	return sharp(input).resize(1600, 1600, { fit: "inside", withoutEnlargement: true }).webp({ quality: 80 }).toBuffer();
 }
 
 export async function uploadImage(formData: FormData) {

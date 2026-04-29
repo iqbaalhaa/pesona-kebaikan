@@ -22,6 +22,8 @@ import {
 	IconButton,
 	LinearProgress,
 	Skeleton,
+	Collapse,
+	Button,
 } from "@mui/material";
 import { TableSortLabel } from "@mui/material";
 import { useRouter } from "next/navigation";
@@ -177,6 +179,7 @@ export default function AdminCampaignTable({
 	const [orderBy, setOrderBy] =
 		React.useState<keyof AdminCampaignRow>("updatedAt");
 	const [order, setOrder] = React.useState<"asc" | "desc">("desc");
+	const [showAdvancedFilter, setShowAdvancedFilter] = React.useState(false);
 	const router = useRouter();
 
 	function parseDateSafe(s: string) {
@@ -237,80 +240,54 @@ export default function AdminCampaignTable({
 			}}
 			elevation={0}
 		>
-			<Box
-				sx={{
-					p: 1.25,
-					borderBottom: "1px solid rgba(15,23,42,.08)",
-					bgcolor: "rgba(255,255,255,.66)",
-				}}
-			>
-				<Stack
-					direction="row"
-					spacing={1.5}
-					alignItems="center"
-					flexWrap="wrap"
-					justifyContent="flex-end"
-					sx={{ width: "100%" }}
+			<Box sx={{ px: 1.25, py: 0.75, borderBottom: "1px solid rgba(15,23,42,.08)", bgcolor: "rgba(255,255,255,.66)" }}>
+				<Button
+					size="small"
+					onClick={() => setShowAdvancedFilter(!showAdvancedFilter)}
+					sx={{ fontSize: 12, fontWeight: 700, textTransform: "none", color: "rgba(15,23,42,.55)" }}
 				>
-					<FormControl size="small" sx={{ minWidth: 220 }}>
-						<InputLabel id="province-label">Daerah</InputLabel>
-						<Select
-							labelId="province-label"
-							label="Daerah"
-							value={provinceId}
-							onChange={(e) => onProvinceChange(String(e.target.value))}
-							sx={{
-								borderRadius: 2,
-								bgcolor: "rgba(255,255,255,.70)",
-								"& .MuiOutlinedInput-notchedOutline": {
-									borderColor: "rgba(15,23,42,.10)",
-								},
-							}}
-						>
-							<MenuItem value="all">Semua</MenuItem>
-							{provinces.map((p) => (
-								<MenuItem key={p.id} value={p.id}>
-									{p.name}
-								</MenuItem>
-							))}
-						</Select>
-					</FormControl>
-
-					<TextField
-						size="small"
-						type="date"
-						label="Tanggal mulai"
-						value={startDate}
-						onChange={(e) => onStartDateChange(e.target.value)}
-						InputLabelProps={{ shrink: true }}
-						sx={{
-							"& .MuiOutlinedInput-root": {
-								borderRadius: 2,
-								bgcolor: "rgba(255,255,255,.70)",
-								"& fieldset": { borderColor: "rgba(15,23,42,.10)" },
-							},
-							"& .MuiOutlinedInput-input": { fontSize: 13.5 },
-						}}
-					/>
-
-					<TextField
-						size="small"
-						type="date"
-						label="Tanggal akhir"
-						value={endDate}
-						onChange={(e) => onEndDateChange(e.target.value)}
-						InputLabelProps={{ shrink: true }}
-						sx={{
-							"& .MuiOutlinedInput-root": {
-								borderRadius: 2,
-								bgcolor: "rgba(255,255,255,.70)",
-								"& fieldset": { borderColor: "rgba(15,23,42,.10)" },
-							},
-							"& .MuiOutlinedInput-input": { fontSize: 13.5 },
-						}}
-					/>
-				</Stack>
+					{showAdvancedFilter ? "Sembunyikan Filter" : "Filter Lanjutan"}
+				</Button>
 			</Box>
+			<Collapse in={showAdvancedFilter}>
+				<Box sx={{ p: 1.25, borderBottom: "1px solid rgba(15,23,42,.08)", bgcolor: "rgba(248,250,252,.8)" }}>
+					<Stack direction="row" spacing={1.5} alignItems="center" flexWrap="wrap">
+						<FormControl size="small" sx={{ minWidth: 200 }}>
+							<InputLabel id="province-label">Daerah</InputLabel>
+							<Select
+								labelId="province-label"
+								label="Daerah"
+								value={provinceId}
+								onChange={(e) => onProvinceChange(String(e.target.value))}
+								sx={{ borderRadius: 2, bgcolor: "#fff", "& .MuiOutlinedInput-notchedOutline": { borderColor: "rgba(15,23,42,.10)" } }}
+							>
+								<MenuItem value="all">Semua</MenuItem>
+								{provinces.map((p) => (
+									<MenuItem key={p.id} value={p.id}>{p.name}</MenuItem>
+								))}
+							</Select>
+						</FormControl>
+						<TextField
+							size="small"
+							type="date"
+							label="Tanggal mulai"
+							value={startDate}
+							onChange={(e) => onStartDateChange(e.target.value)}
+							InputLabelProps={{ shrink: true }}
+							sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2, bgcolor: "#fff", "& fieldset": { borderColor: "rgba(15,23,42,.10)" } }, "& .MuiOutlinedInput-input": { fontSize: 13 } }}
+						/>
+						<TextField
+							size="small"
+							type="date"
+							label="Tanggal akhir"
+							value={endDate}
+							onChange={(e) => onEndDateChange(e.target.value)}
+							InputLabelProps={{ shrink: true }}
+							sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2, bgcolor: "#fff", "& fieldset": { borderColor: "rgba(15,23,42,.10)" } }, "& .MuiOutlinedInput-input": { fontSize: 13 } }}
+						/>
+					</Stack>
+				</Box>
+			</Collapse>
 
 			<Table
 				size="small"
@@ -560,62 +537,29 @@ export default function AdminCampaignTable({
 									</TableCell>
 
 									<TableCell>
-										<Stack spacing={0.75} sx={{ minWidth: 0 }}>
-											<Typography
+										<Stack spacing={0.5} sx={{ minWidth: 0 }}>
+											<Chip
+												label={row.category}
+												size="small"
 												sx={{
-													fontSize: 12.25,
-													fontWeight: 800,
-													color: "rgba(15,23,42,.85)",
-													whiteSpace: "nowrap",
-													overflow: "hidden",
-													textOverflow: "ellipsis",
-												}}
-											>
-												{row.category}
-											</Typography>
-
-											<Stack
-												direction="row"
-												spacing={0.75}
-												alignItems="center"
-												flexWrap="wrap"
-											>
-												<Chip
-													label={
+													height: 22,
+													fontWeight: 900,
+													borderRadius: 999,
+													bgcolor:
 														row.type === "sakit"
-															? "Medis"
-															: row.category
-													}
-													size="small"
-													sx={{
-														height: 22,
-														fontWeight: 900,
-														borderRadius: 999,
-														bgcolor:
-															row.type === "sakit"
-																? "rgba(56,189,248,.16)"
-																: "rgba(11,169,118,.14)",
-														color:
-															row.type === "sakit"
-																? "rgba(2,132,199,.95)"
-																: "rgba(22,101,52,.95)",
-														"& .MuiChip-label": { px: 1, fontSize: 11.5 },
-													}}
-												/>
-												<Chip
-													label={row.ownerName}
-													size="small"
-													variant="outlined"
-													sx={{
-														height: 22,
-														borderRadius: 999,
-														borderColor: "rgba(15,23,42,.14)",
-														bgcolor: "rgba(255,255,255,.55)",
-														"& .MuiChip-label": { px: 1, fontSize: 11.5 },
-														maxWidth: "100%",
-													}}
-												/>
-											</Stack>
+															? "rgba(56,189,248,.16)"
+															: "rgba(11,169,118,.14)",
+													color:
+														row.type === "sakit"
+															? "rgba(2,132,199,.95)"
+															: "rgba(22,101,52,.95)",
+													"& .MuiChip-label": { px: 1, fontSize: 11.5 },
+													width: "fit-content",
+												}}
+											/>
+											<Typography sx={{ fontSize: 11.5, color: "rgba(15,23,42,.55)" }}>
+												{row.ownerName}
+											</Typography>
 										</Stack>
 									</TableCell>
 

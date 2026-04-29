@@ -80,6 +80,19 @@ body {
 	scrollbar-width: none; /* Firefox */
 }
 
+/* Required field indicator - add .field-required to parent */
+.field-required > label::after,
+.field-required > p::after {
+	content: " *";
+	color: #ef4444;
+}
+
+/* MUI error state - red outline */
+.MuiOutlinedInput-root.Mui-error .MuiOutlinedInput-notchedOutline {
+	border-color: #ef4444 !important;
+	border-width: 1.5px;
+}
+
 /* Custom Component Styles */
 
 /* Horizontal Scrollbar Customization */

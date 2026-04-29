@@ -88,6 +88,11 @@ function pct(collected: number, target: number) {
 	if (!target || target <= 0) return 0;
 	return Math.max(0, Math.min(100, Math.round((collected / target) * 100)));
 }
+function fmtDate(s: string) {
+	try {
+		return new Date(s).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
+	} catch { return s; }
+}
 function matchQuery(q: string, row: CampaignVerifyRow) {
 	if (!q) return true;
 	const s = q.toLowerCase();
@@ -685,26 +690,12 @@ export default function AdminCampaignVerifikasiPage() {
 														>
 															{row.title}
 														</Typography>
-														<Typography
-															sx={{
-																fontSize: 11.5,
-																color: "text.secondary",
-															}}
-														>
-															{row.category}
-														</Typography>
 													</Stack>
 												</TableCell>
 												<TableCell align="center">
-													<Stack
-														direction="column"
-														spacing={0.5}
-														alignItems="center"
-													>
+													<Stack spacing={0.25} alignItems="center">
 														<Chip
-															label={
-																row.type === "sakit" ? "Medis" : row.category
-															}
+															label={row.category}
 															size="small"
 															sx={{
 																height: 22,
@@ -721,13 +712,8 @@ export default function AdminCampaignVerifikasiPage() {
 																"& .MuiChip-label": { px: 1, fontSize: 11 },
 															}}
 														/>
-														<Typography
-															sx={{
-																fontSize: 11.5,
-																color: "text.secondary",
-															}}
-														>
-															oleh {row.ownerName}
+														<Typography sx={{ fontSize: 11, color: "text.secondary" }}>
+															{row.ownerName}
 														</Typography>
 													</Stack>
 												</TableCell>
@@ -760,7 +746,7 @@ export default function AdminCampaignVerifikasiPage() {
 															label={
 																ready
 																	? "Siap approve"
-																	: `${missing.length} dokumen kurang`
+																	: `${missing.length} kurang`
 															}
 															size="small"
 															color={ready ? "success" : "warning"}
@@ -775,7 +761,7 @@ export default function AdminCampaignVerifikasiPage() {
 														<Typography
 															sx={{ fontSize: 11, color: "text.secondary" }}
 														>
-															Update {row.updatedAt}
+															{fmtDate(row.updatedAt)}
 														</Typography>
 													</Stack>
 												</TableCell>
@@ -801,14 +787,6 @@ export default function AdminCampaignVerifikasiPage() {
 
 				{/* Right detail */}
 				<Paper elevation={0} sx={{ ...shellSx, p: 1.25 }}>
-					<Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1 }}>
-						<VerifiedRoundedIcon fontSize="small" />
-						<Typography sx={{ fontWeight: 1000, fontSize: 13.5 }}>
-							Panel Verifikasi
-						</Typography>
-					</Stack>
-
-					<Divider sx={{ mb: 1.25 }} />
 
 					{!selected ? (
 						<Typography sx={{ fontSize: 12.5, color: "text.secondary" }}>
@@ -873,33 +851,6 @@ export default function AdminCampaignVerifikasiPage() {
 										<Chip
 											size="small"
 											label={
-												selected.type === "sakit" ? "Medis" : selected.category
-											}
-											variant="outlined"
-											sx={(t) => ({
-												borderRadius: 999,
-												fontWeight: 900,
-												borderColor: alpha(
-													selected.type === "sakit"
-														? t.palette.info.main
-														: t.palette.success.main,
-													0.25,
-												),
-												bgcolor: alpha(
-													selected.type === "sakit"
-														? t.palette.info.main
-														: t.palette.success.main,
-													t.palette.mode === "dark" ? 0.16 : 0.08,
-												),
-												color:
-													selected.type === "sakit"
-														? t.palette.info.main
-														: t.palette.success.main,
-											})}
-										/>
-										<Chip
-											size="small"
-											label={
 												selected.status === "draft"
 													? "Draft"
 													: selected.status === "pending"
@@ -938,7 +889,7 @@ export default function AdminCampaignVerifikasiPage() {
 										/>
 										<Chip
 											size="small"
-											label={`Update ${selected.updatedAt}`}
+											label={fmtDate(selected.updatedAt)}
 											variant="outlined"
 											sx={{
 												borderRadius: 999,
@@ -1077,51 +1028,41 @@ export default function AdminCampaignVerifikasiPage() {
 
 							<Divider sx={{ my: 1.25 }} />
 
-							{/* Actions */}
-							<Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
-								<Button
+							{/* Links */}
+							<Stack direction="row" spacing={2} sx={{ mb: 1 }}>
+								<Typography
 									component={Link}
 									href={`/admin/campaign/${selected.id}`}
-									variant="outlined"
-									startIcon={<VisibilityRoundedIcon />}
-									sx={{
-										borderRadius: 999,
-										fontWeight: 900,
-										justifyContent: "flex-start",
-									}}
+									sx={{ fontSize: 12, fontWeight: 700, color: "primary.main", textDecoration: "none", "&:hover": { textDecoration: "underline" } }}
 								>
 									Buka Detail
-								</Button>
-
-								<Button
+								</Typography>
+								<Typography
 									component={Link}
 									href={`/donasi/${selected.slug || selected.id}`}
 									target="_blank"
-									variant="outlined"
-									endIcon={<OpenInNewRoundedIcon />}
-									sx={{
-										borderRadius: 999,
-										fontWeight: 900,
-										justifyContent: "flex-start",
-									}}
+									sx={{ fontSize: 12, fontWeight: 700, color: "primary.main", textDecoration: "none", "&:hover": { textDecoration: "underline" } }}
 								>
 									Lihat Public
-								</Button>
-
-								<Box sx={{ flex: 1 }} />
-
-								{selected.status === "draft" ? (
-									<Button
-										variant="outlined"
-										color="error"
-										startIcon={<DeleteRoundedIcon />}
+								</Typography>
+								{selected.status === "draft" && (
+									<Typography
 										onClick={onDelete}
-										sx={{ borderRadius: 999, fontWeight: 900 }}
+										sx={{ fontSize: 12, fontWeight: 700, color: "error.main", cursor: "pointer", "&:hover": { textDecoration: "underline" } }}
 									>
 										Hapus Draft
-									</Button>
-								) : null}
+									</Typography>
+								)}
+							</Stack>
 
+							{/* Actions */}
+							{missingRequired(selected).length > 0 ? (
+								<Typography sx={{ fontSize: 12, color: "text.secondary", mb: 1 }}>
+									Lengkapi: <b>{missingRequired(selected).join(", ")}</b>
+								</Typography>
+							) : null}
+
+							<Stack direction="row" spacing={1}>
 								<Button
 									variant="contained"
 									startIcon={<ThumbUpAltRoundedIcon />}
@@ -1129,7 +1070,7 @@ export default function AdminCampaignVerifikasiPage() {
 									onClick={() =>
 										setConfirm({ open: true, mode: "approve", row: selected })
 									}
-									sx={{ borderRadius: 999, fontWeight: 900, boxShadow: "none" }}
+									sx={{ borderRadius: 999, fontWeight: 900, boxShadow: "none", flex: 1 }}
 								>
 									Approve
 								</Button>
@@ -1141,26 +1082,11 @@ export default function AdminCampaignVerifikasiPage() {
 									onClick={() =>
 										setConfirm({ open: true, mode: "reject", row: selected })
 									}
-									sx={{ borderRadius: 999, fontWeight: 900 }}
+									sx={{ borderRadius: 999, fontWeight: 900, flex: 1 }}
 								>
 									Reject
 								</Button>
 							</Stack>
-
-							{missingRequired(selected).length > 0 ? (
-								<Typography
-									sx={{ mt: 1, fontSize: 12.5, color: "text.secondary" }}
-								>
-									Approve non-aktif karena dokumen required belum lengkap:{" "}
-									<b>{missingRequired(selected).join(", ")}</b>
-								</Typography>
-							) : (
-								<Typography
-									sx={{ mt: 1, fontSize: 12.5, color: "text.secondary" }}
-								>
-									Siap approve (dokumen required lengkap).
-								</Typography>
-							)}
 						</Box>
 					)}
 				</Paper>

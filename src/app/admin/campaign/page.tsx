@@ -267,7 +267,7 @@ export default function AdminCampaignPage() {
 
 			if (res.success && res.data) {
 				let nextRows = (res.data as any as CampaignRow[]).filter(
-					(r) => r.status !== "pending" && r.status !== "review",
+					(r) => r.status !== "pending" && r.status !== "review" && !isQuickDonation(r),
 				);
 
 				if (filter === "all") {
@@ -535,35 +535,9 @@ export default function AdminCampaignPage() {
 								Monitor & kelola campaign yang terdaftar.
 							</Typography>
 
-							<Stack
-								direction="row"
-								spacing={1}
-								sx={{ mt: 1.25 }}
-								alignItems="center"
-							>
-								<Chip
-									label={`${rows.length} hasil`}
-									variant="outlined"
-									sx={{
-										borderRadius: 999,
-										fontWeight: 900,
-										bgcolor: "rgba(255,255,255,.55)",
-										borderColor: "rgba(15,23,42,.12)",
-										color: "rgba(15,23,42,.75)",
-									}}
-								/>
-								<Chip
-									label={`Total: ${totalRows}`}
-									variant="outlined"
-									sx={{
-										borderRadius: 999,
-										fontWeight: 900,
-										bgcolor: "rgba(255,255,255,.55)",
-										borderColor: "rgba(15,23,42,.12)",
-										color: "rgba(15,23,42,.75)",
-									}}
-								/>
-							</Stack>
+							<Typography sx={{ mt: 0.5, fontSize: 12, color: "rgba(15,23,42,.55)", fontWeight: 700 }}>
+								{totalRows} campaign terdaftar
+							</Typography>
 						</Box>
 
 						<Stack direction="row" spacing={1} alignItems="center">
@@ -644,18 +618,6 @@ export default function AdminCampaignPage() {
 							"&::-webkit-scrollbar": { display: "none" },
 						}}
 					>
-						<Chip
-							icon={<CategoryRoundedIcon />}
-							label="Filter"
-							variant="outlined"
-							sx={{
-								borderRadius: 999,
-								bgcolor: "rgba(255,255,255,.55)",
-								borderColor: "rgba(15,23,42,.12)",
-								color: "rgba(15,23,42,.70)",
-								fontWeight: 900,
-							}}
-						/>
 						{FILTERS.map((f) => {
 							const selected = filter === f.key;
 							return (

@@ -225,17 +225,6 @@ function KpiCard({
 						)}
 					</Box>
 
-					<IconButton
-						size="small"
-						sx={{
-							borderRadius: 2,
-							color: "text.secondary",
-							bgcolor: alpha(t.palette.action.hover, 0.04),
-							"&:hover": { bgcolor: alpha(t.palette.action.hover, 0.1) },
-						}}
-					>
-						<MoreHorizRoundedIcon fontSize="small" />
-					</IconButton>
 				</Stack>
 
 				<Box sx={{ minWidth: 0 }}>
@@ -376,28 +365,6 @@ function ChartCard({
 
 			<Box sx={{ width: "100%", height }}>{children}</Box>
 
-			<Box sx={{ mt: 1.25, display: "flex", gap: 1, flexWrap: "wrap" }}>
-				<Chip
-					size="small"
-					label="Realtime look"
-					sx={{
-						height: 22,
-						borderRadius: 999,
-						fontWeight: 900,
-						bgcolor: alpha(t.palette.action.hover, 0.06),
-					}}
-				/>
-				<Chip
-					size="small"
-					label="Hover for detail"
-					sx={{
-						height: 22,
-						borderRadius: 999,
-						fontWeight: 900,
-						bgcolor: alpha(t.palette.action.hover, 0.06),
-					}}
-				/>
-			</Box>
 		</Surface>
 	);
 }
@@ -718,6 +685,7 @@ function MapIndonesia({
 					type: "map",
 					map: "Indonesia",
 					roam: true,
+					scaleLimit: { min: 1, max: 8 },
 					zoom: 1.25,
 					center: [118.0, -2.0],
 					itemStyle: {
@@ -1092,31 +1060,11 @@ export default function DashboardClient({
 									Halo, {session?.user?.name ?? "Admin"} 👋
 								</Typography>
 
-								<Stack
-									direction="row"
-									spacing={0.75}
-									alignItems="center"
-									sx={{ mt: 0.4, flexWrap: "wrap" }}
-								>
-									<Typography sx={{ fontSize: 12, color: "text.secondary" }}>
-										Fokus hari ini:
+								{(kpi?.campaignReview ?? 0) > 0 && (
+									<Typography sx={{ fontSize: 12, color: "text.secondary", mt: 0.4 }}>
+										{kpi?.campaignReview} campaign menunggu verifikasi
 									</Typography>
-									<Chip
-										label="Verifikasi"
-										size="small"
-										sx={{
-											height: 22,
-											borderRadius: 999,
-											fontWeight: 1000,
-											bgcolor: alpha(theme.palette.success.main, 0.12),
-											color: theme.palette.success.dark,
-											border: "0px solid transparent",
-										}}
-									/>
-									<Typography sx={{ fontSize: 12, color: "text.secondary" }}>
-										→ Publish
-									</Typography>
-								</Stack>
+								)}
 							</Box>
 						</Stack>
 
@@ -1190,13 +1138,8 @@ export default function DashboardClient({
 						<KpiCard
 							title="Campaign Aktif"
 							value={(kpi?.campaignActive ?? 0).toLocaleString("id-ID")}
-							subtitle="Sedang menerima donasi"
+							subtitle={`${kpi?.campaignActive ?? 0} aktif dari ${kpi?.campaignTotal ?? 0} total`}
 							icon={<CampaignRoundedIcon />}
-							chip={{
-								label: `Total: ${(kpi?.campaignTotal ?? 0).toLocaleString(
-									"id-ID",
-								)}`,
-							}}
 							tone="success"
 						/>
 					</Grid>
@@ -1273,6 +1216,8 @@ export default function DashboardClient({
 									},
 									yAxis: {
 										type: "value",
+										min: 0,
+										minInterval: 1,
 										axisLine: { show: false },
 										axisTick: { show: false },
 										splitLine: { lineStyle: { type: "dashed", color: alpha(theme.palette.divider, 0.1) } },
@@ -1280,7 +1225,12 @@ export default function DashboardClient({
 											color: theme.palette.text.secondary,
 											fontSize: 12,
 											fontWeight: 700,
-											formatter: (v: number) => `${Math.round(v / 1000000)}jt`,
+											formatter: (v: number) => {
+												if (v === 0) return "0";
+												if (v >= 1000000) return `${(v / 1000000).toFixed(1)}jt`;
+												if (v >= 1000) return `${(v / 1000).toFixed(0)}rb`;
+												return v.toLocaleString("id-ID");
+											},
 										},
 									},
 									series: [{
@@ -1320,37 +1270,47 @@ export default function DashboardClient({
 							}
 							height={320}
 						>
-							<EChart
-								height={320}
-								option={{
-									tooltip: {
-										trigger: "item",
-										backgroundColor: theme.palette.background.paper,
-										borderColor: alpha(theme.palette.divider, 0.12),
-										textStyle: { color: theme.palette.text.primary, fontWeight: 800 },
-									},
-									series: [{
-										type: "pie",
-										radius: ["55%", "80%"],
-										padAngle: 3,
-										itemStyle: { borderWidth: 0 },
-										label: { show: false },
-										data: payMethodDist.map((d: any, i: number) => ({
-											name: d.name,
-											value: d.value,
-											itemStyle: {
-												color: [
-													theme.palette.primary.main,
-													theme.palette.info.main,
-													theme.palette.success.main,
-													theme.palette.warning.main,
-													theme.palette.error.main,
-												][i % 5],
-											},
-										})),
-									}],
-								}}
-							/>
+							{payMethodDist.length === 0 || payMethodDist.every((d: any) => !d.value) ? (
+								<Box sx={{ height: 320, display: "flex", alignItems: "center", justifyContent: "center" }}>
+									<Typography sx={{ fontSize: 14, color: "text.secondary" }}>Belum ada data pembayaran</Typography>
+								</Box>
+							) : (
+								<EChart
+									height={320}
+									option={{
+										tooltip: {
+											trigger: "item",
+											backgroundColor: theme.palette.background.paper,
+											borderColor: alpha(theme.palette.divider, 0.12),
+											textStyle: { color: theme.palette.text.primary, fontWeight: 800 },
+										},
+										legend: {
+											bottom: 0,
+											textStyle: { color: theme.palette.text.secondary, fontSize: 11 },
+										},
+										series: [{
+											type: "pie",
+											radius: ["55%", "80%"],
+											padAngle: 3,
+											itemStyle: { borderWidth: 0 },
+											label: { show: false },
+											data: payMethodDist.map((d: any, i: number) => ({
+												name: d.name,
+												value: d.value,
+												itemStyle: {
+													color: [
+														theme.palette.primary.main,
+														theme.palette.info.main,
+														theme.palette.success.main,
+														theme.palette.warning.main,
+														theme.palette.error.main,
+													][i % 5],
+												},
+											})),
+										}],
+									}}
+								/>
+							)}
 						</ChartCard>
 					</Grid>
 

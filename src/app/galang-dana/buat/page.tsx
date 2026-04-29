@@ -737,8 +737,8 @@ function BuatGalangDanaPageContent() {
 					(inpatient === "ya" ? !!hospital : true) &&
 					treatment.trim().length >= 55 &&
 					!!prevCost &&
-					(!!medicalResumeFile || !!medicalResumeUrl) &&
-					(!!medicalExamFile || !!medicalExamUrl)
+					!!medicalResumeUrl &&
+					!!medicalExamUrl
 				);
 			if (stepKey === "target")
 				return (
@@ -800,9 +800,7 @@ function BuatGalangDanaPageContent() {
 		hospital,
 		treatment,
 		prevCost,
-		medicalResumeFile,
 		medicalResumeUrl,
-		medicalExamFile,
 		medicalExamUrl,
 		target,
 		duration,
@@ -870,14 +868,7 @@ function BuatGalangDanaPageContent() {
 					}
 					formData.append("phone", phone);
 
-					if (medicalResumeFile) {
-						formData.append("resume_medis", medicalResumeFile);
-					}
-					if (medicalExamFile) {
-						formData.append("surat_rs", medicalExamFile);
-					}
-
-					if (coverFile) formData.append("cover", coverFile);
+					if (coverPreview) formData.append("coverUrl", coverPreview);
 
 					formData.append("story", story);
 				} else {
@@ -893,7 +884,7 @@ function BuatGalangDanaPageContent() {
 					}
 					formData.append("phone", phoneOther);
 
-					if (coverFileOther) formData.append("cover", coverFileOther);
+					if (coverPreviewOther) formData.append("coverUrl", coverPreviewOther);
 
 					formData.append("story", storyOther);
 				}
@@ -1005,14 +996,7 @@ function BuatGalangDanaPageContent() {
 				}
 				formData.append("phone", phone);
 
-				if (medicalResumeFile) {
-					formData.append("resume_medis", medicalResumeFile);
-				}
-				if (medicalExamFile) {
-					formData.append("surat_rs", medicalExamFile);
-				}
-
-				if (coverFile) formData.append("cover", coverFile);
+				if (coverPreview) formData.append("coverUrl", coverPreview);
 
 				formData.append("story", story);
 			} else {
@@ -1028,7 +1012,7 @@ function BuatGalangDanaPageContent() {
 				}
 				formData.append("phone", phoneOther);
 
-				if (coverFileOther) formData.append("cover", coverFileOther);
+				if (coverPreviewOther) formData.append("coverUrl", coverPreviewOther);
 
 				formData.append("story", storyOther);
 			}

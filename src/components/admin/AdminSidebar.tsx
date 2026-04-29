@@ -31,163 +31,62 @@ type MenuItem = {
 	label: string;
 	href: string;
 	icon: React.ReactElement;
-	desc?: string;
 };
 
 const menus: { title: string; items: MenuItem[] }[] = [
 	{
 		title: "Overview",
 		items: [
-			{
-				label: "Dashboard",
-				href: "/admin",
-				icon: <DashboardIcon fontSize="small" />,
-				desc: "Ringkasan data & status",
-			},
-			{
-				label: "Carousel",
-				href: "/admin/carousel",
-				icon: <VrpanoIcon fontSize="small" />,
-				desc: "Carousel",
-			},
-			{
-				label: "Campaign Pilihan",
-				href: "/admin/campaign-pilihan",
-				icon: <StarOutlineIcon fontSize="small" />,
-				desc: "Campaign Pilihan",
-			},
+			{ label: "Dashboard", href: "/admin", icon: <DashboardIcon fontSize="small" /> },
+			{ label: "Carousel", href: "/admin/carousel", icon: <VrpanoIcon fontSize="small" /> },
+			{ label: "Campaign Pilihan", href: "/admin/campaign-pilihan", icon: <StarOutlineIcon fontSize="small" /> },
 		],
 	},
 	{
 		title: "Galang Dana",
 		items: [
-			{
-				label: "Campaign",
-				href: "/admin/campaign",
-				icon: <CampaignIcon fontSize="small" />,
-				desc: "Kelola campaign/penggalangan",
-			},
-			{
-				label: "Verifikasi Campaign",
-				href: "/admin/campaign/verifikasi",
-				icon: <VerifiedRoundedIcon fontSize="small" />,
-				desc: "Review dokumen & approval",
-			},
-			{
-				label: "Kategori Campaign",
-				href: "/admin/campaign/kategori",
-				icon: <CategoryRoundedIcon fontSize="small" />,
-				desc: "Struktur kategori (lainnya)",
-			},
-			{
-				label: "Pengajuan Campaign",
-				href: "/admin/pengajuan-campaign",
-				icon: <TrendingUpRoundedIcon fontSize="small" />,
-				desc: "Perpanjangan & tambah target",
-			},
+			{ label: "Campaign", href: "/admin/campaign", icon: <CampaignIcon fontSize="small" /> },
+			{ label: "Verifikasi Campaign", href: "/admin/campaign/verifikasi", icon: <VerifiedRoundedIcon fontSize="small" /> },
+			{ label: "Kategori Campaign", href: "/admin/campaign/kategori", icon: <CategoryRoundedIcon fontSize="small" /> },
+			{ label: "Pengajuan Campaign", href: "/admin/pengajuan-campaign", icon: <TrendingUpRoundedIcon fontSize="small" /> },
 		],
 	},
 	{
 		title: "Donasi & Keuangan",
 		items: [
-			{
-				label: "Transaksi Donasi",
-				href: "/admin/transaksi",
-				icon: <ReceiptLongIcon fontSize="small" />,
-				desc: "List transaksi & status",
-			},
-			{
-				label: "Pencairan Dana",
-				href: "/admin/pencairan",
-				icon: <AccountBalanceWalletRoundedIcon fontSize="small" />,
-				desc: "Request & penyaluran",
-			},
+			{ label: "Transaksi Donasi", href: "/admin/transaksi", icon: <ReceiptLongIcon fontSize="small" /> },
+			{ label: "Pencairan Dana", href: "/admin/pencairan", icon: <AccountBalanceWalletRoundedIcon fontSize="small" /> },
 		],
 	},
 	{
 		title: "Konten",
 		items: [
-			{
-				label: "Blog",
-				href: "/admin/blog",
-				icon: <ArticleIcon fontSize="small" />,
-				desc: "Artikel & edukasi",
-			},
+			{ label: "Blog", href: "/admin/blog", icon: <ArticleIcon fontSize="small" /> },
 		],
 	},
 	{
 		title: "User",
 		items: [
-			{
-				label: "Users",
-				href: "/admin/users",
-				icon: <PeopleIcon fontSize="small" />,
-				desc: "Akun, role, status",
-			},
-			{
-				label: "Informasi Users",
-				href: "/admin/infousers",
-				icon: <PersonPinIcon fontSize="small" />,
-				desc: "Informasi User",
-			},
-			{
-				label: "Notifikasi",
-				href: "/admin/notifikasi",
-				icon: <NotificationsIcon fontSize="small" />,
-				desc: "Broadcast & pesan",
-			},
-			{
-				label: "Pusat Pengaduan",
-				href: "/admin/pengaduan",
-				icon: <AddTask fontSize="small" />,
-				desc: "Laporkan masalah",
-			},
+			{ label: "Users", href: "/admin/users", icon: <PeopleIcon fontSize="small" /> },
+			{ label: "Informasi Users", href: "/admin/infousers", icon: <PersonPinIcon fontSize="small" /> },
+			{ label: "Notifikasi", href: "/admin/notifikasi", icon: <NotificationsIcon fontSize="small" /> },
+			{ label: "Pusat Pengaduan", href: "/admin/pengaduan", icon: <AddTask fontSize="small" /> },
 		],
 	},
 	{
 		title: "Informasi",
 		items: [
-			{
-				label: "Pusat Bantuan",
-				href: "/admin/bantuan",
-				icon: <HelpOutlineIcon fontSize="small" />,
-				desc: "FAQ & panduan",
-			},
-			{
-				label: "Tentang Platform",
-				href: "/admin/tentang",
-				icon: <InfoOutlinedIcon fontSize="small" />,
-				desc: "Profil & visi misi",
-			},
-			{
-				label: "Syarat & Ketentuan",
-				href: "/admin/syarat-ketentuan",
-				icon: <DescriptionIcon fontSize="small" />,
-				desc: "Aturan & kebijakan",
-			},
-			{
-				label: "Akuntabilitas",
-				href: "/admin/akuntabilitas",
-				icon: <VerifiedUserIcon fontSize="small" />,
-				desc: "Laporan transparansi",
-			},
-			{
-				label: "Panduan Galang Dana",
-				href: "/admin/panduan-galang-dana",
-				icon: <HelpOutlineIcon fontSize="small" />,
-				desc: "Tips & best practices",
-			},
+			{ label: "Pusat Bantuan", href: "/admin/bantuan", icon: <HelpOutlineIcon fontSize="small" /> },
+			{ label: "Tentang Platform", href: "/admin/tentang", icon: <InfoOutlinedIcon fontSize="small" /> },
+			{ label: "Syarat & Ketentuan", href: "/admin/syarat-ketentuan", icon: <DescriptionIcon fontSize="small" /> },
+			{ label: "Akuntabilitas", href: "/admin/akuntabilitas", icon: <VerifiedUserIcon fontSize="small" /> },
+			{ label: "Panduan Galang Dana", href: "/admin/panduan-galang-dana", icon: <HelpOutlineIcon fontSize="small" /> },
 		],
 	},
 	{
 		title: "System",
 		items: [
-			{
-				label: "Pengaturan",
-				href: "/admin/settings",
-				icon: <SettingsOutlinedIcon fontSize="small" />,
-				desc: "Konfigurasi platform",
-			},
+			{ label: "Pengaturan", href: "/admin/settings", icon: <SettingsOutlinedIcon fontSize="small" /> },
 		],
 	},
 ];
@@ -245,7 +144,7 @@ export default function AdminSidebar({
 	const SidebarContent = (
 		<div className="h-full flex flex-col">
 			{/* Brand */}
-			<div className="flex items-center gap-3 px-6 py-6">
+			<div className="flex items-center gap-3 px-5 py-4">
 				<div className="relative h-10 w-10 overflow-hidden rounded-xl border border-slate-200/70 bg-slate-50 dark:border-slate-800/70 dark:bg-[#0b1324]">
 					<Image
 						src="/brand/logo.png"
@@ -268,15 +167,15 @@ export default function AdminSidebar({
 			</div>
 
 			<div className="flex-1 overflow-y-auto px-4 pb-4">
-				<div className="mb-4 h-px bg-slate-200/70 dark:bg-slate-800/70" />
+				<div className="mb-2 h-px bg-slate-200/70 dark:bg-slate-800/70" />
 
 				{menus.map((section) => (
-					<div key={section.title} className="mb-5 last:mb-0">
+					<div key={section.title} className="mb-3 last:mb-0">
 						<div className="px-1 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
 							{section.title}
 						</div>
 
-						<nav className="mt-2 space-y-1">
+						<nav className="mt-1 space-y-0.5">
 							{section.items.map((m) => {
 								const isActive = pathname === m.href;
 								const isCampaignMenu = m.href === "/admin/campaign";
@@ -287,7 +186,7 @@ export default function AdminSidebar({
 										href={m.href}
 										className={`
                       group flex items-start gap-3
-                      rounded-xl px-3 py-2.5
+                      rounded-xl px-3 py-1.5
                       transition-colors
                       ${
 												isActive
@@ -344,11 +243,6 @@ export default function AdminSidebar({
 											>
 												{m.label}
 											</span>
-											{m.desc ? (
-												<span className="mt-0.5 block text-xs text-slate-500 dark:text-slate-400">
-													{m.desc}
-												</span>
-											) : null}
 											{isCampaignMenu && (
 												<span className="mt-1 inline-flex items-center gap-1.5 rounded-full bg-slate-50 px-2 py-0.5 text-[10px] font-semibold text-slate-700 shadow-sm ring-1 ring-slate-300/60 dark:bg-slate-800/60 dark:text-slate-200">
 													<span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
@@ -384,59 +278,6 @@ export default function AdminSidebar({
 					</div>
 				))}
 
-				{/* Quick action - sesuai alur admin */}
-				<div
-					className="
-            mt-4 rounded-xl
-            border border-slate-200/70 dark:border-slate-800/70
-            bg-gradient-to-b from-white to-slate-50
-            dark:from-[#0f172a] dark:to-[#0b1324]
-            p-3
-          "
-				>
-					<div className="text-xs font-extrabold text-slate-600 dark:text-slate-300">
-						Quick Actions
-					</div>
-
-					<div className="mt-2 grid grid-cols-1 gap-2">
-						<Link
-							href="/admin/campaign/create"
-							className="
-                flex items-center justify-between
-                rounded-xl px-3 py-2.5
-                border border-slate-200/70 dark:border-slate-800/70
-                bg-white dark:bg-[#0f172a]
-                hover:bg-slate-50 dark:hover:bg-[#0b1324]
-                transition-colors
-              "
-						>
-							<span className="inline-flex items-center gap-2 text-sm font-extrabold text-slate-800 dark:text-slate-100">
-								<AddTask fontSize="small" />
-								Buat Campaign
-							</span>
-							<span
-								className="h-2 w-2 rounded-full"
-								style={{ background: "#0ba976" }}
-							/>
-						</Link>
-
-						<Link
-							href="/admin/campaign/verifikasi"
-							className="
-                flex items-center justify-between
-                rounded-xl px-3 py-2.5
-                border border-slate-200/70 dark:border-slate-800/70
-                bg-white dark:bg-[#0f172a]
-                hover:bg-slate-50 dark:hover:bg-[#0b1324]
-                transition-colors
-              "
-						>
-							<span className="text-sm font-extrabold text-slate-800 dark:text-slate-100">
-								Review Verifikasi
-							</span>
-						</Link>
-					</div>
-				</div>
 			</div>
 		</div>
 	);

@@ -137,7 +137,7 @@ export async function createCampaign(formData: FormData) {
 
 		const results = await Promise.all(uploadPromises);
 
-		let coverUrl = "";
+		let coverUrl = (formData.get("coverUrl") as string) || "";
 
 		for (const result of results) {
 			if (result.res.success && result.res.url) {
@@ -924,7 +924,21 @@ export async function updateCampaign(id: string, formData: FormData) {
 			return { success: false, error: "Invalid category" };
 		}
 
-		if (coverUploadRes && coverUploadRes.success && coverUploadRes.url) {
+		const coverUrlDirect = formData.get("coverUrl") as string;
+		if (coverUrlDirect) {
+			await prisma.campaignMedia.updateMany({
+				where: { campaignId: id },
+				data: { isThumbnail: false },
+			});
+			await prisma.campaignMedia.create({
+				data: {
+					campaignId: id,
+					type: "IMAGE",
+					url: coverUrlDirect,
+					isThumbnail: true,
+				},
+			});
+		} else if (coverUploadRes && coverUploadRes.success && coverUploadRes.url) {
 			await prisma.campaignMedia.updateMany({
 				where: { campaignId: id },
 				data: { isThumbnail: false },
