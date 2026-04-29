@@ -2,16 +2,7 @@ import { getCampaigns } from "@/actions/campaign";
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import ProfileHeader from "@/components/profile/ProfileHeader";
-import {
-	Box,
-	Container,
-	Typography,
-	Card,
-	CardContent,
-	Avatar,
-} from "@mui/material";
-import Grid from "@mui/material/Grid";
-import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
+import { ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 
@@ -32,27 +23,13 @@ export default async function InitiatorPage({
 			email: true,
 			image: true,
 			verifiedAs: true,
-			_count: {
-				select: {
-					campaigns: true,
-				},
-			},
+			_count: { select: { campaigns: true } },
 		},
 	});
 
-	if (!user) {
-		notFound();
-	}
+	if (!user) notFound();
 
-	// Use getCampaigns to ensure safe data serialization and consistent logic
-	const campaignsRes = await getCampaigns(
-		1,
-		50, // Limit to 50 to prevent huge payloads
-		"all",
-		"",
-		user.id,
-	);
-
+	const campaignsRes = await getCampaigns(1, 50, "all", "", user.id);
 	const campaigns =
 		campaignsRes.success && campaignsRes.data
 			? campaignsRes.data.filter((c) => c !== null)
@@ -61,239 +38,117 @@ export default async function InitiatorPage({
 	const avatarInitial = (user.name?.trim()?.[0] ?? "?").toUpperCase();
 
 	return (
-		<Box sx={{ pb: 8, bgcolor: "#f8fafc", minHeight: "100vh" }}>
+		<div className="min-h-screen bg-slate-50 pb-8">
 			{/* Header Profile */}
-			<Box
-				sx={{
-					bgcolor: "white",
-					pb: 6,
-					pt: 12,
-					borderBottom: "1px solid #e2e8f0",
-					position: "relative",
-				}}
-			>
-				<Box
-					sx={{ position: "absolute", top: 12, left: 0, right: 0, zIndex: 1 }}
-				>
-					<Container maxWidth="md">
-						<ProfileHeader title="Profil Penggalang" container={false} />
-					</Container>
-				</Box>
-				<Container maxWidth="md">
-					<Box
-						sx={{
-							display: "flex",
-							flexDirection: "column",
-							alignItems: "center",
-							textAlign: "center",
-						}}
-					>
-						<Avatar
-							src={user.image || undefined}
-							sx={{
-								width: 100,
-								height: 100,
-								mb: 2,
-								border: "4px solid white",
-								boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-							}}
-						>
+			<div className="relative border-b border-slate-200 bg-white pb-6 pt-12">
+				<div className="absolute left-0 right-0 top-3 z-1 mx-auto max-w-2xl px-2">
+					<ProfileHeader title="Profil Penggalang" container={false} />
+				</div>
+				<div className="mx-auto flex max-w-2xl flex-col items-center px-2 text-center">
+					{user.image ? (
+						<img
+							src={user.image}
+							alt={user.name || ""}
+							className="mb-2 h-[100px] w-[100px] rounded-full border-4 border-white object-cover shadow-md"
+						/>
+					) : (
+						<div className="mb-2 grid h-[100px] w-[100px] place-items-center rounded-full border-4 border-white bg-primary/10 text-3xl font-bold text-primary shadow-md">
 							{avatarInitial}
-						</Avatar>
+						</div>
+					)}
 
-						<Box
-							sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5 }}
-						>
-							<Typography variant="h5" fontWeight="700" color="text.primary">
-								{user.name}
-							</Typography>
-							{user.verifiedAs && (
-								<VerifiedUserIcon color="primary" sx={{ fontSize: 20 }} />
-							)}
-						</Box>
+					<div className="mb-0.5 flex items-center gap-1">
+						<h1 className="text-xl font-bold text-foreground">
+							{user.name}
+						</h1>
+						{user.verifiedAs && (
+							<ShieldCheck size={20} className="text-primary" />
+						)}
+					</div>
 
-						<Typography color="text.secondary" sx={{ mb: 3 }}>
-							{user.email}
-						</Typography>
+					<p className="mb-3 text-text-secondary">{user.email}</p>
 
-						<Box
-							sx={{
-								display: "inline-flex",
-								bgcolor: "#f1f5f9",
-								px: 3,
-								py: 1,
-								borderRadius: 4,
-							}}
-						>
-							<Box sx={{ textAlign: "center" }}>
-								<Typography fontWeight="700" fontSize={18} color="text.primary">
-									{user._count.campaigns}
-								</Typography>
-								<Typography variant="caption" color="text.secondary">
-									Campaigns
-								</Typography>
-							</Box>
-						</Box>
-					</Box>
-				</Container>
-			</Box>
+					<div className="inline-flex rounded-2xl bg-slate-100 px-3 py-1 text-center">
+						<div>
+							<p className="text-lg font-bold text-foreground">
+								{user._count.campaigns}
+							</p>
+							<p className="text-xs text-text-secondary">Campaigns</p>
+						</div>
+					</div>
+				</div>
+			</div>
 
 			{/* Campaigns List */}
-			<Container maxWidth="md" sx={{ mt: 4 }}>
-				<Typography
-					variant="h6"
-					fontWeight="700"
-					sx={{ mb: 3, color: "text.primary" }}
-				>
-					Campaigns
-				</Typography>
+			<div className="mx-auto mt-4 max-w-2xl px-2">
+				<h2 className="mb-3 text-lg font-bold text-foreground">Campaigns</h2>
 
-				<Grid container spacing={3}>
+				<div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
 					{campaigns.map((campaign) => {
 						if (!campaign) return null;
+						const progress = Math.min(
+							((campaign.collected || 0) / (campaign.target || 1)) * 100,
+							100,
+						);
 						return (
-							<Grid key={campaign.id} size={{ xs: 12, sm: 6, md: 4 }}>
-								<Link
-									href={`/donasi/${campaign.slug || campaign.id}`}
-									style={{ textDecoration: "none" }}
-								>
-									<Card
-										sx={{
-											height: "100%",
-											display: "flex",
-											flexDirection: "column",
-											borderRadius: 3,
-											overflow: "hidden",
-											border: "1px solid #e2e8f0",
-											boxShadow: "none",
-											transition: "all 0.2s",
-											"&:hover": {
-												transform: "translateY(-4px)",
-												boxShadow: "0 12px 24px -10px rgba(0,0,0,0.1)",
-											},
-										}}
-									>
-										{/* Image */}
-										<Box
-											sx={{
-												position: "relative",
-												pt: "56.25%",
-												bgcolor: "#eee",
-											}}
-										>
-											<Image
-												src={campaign.thumbnail || "/defaultimg.webp"}
-												alt={campaign.title}
-												fill
-												sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-												style={{ objectFit: "cover" }}
-												unoptimized
+							<Link
+								key={campaign.id}
+								href={`/donasi/${campaign.slug || campaign.id}`}
+								className="block no-underline"
+							>
+								<div className="flex h-full flex-col overflow-hidden rounded-xl border border-slate-200 bg-white transition-all duration-200 hover:-translate-y-1 hover:shadow-lg">
+									<div className="relative bg-slate-200 pt-[56.25%]">
+										<Image
+											src={campaign.thumbnail || "/defaultimg.webp"}
+											alt={campaign.title}
+											fill
+											sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+											style={{ objectFit: "cover" }}
+											unoptimized
+										/>
+									</div>
+									<div className="flex-1 p-2">
+										<p className="line-clamp-2 min-h-[2.8em] text-base font-bold leading-snug text-foreground">
+											{campaign.title}
+										</p>
+										<div className="mt-2 flex items-center justify-between">
+											<span className="text-xs text-text-secondary">
+												Terkumpul
+											</span>
+											<span className="text-xs font-bold text-primary">
+												Rp{" "}
+												{campaign.collected?.toLocaleString("id-ID") || 0}
+											</span>
+										</div>
+										<div className="mt-1 h-1 overflow-hidden rounded-full bg-slate-200">
+											<div
+												className="h-full rounded-full bg-primary"
+												style={{ width: `${progress}%` }}
 											/>
-										</Box>
-
-										<CardContent sx={{ flexGrow: 1, p: 2 }}>
-											<Typography
-												variant="subtitle1"
-												fontWeight="700"
-												color="text.primary"
-												sx={{
-													lineHeight: 1.4,
-													display: "-webkit-box",
-													WebkitLineClamp: 2,
-													WebkitBoxOrient: "vertical",
-													overflow: "hidden",
-													minHeight: "2.8em",
-												}}
-											>
-												{campaign.title}
-											</Typography>
-
-											<Box
-												sx={{
-													display: "flex",
-													justifyContent: "space-between",
-													alignItems: "center",
-													mt: 2,
-												}}
-											>
-												<Typography variant="caption" color="text.secondary">
-													Terkumpul
-												</Typography>
-												<Typography
-													variant="caption"
-													fontWeight="700"
-													color="primary"
-												>
-													Rp {campaign.collected?.toLocaleString("id-ID") || 0}
-												</Typography>
-											</Box>
-
-											{/* Progress Bar */}
-											<Box
-												sx={{
-													width: "100%",
-													height: 4,
-													bgcolor: "#e2e8f0",
-													borderRadius: 2,
-													mt: 1,
-													overflow: "hidden",
-												}}
-											>
-												<Box
-													sx={{
-														width: `${Math.min(
-															((campaign.collected || 0) /
-																(campaign.target || 1)) *
-																100,
-															100,
-														)}%`,
-														height: "100%",
-														bgcolor: "primary.main",
-														borderRadius: 2,
-													}}
-												/>
-											</Box>
-
-											<Box
-												sx={{
-													display: "flex",
-													justifyContent: "space-between",
-													mt: 1,
-												}}
-											>
-												<Typography variant="caption" color="text.secondary">
-													Sisa hari
-												</Typography>
-												<Typography variant="caption" fontWeight="700">
-													{campaign.daysLeft} hari
-												</Typography>
-											</Box>
-										</CardContent>
-									</Card>
-								</Link>
-							</Grid>
+										</div>
+										<div className="mt-1 flex justify-between">
+											<span className="text-xs text-text-secondary">
+												Sisa hari
+											</span>
+											<span className="text-xs font-bold">
+												{campaign.daysLeft} hari
+											</span>
+										</div>
+									</div>
+								</div>
+							</Link>
 						);
 					})}
 
 					{campaigns.length === 0 && (
-						<Grid size={12}>
-							<Box
-								sx={{
-									py: 8,
-									textAlign: "center",
-									bgcolor: "white",
-									borderRadius: 3,
-									border: "1px solid #e2e8f0",
-								}}
-							>
-								<Typography color="text.secondary">
-									Belum ada campaign aktif yang dibuat.
-								</Typography>
-							</Box>
-						</Grid>
+						<div className="col-span-full rounded-xl border border-slate-200 bg-white py-8 text-center">
+							<p className="text-text-secondary">
+								Belum ada campaign aktif yang dibuat.
+							</p>
+						</div>
 					)}
-				</Grid>
-			</Container>
-		</Box>
+				</div>
+			</div>
+		</div>
 	);
 }

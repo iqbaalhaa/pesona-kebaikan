@@ -1,308 +1,244 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import Box from "@mui/material/Box";
-import Typography from "@mui/material/Typography";
-import IconButton from "@mui/material/IconButton";
-import Paper from "@mui/material/Paper";
-import Grid from "@mui/material/Grid";
-import Avatar from "@mui/material/Avatar";
-import Skeleton from "@mui/material/Skeleton";
-import Stack from "@mui/material/Stack";
-import Container from "@mui/material/Container";
-import Button from "@mui/material/Button";
-
-// Icons
-import FavoriteIcon from "@mui/icons-material/Favorite";
-import FacebookIcon from "@mui/icons-material/Facebook";
-import InstagramIcon from "@mui/icons-material/Instagram";
-import TwitterIcon from "@mui/icons-material/Twitter";
-import LinkedInIcon from "@mui/icons-material/LinkedIn";
-import YouTubeIcon from "@mui/icons-material/YouTube";
-import PersonIcon from "@mui/icons-material/Person";
-import ArticleIcon from "@mui/icons-material/Article";
-import DownloadIcon from "@mui/icons-material/Download";
-
+import { Heart, User, FileText, Download } from "lucide-react";
+import {
+	FacebookIcon,
+	InstagramIcon,
+	TwitterIcon,
+	LinkedinIcon,
+	YoutubeIcon,
+} from "@/components/ui/SocialIcons";
 import { getPageContent } from "@/actions/cms";
 import ProfileHeader from "@/components/profile/ProfileHeader";
 
 interface OrgMember {
-  name: string;
-  position: string;
-  image: string;
+	name: string;
+	position: string;
+	image: string;
 }
 
 interface Socials {
-  facebook: string;
-  instagram: string;
-  twitter: string;
-  linkedin: string;
-  youtube: string;
+	facebook: string;
+	instagram: string;
+	twitter: string;
+	linkedin: string;
+	youtube: string;
 }
 
 interface Legality {
-  title: string;
-  url: string;
+	title: string;
+	url: string;
 }
 
 interface AboutData {
-  banner: string;
-  vision: string;
-  mission: string;
-  goals: string;
-  achievements: string;
-  socials: Socials;
-  organization: OrgMember[];
-  legality: Legality[];
+	banner: string;
+	vision: string;
+	mission: string;
+	goals: string;
+	achievements: string;
+	socials: Socials;
+	organization: OrgMember[];
+	legality: Legality[];
 }
 
+function HtmlContent({ content }: { content: string }) {
+	if (!content) return null;
+	return (
+		<div
+			dangerouslySetInnerHTML={{ __html: content }}
+			className="prose max-w-none leading-relaxed text-slate-700"
+		/>
+	);
+}
+
+const socialIcons: Record<string, React.ReactNode> = {
+	facebook: <FacebookIcon size={20} />,
+	instagram: <InstagramIcon size={20} />,
+	twitter: <TwitterIcon size={20} />,
+	linkedin: <LinkedinIcon size={20} />,
+	youtube: <YoutubeIcon size={20} />,
+};
+
 export default function AboutPage() {
-  const [loading, setLoading] = useState(true);
-  const [title, setTitle] = useState("Tentang Kami");
-  const [content, setContent] = useState("");
-  const [aboutData, setAboutData] = useState<AboutData | null>(null);
+	const [loading, setLoading] = useState(true);
+	const [title, setTitle] = useState("Tentang Kami");
+	const [content, setContent] = useState("");
+	const [aboutData, setAboutData] = useState<AboutData | null>(null);
 
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        const page = await getPageContent("about");
-        if (page) {
-          setTitle(page.title);
-          setContent(page.content);
-          if (page.data) {
-            setAboutData(page.data as any);
-          }
-        }
-      } catch (error) {
-        console.error("Failed to load about data", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadData();
-  }, []);
+	useEffect(() => {
+		const loadData = async () => {
+			try {
+				const page = await getPageContent("about");
+				if (page) {
+					setTitle(page.title);
+					setContent(page.content);
+					if (page.data) setAboutData(page.data as any);
+				}
+			} catch (error) {
+				console.error("Failed to load about data", error);
+			} finally {
+				setLoading(false);
+			}
+		};
+		loadData();
+	}, []);
 
-  const SocialLink = ({ icon, url }: { icon: React.ReactNode; url: string }) => {
-    if (!url) return null;
-    return (
-      <IconButton
-        component="a"
-        href={url}
-        target="_blank"
-        rel="noopener noreferrer"
-        sx={{ color: "primary.main", bgcolor: "primary.light", "&:hover": { bgcolor: "primary.main", color: "white" } }}
-      >
-        {icon}
-      </IconButton>
-    );
-  };
+	if (loading) {
+		return (
+			<div className="px-2 pb-6 pt-2.5">
+				<div className="mb-4 h-[200px] animate-pulse rounded-2xl bg-foreground/5" />
+				<div className="mb-2 h-10 w-3/5 animate-pulse rounded bg-foreground/5" />
+				<div className="mb-1 h-5 animate-pulse rounded bg-foreground/5" />
+				<div className="mb-1 h-5 animate-pulse rounded bg-foreground/5" />
+				<div className="h-5 w-4/5 animate-pulse rounded bg-foreground/5" />
+			</div>
+		);
+	}
 
-  const HtmlContent = ({ content }: { content: string }) => {
-    if (!content) return null;
-    return (
-      <div 
-        dangerouslySetInnerHTML={{ __html: content }} 
-        style={{ lineHeight: 1.8, color: "#334155" }}
-        className="prose max-w-none"
-      />
-    );
-  };
+	const sections = [
+		{ key: "vision", label: "Visi", content: aboutData?.vision },
+		{ key: "mission", label: "Misi", content: aboutData?.mission },
+		{ key: "goals", label: "Tujuan", content: aboutData?.goals },
+		{
+			key: "achievements",
+			label: "Capaian & Prestasi",
+			content: aboutData?.achievements,
+		},
+	].filter((s) => s.content);
 
-  if (loading) {
-    return (
-      <Box sx={{ px: 2, pt: 2.5, pb: 6 }}>
-        <Skeleton variant="rectangular" height={200} sx={{ borderRadius: 4, mb: 4 }} />
-        <Skeleton variant="text" height={40} width="60%" sx={{ mb: 2 }} />
-        <Skeleton variant="text" height={20} sx={{ mb: 1 }} />
-        <Skeleton variant="text" height={20} sx={{ mb: 1 }} />
-        <Skeleton variant="text" height={20} width="80%" />
-      </Box>
-    );
-  }
+	return (
+		<div className="pb-8">
+			<ProfileHeader title={title} container maxWidth="md" />
 
-  return (
-    <Box sx={{ pb: 8 }}>
-      <ProfileHeader title={title} container maxWidth="md" />
+			{aboutData?.banner ? (
+				<div
+					className="mb-4 h-[200px] w-full bg-cover bg-center md:h-[350px]"
+					style={{ backgroundImage: `url(${aboutData.banner})` }}
+				/>
+			) : (
+				<div className="mx-auto max-w-2xl px-2">
+					<div className="mb-4 flex flex-col items-center rounded-2xl bg-gradient-to-br from-primary to-green-600 p-4 text-center text-white">
+						<div className="mb-2 flex h-20 w-20 items-center justify-center rounded-full bg-white/20">
+							<Heart size={40} />
+						</div>
+						<h1 className="text-2xl font-extrabold">{title}</h1>
+					</div>
+				</div>
+			)}
 
-      {/* Banner */}
-      {aboutData?.banner ? (
-        <Box
-          sx={{
-            width: "100%",
-            height: { xs: 200, md: 350 },
-            backgroundImage: `url(${aboutData.banner})`,
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-            mb: 4,
-          }}
-        />
-      ) : (
-        <Container maxWidth="md">
-          <Paper
-            elevation={0}
-            sx={{
-              p: 4,
-              mb: 4,
-              borderRadius: 4,
-              background: "linear-gradient(135deg, #0ba976 0%, #16a34a 100%)",
-              color: "white",
-              textAlign: "center",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-            }}
-          >
-            <Box
-              sx={{
-                width: 80, height: 80, borderRadius: "50%", bgcolor: "rgba(255,255,255,0.2)",
-                display: "flex", alignItems: "center", justifyContent: "center", mb: 2,
-              }}
-            >
-              <FavoriteIcon sx={{ fontSize: 40 }} />
-            </Box>
-            <Typography variant="h4" fontWeight={800} gutterBottom>
-              {title}
-            </Typography>
-          </Paper>
-        </Container>
-      )}
+			<div className="mx-auto max-w-2xl px-2">
+				{content && (
+					<div className="mb-6">
+						<HtmlContent content={content} />
+					</div>
+				)}
 
-      <Container maxWidth="md">
-        {/* Main Content (About Us) */}
-        {content && (
-          <Box sx={{ mb: 6 }}>
-            <HtmlContent content={content} />
-          </Box>
-        )}
+				{sections.length > 0 && (
+					<div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2">
+						{sections.map((s) => (
+							<div
+								key={s.key}
+								className="h-full rounded-xl border border-slate-200 bg-slate-50 p-3"
+							>
+								<h3 className="mb-1 text-base font-bold text-primary">
+									{s.label}
+								</h3>
+								<HtmlContent content={s.content!} />
+							</div>
+						))}
+					</div>
+				)}
 
-        {/* Visi Misi Goals */}
-        {aboutData && (
-          <Grid container spacing={4} sx={{ mb: 6 }}>
-            {aboutData.vision && (
-              <Grid size={{ xs: 12, md: 6 }}>
-                <Paper elevation={0} sx={{ p: 3, height: "100%", borderRadius: 3, bgcolor: "#f8fafc", border: "1px solid #e2e8f0" }}>
-                  <Typography variant="h6" fontWeight={700} gutterBottom color="primary">Visi</Typography>
-                  <HtmlContent content={aboutData.vision} />
-                </Paper>
-              </Grid>
-            )}
-            {aboutData.mission && (
-              <Grid size={{ xs: 12, md: 6 }}>
-                <Paper elevation={0} sx={{ p: 3, height: "100%", borderRadius: 3, bgcolor: "#f8fafc", border: "1px solid #e2e8f0" }}>
-                  <Typography variant="h6" fontWeight={700} gutterBottom color="primary">Misi</Typography>
-                  <HtmlContent content={aboutData.mission} />
-                </Paper>
-              </Grid>
-            )}
-            {aboutData.goals && (
-              <Grid size={{ xs: 12, md: 6 }}>
-                <Paper elevation={0} sx={{ p: 3, height: "100%", borderRadius: 3, bgcolor: "#f8fafc", border: "1px solid #e2e8f0" }}>
-                  <Typography variant="h6" fontWeight={700} gutterBottom color="primary">Tujuan</Typography>
-                  <HtmlContent content={aboutData.goals} />
-                </Paper>
-              </Grid>
-            )}
-            {aboutData.achievements && (
-              <Grid size={{ xs: 12, md: 6 }}>
-                <Paper elevation={0} sx={{ p: 3, height: "100%", borderRadius: 3, bgcolor: "#f8fafc", border: "1px solid #e2e8f0" }}>
-                  <Typography variant="h6" fontWeight={700} gutterBottom color="primary">Capaian & Prestasi</Typography>
-                  <HtmlContent content={aboutData.achievements} />
-                </Paper>
-              </Grid>
-            )}
-          </Grid>
-        )}
+				{aboutData?.organization && aboutData.organization.length > 0 && (
+					<div className="mb-6">
+						<h2 className="mb-4 text-center text-xl font-extrabold text-foreground">
+							Tim Kami
+						</h2>
+						<div className="grid grid-cols-2 justify-center gap-3 sm:grid-cols-4 md:grid-cols-4">
+							{aboutData.organization.map((member, index) => (
+								<div
+									key={index}
+									className="h-full rounded-xl border border-slate-200 p-2 text-center"
+								>
+									{member.image ? (
+										<img
+											src={member.image}
+											alt={member.name}
+											className="mx-auto mb-2 h-[100px] w-[100px] rounded-full bg-slate-100 object-cover"
+										/>
+									) : (
+										<div className="mx-auto mb-2 grid h-[100px] w-[100px] place-items-center rounded-full bg-slate-100">
+											<User size={50} className="text-slate-400" />
+										</div>
+									)}
+									<p className="mb-0.5 text-sm font-bold text-foreground">
+										{member.name}
+									</p>
+									<p className="text-xs leading-tight text-slate-500">
+										{member.position}
+									</p>
+								</div>
+							))}
+						</div>
+					</div>
+				)}
 
-        {/* Organization Structure */}
-        {aboutData?.organization && aboutData.organization.length > 0 && (
-          <Box sx={{ mb: 6 }}>
-            <Typography variant="h5" fontWeight={800} align="center" sx={{ mb: 4, color: "#0f172a" }}>
-              Tim Kami
-            </Typography>
-            <Grid container spacing={3} justifyContent="center">
-              {aboutData.organization.map((member, index) => (
-                <Grid size={{ xs: 6, sm: 4, md: 3 }} key={index}>
-                  <Paper elevation={0} sx={{ p: 2, textAlign: "center", height: "100%", border: "1px solid #e2e8f0", borderRadius: 3 }}>
-                    <Avatar
-                      src={member.image}
-                      sx={{ width: 100, height: 100, mx: "auto", mb: 2, bgcolor: "#f1f5f9" }}
-                    >
-                      <PersonIcon sx={{ fontSize: 50, color: "#94a3b8" }} />
-                    </Avatar>
-                    <Typography variant="subtitle1" fontWeight={700} sx={{ color: "#0f172a", mb: 0.5 }}>
-                      {member.name}
-                    </Typography>
-                    <Typography variant="caption" sx={{ color: "#64748b", display: "block", lineHeight: 1.2 }}>
-                      {member.position}
-                    </Typography>
-                  </Paper>
-                </Grid>
-              ))}
-            </Grid>
-          </Box>
-        )}
+				{aboutData?.legality && aboutData.legality.length > 0 && (
+					<div className="mb-6">
+						<h2 className="mb-3 text-xl font-extrabold text-foreground">
+							Legalitas & Dokumen
+						</h2>
+						<div className="flex flex-col gap-2">
+							{aboutData.legality.map((doc, index) => (
+								<a
+									key={index}
+									href={doc.url}
+									target="_blank"
+									rel="noopener noreferrer"
+									className="flex items-center gap-2 rounded-lg border border-slate-200 p-2 no-underline transition-colors hover:border-slate-300 hover:bg-slate-50"
+								>
+									<span className="rounded-lg bg-sky-100 p-1 text-sky-600">
+										<FileText size={20} />
+									</span>
+									<span className="flex-1">
+										<span className="block text-sm font-semibold text-foreground">
+											{doc.title}
+										</span>
+										<span className="text-xs text-text-secondary">
+											Klik untuk melihat dokumen
+										</span>
+									</span>
+									<Download size={18} className="text-foreground/40" />
+								</a>
+							))}
+						</div>
+					</div>
+				)}
 
-        {/* Legality */}
-        {aboutData?.legality && aboutData.legality.length > 0 && (
-          <Box sx={{ mb: 6 }}>
-            <Typography variant="h5" fontWeight={800} sx={{ mb: 3, color: "#0f172a" }}>
-              Legalitas & Dokumen
-            </Typography>
-            <Stack spacing={2}>
-              {aboutData.legality.map((doc, index) => (
-                <Paper 
-                  key={index} 
-                  elevation={0} 
-                  component="a"
-                  href={doc.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  sx={{ 
-                    p: 2, 
-                    display: "flex", 
-                    alignItems: "center", 
-                    gap: 2, 
-                    border: "1px solid #e2e8f0", 
-                    borderRadius: 2,
-                    textDecoration: "none",
-                    color: "inherit",
-                    "&:hover": { bgcolor: "#f8fafc", borderColor: "#cbd5e1" }
-                  }}
-                >
-                  <Box sx={{ p: 1, bgcolor: "#e0f2fe", borderRadius: 1, color: "#0284c7" }}>
-                    <ArticleIcon />
-                  </Box>
-                  <Box sx={{ flexGrow: 1 }}>
-                    <Typography variant="subtitle1" fontWeight={600}>
-                      {doc.title}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      Klik untuk melihat dokumen
-                    </Typography>
-                  </Box>
-                  <DownloadIcon color="action" />
-                </Paper>
-              ))}
-            </Stack>
-          </Box>
-        )}
-
-        {/* Social Media */}
-        {aboutData?.socials && (
-          <Box sx={{ textAlign: "center", pt: 4, borderTop: "1px solid #e2e8f0" }}>
-            <Typography variant="h6" fontWeight={700} gutterBottom sx={{ color: "#0f172a" }}>
-              Ikuti Kami
-            </Typography>
-            <Stack direction="row" spacing={2} justifyContent="center">
-              <SocialLink icon={<FacebookIcon />} url={aboutData.socials.facebook} />
-              <SocialLink icon={<InstagramIcon />} url={aboutData.socials.instagram} />
-              <SocialLink icon={<TwitterIcon />} url={aboutData.socials.twitter} />
-              <SocialLink icon={<LinkedInIcon />} url={aboutData.socials.linkedin} />
-              <SocialLink icon={<YouTubeIcon />} url={aboutData.socials.youtube} />
-            </Stack>
-          </Box>
-        )}
-      </Container>
-    </Box>
-  );
+				{aboutData?.socials && (
+					<div className="border-t border-slate-200 pt-4 text-center">
+						<h3 className="mb-2 text-base font-bold text-foreground">
+							Ikuti Kami
+						</h3>
+						<div className="flex justify-center gap-2">
+							{Object.entries(aboutData.socials)
+								.filter(([, url]) => url)
+								.map(([key, url]) => (
+									<a
+										key={key}
+										href={url}
+										target="_blank"
+										rel="noopener noreferrer"
+										className="grid h-10 w-10 place-items-center rounded-full bg-primary/10 text-primary transition-colors hover:bg-primary hover:text-white"
+									>
+										{socialIcons[key]}
+									</a>
+								))}
+						</div>
+					</div>
+				)}
+			</div>
+		</div>
+	);
 }

@@ -2,30 +2,8 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import {
-	Box,
-	Typography,
-	Avatar,
-	IconButton,
-	Tabs,
-	Tab,
-	Divider,
-	Stack,
-	Paper,
-	Container,
-	Grid,
-	Chip,
-	Button,
-	LinearProgress,
-} from "@mui/material";
+import { ArrowLeft, ShieldCheck, MapPin, Calendar, Share2 } from "lucide-react";
 
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
-import LocationOnOutlinedIcon from "@mui/icons-material/LocationOnOutlined";
-import CalendarMonthOutlinedIcon from "@mui/icons-material/CalendarMonthOutlined";
-import ShareIcon from "@mui/icons-material/Share";
-
-// Mock Data
 const USER_DATA = {
 	id: "collab-for-change",
 	name: "CollabForChange",
@@ -36,11 +14,9 @@ const USER_DATA = {
 	type: "Yayasan",
 	joinedAt: "Bergabung sejak 2021",
 	location: "Bandung, Jawa Barat",
-	about: `
-    CollabForChange adalah yayasan sosial yang berfokus pada pemberdayaan masyarakat marginal dan penyandang disabilitas. Kami percaya bahwa setiap orang berhak mendapatkan kesempatan yang sama untuk berkembang.
-    
-    Visi kami adalah menciptakan ekosistem inklusif di mana difabel dapat mandiri secara ekonomi dan sosial.
-  `,
+	about: `CollabForChange adalah yayasan sosial yang berfokus pada pemberdayaan masyarakat marginal dan penyandang disabilitas. Kami percaya bahwa setiap orang berhak mendapatkan kesempatan yang sama untuk berkembang.
+
+Visi kami adalah menciptakan ekosistem inklusif di mana difabel dapat mandiri secara ekonomi dan sosial.`,
 	campaigns: [
 		{
 			id: "tanam-harapan-difabel",
@@ -74,280 +50,154 @@ function formatIDR(amount: number) {
 	}).format(amount);
 }
 
-interface TabPanelProps {
-	children?: React.ReactNode;
-	index: number;
-	value: number;
-}
-
-function CustomTabPanel(props: TabPanelProps) {
-	const { children, value, index, ...other } = props;
-
-	return (
-		<div
-			role="tabpanel"
-			hidden={value !== index}
-			id={`profile-tabpanel-${index}`}
-			aria-labelledby={`profile-tab-${index}`}
-			{...other}
-		>
-			{value === index && <Box sx={{ py: 3 }}>{children}</Box>}
-		</div>
-	);
-}
-
-export default function SahabatBaikPage({
-	params,
-}: {
-	params: { id: string };
-}) {
+export default function SahabatBaikPage() {
 	const router = useRouter();
-	const [tabValue, setTabValue] = React.useState(0);
-
-	const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
-		setTabValue(newValue);
-	};
-
-	const data = USER_DATA; // Mock
+	const [tabValue, setTabValue] = React.useState<0 | 1>(0);
+	const data = USER_DATA;
 
 	return (
-		<Box sx={{ pb: 12, bgcolor: "#fff", minHeight: "100vh" }}>
-			{/* Header with Cover & Back Button */}
-			<Box sx={{ position: "relative", height: 160, bgcolor: "#f1f5f9" }}>
+		<div className="min-h-screen bg-white pb-12">
+			{/* Cover */}
+			<div className="relative h-40 bg-slate-100">
 				{data.cover && (
-					<Box
-						component="img"
+					<img
 						src={data.cover}
 						alt="Cover"
-						sx={{ width: "100%", height: "100%", objectFit: "cover" }}
+						className="h-full w-full object-cover"
 					/>
 				)}
-				<Box
-					sx={{
-						position: "absolute",
-						top: 0,
-						left: 0,
-						right: 0,
-						p: 2,
-						display: "flex",
-						justifyContent: "space-between",
-					}}
-				>
-					<IconButton
+				<div className="absolute inset-x-0 top-0 flex justify-between p-2">
+					<button
 						onClick={() => router.back()}
-						sx={{ bgcolor: "rgba(255,255,255,0.8)", "&:hover": { bgcolor: "white" } }}
+						className="grid h-9 w-9 place-items-center rounded-full bg-white/80 transition-colors hover:bg-white"
 					>
-						<ArrowBackIcon />
-					</IconButton>
-					<IconButton
-						sx={{ bgcolor: "rgba(255,255,255,0.8)", "&:hover": { bgcolor: "white" } }}
-					>
-						<ShareIcon />
-					</IconButton>
-				</Box>
-			</Box>
+						<ArrowLeft size={20} />
+					</button>
+					<button className="grid h-9 w-9 place-items-center rounded-full bg-white/80 transition-colors hover:bg-white">
+						<Share2 size={20} />
+					</button>
+				</div>
+			</div>
 
-			<Container maxWidth="md">
+			<div className="mx-auto max-w-2xl">
 				{/* Profile Info */}
-				<Box sx={{ mt: -5, px: 2, position: "relative", mb: 3 }}>
-					<Box sx={{ display: "flex", alignItems: "flex-end", mb: 2 }}>
-						<Avatar
+				<div className="relative -mt-5 mb-3 px-2">
+					<div className="mb-2">
+						<img
 							src={data.avatar}
-							sx={{
-								width: 80,
-								height: 80,
-								border: "4px solid white",
-								bgcolor: "#fff",
-								boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-							}}
+							alt={data.name}
+							className="h-20 w-20 rounded-full border-4 border-white bg-white object-cover shadow-md"
 						/>
-					</Box>
-					<Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5 }}>
-						<Typography variant="h5" sx={{ fontWeight: 700, color: "#0f172a" }}>
-							{data.name}
-						</Typography>
+					</div>
+					<div className="mb-0.5 flex items-center gap-1">
+						<h1 className="text-xl font-bold text-foreground">{data.name}</h1>
 						{data.verified && (
-							<VerifiedUserIcon sx={{ color: "#3b82f6", fontSize: 20 }} />
+							<ShieldCheck size={20} className="text-blue-500" />
 						)}
-					</Box>
-					<Typography sx={{ color: "#64748b", fontSize: 14, mb: 2 }}>
-						{data.type}
-					</Typography>
+					</div>
+					<p className="mb-2 text-sm text-slate-500">{data.type}</p>
 
-					<Stack direction="row" spacing={2} sx={{ mb: 2 }}>
-						<Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-							<LocationOnOutlinedIcon
-								sx={{ fontSize: 16, color: "#94a3b8" }}
-							/>
-							<Typography sx={{ fontSize: 12, color: "#64748b" }}>
-								{data.location}
-							</Typography>
-						</Box>
-						<Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-							<CalendarMonthOutlinedIcon
-								sx={{ fontSize: 16, color: "#94a3b8" }}
-							/>
-							<Typography sx={{ fontSize: 12, color: "#64748b" }}>
-								{data.joinedAt}
-							</Typography>
-						</Box>
-					</Stack>
-				</Box>
+					<div className="mb-2 flex gap-2">
+						<span className="flex items-center gap-0.5 text-xs text-slate-500">
+							<MapPin size={14} className="text-slate-400" />
+							{data.location}
+						</span>
+						<span className="flex items-center gap-0.5 text-xs text-slate-500">
+							<Calendar size={14} className="text-slate-400" />
+							{data.joinedAt}
+						</span>
+					</div>
+				</div>
 
-				<Divider sx={{ mb: 0 }} />
+				<hr className="border-divider" />
 
 				{/* Tabs */}
-				<Tabs
-					value={tabValue}
-					onChange={handleTabChange}
-					variant="fullWidth"
-					sx={{
-						borderBottom: 1,
-						borderColor: "divider",
-						"& .MuiTab-root": {
-							textTransform: "none",
-							fontWeight: 600,
-							fontSize: 14,
-						},
-						"& .Mui-selected": { color: "#0ba976" },
-						"& .MuiTabs-indicator": { bgcolor: "#0ba976" },
-					}}
-				>
-					<Tab label="Tentang" />
-					<Tab label="Penggalangan Dana" />
-				</Tabs>
+				<div className="flex border-b border-divider">
+					{(["Tentang", "Penggalangan Dana"] as const).map((label, i) => (
+						<button
+							key={label}
+							onClick={() => setTabValue(i as 0 | 1)}
+							className={[
+								"flex-1 py-3 text-sm font-semibold transition-colors",
+								tabValue === i
+									? "border-b-2 border-primary text-primary"
+									: "text-foreground/50",
+							].join(" ")}
+						>
+							{label}
+						</button>
+					))}
+				</div>
 
 				{/* Tab: Tentang */}
-				<CustomTabPanel value={tabValue} index={0}>
-					<Box sx={{ px: 2 }}>
-						<Typography
-							sx={{
-								fontSize: 14,
-								color: "#334155",
-								lineHeight: 1.8,
-								whiteSpace: "pre-line",
-							}}
-						>
+				{tabValue === 0 && (
+					<div className="px-2 py-3">
+						<p className="whitespace-pre-line text-sm leading-relaxed text-slate-700">
 							{data.about}
-						</Typography>
-					</Box>
-				</CustomTabPanel>
+						</p>
+					</div>
+				)}
 
 				{/* Tab: Penggalangan Dana */}
-				<CustomTabPanel value={tabValue} index={1}>
-					<Stack spacing={2} sx={{ px: 2 }}>
+				{tabValue === 1 && (
+					<div className="flex flex-col gap-2 px-2 py-3">
 						{data.campaigns.map((campaign) => {
 							const progress = Math.min(
 								100,
-								Math.round((campaign.collected / campaign.target) * 100)
+								Math.round(
+									(campaign.collected / campaign.target) * 100,
+								),
 							);
 							return (
-								<Paper
+								<button
 									key={campaign.id}
-									variant="outlined"
-									sx={{ p: 0, borderRadius: 2, overflow: "hidden" }}
 									onClick={() => router.push(`/donasi/${campaign.id}`)}
+									className="flex cursor-pointer overflow-hidden rounded-2xl border border-divider text-left"
 								>
-									<Grid container>
-										<Grid size={{ xs: 4 }}>
-											<Box
-												component="img"
-												src={campaign.image}
-												sx={{
-													width: "100%",
-													height: "100%",
-													objectFit: "cover",
-													minHeight: 120,
-												}}
+									<img
+										src={campaign.image}
+										alt={campaign.title}
+										className="h-[120px] w-1/3 object-cover"
+									/>
+									<div className="flex-1 p-2">
+										<p className="mb-1 text-sm font-bold leading-tight">
+											{campaign.title}
+										</p>
+										<div className="mb-1 h-1.5 overflow-hidden rounded-full bg-slate-100">
+											<div
+												className="h-full rounded-full bg-primary"
+												style={{ width: `${progress}%` }}
 											/>
-										</Grid>
-										<Grid size={{ xs: 8 }} sx={{ p: 2 }}>
-											<Typography
-												sx={{
-													fontWeight: 700,
-													fontSize: 14,
-													mb: 1,
-													lineHeight: 1.3,
-												}}
-											>
-												{campaign.title}
-											</Typography>
-											<Box sx={{ mb: 1 }}>
-												<LinearProgress
-													variant="determinate"
-													value={progress}
-													sx={{
-														height: 6,
-														borderRadius: 3,
-														bgcolor: "#f1f5f9",
-														"& .MuiLinearProgress-bar": {
-															bgcolor: "#0ba976",
-															borderRadius: 3,
-														},
-													}}
-												/>
-											</Box>
-											<Box
-												sx={{
-													display: "flex",
-													justifyContent: "space-between",
-													alignItems: "center",
-												}}
-											>
-												<Box>
-													<Typography
-														sx={{ fontSize: 12, color: "#64748b" }}
-													>
-														Terkumpul
-													</Typography>
-													<Typography
-														sx={{
-															fontSize: 12,
-															fontWeight: 700,
-															color: "#0ba976",
-														}}
-													>
-														{formatIDR(campaign.collected)}
-													</Typography>
-												</Box>
-												{campaign.status === "active" ? (
-													<Box sx={{ textAlign: "right" }}>
-														<Typography
-															sx={{ fontSize: 12, color: "#64748b" }}
-														>
-															Sisa hari
-														</Typography>
-														<Typography
-															sx={{
-																fontSize: 12,
-																fontWeight: 700,
-																color: "#0f172a",
-															}}
-														>
-															{campaign.daysLeft}
-														</Typography>
-													</Box>
-												) : (
-													<Chip
-														label="Selesai"
-														size="small"
-														sx={{
-															fontSize: 10,
-															height: 20,
-															bgcolor: "#f1f5f9",
-															color: "#64748b",
-														}}
-													/>
-												)}
-											</Box>
-										</Grid>
-									</Grid>
-								</Paper>
+										</div>
+										<div className="flex items-center justify-between">
+											<div>
+												<p className="text-xs text-slate-500">Terkumpul</p>
+												<p className="text-xs font-bold text-primary">
+													{formatIDR(campaign.collected)}
+												</p>
+											</div>
+											{campaign.status === "active" ? (
+												<div className="text-right">
+													<p className="text-xs text-slate-500">
+														Sisa hari
+													</p>
+													<p className="text-xs font-bold text-foreground">
+														{campaign.daysLeft}
+													</p>
+												</div>
+											) : (
+												<span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-500">
+													Selesai
+												</span>
+											)}
+										</div>
+									</div>
+								</button>
 							);
 						})}
-					</Stack>
-				</CustomTabPanel>
-			</Container>
-		</Box>
+					</div>
+				)}
+			</div>
+		</div>
 	);
 }
