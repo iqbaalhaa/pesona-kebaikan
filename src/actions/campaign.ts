@@ -686,16 +686,17 @@ export async function getCampaignById(id: string) {
 			})),
 		].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
-		let fundraisers: {
-			id: string;
-			title: string;
-			slug: string;
-			target: any;
-		}[] = [];
+		let fundraisers: any[] = [];
 		if ((prisma as any).fundraiser) {
 			fundraisers = await (prisma as any).fundraiser.findMany({
 				where: { campaignId: campaign.id },
-				select: { id: true, title: true, slug: true, target: true },
+				select: {
+					id: true,
+					title: true,
+					slug: true,
+					target: true,
+					createdBy: { select: { name: true, image: true } },
+				},
 			});
 		}
 
@@ -752,11 +753,13 @@ export async function getCampaignById(id: string) {
 				...t,
 				date: new Date(t.date).toISOString(),
 			})),
-			fundraisers: fundraisers.map((f) => ({
+			fundraisers: fundraisers.map((f: any) => ({
 				id: f.id,
 				title: f.title,
 				slug: f.slug,
 				target: Number(f.target),
+				creatorName: f.createdBy?.name || "Anonim",
+				creatorImage: f.createdBy?.image || "",
 			})),
 		};
 

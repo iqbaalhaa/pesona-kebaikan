@@ -151,6 +151,7 @@ export async function getFundraiserCampaign(slug: string) {
 		const fr = await prisma.fundraiser.findUnique({
 			where: { slug },
 			include: {
+				createdBy: { select: { id: true, name: true, image: true } },
 				amiins: {
 					include: { user: true },
 					orderBy: { createdAt: "desc" },
@@ -258,10 +259,15 @@ export async function getFundraiserCampaign(slug: string) {
 				ownerVerifiedAt: (campaign.createdBy as any).verifiedAt || null,
 				ownerVerifiedAs: (campaign.createdBy as any).verifiedAs || null,
 				updates: timeline,
+				campaignTitle: campaign.title,
+				campaignSlug: campaign.slug,
 				fundraiserId: fr.id,
 				fundraiserSlug: fr.slug,
 				fundraiserTitle: fr.title,
 				fundraiserTarget: Number(fr.target),
+				fundraiserCreatorId: fr.createdBy?.id || "",
+				fundraiserCreatorName: fr.createdBy?.name || "Anonim",
+				fundraiserCreatorImage: fr.createdBy?.image || "",
 				fundraiserPrayers: fr.amiins.map((a) => ({
 					id: a.id,
 					name: a.user?.name || "Hamba Allah",

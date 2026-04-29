@@ -34,7 +34,7 @@ export default function CampaignFundraiser({
 	}, [data.categorySlug, data.category]);
 
 	return (
-		<Box sx={{ mb: 3 }}>
+		<Box sx={{ mb: 0 }}>
 			<Typography
 				variant="h6"
 				sx={{

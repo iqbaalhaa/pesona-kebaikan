@@ -10,6 +10,7 @@ import {
 	Divider,
 	Snackbar,
 	Alert,
+	Avatar,
 	IconButton,
 	Chip,
 	Dialog,
@@ -61,7 +62,7 @@ function CustomTabPanel(props: TabPanelProps) {
 			aria-labelledby={`campaign-tab-${index}`}
 			{...other}
 		>
-			{value === index && <Box sx={{ py: 3 }}>{children}</Box>}
+			{value === index && <Box sx={{ py: 1.5 }}>{children}</Box>}
 		</div>
 	);
 }
@@ -378,7 +379,7 @@ export default function CampaignDetailView({
 	return (
 		<Box
 			sx={{
-				pb: "100px",
+				pb: "80px",
 				bgcolor: "#fff",
 				minHeight: "100vh",
 			}}
@@ -418,7 +419,7 @@ export default function CampaignDetailView({
 				<Box
 					sx={{
 						px: 2,
-						py: 3,
+						py: 2,
 						mt: 0,
 						position: "relative",
 						bgcolor: "white",
@@ -435,7 +436,61 @@ export default function CampaignDetailView({
 						setTabValue={setTabValue}
 					/>
 
-					<Divider sx={{ my: 3 }} />
+					{!showFundraiser && (data as any).fundraiserCreatorName && (
+						<Box
+							sx={{
+								mt: 2,
+								p: 2,
+								borderRadius: 3,
+								bgcolor: "#f0fdf4",
+								border: "1px solid #bbf7d0",
+							}}
+						>
+							<Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 1.5 }}>
+								<Avatar
+									src={(data as any).fundraiserCreatorImage}
+									sx={{ width: 36, height: 36 }}
+								>
+									{((data as any).fundraiserCreatorName || "A").charAt(0)}
+								</Avatar>
+								<Box>
+									<Typography sx={{ fontSize: 13, fontWeight: 700, color: "#166534" }}>
+										Fundraiser oleh {(data as any).fundraiserCreatorName}
+									</Typography>
+									<Typography sx={{ fontSize: 11, color: "#15803d" }}>
+										Membantu menyebarkan campaign ini
+									</Typography>
+								</Box>
+							</Box>
+							{(data as any).campaignTitle && (
+								<Box
+									onClick={() => {
+										if ((data as any).campaignSlug) router.push(`/donasi/${(data as any).campaignSlug}`);
+									}}
+									sx={{
+										display: "flex",
+										alignItems: "center",
+										gap: 1,
+										p: 1.5,
+										borderRadius: 2,
+										bgcolor: "white",
+										cursor: "pointer",
+										"&:hover": { bgcolor: "#f8fafc" },
+									}}
+								>
+									<Typography sx={{ fontSize: 12, color: "#64748b" }}>
+										Campaign:
+									</Typography>
+									<Typography sx={{ fontSize: 12, fontWeight: 700, color: "#0f172a", flex: 1 }}>
+										{(data as any).campaignTitle}
+									</Typography>
+									<NavigateNextIcon sx={{ fontSize: 18, color: "#94a3b8" }} />
+								</Box>
+							)}
+						</Box>
+					)}
+
+					<Divider sx={{ my: 2 }} />
 
 					{showFundraiser && (
 						<CampaignFundraiser
@@ -447,7 +502,7 @@ export default function CampaignDetailView({
 						/>
 					)}
 
-					<Divider sx={{ my: 3 }} />
+					<Divider sx={{ my: 2 }} />
 
 					{/* Tab: Cerita */}
 					<CustomTabPanel value={tabValue} index={0}>
@@ -648,8 +703,14 @@ export default function CampaignDetailView({
 										setOpenFundraiserModal(false);
 										if (f.slug) router.push(`/donasi/fundraiser/${f.slug}`);
 									}}
-									sx={{ borderRadius: 2, mb: 0.5 }}
+									sx={{ borderRadius: 2, mb: 0.5, gap: 1.5 }}
 								>
+									<Avatar
+										src={f.creatorImage}
+										sx={{ width: 36, height: 36 }}
+									>
+										{(f.creatorName || "A").charAt(0)}
+									</Avatar>
 									<ListItemText
 										primaryTypographyProps={{
 											sx: { fontWeight: 700, fontSize: 14 },
@@ -658,7 +719,7 @@ export default function CampaignDetailView({
 											sx: { fontSize: 12, color: "#64748b" },
 										}}
 										primary={f.title}
-										secondary={`Target: Rp ${new Intl.NumberFormat("id-ID", {
+										secondary={`oleh ${f.creatorName || "Anonim"} · Target: Rp ${new Intl.NumberFormat("id-ID", {
 											maximumFractionDigits: 0,
 										}).format(Number(f.target || 0))}`}
 									/>

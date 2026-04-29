@@ -31,7 +31,7 @@ export default function CampaignHeader({
 	return (
 		<Box>
 			{/* Title & Category */}
-			<Box sx={{ mb: 2 }}>
+			<Box sx={{ mb: 1.5 }}>
 				<Typography
 					variant="h1"
 					sx={{
@@ -59,7 +59,7 @@ export default function CampaignHeader({
 			</Box>
 
 			{/* Progress Stats */}
-			<Box sx={{ mb: 3 }}>
+			<Box sx={{ mb: 0 }}>
 				<Box
 					sx={{
 						display: "flex",
