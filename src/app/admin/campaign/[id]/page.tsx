@@ -65,37 +65,15 @@ import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
 import HourglassBottomRoundedIcon from "@mui/icons-material/HourglassBottomRounded";
 import ErrorRoundedIcon from "@mui/icons-material/ErrorRounded";
 import RichTextEditor from "@/components/admin/RichTextEditor";
+import {
+	idr as _idr, pct as _pct, statusMeta as _statusMeta, methodLabel as _methodLabel,
+	fieldSx as _fieldSx, shellSx as _shellSx,
+	SegTab, InfoRow, MiniStat, VerifyItem, FormBlock, DocRow, TimelineRow, TxRowCard,
+	type DocItem, type AuditEvent, type TxRow, type TxStatus, type PayMethod,
+	type CampaignStatus as CampaignStatusType, type CampaignType, type DocKey,
+} from "./_components/shared";
 
-type CampaignStatus =
-	| "draft"
-	| "review"
-	| "active"
-	| "ended"
-	| "rejected"
-	| "pending"
-	| "paused";
-type CampaignType = "sakit" | "lainnya";
-
-type AuditEvent = {
-	id: string;
-	at: string;
-	title: string;
-	meta?: string;
-	tone?: "neutral" | "success" | "warning" | "error" | "info";
-};
-
-type DocKey = "cover" | "ktp" | "resume_medis" | "surat_rs" | "pendukung";
-
-type DocItem = {
-	key: DocKey;
-	title: string;
-	required: boolean;
-	help?: string;
-	uploaded: boolean;
-	filename?: string;
-	previewUrl?: string; // blob url
-	updatedAt?: string;
-};
+type CampaignStatus = CampaignStatusType;
 
 const QUICK_DONATION_SLUG = "donasi-cepat";
 
@@ -112,92 +90,17 @@ const STATUS_META: Record<
 	paused: { label: "Jeda", tone: "warning" },
 };
 
-// Transaction Types & Helpers
-type TxStatus = "paid" | "pending" | "failed" | "refunded";
-type PayMethod = "qris" | "va_bca" | "va_bri" | "gopay" | "manual";
-
-type TxRow = {
-	id: string;
-	createdAt: string;
-	campaignId: string;
-	campaignTitle: string;
-	donorName: string;
-	donorPhone: string;
-	donorEmail: string;
-	message: string;
-	isAnonymous: boolean;
-	amount: number;
-	method: PayMethod;
-	status: TxStatus;
-	refCode: string;
-	account: {
-		name: string;
-		email: string;
-		phone: string;
-	} | null;
-};
-
-function statusMeta(status: TxStatus) {
-	switch (status) {
-		case "paid":
-			return {
-				label: "Berhasil",
-				icon: <CheckCircleRoundedIcon fontSize="small" />,
-				tone: "success" as const,
-			};
-		case "pending":
-			return {
-				label: "Pending",
-				icon: <HourglassBottomRoundedIcon fontSize="small" />,
-				tone: "warning" as const,
-			};
-		case "failed":
-			return {
-				label: "Gagal",
-				icon: <ErrorRoundedIcon fontSize="small" />,
-				tone: "error" as const,
-			};
-		case "refunded":
-			return {
-				label: "Refund",
-				icon: <ErrorRoundedIcon fontSize="small" />,
-				tone: "info" as const,
-			};
-	}
-}
-
-function methodLabel(m: PayMethod) {
-	switch (m) {
-		case "qris":
-			return "QRIS";
-		case "va_bca":
-			return "VA BCA";
-		case "va_bri":
-			return "VA BRI";
-		case "gopay":
-			return "GoPay";
-		case "manual":
-			return "Manual";
-	}
-}
-
-function idr(n: number) {
-	if (!n) return "Rp0";
-	const s = Math.round(n).toString();
-	return "Rp" + s.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-}
-function pct(collected: number, target: number) {
-	if (!target || target <= 0) return 0;
-	return Math.max(0, Math.min(100, Math.round((collected / target) * 100)));
-}
+const idr = _idr;
+const pct = _pct;
+const statusMeta = _statusMeta;
+const methodLabel = _methodLabel;
+const fieldSx = _fieldSx;
+const shellSx = _shellSx;
 
 function nowLabel() {
-	// dummy readable label
 	const d = new Date();
 	const pad = (x: number) => String(x).padStart(2, "0");
-	return `${pad(d.getDate())}/${pad(d.getMonth() + 1)} ${pad(
-		d.getHours(),
-	)}:${pad(d.getMinutes())}`;
+	return `${pad(d.getDate())}/${pad(d.getMonth() + 1)} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
 export default function AdminCampaignDetailPage(props: {
@@ -220,6 +123,8 @@ export default function AdminCampaignDetailPage(props: {
 		| "timeline"
 		| "transactions"
 	>("overview");
+
+	const isReviewStatus = ["pending", "review", "draft"].includes(data?.status || "");
 
 	const [snack, setSnack] = React.useState<{
 		open: boolean;
@@ -581,8 +486,8 @@ export default function AdminCampaignDetailPage(props: {
 		coverOk: false,
 		storyOk: false,
 		targetOk: false,
-		categoryOk: true,
-		phoneOk: true,
+		categoryOk: false,
+		phoneOk: false,
 		feeOk: false,
 	});
 	const [rejectReason, setRejectReason] = React.useState("");
@@ -674,22 +579,6 @@ export default function AdminCampaignDetailPage(props: {
 	const canResume =
 		!isQuickDonation && (data?.status === "paused" || data?.status === "ended");
 
-	// derive checklist suggestions from current state (soft suggestion)
-	React.useEffect(() => {
-		if (!data) return;
-		const hasCover = docs.find((d) => d.key === "cover")?.uploaded ?? false;
-		const hasKtp = docs.find((d) => d.key === "ktp")?.uploaded ?? false;
-
-		setCheck((c) => ({
-			...c,
-			coverOk: c.coverOk || hasCover,
-			identityOk: c.identityOk || hasKtp,
-			storyOk: c.storyOk || (data.story?.trim().length ?? 0) >= 80,
-			targetOk: c.targetOk || (data.target ?? 0) > 0,
-			feeOk: c.feeOk || (feeValue !== "" && !Number.isNaN(Number(feeValue))),
-		}));
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [docs, data?.story, data?.target, feeValue]);
 
 	if (loading) {
 		return (
@@ -1257,7 +1146,189 @@ export default function AdminCampaignDetailPage(props: {
 				</Stack>
 			</Paper>
 
-			{/* MAIN GRID */}
+			{isReviewMode ? (
+				/* ===== REVIEW MODE: single column, top-to-bottom checklist ===== */
+				<Stack spacing={2}>
+					{/* Owner info inline */}
+					<Paper elevation={0} sx={{ ...shellSx, p: 1.5 }}>
+						<Stack direction="row" spacing={1.5} alignItems="center">
+							<Avatar
+								src={data.ownerAvatar}
+								sx={{ width: 40, height: 40, bgcolor: theme.palette.primary.main }}
+							>
+								{!data.ownerAvatar && data.ownerName ? data.ownerName.charAt(0).toUpperCase() : ""}
+							</Avatar>
+							<Box sx={{ flex: 1, minWidth: 0 }}>
+								<Typography sx={{ fontWeight: 900, fontSize: 13.5 }}>{data.ownerName}</Typography>
+								<Typography sx={{ fontSize: 12, color: "text.secondary" }}>
+									{data.ownerEmail} {data.phone ? `· ${data.phone}` : ""}
+								</Typography>
+							</Box>
+							<Chip
+								label={data.ownerVerifiedAs === "organization" ? "Organisasi" : data.ownerVerifiedAs === "personal" ? "Personal" : "Belum Verifikasi"}
+								size="small"
+								variant="outlined"
+								sx={{ borderRadius: 999, fontWeight: 900 }}
+							/>
+						</Stack>
+					</Paper>
+
+					{/* Document checklist */}
+					<Paper elevation={0} sx={{ ...shellSx, p: 1.5 }}>
+						<Typography sx={{ fontWeight: 1000, fontSize: 14 }}>Kelengkapan Dokumen</Typography>
+						<Stack direction="row" spacing={1} sx={{ mt: 1, flexWrap: "wrap" }}>
+							{docs.map((d) => (
+								<Chip
+									key={d.key}
+									size="small"
+									label={d.title}
+									variant="outlined"
+									sx={(t) => ({
+										borderRadius: 999,
+										fontWeight: 900,
+										borderColor: alpha(d.uploaded ? t.palette.success.main : t.palette.warning.main, 0.25),
+										bgcolor: alpha(d.uploaded ? t.palette.success.main : t.palette.warning.main, t.palette.mode === "dark" ? 0.16 : 0.08),
+										color: d.uploaded ? t.palette.success.main : t.palette.warning.main,
+									})}
+								/>
+							))}
+						</Stack>
+						<Button size="small" onClick={() => setTab("docs")} sx={{ mt: 1, fontWeight: 700, textTransform: "none" }}>
+							Lihat & upload dokumen →
+						</Button>
+					</Paper>
+
+					{/* Story preview */}
+					<Paper elevation={0} sx={{ ...shellSx, p: 1.5 }}>
+						<Typography sx={{ fontWeight: 1000, fontSize: 14 }}>Cerita Campaign</Typography>
+						<Box
+							sx={{
+								mt: 1,
+								fontSize: 13,
+								color: "text.secondary",
+								lineHeight: 1.8,
+								maxHeight: 200,
+								overflow: "hidden",
+								position: "relative",
+								"& img": { maxWidth: "100%", borderRadius: 2 },
+								"&::after": {
+									content: '""',
+									position: "absolute",
+									bottom: 0,
+									left: 0,
+									right: 0,
+									height: 60,
+									background: "linear-gradient(transparent, white)",
+								},
+							}}
+							dangerouslySetInnerHTML={{ __html: data.story || "<p>Belum ada cerita.</p>" }}
+						/>
+						<Button size="small" onClick={() => setTab("story")} sx={{ mt: 0.5, fontWeight: 700, textTransform: "none" }}>
+							Baca selengkapnya →
+						</Button>
+					</Paper>
+
+					{/* Dana & Target */}
+					<Paper elevation={0} sx={{ ...shellSx, p: 1.5 }}>
+						<Stack direction="row" justifyContent="space-between" alignItems="baseline">
+							<Typography sx={{ fontWeight: 1000, fontSize: 14 }}>
+								{idr(data.collected)} <Typography component="span" sx={{ fontWeight: 800, color: "text.secondary" }}>/ {idr(data.target)}</Typography>
+							</Typography>
+							<Typography sx={{ fontSize: 13, fontWeight: 900, color: "text.secondary" }}>
+								{pct(data.collected, data.target)}%
+							</Typography>
+						</Stack>
+						<LinearProgress
+							variant="determinate"
+							value={pct(data.collected, data.target)}
+							sx={{ mt: 1, height: 6, borderRadius: 4, bgcolor: alpha(theme.palette.primary.main, 0.1), "& .MuiLinearProgress-bar": { borderRadius: 4 } }}
+						/>
+						<Typography sx={{ mt: 0.75, fontSize: 12, color: "text.secondary" }}>
+							{data.donors} donatur · {data.category} · {data.daysLeft > 0 ? `${data.daysLeft} hari lagi` : "Berakhir"}
+						</Typography>
+					</Paper>
+
+					{/* Verification checklist */}
+					{tab === "verify" && (
+						<Paper elevation={0} sx={{ ...shellSx, p: 1.5 }}>
+							<Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ gap: 1, flexWrap: "wrap" }}>
+								<Typography sx={{ fontWeight: 1000, fontSize: 14 }}>Checklist Verifikasi</Typography>
+								<Chip
+									label={verifyReady ? "Siap Approve" : "Belum lengkap"}
+									variant="outlined"
+									sx={{
+										borderRadius: 999, fontWeight: 900,
+										borderColor: alpha(verifyReady ? theme.palette.success.main : theme.palette.warning.main, 0.3),
+										bgcolor: alpha(verifyReady ? theme.palette.success.main : theme.palette.warning.main, theme.palette.mode === "dark" ? 0.18 : 0.1),
+										color: verifyReady ? theme.palette.success.main : theme.palette.warning.main,
+									}}
+								/>
+							</Stack>
+							<Divider sx={{ my: 1.25 }} />
+							<Stack spacing={0.5}>
+								<VerifyItem label="Fee Yayasan sudah diatur" checked={check.feeOk} onChange={(v) => setCheck((c) => ({ ...c, feeOk: v }))} hint={`Fee saat ini: ${feeValue}%`} />
+								<VerifyItem label="Identitas/KTP valid" checked={check.identityOk} onChange={(v) => setCheck((c) => ({ ...c, identityOk: v }))} hint="Pastikan KTP jelas dan sesuai." />
+								<VerifyItem label="Foto sampul sesuai" checked={check.coverOk} onChange={(v) => setCheck((c) => ({ ...c, coverOk: v }))} hint="Tidak mengandung konten sensitif." />
+								<VerifyItem label="Cerita memadai" checked={check.storyOk} onChange={(v) => setCheck((c) => ({ ...c, storyOk: v }))} hint="Kronologi & penggunaan dana jelas." />
+								<VerifyItem label="Target biaya wajar" checked={check.targetOk} onChange={(v) => setCheck((c) => ({ ...c, targetOk: v }))} hint="Nominal tidak nol, masuk akal." />
+								<VerifyItem label="Kategori sesuai" checked={check.categoryOk} onChange={(v) => setCheck((c) => ({ ...c, categoryOk: v }))} hint="Kategori yang benar." />
+								<VerifyItem label="Nomor HP dapat dihubungi" checked={check.phoneOk} onChange={(v) => setCheck((c) => ({ ...c, phoneOk: v }))} hint="WA/telepon aktif." />
+							</Stack>
+							<Divider sx={{ my: 1.25 }} />
+							<TextField size="small" label="Catatan / Alasan penolakan (opsional)" value={rejectReason} onChange={(e) => setRejectReason(e.target.value)} fullWidth multiline minRows={2} sx={fieldSx(theme)} />
+							<Stack direction="row" spacing={1} sx={{ mt: 1.25 }}>
+								<Button variant="contained" fullWidth startIcon={<ThumbUpAltRoundedIcon />} onClick={() => setConfirmApprove(true)} sx={{ borderRadius: 999, fontWeight: 900, boxShadow: "none" }}>
+									Approve
+								</Button>
+								<Button variant="outlined" fullWidth color="error" startIcon={<ThumbDownAltRoundedIcon />} onClick={() => setConfirmReject(true)} sx={{ borderRadius: 999, fontWeight: 900 }}>
+									Reject
+								</Button>
+							</Stack>
+						</Paper>
+					)}
+
+					{/* Docs tab content */}
+					{tab === "docs" && (
+						<Paper elevation={0} sx={{ ...shellSx, p: 1.5 }}>
+							<Typography sx={{ fontWeight: 1000, fontSize: 14 }}>Dokumen</Typography>
+							<Typography sx={{ mt: 0.5, fontSize: 12.5, color: "text.secondary" }}>
+								Upload dokumen untuk verifikasi. Required missing: <b>{requiredMissing}</b>
+							</Typography>
+							<Divider sx={{ my: 1.25 }} />
+							<Stack spacing={1}>
+								{docs.map((d) => (
+									<DocRow
+										key={d.key}
+										doc={d}
+										onUpload={(file) => handleUpload(d.key, file)}
+										onPreview={() => setPreview({ open: true, title: d.title, url: d.previewUrl })}
+										onRemove={() => handleRemoveDoc(d.key)}
+									/>
+								))}
+							</Stack>
+						</Paper>
+					)}
+
+					{/* Story tab content */}
+					{tab === "story" && (
+						<Paper elevation={0} sx={{ ...shellSx, p: 1.5 }}>
+							<Typography sx={{ fontWeight: 1000, fontSize: 14 }}>Cerita Lengkap</Typography>
+							<Divider sx={{ my: 1.25 }} />
+							<Box sx={{ fontSize: 14, lineHeight: 1.8, color: "text.secondary", "& img": { maxWidth: "100%", borderRadius: 2, my: 1 } }} dangerouslySetInnerHTML={{ __html: data.story || "<p>Belum ada cerita.</p>" }} />
+						</Paper>
+					)}
+
+					{/* Default: show verify tab for review mode */}
+					{tab !== "verify" && tab !== "docs" && tab !== "story" && (
+						<Box sx={{ textAlign: "center", py: 2 }}>
+							<Button variant="contained" onClick={() => setTab("verify")} startIcon={<VerifiedRoundedIcon />} sx={{ borderRadius: 999, fontWeight: 900, boxShadow: "none" }}>
+								Mulai Verifikasi
+							</Button>
+						</Box>
+					)}
+				</Stack>
+			) : (
+			/* ===== MONITOR MODE: existing grid layout ===== */
 			<Box
 				sx={{
 					display: "grid",
@@ -1404,52 +1475,37 @@ export default function AdminCampaignDetailPage(props: {
 						</Stack>
 					</Paper>
 
-					{/* Tabs */}
-					<Paper elevation={0} sx={{ ...shellSx, px: 1.25, py: 0, borderBottom: "1px solid", borderColor: "divider" }}>
-						<Stack
-							direction="row"
-							spacing={0}
-							sx={{
-								overflowX: "auto",
-								"&::-webkit-scrollbar": { display: "none" },
-							}}
-						>
-							<SegTab
-								label="Overview"
-								active={tab === "overview"}
-								onClick={() => setTab("overview")}
-							/>
-							<SegTab
-								label="Story"
-								active={tab === "story"}
-								onClick={() => setTab("story")}
-							/>
-							<SegTab
-								label="Dokumen"
-								active={tab === "docs"}
-								onClick={() => setTab("docs")}
-							/>
-							<SegTab
-								label="Verifikasi"
-								active={tab === "verify"}
-								onClick={() => setTab("verify")}
-							/>
-							<SegTab
-								label="Timeline"
-								active={tab === "timeline"}
-								onClick={() => setTab("timeline")}
-							/>
-							<SegTab
-								label="Transaksi"
-								active={tab === "transactions"}
-								onClick={() => setTab("transactions")}
-							/>
-						</Stack>
-					</Paper>
+					{/* Tabs + Content */}
+					<Paper elevation={0} sx={{ ...shellSx, overflow: "hidden" }}>
+						<Box sx={{ px: 1.25, borderBottom: "1px solid", borderColor: "divider" }}>
+							<Stack
+								direction="row"
+								spacing={0}
+								sx={{
+									overflowX: "auto",
+									"&::-webkit-scrollbar": { display: "none" },
+								}}
+							>
+								<SegTab
+									label="Ringkasan"
+									active={tab === "overview"}
+									onClick={() => setTab("overview")}
+								/>
+								<SegTab
+									label="Donasi"
+									active={tab === "transactions"}
+									onClick={() => setTab("transactions")}
+								/>
+								<SegTab
+									label="Timeline"
+									active={tab === "timeline"}
+									onClick={() => setTab("timeline")}
+								/>
+							</Stack>
+						</Box>
 
-					{/* Content */}
 					{tab === "overview" && (
-						<Paper elevation={0} sx={{ ...shellSx, p: 1.5 }}>
+						<Box sx={{ p: 1.5 }}>
 							<Typography sx={{ fontWeight: 1000, fontSize: 14 }}>
 								Ringkasan
 							</Typography>
@@ -1631,11 +1687,11 @@ export default function AdminCampaignDetailPage(props: {
 									</Stack>
 								</>
 							)}
-						</Paper>
+						</Box>
 					)}
 
 					{tab === "story" && (
-						<Paper elevation={0} sx={{ ...shellSx, p: 1.5 }}>
+						<Box sx={{ p: 1.5 }}>
 							<Stack
 								direction="row"
 								alignItems="center"
@@ -1715,11 +1771,11 @@ export default function AdminCampaignDetailPage(props: {
 									konten cerita utama.
 								</Typography>
 							</FormBlock>
-						</Paper>
+						</Box>
 					)}
 
 					{tab === "docs" && (
-						<Paper elevation={0} sx={{ ...shellSx, p: 1.5 }}>
+						<Box sx={{ p: 1.5 }}>
 							<Stack
 								direction="row"
 								justifyContent="space-between"
@@ -1766,11 +1822,11 @@ export default function AdminCampaignDetailPage(props: {
 									/>
 								))}
 							</Stack>
-						</Paper>
+						</Box>
 					)}
 
 					{tab === "verify" && (
-						<Paper elevation={0} sx={{ ...shellSx, p: 1.5 }}>
+						<Box sx={{ p: 1.5 }}>
 							<Stack
 								direction="row"
 								alignItems="center"
@@ -1933,11 +1989,11 @@ export default function AdminCampaignDetailPage(props: {
 									</Typography>
 								</Paper>
 							) : null}
-						</Paper>
+						</Box>
 					)}
 
 					{tab === "timeline" && (
-						<Paper elevation={0} sx={{ ...shellSx, p: 1.5 }}>
+						<Box sx={{ p: 1.5 }}>
 							<Typography sx={{ fontWeight: 1000, fontSize: 14 }}>
 								Timeline
 							</Typography>
@@ -1954,11 +2010,11 @@ export default function AdminCampaignDetailPage(props: {
 									<TimelineRow key={e.id} event={e} />
 								))}
 							</Stack>
-						</Paper>
+						</Box>
 					)}
 
 					{tab === "transactions" && (
-						<Paper elevation={0} sx={{ ...shellSx, p: 1.5 }}>
+						<Box sx={{ p: 1.5 }}>
 							<Typography sx={{ fontWeight: 1000, fontSize: 14 }}>
 								Transaksi
 							</Typography>
@@ -1990,8 +2046,9 @@ export default function AdminCampaignDetailPage(props: {
 									txRows.map((row) => <TxRowCard key={row.id} row={row} />)
 								)}
 							</Stack>
-						</Paper>
+						</Box>
 					)}
+				</Paper>
 				</Stack>
 
 				{/* RIGHT SIDEBAR */}
@@ -2066,6 +2123,7 @@ export default function AdminCampaignDetailPage(props: {
 
 				</Stack>
 			</Box>
+			)}
 
 			{/* Preview Doc */}
 			<Dialog
@@ -2246,22 +2304,34 @@ export default function AdminCampaignDetailPage(props: {
 				maxWidth="sm"
 				fullWidth
 			>
-				<DialogTitle sx={{ fontWeight: 1000 }}>Approve campaign?</DialogTitle>
+				<DialogTitle sx={{ fontWeight: 1000 }}>Approve Campaign</DialogTitle>
 				<DialogContent>
-					<DialogContentText>
-						Status akan menjadi <b>Aktif</b>. Pastikan checklist sudah benar.
+					<DialogContentText sx={{ mb: 2 }}>
+						Status akan menjadi <b>Aktif</b>. Review ringkasan dan atur fee sebelum approve.
 					</DialogContentText>
-					<Box sx={{ mt: 2, p: 2, bgcolor: "action.hover", borderRadius: 2 }}>
-						<Typography variant="body2" color="text.secondary">
-							Fee Yayasan
-						</Typography>
-						<Typography variant="h6" fontWeight={900}>
-							{feeValue}%
-						</Typography>
-						<Typography variant="caption" color="text.secondary">
-							Pastikan fee sudah sesuai sebelum melanjutkan.
-						</Typography>
-					</Box>
+
+					<Stack spacing={1.5} sx={{ mb: 2, p: 1.5, bgcolor: "action.hover", borderRadius: 2 }}>
+						<InfoRow k="Judul" v={data.title} />
+						<InfoRow k="Kategori" v={data.category} />
+						<InfoRow k="Target" v={idr(data.target)} />
+						<InfoRow k="Penggalang" v={data.ownerName} />
+						<InfoRow k="Donatur" v={`${data.donors}`} />
+					</Stack>
+
+					<Typography sx={{ fontSize: 13, fontWeight: 900, mb: 1 }}>Fee Yayasan</Typography>
+					<TextField
+						size="small"
+						type="number"
+						value={feeValue}
+						onChange={(e) => {
+							const num = Number(e.target.value);
+							if (!Number.isNaN(num) && num >= 0 && num <= 100) setFeeValue(e.target.value);
+						}}
+						inputProps={{ step: 0.1 }}
+						InputProps={{ endAdornment: <InputAdornment position="end">%</InputAdornment> }}
+						fullWidth
+						sx={fieldSx(theme)}
+					/>
 				</DialogContent>
 				<DialogActions sx={{ p: 2, pt: 0 }}>
 					<Button
@@ -2277,7 +2347,7 @@ export default function AdminCampaignDetailPage(props: {
 						disabled={feeLoading}
 						sx={{ borderRadius: 999, fontWeight: 900, boxShadow: "none" }}
 					>
-						{feeLoading ? "Menyimpan..." : "Approve"}
+						{feeLoading ? "Menyimpan..." : "Approve & Aktifkan"}
 					</Button>
 				</DialogActions>
 			</Dialog>
@@ -2335,440 +2405,17 @@ export default function AdminCampaignDetailPage(props: {
 	);
 }
 
-/* ---------- UI bits ---------- */
-
-function fieldSx(theme: any) {
-	return {
-		"& .MuiOutlinedInput-root": {
-			borderRadius: 2.5,
-			bgcolor: alpha(
-				theme.palette.background.default,
-				theme.palette.mode === "dark" ? 0.22 : 1,
-			),
-		},
-		"& .MuiInputBase-input": { fontSize: 13.5 },
-	};
-}
-
-function SegTab({
-	label,
-	active,
-	onClick,
-}: {
-	label: string;
-	active: boolean;
-	onClick: () => void;
-}) {
-	const theme = useTheme();
-	return (
-		<Box
-			component="button"
-			onClick={onClick}
-			sx={{
-				px: 1.5,
-				py: 0.75,
-				fontSize: 13,
-				fontWeight: active ? 900 : 700,
-				color: active ? theme.palette.primary.main : theme.palette.text.secondary,
-				borderBottom: active ? `2px solid ${theme.palette.primary.main}` : "2px solid transparent",
-				background: "none",
-				border: "none",
-				borderBottomStyle: "solid",
-				cursor: "pointer",
-				whiteSpace: "nowrap",
-				transition: "all 140ms ease",
-				"&:hover": {
-					color: theme.palette.primary.main,
-				},
-			}}
-		>
-			{label}
-		</Box>
-	);
-}
-
+/* ---------- UI bits (imported from ./_components/shared) ---------- */
+// QuickPill kept locally as it's only used here
 function QuickPill({ label, value }: { label: string; value: string }) {
 	const theme = useTheme();
 	return (
-		<Box
-			sx={{
-				px: 1.25,
-				py: 0.75,
-				borderRadius: 2,
-				bgcolor: alpha(
-					theme.palette.background.default,
-					theme.palette.mode === "dark" ? 0.18 : 1,
-				),
-				minWidth: 180,
-			}}
-		>
-			<Typography
-				sx={{ fontSize: 11.5, color: "text.secondary", fontWeight: 900 }}
-			>
-				{label}
-			</Typography>
-			<Typography
-				sx={{ mt: 0.2, fontSize: 12.5, fontWeight: 1000 }}
-				className="line-clamp-1"
-			>
-				{value}
-			</Typography>
+		<Box sx={{ px: 1.25, py: 0.75, borderRadius: 2, bgcolor: alpha(theme.palette.background.default, theme.palette.mode === "dark" ? 0.18 : 1), minWidth: 180 }}>
+			<Typography sx={{ fontSize: 11.5, color: "text.secondary", fontWeight: 900 }}>{label}</Typography>
+			<Typography sx={{ mt: 0.2, fontSize: 12.5, fontWeight: 1000 }} className="line-clamp-1">{value}</Typography>
 		</Box>
 	);
 }
 
-function MiniStat({
-	label,
-	value,
-	avatar,
-}: {
-	label: string;
-	value: string;
-	avatar?: string;
-}) {
-	return (
-		<Box
-			sx={{
-				display: "flex",
-				alignItems: "center",
-				gap: 1.5,
-				py: 0.75,
-			}}
-		>
-			{avatar && <Avatar src={avatar} sx={{ width: 36, height: 36 }} />}
-			<Box sx={{ flex: 1, minWidth: 0 }}>
-				<Typography
-					sx={{ fontSize: 11.5, color: "text.secondary", fontWeight: 700 }}
-				>
-					{label}
-				</Typography>
-				<Typography
-					sx={{ mt: 0.2, fontSize: 12.5, fontWeight: 900 }}
-					className="line-clamp-2"
-				>
-					{value}
-				</Typography>
-			</Box>
-		</Box>
-	);
-}
+/* Remaining inline components removed — now in _components/shared.tsx */
 
-function InfoRow({ k, v }: { k: string; v: string }) {
-	return (
-		<Box sx={{ display: "flex", gap: 1, alignItems: "baseline" }}>
-			<Typography sx={{ width: 120, fontSize: 12.5, color: "text.secondary" }}>
-				{k}
-			</Typography>
-			<Typography sx={{ fontSize: 12.5, fontWeight: 900 }}>{v}</Typography>
-		</Box>
-	);
-}
-
-function FormBlock({
-	label,
-	children,
-}: {
-	label: string;
-	children: React.ReactNode;
-}) {
-	return (
-		<Box sx={{ mt: 2 }}>
-			<Typography sx={{ fontWeight: 1000, fontSize: 13.5 }}>{label}</Typography>
-			<Box sx={{ mt: 1 }}>{children}</Box>
-		</Box>
-	);
-}
-
-function VerifyItem({
-	label,
-	checked,
-	onChange,
-	hint,
-}: {
-	label: string;
-	checked: boolean;
-	onChange: (v: boolean) => void;
-	hint?: string;
-}) {
-	return (
-		<Box sx={{ display: "flex", alignItems: "flex-start", gap: 1, py: 0.25 }}>
-			<FormControlLabel
-				control={
-					<Checkbox
-						checked={checked}
-						onChange={(e) => onChange(e.target.checked)}
-					/>
-				}
-				label={
-					<Box>
-						<Typography sx={{ fontSize: 13, fontWeight: 900 }}>
-							{label}
-						</Typography>
-						{hint ? (
-							<Typography sx={{ fontSize: 12.5, color: "text.secondary" }}>
-								{hint}
-							</Typography>
-						) : null}
-					</Box>
-				}
-				sx={{ m: 0 }}
-			/>
-		</Box>
-	);
-}
-
-function DocRow({
-	doc,
-	onUpload,
-	onPreview,
-	onRemove,
-}: {
-	doc: DocItem;
-	onUpload: (file?: File | null) => void;
-	onPreview: () => void;
-	onRemove: () => void;
-}) {
-	const theme = useTheme();
-	const id = `file-${doc.key}`;
-	const badgeColor = doc.uploaded
-		? theme.palette.success.main
-		: theme.palette.warning.main;
-
-	return (
-		<Paper
-			variant="outlined"
-			sx={{
-				borderRadius: 2.5,
-				p: 1,
-				// borderColor: alpha(theme.palette.divider, 1),
-				border: "none",
-				bgcolor: alpha(
-					theme.palette.background.default,
-					theme.palette.mode === "dark" ? 0.2 : 1,
-				),
-			}}
-		>
-			<input
-				id={id}
-				type="file"
-				hidden
-				accept="image/*,.pdf"
-				onChange={(e) => onUpload(e.target.files?.[0] ?? null)}
-			/>
-
-			<Stack direction="row" spacing={1} alignItems="center">
-				<Box sx={{ flex: 1, minWidth: 0 }}>
-					<Stack
-						direction="row"
-						spacing={1}
-						alignItems="center"
-						sx={{ flexWrap: "wrap" }}
-					>
-						<Typography
-							sx={{ fontSize: 13, fontWeight: 1000 }}
-							className="line-clamp-1"
-						>
-							{doc.title}
-						</Typography>
-
-						{doc.required && (
-							<Chip
-								size="small"
-								label="Required"
-								variant="outlined"
-								sx={{
-									borderRadius: 999,
-									fontWeight: 900,
-									height: 22,
-									borderColor: alpha(theme.palette.divider, 1),
-									color: "text.secondary",
-								}}
-							/>
-						)}
-
-						<Chip
-							size="small"
-							label={doc.uploaded ? "Uploaded" : "Belum"}
-							variant="outlined"
-							sx={{
-								borderRadius: 999,
-								fontWeight: 900,
-								height: 22,
-								borderColor: alpha(badgeColor, 0.28),
-								bgcolor: alpha(
-									badgeColor,
-									theme.palette.mode === "dark" ? 0.16 : 0.08,
-								),
-								color: badgeColor,
-							}}
-						/>
-					</Stack>
-
-					<Typography
-						sx={{ fontSize: 12.5, color: "text.secondary" }}
-						className="line-clamp-1"
-					>
-						{doc.uploaded ? (
-							<>
-								{doc.filename} {doc.updatedAt ? `• ${doc.updatedAt}` : ""}
-							</>
-						) : (
-							doc.help || "—"
-						)}
-					</Typography>
-				</Box>
-
-				{doc.uploaded ? (
-					<Stack direction="row" spacing={1}>
-						<Button
-							variant="outlined"
-							startIcon={<VisibilityRoundedIcon />}
-							onClick={onPreview}
-							disabled={!doc.previewUrl}
-							sx={{ borderRadius: 999, fontWeight: 900 }}
-						>
-							Preview
-						</Button>
-						<Tooltip title="Hapus dokumen">
-							<IconButton
-								onClick={onRemove}
-								sx={{
-									borderRadius: 2,
-									// border: "1px solid",
-									// borderColor: alpha(theme.palette.divider, 1),
-								}}
-							>
-								<DeleteOutlineRoundedIcon fontSize="small" />
-							</IconButton>
-						</Tooltip>
-					</Stack>
-				) : (
-					<Button
-						component="label"
-						htmlFor={id}
-						variant="outlined"
-						startIcon={<UploadFileRoundedIcon />}
-						sx={{ borderRadius: 999, fontWeight: 900 }}
-					>
-						Upload
-					</Button>
-				)}
-			</Stack>
-		</Paper>
-	);
-}
-
-function TimelineRow({ event }: { event: AuditEvent }) {
-	const theme = useTheme();
-
-	const tone = event.tone ?? "neutral";
-	const c =
-		tone === "success"
-			? theme.palette.success.main
-			: tone === "warning"
-				? theme.palette.warning.main
-				: tone === "error"
-					? theme.palette.error.main
-					: tone === "info"
-						? theme.palette.info.main
-						: theme.palette.text.secondary;
-
-	return (
-		<Paper
-			variant="outlined"
-			sx={{
-				borderRadius: 2.5,
-				p: 1,
-				// borderColor: alpha(theme.palette.divider, 1),
-				border: "none",
-				bgcolor: alpha(
-					theme.palette.background.default,
-					theme.palette.mode === "dark" ? 0.2 : 1,
-				),
-			}}
-		>
-			<Stack direction="row" spacing={1} alignItems="baseline">
-				<Typography
-					sx={{ fontSize: 12, color: "text.secondary", minWidth: 72 }}
-				>
-					{event.at}
-				</Typography>
-				<Box sx={{ flex: 1 }}>
-					<Typography sx={{ fontSize: 13, fontWeight: 1000 }}>
-						{event.title}
-					</Typography>
-					{event.meta ? (
-						<Typography sx={{ fontSize: 12.5, color: "text.secondary" }}>
-							{event.meta}
-						</Typography>
-					) : null}
-				</Box>
-				<Box
-					sx={{
-						width: 10,
-						height: 10,
-						borderRadius: 999,
-						bgcolor: c,
-						boxShadow: `0 0 0 3px ${alpha(
-							c,
-							theme.palette.mode === "dark" ? 0.18 : 0.12,
-						)}`,
-					}}
-				/>
-			</Stack>
-		</Paper>
-	);
-}
-
-function TxRowCard({ row }: { row: TxRow }) {
-	const theme = useTheme();
-	const meta = statusMeta(row.status);
-
-	return (
-		<Paper
-			variant="outlined"
-			sx={{
-				p: 2,
-				borderRadius: 2.5,
-				borderColor: alpha(theme.palette.divider, 1),
-				bgcolor: alpha(
-					theme.palette.background.default,
-					theme.palette.mode === "dark" ? 0.2 : 1,
-				),
-			}}
-		>
-			<Stack
-				direction="row"
-				spacing={1.5}
-				alignItems="center"
-				sx={{ minWidth: 0 }}
-			>
-				<Box
-					sx={{
-						width: 40,
-						height: 40,
-						borderRadius: 2.5,
-						display: "grid",
-						placeItems: "center",
-						bgcolor: alpha(
-							meta.tone === "success" ? "#22c55e" : "#f97316",
-							0.12,
-						),
-						color: meta.tone === "success" ? "#22c55e" : "#f97316",
-					}}
-				>
-					{meta.icon}
-				</Box>
-
-				<Box sx={{ flex: 1 }}>
-					<Typography sx={{ fontSize: 13, fontWeight: 1000 }}>
-						{idr(row.amount)} • {row.donorName}
-					</Typography>
-					<Typography sx={{ fontSize: 12, color: "text.secondary" }}>
-						{row.createdAt} • {methodLabel(row.method)} • {row.refCode}
-					</Typography>
-				</Box>
-			</Stack>
-		</Paper>
-	);
-}

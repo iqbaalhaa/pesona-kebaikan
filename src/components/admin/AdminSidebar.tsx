@@ -253,14 +253,10 @@ export default function AdminSidebar({
 													</span>
 												</span>
 											)}
-											{isVerifyMenu && (
+											{isVerifyMenu && reviewCount !== null && reviewCount > 0 && (
 												<span className="mt-1 inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 shadow-sm ring-1 ring-emerald-500/40 dark:bg-emerald-500/10 dark:text-emerald-200">
 													<span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-													<span>
-														{reviewCount === null
-															? "Memuat…"
-															: `${reviewCount} antrian`}
-													</span>
+													<span>{reviewCount} antrian</span>
 												</span>
 											)}
 										</span>

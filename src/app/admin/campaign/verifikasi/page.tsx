@@ -1062,31 +1062,15 @@ export default function AdminCampaignVerifikasiPage() {
 								</Typography>
 							) : null}
 
-							<Stack direction="row" spacing={1}>
-								<Button
-									variant="contained"
-									startIcon={<ThumbUpAltRoundedIcon />}
-									disabled={missingRequired(selected).length > 0}
-									onClick={() =>
-										setConfirm({ open: true, mode: "approve", row: selected })
-									}
-									sx={{ borderRadius: 999, fontWeight: 900, boxShadow: "none", flex: 1 }}
-								>
-									Approve
-								</Button>
-
-								<Button
-									variant="outlined"
-									color="error"
-									startIcon={<ThumbDownAltRoundedIcon />}
-									onClick={() =>
-										setConfirm({ open: true, mode: "reject", row: selected })
-									}
-									sx={{ borderRadius: 999, fontWeight: 900, flex: 1 }}
-								>
-									Reject
-								</Button>
-							</Stack>
+							<Button
+								variant="contained"
+								fullWidth
+								startIcon={<VisibilityRoundedIcon />}
+								onClick={() => router.push(`/admin/campaign/${selected.id}`)}
+								sx={{ borderRadius: 999, fontWeight: 900, boxShadow: "none" }}
+							>
+								Review
+							</Button>
 						</Box>
 					)}
 				</Paper>

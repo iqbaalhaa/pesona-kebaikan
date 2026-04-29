@@ -27,6 +27,8 @@ export type WithdrawalRow = {
 	campaignSlug?: string | null;
 	proofUrl?: string | null;
 	referenceNo?: string | null;
+	collected?: number;
+	target?: number;
 };
 
 function idr(n: number) {
@@ -35,51 +37,36 @@ function idr(n: number) {
 	return "Rp" + s.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 }
 
+function daysAgo(dateStr: string) {
+	const d = new Date(dateStr);
+	const now = new Date();
+	return Math.floor((now.getTime() - d.getTime()) / (1000 * 60 * 60 * 24));
+}
+
 function statusMeta(status: WithdrawalStatus) {
 	switch (status) {
 		case "COMPLETED":
-			return {
-				label: "Selesai",
-				icon: <CheckCircleRoundedIcon fontSize="small" />,
-				tone: "success" as const,
-			};
+			return { label: "Selesai", icon: <CheckCircleRoundedIcon fontSize="small" />, tone: "success" as const };
 		case "APPROVED":
-			return {
-				label: "Disetujui",
-				icon: <CheckCircleRoundedIcon fontSize="small" />,
-				tone: "info" as const,
-			};
+			return { label: "Disetujui", icon: <CheckCircleRoundedIcon fontSize="small" />, tone: "info" as const };
 		case "PENDING":
-			return {
-				label: "Menunggu",
-				icon: <HourglassBottomRoundedIcon fontSize="small" />,
-				tone: "warning" as const,
-			};
+			return { label: "Menunggu", icon: <HourglassBottomRoundedIcon fontSize="small" />, tone: "warning" as const };
 		case "REJECTED":
-			return {
-				label: "Ditolak",
-				icon: <ErrorRoundedIcon fontSize="small" />,
-				tone: "error" as const,
-			};
+			return { label: "Ditolak", icon: <ErrorRoundedIcon fontSize="small" />, tone: "error" as const };
 	}
 }
 
 interface WithdrawalCardProps {
 	row: WithdrawalRow;
-	onUpdateStatus: (
-		id: string,
-		status: Exclude<WithdrawalStatus, "PENDING">
-	) => void;
+	onUpdateStatus: (id: string, status: Exclude<WithdrawalStatus, "PENDING">) => void;
 	onApproveClick: (row: WithdrawalRow) => void;
 }
 
-export default function WithdrawalCard({
-	row,
-	onUpdateStatus,
-	onApproveClick,
-}: WithdrawalCardProps) {
+export default function WithdrawalCard({ row, onUpdateStatus, onApproveClick }: WithdrawalCardProps) {
 	const theme = useTheme();
 	const meta = statusMeta(row.status);
+	const days = daysAgo(row.createdAt);
+	const isUrgent = row.status === "PENDING" && days >= 3;
 
 	return (
 		<Paper
@@ -87,121 +74,76 @@ export default function WithdrawalCard({
 			sx={{
 				p: 2,
 				borderRadius: 3,
-				borderColor: alpha(theme.palette.divider, 0.6),
-				bgcolor: alpha(
-					theme.palette.background.default,
-					theme.palette.mode === "dark" ? 0.4 : 0.8
-				),
+				borderColor: isUrgent
+					? alpha("#f59e0b", 0.5)
+					: alpha(theme.palette.divider, 0.6),
+				bgcolor: isUrgent
+					? alpha("#f59e0b", 0.03)
+					: alpha(theme.palette.background.default, theme.palette.mode === "dark" ? 0.4 : 0.8),
 				backdropFilter: "blur(12px)",
 				boxShadow: theme.shadows[1],
 			}}
 		>
-			<Stack
-				direction={{ xs: "column", sm: "row" }}
-				spacing={2}
-				alignItems={{ xs: "start", sm: "center" }}
-			>
+			<Stack direction={{ xs: "column", sm: "row" }} spacing={2} alignItems={{ xs: "start", sm: "center" }}>
 				<Box
 					sx={{
-						width: 48,
-						height: 48,
-						borderRadius: 2.5,
-						display: "grid",
-						placeItems: "center",
+						width: 48, height: 48, borderRadius: 2.5,
+						display: "grid", placeItems: "center",
 						bgcolor: alpha(
-							meta.tone === "success"
-								? "#22c55e"
-								: meta.tone === "warning"
-								? "#f59e0b"
-								: meta.tone === "info"
-								? "#3b82f6"
-								: "#ef4444",
-							0.12
+							meta.tone === "success" ? "#22c55e" : meta.tone === "warning" ? "#f59e0b" : meta.tone === "info" ? "#3b82f6" : "#ef4444",
+							0.12,
 						),
-						color:
-							meta.tone === "success"
-								? "#22c55e"
-								: meta.tone === "warning"
-								? "#f59e0b"
-								: meta.tone === "info"
-								? "#3b82f6"
-								: "#ef4444",
+						color: meta.tone === "success" ? "#22c55e" : meta.tone === "warning" ? "#f59e0b" : meta.tone === "info" ? "#3b82f6" : "#ef4444",
 					}}
 				>
 					{meta.icon}
 				</Box>
 
 				<Box sx={{ flex: 1, minWidth: 0 }}>
-					<Stack
-						direction="row"
-						alignItems="center"
-						spacing={1}
-						flexWrap="wrap"
-						sx={{ mb: 0.5 }}
-					>
-						<Typography sx={{ fontSize: 16, fontWeight: 1000 }}>
-							{idr(row.amount)}
-						</Typography>
-						<Chip
-							label={meta.label}
-							size="small"
-							color={meta.tone}
-							sx={{ fontWeight: 800, height: 20 }}
-						/>
+					<Stack direction="row" alignItems="center" spacing={1} flexWrap="wrap" sx={{ mb: 0.5 }}>
+						<Typography sx={{ fontSize: 16, fontWeight: 1000 }}>{idr(row.amount)}</Typography>
+						<Chip label={meta.label} size="small" color={meta.tone} sx={{ fontWeight: 800, height: 20 }} />
+						{isUrgent && (
+							<Chip
+								label={`${days} hari menunggu`}
+								size="small"
+								sx={{ fontWeight: 700, height: 20, bgcolor: alpha("#f59e0b", 0.15), color: "#92400e", fontSize: 10 }}
+							/>
+						)}
 					</Stack>
-					<Typography
-						sx={{ fontSize: 13, fontWeight: 600, color: "text.primary" }}
-						noWrap
-					>
+					<Typography sx={{ fontSize: 13, fontWeight: 600, color: "text.primary" }} noWrap>
 						{row.campaignTitle}
 					</Typography>
+					{(row.collected !== undefined || row.target !== undefined) && (
+						<Typography sx={{ fontSize: 11, color: "text.secondary" }}>
+							Terkumpul: {idr(row.collected || 0)} / Target: {idr(row.target || 0)}
+						</Typography>
+					)}
 					<Typography sx={{ fontSize: 12, color: "text.secondary" }}>
-						{getBankName(row.bankName)} • {row.bankAccount} a.n{" "}
-						{row.accountHolder}
+						{getBankName(row.bankName)} • {row.bankAccount} a.n {row.accountHolder}
 					</Typography>
 					{row.referenceNo && (
-						<Typography
-							sx={{
-								fontSize: 11,
-								fontFamily: "monospace",
-								color: "text.secondary",
-								mt: 0.25,
-							}}
-						>
+						<Typography sx={{ fontSize: 11, fontFamily: "monospace", color: "text.secondary", mt: 0.25 }}>
 							Ref: {row.referenceNo}
 						</Typography>
 					)}
 					<Typography sx={{ fontSize: 11, color: "text.secondary", mt: 0.5 }}>
-						{row.createdAt}
+						{new Date(row.createdAt).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
 					</Typography>
 				</Box>
 
 				{row.status === "PENDING" && (
 					<Stack direction="row" spacing={1}>
-						<Button
-							variant="outlined"
-							color="error"
-							size="small"
-							onClick={() => onUpdateStatus(row.id, "REJECTED")}
-						>
+						<Button variant="outlined" color="error" size="small" onClick={() => onUpdateStatus(row.id, "REJECTED")}>
 							Tolak
 						</Button>
-						<Button
-							variant="contained"
-							size="small"
-							onClick={() => onApproveClick(row)}
-						>
+						<Button variant="contained" size="small" onClick={() => onApproveClick(row)}>
 							Setujui
 						</Button>
 					</Stack>
 				)}
 				{row.status === "APPROVED" && (
-					<Button
-						variant="contained"
-						color="success"
-						size="small"
-						onClick={() => onUpdateStatus(row.id, "COMPLETED")}
-					>
+					<Button variant="contained" color="success" size="small" onClick={() => onUpdateStatus(row.id, "COMPLETED")}>
 						Selesai Transfer
 					</Button>
 				)}
