@@ -3,9 +3,18 @@
 @variant dark (&:where(.dark, .dark *));
 
 :root {
-	--background: #f8fafc; /* Matches MUI Light background.default */
-	--foreground: #0f172a; /* Matches MUI Light text.primary */
+	--background: #f8fafc;
+	--foreground: #0f172a;
 	--brand: #0ba976;
+	--brand-light: #34d399;
+	--brand-dark: #059669;
+	--text-secondary: rgba(15, 23, 42, 0.55);
+	--surface: #ffffff;
+	--divider: rgba(15, 23, 42, 0.08);
+	--success: #22c55e;
+	--warning: #f59e0b;
+	--error: #ef4444;
+	--info: #3b82f6;
 	--font-pjs: "Plus Jakarta Sans";
 	--mui-font-family: var(--font-pjs), "Plus Jakarta Sans", system-ui,
 		-apple-system, Segoe UI, Roboto, Arial, sans-serif;
@@ -25,14 +34,26 @@
 	--color-background: var(--background);
 	--color-foreground: var(--foreground);
 	--color-primary: var(--brand);
+	--color-primary-light: var(--brand-light);
+	--color-primary-dark: var(--brand-dark);
 	--color-primary-soft: color-mix(in srgb, var(--brand), transparent 88%);
 	--color-primary-shadow: color-mix(in srgb, var(--brand), transparent 78%);
+	--color-surface: var(--surface);
+	--color-divider: var(--divider);
+	--color-text-secondary: var(--text-secondary);
+	--color-success: var(--success);
+	--color-warning: var(--warning);
+	--color-error: var(--error);
+	--color-info: var(--info);
 	--font-sans: var(--font-pjs);
 }
 
 .dark {
 	--background: #0b1220;
 	--foreground: #f8fafc;
+	--text-secondary: rgba(248, 250, 252, 0.6);
+	--surface: rgba(11, 18, 32, 0.85);
+	--divider: rgba(248, 250, 252, 0.08);
 }
 
 html,
