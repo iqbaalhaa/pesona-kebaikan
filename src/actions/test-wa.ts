@@ -14,7 +14,7 @@ export async function sendTestWhatsapp(to: string, message: string) {
 		}
 
 		return { success: true, data: result.data };
-	} catch (error: unknown) {
+	} catch (error: any) {
 		console.error("Error sending WhatsApp:", error);
 		return {
 			success: false,

@@ -4,7 +4,7 @@ async function upsertPageContent(params: {
 	key: string;
 	title: string;
 	content: string;
-	data?: unknown;
+	data?: any;
 }) {
 	return prisma.pageContent.upsert({
 		where: { key: params.key },

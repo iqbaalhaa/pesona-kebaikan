@@ -84,7 +84,7 @@ export const verifyTransport = async () => {
 		const t = nodemailer.createTransport(baseOptions(config));
 		await t.verify();
 		return { ok: true, message: "ok" };
-	} catch (e: unknown) {
+	} catch (e: any) {
 		const msg = e instanceof Error ? e.message : "Transport verify failed";
 		if (
 			/Greeting never received|timeout|ETIMEDOUT|ECONNREFUSED|ECONNRESET|ENOTFOUND|EHOSTUNREACH/i.test(
@@ -100,7 +100,7 @@ export const verifyTransport = async () => {
 				});
 				await t2.verify();
 				return { ok: true, message: "fallback-ok" };
-			} catch (e2: unknown) {
+			} catch (e2: any) {
 				return {
 					ok: false,
 					message:
@@ -130,7 +130,7 @@ export const sendVerificationEmail = async (email: string, token: string) => {
 					ok: true;
 					messageId?: string;
 					options: { host?: string; port?: number; secure?: boolean };
-					envelope?: unknown;
+					envelope?: any;
 					fallback?: boolean;
 			  }
 			| {
@@ -159,7 +159,7 @@ export const sendVerificationEmail = async (email: string, token: string) => {
 					requireTLS: (currentOptions as SMTPTransport.Options).requireTLS,
 				},
 			});
-		} catch (e: unknown) {
+		} catch (e: any) {
 			const msg = e instanceof Error ? e.message : "";
 			debug.attempts.push({
 				phase: "verify-587",
@@ -235,7 +235,7 @@ export const sendVerificationEmail = async (email: string, token: string) => {
 				envelope: info?.envelope,
 			};
 			return { ok: true, debug };
-		} catch (sendErr: unknown) {
+		} catch (sendErr: any) {
 			const sendMsg = sendErr instanceof Error ? sendErr.message : "";
 			debug.send = {
 				ok: false,
@@ -290,7 +290,7 @@ export const sendVerificationEmail = async (email: string, token: string) => {
 						fallback: true,
 					};
 					return { ok: true, debug };
-				} catch (altErr: unknown) {
+				} catch (altErr: any) {
 					debug.attempts.push({
 						phase:
 							currentOptions.port === 465
@@ -317,7 +317,7 @@ export const sendVerificationEmail = async (email: string, token: string) => {
 			}
 			return { ok: false, message: sendMsg || "Send email failed", debug };
 		}
-	} catch (e: unknown) {
+	} catch (e: any) {
 		return {
 			ok: false,
 			message: e instanceof Error ? e.message : "Send email failed",
@@ -344,7 +344,7 @@ export const sendPasswordResetEmail = async (email: string, token: string) => {
 					ok: true;
 					messageId?: string;
 					options: { host?: string; port?: number; secure?: boolean };
-					envelope?: unknown;
+					envelope?: any;
 					fallback?: boolean;
 			  }
 			| {
@@ -373,7 +373,7 @@ export const sendPasswordResetEmail = async (email: string, token: string) => {
 					requireTLS: (currentOptions as SMTPTransport.Options).requireTLS,
 				},
 			});
-		} catch (e: unknown) {
+		} catch (e: any) {
 			const msg = e instanceof Error ? e.message : "";
 			debug.attempts.push({
 				phase: "verify-587",
@@ -449,7 +449,7 @@ export const sendPasswordResetEmail = async (email: string, token: string) => {
 				envelope: info?.envelope,
 			};
 			return { ok: true, debug };
-		} catch (sendErr: unknown) {
+		} catch (sendErr: any) {
 			const sendMsg = sendErr instanceof Error ? sendErr.message : "";
 			debug.send = {
 				ok: false,
@@ -504,7 +504,7 @@ export const sendPasswordResetEmail = async (email: string, token: string) => {
 						fallback: true,
 					};
 					return { ok: true, debug };
-				} catch (altErr: unknown) {
+				} catch (altErr: any) {
 					debug.attempts.push({
 						phase:
 							currentOptions.port === 465
@@ -531,7 +531,7 @@ export const sendPasswordResetEmail = async (email: string, token: string) => {
 			}
 			return { ok: false, message: sendMsg || "Send email failed", debug };
 		}
-	} catch (e: unknown) {
+	} catch (e: any) {
 		return {
 			ok: false,
 			message: e instanceof Error ? e.message : "Send email failed",

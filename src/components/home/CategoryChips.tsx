@@ -83,7 +83,7 @@ function CampaignRowCard({ item }: { item: Campaign }) {
 				/>
 				<div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/55 to-transparent to-70%" />
 				<span className="absolute left-2.5 top-2.5">
-					<CategoryPill label={item.category} variant="overlay" />
+					<CategoryPill label={item.category || "Lainnya"} variant="overlay" />
 				</span>
 				<span className="absolute bottom-2.5 left-2.5 rounded-full bg-foreground/72 px-1 py-px text-[10px] font-black text-white backdrop-blur-lg">
 					{item.daysLeft} hari

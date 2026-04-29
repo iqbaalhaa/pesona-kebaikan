@@ -59,7 +59,7 @@ function shouldRetryNetworkError(code: string | undefined) {
 	);
 }
 
-async function postWithRetry<TResponse>(url: string, data: unknown) {
+async function postWithRetry<TResponse>(url: string, data: any) {
 	const maxAttempts = 3;
 	for (let attempt = 1; attempt <= maxAttempts; attempt++) {
 		try {
@@ -156,7 +156,7 @@ export async function createPayout(payload: PayoutPayload) {
 		}
 		const response = await postWithRetry<unknown>("/payouts", payload);
 		return response.data as unknown;
-	} catch (err: unknown) {
+	} catch (err: any) {
 		if (axios.isAxiosError(err)) {
 			const data = err.response?.data;
 			console.error("Iris Create Payout Error:", data || err.message);
@@ -213,7 +213,7 @@ export async function approvePayout(reference_nos: string[], otp: string) {
 			otp,
 		});
 		return response.data as unknown;
-	} catch (err: unknown) {
+	} catch (err: any) {
 		if (axios.isAxiosError(err)) {
 			const data = err.response?.data;
 			console.error("Iris Approve Payout Error:", data || err.message);
@@ -247,7 +247,7 @@ export async function getPayoutDetails(reference_no: string) {
 	try {
 		const response = await getWithRetry<unknown>(`/payouts/${reference_no}`);
 		return response.data as unknown;
-	} catch (err: unknown) {
+	} catch (err: any) {
 		if (axios.isAxiosError(err)) {
 			console.error(
 				"Iris Get Payout Details Error:",

@@ -57,7 +57,7 @@ export default function ProfileCard({ user }: { user: UserCardData }) {
 						{user?.name || "User"}
 					</span>
 					{isVerified && (
-						<ShieldCheck size={18} className="text-blue-500" title="Terverifikasi" />
+						<span title="Terverifikasi"><ShieldCheck size={18} className="text-blue-500" /></span>
 					)}
 					{isVerified && user?.verifiedAs === "organization" && (
 						<span className="ml-0.5 rounded border border-blue-200 bg-blue-50 px-1.5 py-px text-[10px] font-extrabold text-blue-700">

@@ -189,7 +189,7 @@ export async function createUser(data: CreateUserInput) {
 
 		revalidatePath("/admin/users");
 		return { success: true };
-	} catch (error: unknown) {
+	} catch (error: any) {
 		console.error("Error creating user:", error);
 		if ((error as { code?: string })?.code === "P2002") {
 			return { success: false, error: "Email or phone already exists" };
@@ -235,7 +235,7 @@ export async function updateUser(id: string, data: UpdateUserInput) {
 
 		revalidatePath("/admin/users");
 		return { success: true };
-	} catch (error: unknown) {
+	} catch (error: any) {
 		console.error("Error updating user:", error);
 		if ((error as { code?: string })?.code === "P2002") {
 			return { success: false, error: "Email or phone already exists" };

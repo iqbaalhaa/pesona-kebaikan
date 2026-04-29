@@ -63,7 +63,7 @@ export async function getPageContent(key: string) {
 
 export async function updatePageContent(
 	key: string,
-	data: { title: string; content: string; data?: unknown }
+	data: { title: string; content: string; data?: any }
 ) {
 	const session = await auth();
 	if (session?.user?.role !== "ADMIN") return { error: "Unauthorized" };

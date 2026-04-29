@@ -11,6 +11,11 @@ const eslintConfig = defineConfig([
 		rules: {
 			"@typescript-eslint/no-require-imports": "off",
 			"@typescript-eslint/no-unused-expressions": "off",
+			"@typescript-eslint/no-explicit-any": "off",
+			"@typescript-eslint/no-unused-vars": ["warn", { argsIgnorePattern: "^_", varsIgnorePattern: "^_" }],
+			"react/no-unescaped-entities": "off",
+			"@next/next/no-img-element": "off",
+			"prefer-const": "warn",
 		},
 	},
 	globalIgnores([
