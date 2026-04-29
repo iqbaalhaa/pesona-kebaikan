@@ -31,6 +31,7 @@ import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import PhotoCameraRoundedIcon from "@mui/icons-material/PhotoCameraRounded";
+import StepProgress from "@/components/ui/StepProgress";
 
 import {
 	createCampaign,
@@ -512,8 +513,7 @@ function BuatGalangDanaPageContent() {
 
 	const canOpenConfirm =
 		(who === "other" ? !!whoOther : !!who) &&
-		phone.trim().length >= 8 &&
-		!!bank;
+		phone.trim().length >= 8;
 	const allTermsOk = t1 && t2 && t3 && t4;
 
 	const [purposes, setPurposes] = React.useState<Purpose[]>([]);
@@ -732,7 +732,8 @@ function BuatGalangDanaPageContent() {
 					!!onlyDigits(target) &&
 					!!duration &&
 					(duration === "custom" ? !!customStart && !!customEnd : true) &&
-					usage.trim().length >= 55
+					usage.trim().length >= 55 &&
+					!!bank
 				);
 			if (stepKey === "judul")
 				return !!title && !!slug && !!coverPreview && !slugError;
@@ -742,7 +743,7 @@ function BuatGalangDanaPageContent() {
 		}
 
 		// ---- lainnya
-		if (stepKey === "tujuan") return !!purposeKey && agreeA && agreeB;
+		if (stepKey === "tujuan") return !!purposeKey;
 		if (stepKey === "data_diri")
 			return (
 				ktpName.trim().length >= 3 &&
@@ -1098,103 +1099,39 @@ function BuatGalangDanaPageContent() {
 	return (
 		<Box
 			sx={{
-				pb: `calc(var(--bottom-nav-h, 72px) + 96px + env(safe-area-inset-bottom))`,
+				pb: "180px",
 			}}
 		>
 			{/* Header */}
-			<Paper
-				elevation={0}
-				sx={{
-					borderRadius: 0,
-					bgcolor: "primary.main",
-					color: "primary.contrastText",
-					px: 1,
-					py: 1.25,
-				}}
-			>
-				<Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-					<IconButton
+			<div className="bg-primary px-1 py-[5px]">
+				<div className="flex items-center gap-1">
+					<button
 						onClick={() => router.back()}
-						sx={{ color: "primary.contrastText" }}
+						className="grid h-9 w-9 place-items-center rounded-lg text-white"
 					>
 						<ArrowBackIosNewRoundedIcon fontSize="small" />
-					</IconButton>
-
-					<Typography sx={{ fontWeight: 600, fontSize: 14 }}>
+					</button>
+					<span className="text-sm font-semibold text-white">
 						{headerTitle}
-					</Typography>
-				</Box>
-			</Paper>
+					</span>
+				</div>
+			</div>
 
-			{/* Step bar (scrollable) */}
-			<Box sx={{ px: 2, pt: 1.25, pb: 1 }}>
-				<Box
-					ref={stepsContainerRef}
-					sx={{
-						display: "flex",
-						gap: 1,
-						overflowX: "auto",
-						pb: 0.5,
-						"&::-webkit-scrollbar": { display: "none" },
-					}}
-				>
-					{steps.map((s, i) => {
-						const active = i === step;
-						const done = i < step;
-						const isFuture = !isEdit && i > step;
-						const locked = isContentEdit && i < 5;
-						return (
-							<Chip
-								key={s.key}
-								onClick={() => {
-									if (!isFuture && !locked) setStep(i);
-								}}
-								clickable={!isFuture && !locked}
-								label={
-									<Box
-										sx={{
-											display: "inline-flex",
-											alignItems: "center",
-											gap: 0.8,
-										}}
-									>
-										<Box
-											sx={{
-												width: 20,
-												height: 20,
-												borderRadius: 999,
-												display: "grid",
-												placeItems: "center",
-												fontWeight: 700,
-												fontSize: 12,
-												bgcolor: active
-													? "primary.main"
-													: done
-														? "rgba(2,132,199,.18)"
-														: "rgba(15,23,42,.08)",
-												color: active ? "primary.contrastText" : "text.primary",
-											}}
-										>
-											{i + 1}
-										</Box>
-										<Typography sx={{ fontSize: 12.5, fontWeight: 600 }}>
-											{s.label}
-										</Typography>
-									</Box>
-								}
-								variant={active ? "filled" : "outlined"}
-								color={active ? "primary" : "default"}
-								sx={{
-									borderRadius: 999,
-									opacity: isFuture || locked ? 0.5 : 1,
-								}}
-							/>
-						);
-					})}
-				</Box>
-
-				<Divider sx={{ mt: 1 }} />
-			</Box>
+			{/* Step progress */}
+			<StepProgress
+				steps={steps}
+				current={step}
+				onStepClick={(i) => {
+					const isFuture = !isEdit && i > step;
+					const locked = isContentEdit && i < 5;
+					if (!isFuture && !locked) setStep(i);
+				}}
+				canNavigate={(i) => {
+					const isFuture = !isEdit && i > step;
+					const locked = isContentEdit && i < 5;
+					return !isFuture && !locked;
+				}}
+			/>
 
 			{isContentEdit && (
 				<Box sx={{ px: 2, pb: 1 }}>
@@ -1355,52 +1292,6 @@ function BuatGalangDanaPageContent() {
 									/>
 								</Box>
 
-								<Box sx={{ mt: 2 }}>
-									<Typography sx={{ fontWeight: 600, fontSize: 14 }}>
-										Pilih rekening bank penggalangan dana{" "}
-										<span style={{ color: "red" }}>*</span>
-									</Typography>
-									<Typography
-										sx={{ color: "text.secondary", fontSize: 12.5, mb: 1 }}
-									>
-										Donasi hanya bisa dicairkan ke rekening ini.
-									</Typography>
-
-									<RadioGroup
-										value={bank}
-										onChange={(e) => setBank(e.target.value)}
-									>
-										<Stack spacing={1}>
-											{[
-												{ k: "pasien", t: "Pasien langsung" },
-												{ k: "kk", t: "Keluarga satu KK" },
-												{ k: "beda_kk", t: "Keluarga inti berbeda KK" },
-												{ k: "rs", t: "Rumah sakit" },
-												{ k: "yayasan", t: "Rekening Pesona Kebaikan" },
-											].map((x) => (
-												<Paper
-													key={x.k}
-													variant="outlined"
-													sx={{ borderRadius: 2 }}
-												>
-													<FormControlLabel
-														value={x.k}
-														sx={{
-															px: 1.5,
-															py: 0.5,
-															width: "100%",
-															"& .MuiFormControlLabel-label": {
-																fontSize: 13.5,
-															},
-														}}
-														control={<Radio size="small" />}
-														label={x.t}
-													/>
-												</Paper>
-											))}
-										</Stack>
-									</RadioGroup>
-								</Box>
 							</Box>
 						)}
 
@@ -1826,6 +1717,53 @@ function BuatGalangDanaPageContent() {
 										}
 									/>
 								</Box>
+
+								<Box sx={{ mt: 2 }}>
+									<Typography sx={{ fontWeight: 600, fontSize: 14 }}>
+										Pilih rekening bank penggalangan dana{" "}
+										<span style={{ color: "red" }}>*</span>
+									</Typography>
+									<Typography
+										sx={{ color: "text.secondary", fontSize: 12.5, mb: 1 }}
+									>
+										Donasi hanya bisa dicairkan ke rekening ini.
+									</Typography>
+
+									<RadioGroup
+										value={bank}
+										onChange={(e) => setBank(e.target.value)}
+									>
+										<Stack spacing={1}>
+											{[
+												{ k: "pasien", t: "Pasien langsung" },
+												{ k: "kk", t: "Keluarga satu KK" },
+												{ k: "beda_kk", t: "Keluarga inti berbeda KK" },
+												{ k: "rs", t: "Rumah sakit" },
+												{ k: "yayasan", t: "Rekening Pesona Kebaikan" },
+											].map((x) => (
+												<Paper
+													key={x.k}
+													variant="outlined"
+													sx={{ borderRadius: 2 }}
+												>
+													<FormControlLabel
+														value={x.k}
+														sx={{
+															px: 1.5,
+															py: 0.5,
+															width: "100%",
+															"& .MuiFormControlLabel-label": {
+																fontSize: 13.5,
+															},
+														}}
+														control={<Radio size="small" />}
+														label={x.t}
+													/>
+												</Paper>
+											))}
+										</Stack>
+									</RadioGroup>
+								</Box>
 							</Box>
 						)}
 
@@ -2089,7 +2027,7 @@ function BuatGalangDanaPageContent() {
 						{stepKey === "tujuan" && (
 							<Box>
 								<Typography sx={{ fontWeight: 600, fontSize: 14, mb: 1 }}>
-									Donasi akan ditujukan kepada...{" "}
+									Untuk apa galang dana ini?{" "}
 									<span style={{ color: "red" }}>*</span>
 								</Typography>
 
@@ -2160,59 +2098,6 @@ function BuatGalangDanaPageContent() {
 												</Button>
 											</Box>
 										</Paper>
-
-										<Box sx={{ mt: 2 }}>
-											<Typography
-												sx={{ fontWeight: 600, fontSize: 14, mb: 0.75 }}
-											>
-												Berapa jumlah penerima manfaat yang dituju?{" "}
-												<span style={{ color: "rgba(15,23,42,.55)" }}>
-													(opsional)
-												</span>
-											</Typography>
-											<TextField
-												size="small"
-												sx={{
-													"& .MuiInputBase-input": { fontSize: 13.5 },
-													"& .MuiInputLabel-root": { fontSize: 13.5 },
-												}}
-												value={beneficiaries}
-												onChange={(e) =>
-													setBeneficiaries(onlyDigits(e.target.value))
-												}
-												fullWidth
-												inputMode="numeric"
-												placeholder="Contoh: 100"
-											/>
-										</Box>
-
-										<Box sx={{ mt: 2 }}>
-											<Typography sx={{ fontWeight: 600, fontSize: 14, mb: 1 }}>
-												Baca dan beri tanda syarat penggalangan di bawah ini
-											</Typography>
-
-											<Paper variant="outlined" sx={{ borderRadius: 3, p: 1 }}>
-												<FormControlLabel
-													control={
-														<Checkbox
-															checked={agreeA}
-															onChange={(e) => setAgreeA(e.target.checked)}
-														/>
-													}
-													label="Pemilik rekening bertanggung jawab atas penggunaan dana yang diterima dari galang dana ini."
-												/>
-												<Divider sx={{ my: 1 }} />
-												<FormControlLabel
-													control={
-														<Checkbox
-															checked={agreeB}
-															onChange={(e) => setAgreeB(e.target.checked)}
-														/>
-													}
-													label="Kamu sebagai penggalang dana bertanggung jawab atas permintaan pencairan dan pelaporan penggunaan dana."
-												/>
-											</Paper>
-										</Box>
 									</Box>
 								)}
 							</Box>
@@ -2463,6 +2348,22 @@ function BuatGalangDanaPageContent() {
 													</Typography>
 												) : null
 											}
+										/>
+									</Box>
+
+									<Box>
+										<Typography sx={{ fontWeight: 600, fontSize: 14, mb: 0.6 }}>
+											Jumlah penerima manfaat{" "}
+											<span style={{ color: "rgba(15,23,42,.55)" }}>(opsional)</span>
+										</Typography>
+										<TextField
+											size="small"
+											sx={{ "& .MuiInputBase-input": { fontSize: 13.5 } }}
+											value={beneficiaries}
+											onChange={(e) => setBeneficiaries(onlyDigits(e.target.value))}
+											fullWidth
+											inputMode="numeric"
+											placeholder="Contoh: 100"
 										/>
 									</Box>
 								</Stack>
@@ -2877,53 +2778,65 @@ function BuatGalangDanaPageContent() {
 
 						{/* STEP: ajakan */}
 						{stepKey === "ajakan" && (
-							<AjakanCreationSection
-								value={ctaOther}
-								onChange={setCtaOther}
-								placeholder="Contoh: Kami butuh bantuan agar fasilitas bisa dipakai warga kembali..."
-								error={ctaOtherLeft < 0}
-							/>
+							<>
+								<AjakanCreationSection
+									value={ctaOther}
+									onChange={setCtaOther}
+									placeholder="Contoh: Kami butuh bantuan agar fasilitas bisa dipakai warga kembali..."
+									error={ctaOtherLeft < 0}
+								/>
+
+								<Box sx={{ mt: 3 }}>
+									<Typography sx={{ fontWeight: 600, fontSize: 14, mb: 1 }}>
+										Syarat penggalangan dana
+									</Typography>
+									<Paper variant="outlined" sx={{ borderRadius: 3, p: 1 }}>
+										<FormControlLabel
+											control={
+												<Checkbox
+													checked={agreeA}
+													onChange={(e) => setAgreeA(e.target.checked)}
+												/>
+											}
+											label="Pemilik rekening bertanggung jawab atas penggunaan dana yang diterima dari galang dana ini."
+										/>
+										<Divider sx={{ my: 1 }} />
+										<FormControlLabel
+											control={
+												<Checkbox
+													checked={agreeB}
+													onChange={(e) => setAgreeB(e.target.checked)}
+												/>
+											}
+											label="Kamu sebagai penggalang dana bertanggung jawab atas permintaan pencairan dan pelaporan penggunaan dana."
+										/>
+									</Paper>
+								</Box>
+							</>
 						)}
 					</>
 				)}
 			</Box>
 
-			{/* Bottom actions (di atas bottom nav app kamu) */}
-			<Paper
-				elevation={0}
-				sx={{
-					position: "fixed",
-					left: 0,
-					right: 0,
-					maxWidth: 480,
-					mx: "auto",
-					bottom: `calc(var(--bottom-nav-h, 72px) + env(safe-area-inset-bottom))`,
-					borderTop: "1px solid",
-					borderColor: "divider",
-					bgcolor: "background.paper",
-					zIndex: 99,
-				}}
-			>
-				<Box sx={{ maxWidth: 480, mx: "auto", px: 2, py: 1.25 }}>
-					<Stack direction="row" spacing={1}>
-						<Button
+			{/* Bottom actions */}
+			<div className="fixed inset-x-0 bottom-0 z-[99] mx-auto max-w-[480px] border-t border-divider bg-white pb-[env(safe-area-inset-bottom)]">
+				<div className="mx-auto max-w-[480px] px-4 py-[5px]">
+					<div className="flex items-center gap-1">
+						<button
 							onClick={goPrev}
-							variant="text"
-							startIcon={<ChevronLeftRoundedIcon />}
-							sx={{ fontWeight: 600 }}
 							disabled={step === 0}
+							className="flex items-center gap-0.5 rounded-lg px-2 py-2 text-sm font-semibold text-foreground/70 transition-colors hover:bg-foreground/5 disabled:opacity-30"
 						>
+							<ChevronLeftRoundedIcon fontSize="small" />
 							Sebelumnya
-						</Button>
+						</button>
 
-						<Box sx={{ flex: 1 }} />
+						<div className="flex-1" />
 
-						<Button
+						<button
 							onClick={onClickNext}
-							variant="contained"
-							endIcon={!submitting && <ChevronRightRoundedIcon />}
-							sx={{ borderRadius: 2, fontWeight: 700, px: 2.25 }}
 							disabled={!canNext || submitting}
+							className="flex items-center gap-0.5 rounded-lg bg-primary px-4 py-2 text-sm font-bold text-white shadow-sm transition-all hover:bg-primary/90 disabled:opacity-40"
 						>
 							{submitting
 								? "Menyimpan..."
@@ -2932,22 +2845,21 @@ function BuatGalangDanaPageContent() {
 										? "Simpan Perubahan"
 										: "Selesai"
 									: "Selanjutnya"}
-						</Button>
-					</Stack>
+							{!submitting && <ChevronRightRoundedIcon fontSize="small" />}
+						</button>
+					</div>
 
 					{!isContentEdit && (
-						<Button
+						<button
 							onClick={handleSaveDraft}
 							disabled={submitting}
-							variant="text"
-							fullWidth
-							sx={{ mt: 0.5, fontWeight: 600, color: "text.secondary" }}
+							className="mt-0.5 w-full rounded-lg py-2 text-sm font-semibold text-foreground/50 transition-colors hover:bg-foreground/5 disabled:opacity-30"
 						>
 							Simpan dan lanjutkan nanti
-						</Button>
+						</button>
 					)}
-				</Box>
-			</Paper>
+				</div>
+			</div>
 
 			{/* Dialog terms (khusus sakit) */}
 			<Dialog

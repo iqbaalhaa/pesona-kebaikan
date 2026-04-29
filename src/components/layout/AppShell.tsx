@@ -19,7 +19,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 		pathname.startsWith("/galang-dana") ||
 		pathname.startsWith("/profil");
 
-	const shouldHideNav = isAuth || isDonasiDetail;
+	const isGalangDanaBuat = pathname === "/galang-dana/buat";
+	const shouldHideNav = isAuth || isDonasiDetail || isGalangDanaBuat;
 	const shouldHideAppBar = shouldHideNav || isIndependentScreen;
 
 	const [scrolled, setScrolled] = React.useState(false);

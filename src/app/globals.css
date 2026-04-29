@@ -103,14 +103,10 @@ body {
 	}
 }
 
-/* Accessibility: focus-visible ring for all interactive elements */
+/* Accessibility: focus-visible ring for interactive elements (not form inputs — they have their own styles) */
 a:focus-visible,
 button:focus-visible,
-input:focus-visible,
-select:focus-visible,
-textarea:focus-visible,
-[role="button"]:focus-visible,
-[role="combobox"]:focus-visible {
+[role="button"]:focus-visible {
 	outline: 2px solid var(--brand);
 	outline-offset: 2px;
 }
