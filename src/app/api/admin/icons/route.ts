@@ -1,9 +1,7 @@
 
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { writeFile, mkdir } from "fs/promises";
-import path from "path";
-import { existsSync } from "fs";
+import { uploadFile } from "@/actions/upload";
 
 export async function POST(request: Request) {
   try {
@@ -18,7 +16,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // Validate file type
     const validTypes = ["image/jpeg", "image/png", "image/svg+xml", "image/webp", "image/x-icon"];
     if (!validTypes.includes(file.type)) {
       return NextResponse.json(
@@ -27,7 +24,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // Validate file size (3MB)
     if (file.size > 3 * 1024 * 1024) {
       return NextResponse.json(
         { success: false, message: "File size exceeds 3MB" },
@@ -35,26 +31,21 @@ export async function POST(request: Request) {
       );
     }
 
-    const buffer = Buffer.from(await file.arrayBuffer());
-    
-    // Create directory if not exists
-    const uploadDir = path.join(process.cwd(), "public/uploads/icons");
-    if (!existsSync(uploadDir)) {
-      await mkdir(uploadDir, { recursive: true });
+    const uploadForm = new FormData();
+    uploadForm.set("file", file);
+    const result = await uploadFile(uploadForm);
+
+    if (!result.success) {
+      return NextResponse.json(
+        { success: false, message: result.error || "Upload failed" },
+        { status: 500 }
+      );
     }
-
-    // Generate unique filename
-    const ext = path.extname(file.name);
-    const filename = `${Date.now()}-${Math.random().toString(36).substring(7)}${ext}`;
-    const filePath = path.join(uploadDir, filename);
-    const publicUrl = `/uploads/icons/${filename}`;
-
-    await writeFile(filePath, buffer);
 
     const icon = await prisma.categoryIcon.create({
       data: {
         name,
-        url: publicUrl,
+        url: result.url!,
       },
     });
 

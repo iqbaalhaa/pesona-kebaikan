@@ -39,9 +39,6 @@ import ZoomInRoundedIcon from "@mui/icons-material/ZoomInRounded";
 import DownloadIcon from "@mui/icons-material/Download";
 import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 import TableViewIcon from "@mui/icons-material/TableView";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
-import * as XLSX from "xlsx";
 
 echarts.use([
 	MapChart,
@@ -344,7 +341,11 @@ export default function InfoUsersClient({
 		setAnchorElExport(e.currentTarget);
 	const handleExportClose = () => setAnchorElExport(null);
 
-	const handleExportPDF = () => {
+	const handleExportPDF = async () => {
+		const [{ default: jsPDF }, { default: autoTable }] = await Promise.all([
+			import("jspdf"),
+			import("jspdf-autotable"),
+		]);
 		const doc = new jsPDF();
 		const pageWidth = doc.internal.pageSize.width;
 		doc.setFontSize(18);
@@ -397,7 +398,8 @@ export default function InfoUsersClient({
 		handleExportClose();
 	};
 
-	const handleExportExcel = () => {
+	const handleExportExcel = async () => {
+		const XLSX = await import("xlsx");
 		const rows = filtered.map((u) => ({
 			Nama: u.name ?? "-",
 			Email: u.email,

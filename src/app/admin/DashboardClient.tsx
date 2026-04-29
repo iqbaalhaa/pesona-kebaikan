@@ -23,7 +23,15 @@ import {
 } from "@mui/material";
 import ZoomInRoundedIcon from "@mui/icons-material/ZoomInRounded";
 import { alpha } from "@mui/material/styles";
-import * as echarts from "echarts";
+import * as echarts from "echarts/core";
+import { MapChart } from "echarts/charts";
+import {
+	TooltipComponent,
+	VisualMapComponent,
+} from "echarts/components";
+import { CanvasRenderer } from "echarts/renderers";
+
+echarts.use([MapChart, TooltipComponent, VisualMapComponent, CanvasRenderer]);
 
 import {
 	ResponsiveContainer,

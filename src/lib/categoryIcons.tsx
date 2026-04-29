@@ -13,8 +13,8 @@ import HandshakeIcon from "@mui/icons-material/Handshake";
 import CategoryRoundedIcon from "@mui/icons-material/CategoryRounded";
 import StorefrontIcon from "@mui/icons-material/Storefront";
 import { Box } from "@mui/material";
-import { SYSTEM_ICONS_MAP } from "@/lib/systemIcons";
 import React from "react";
+import { SYSTEM_ICONS_MAP } from "@/lib/systemIcons";
 
 export const CATEGORY_ICON_MAP: Record<
 	string,
