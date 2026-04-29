@@ -5,8 +5,8 @@ RUN corepack enable
 
 FROM base AS deps
 WORKDIR /app
-COPY package.json ./
-RUN yarn install --non-interactive
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile
 
 FROM base AS builder
 WORKDIR /app
@@ -25,8 +25,8 @@ ARG NEXT_PUBLIC_MIN_DONATION
 ENV NEXT_PUBLIC_MIN_DONATION=${NEXT_PUBLIC_MIN_DONATION}
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-RUN npx prisma@6 generate
-RUN yarn build
+RUN pnpm exec prisma generate
+RUN pnpm build
 
 FROM base AS runner
 WORKDIR /app

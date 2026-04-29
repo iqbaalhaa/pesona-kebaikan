@@ -1,10 +1,18 @@
 import type { Metadata } from "next";
+import { Plus_Jakarta_Sans } from "next/font/google";
 import { AppRouterCacheProvider } from "@mui/material-nextjs/v15-appRouter";
 import "./globals.css";
 import AppShell from "@/components/layout/AppShell";
 import ThemeWrapper from "@/components/layout/ThemeWrapper";
 import { auth } from "@/auth";
 import NextAuthProvider from "@/components/providers/NextAuthProvider";
+
+const plusJakartaSans = Plus_Jakarta_Sans({
+	subsets: ["latin"],
+	display: "swap",
+	weight: ["400", "500", "600", "700", "800"],
+	variable: "--font-plus-jakarta-sans",
+});
 
 const siteName = "Pesona Kebaikan";
 const siteUrl =
@@ -68,19 +76,7 @@ export default async function RootLayout({
 
 	return (
 		<html lang="id" suppressHydrationWarning>
-			<head>
-				<link rel="preconnect" href="https://fonts.googleapis.com" />
-				<link
-					rel="preconnect"
-					href="https://fonts.gstatic.com"
-					crossOrigin="anonymous"
-				/>
-				<link
-					rel="stylesheet"
-					href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
-				/>
-			</head>
-			<body className="antialiased" suppressHydrationWarning>
+			<body className={`${plusJakartaSans.className} antialiased`} suppressHydrationWarning>
 				<NextAuthProvider session={session}>
 					<AppRouterCacheProvider options={{ enableCssLayer: true }}>
 						<ThemeWrapper>
