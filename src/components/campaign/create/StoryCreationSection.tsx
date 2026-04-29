@@ -104,13 +104,22 @@ export default function StoryCreationSection({
 				{/* Preview if story exists */}
 				{story && (
 					<Box sx={{ mb: 3 }}>
+						<Button
+							size="small"
+							variant="outlined"
+							onClick={() => setShowEditor(true)}
+							sx={{ mb: 1.5, fontWeight: 700, borderRadius: 2 }}
+							data-testid="btn-edit-story"
+						>
+							Edit Cerita
+						</Button>
 						<Paper
 							variant="outlined"
 							sx={{
 								p: 2,
 								borderRadius: 3,
 								bgcolor: "grey.50",
-								maxHeight: 400,
+								maxHeight: 300,
 								overflow: "auto",
 							}}
 						>
@@ -135,14 +144,6 @@ export default function StoryCreationSection({
 								}}
 								dangerouslySetInnerHTML={{ __html: story }}
 							/>
-							<Button
-								size="small"
-								onClick={() => setShowEditor(true)}
-								sx={{ mt: 1, fontWeight: 700 }}
-								data-testid="btn-edit-story"
-							>
-								Edit Cerita
-							</Button>
 						</Paper>
 					</Box>
 				)}
@@ -245,46 +246,40 @@ export default function StoryCreationSection({
 				)}
 
 				{story && !showEditor && hasSaved && (
-					<Box
-						sx={{
-							mt: 2,
-							p: 2,
-							border: "1px solid",
-							borderColor: "divider",
-							borderRadius: 2,
-							bgcolor: "background.paper",
-						}}
-						data-testid="story-preview"
-					>
-						<Typography
-							sx={{
-								mb: 1,
-								fontSize: 12,
-								color: "text.secondary",
-								fontWeight: 600,
-							}}
-						>
-							Preview Cerita:
-						</Typography>
-						<Box
-							sx={{
-								"& p": { fontSize: 14, mb: 1, lineHeight: 1.6 },
-								"& img": {
-									maxWidth: "100%",
-									height: "auto",
-									borderRadius: 8,
-								},
-							}}
-							dangerouslySetInnerHTML={{ __html: story }}
-						/>
+					<Box sx={{ mt: 2 }} data-testid="story-preview">
 						<Button
 							size="small"
+							variant="outlined"
 							onClick={() => setShowEditor(true)}
-							sx={{ mt: 1, fontWeight: 700 }}
+							sx={{ mb: 1.5, fontWeight: 700, borderRadius: 2 }}
 							data-testid="btn-edit-story"
 						>
 							Edit Cerita
 						</Button>
+						<Box
+							sx={{
+								p: 2,
+								border: "1px solid",
+								borderColor: "divider",
+								borderRadius: 2,
+								bgcolor: "background.paper",
+								maxHeight: 300,
+								overflow: "auto",
+							}}
+						>
+							<Typography
+								sx={{ mb: 1, fontSize: 12, color: "text.secondary", fontWeight: 600 }}
+							>
+								Preview Cerita:
+							</Typography>
+							<Box
+								sx={{
+									"& p": { fontSize: 14, mb: 1, lineHeight: 1.6 },
+									"& img": { maxWidth: "100%", height: "auto", borderRadius: 8 },
+								}}
+								dangerouslySetInnerHTML={{ __html: story }}
+							/>
+						</Box>
 					</Box>
 				)}
 			</>

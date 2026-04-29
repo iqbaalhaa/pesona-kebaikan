@@ -33,6 +33,7 @@ import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import PhotoCameraRoundedIcon from "@mui/icons-material/PhotoCameraRounded";
 import StepProgress from "@/components/ui/StepProgress";
 import FileUploadField from "@/components/ui/FileUploadField";
+import FormField from "@/components/ui/FormField";
 
 import {
 	createCampaign,
@@ -953,6 +954,11 @@ function BuatGalangDanaPageContent() {
 							: "Campaign berhasil dibuat!",
 						type: "success",
 					});
+					// Clear draft from localStorage
+					try {
+						localStorage.removeItem("draft_story_medis");
+						localStorage.removeItem("draft_story_other");
+					} catch {}
 					// Redirect
 					setTimeout(() => {
 						router.push("/galang-dana");
@@ -1527,89 +1533,36 @@ function BuatGalangDanaPageContent() {
 										verifikasi. (Maksimal ukuran file 3MB)
 									</Typography>
 
-									<Stack spacing={1.25}>
-										<Paper
-											variant="outlined"
-											sx={{ borderRadius: 2, p: 1, display: "flex", gap: 1 }}
-										>
-											<input
-												id="resume-medis-upload"
-												type="file"
-												accept="image/*,.pdf"
-												hidden
-												onChange={(e) => {
-													const f = e.target.files?.[0] || null;
-													setMedicalResumeFile(f);
-													if (f) {
-														setMedicalResumeUrl("");
-													}
-												}}
-											/>
-											<Button
-												component="label"
-												htmlFor="resume-medis-upload"
-												variant="outlined"
-												sx={{ borderRadius: 999, fontWeight: 700, minWidth: 0 }}
-											>
-												Pilih file
-											</Button>
-											<Box sx={{ flex: 1, minWidth: 0 }}>
-												<Typography sx={{ fontSize: 13, fontWeight: 600 }}>
-													Surat keterangan medis / diagnosis
-												</Typography>
-												<Typography
-													sx={{ fontSize: 12.5, color: "text.secondary" }}
-													noWrap
-												>
-													{medicalResumeFile?.name ||
-														(medicalResumeUrl
-															? "Dokumen sudah tersimpan"
-															: "") ||
-														"Belum ada file"}
-												</Typography>
-											</Box>
-										</Paper>
-
-										<Paper
-											variant="outlined"
-											sx={{ borderRadius: 2, p: 1, display: "flex", gap: 1 }}
-										>
-											<input
-												id="hasil-pemeriksaan-upload"
-												type="file"
-												accept="image/*,.pdf"
-												hidden
-												onChange={(e) => {
-													const f = e.target.files?.[0] || null;
-													setMedicalExamFile(f);
-													if (f) {
-														setMedicalExamUrl("");
-													}
-												}}
-											/>
-											<Button
-												component="label"
-												htmlFor="hasil-pemeriksaan-upload"
-												variant="outlined"
-												sx={{ borderRadius: 999, fontWeight: 700, minWidth: 0 }}
-											>
-												Pilih file
-											</Button>
-											<Box sx={{ flex: 1, minWidth: 0 }}>
-												<Typography sx={{ fontSize: 13, fontWeight: 600 }}>
-													Hasil pemeriksaan (lab, rontgen, dsb.)
-												</Typography>
-												<Typography
-													sx={{ fontSize: 12.5, color: "text.secondary" }}
-													noWrap
-												>
-													{medicalExamFile?.name ||
-														(medicalExamUrl ? "Dokumen sudah tersimpan" : "") ||
-														"Belum ada file"}
-												</Typography>
-											</Box>
-										</Paper>
-									</Stack>
+									<div className="flex flex-col gap-2">
+										<FileUploadField
+											label="Surat keterangan medis / diagnosis"
+											accept="image/*,.pdf"
+											value={medicalResumeUrl}
+											preview={false}
+											onUploaded={(url) => {
+												setMedicalResumeUrl(url);
+												setMedicalResumeFile(null);
+											}}
+											onClear={() => {
+												setMedicalResumeUrl("");
+												setMedicalResumeFile(null);
+											}}
+										/>
+										<FileUploadField
+											label="Hasil pemeriksaan (lab, rontgen, dsb.)"
+											accept="image/*,.pdf"
+											value={medicalExamUrl}
+											preview={false}
+											onUploaded={(url) => {
+												setMedicalExamUrl(url);
+												setMedicalExamFile(null);
+											}}
+											onClear={() => {
+												setMedicalExamUrl("");
+												setMedicalExamFile(null);
+											}}
+										/>
+									</div>
 								</Box>
 							</Box>
 						)}
@@ -1889,7 +1842,7 @@ function BuatGalangDanaPageContent() {
 									</Box>
 
 									<FileUploadField
-										label="Upload foto galang dana *"
+										label="Upload Cover/Thumbnail Galang Dana *"
 										accept="image/*"
 										value={coverPreview}
 										onUploaded={(url) => {
@@ -2158,7 +2111,7 @@ function BuatGalangDanaPageContent() {
 								<Stack spacing={1.25}>
 									<Box>
 										<Typography sx={{ fontWeight: 600, fontSize: 14, mb: 0.6 }}>
-											Nama penerima/infrastruktur{" "}
+											Nama penerima manfaat{" "}
 											<span style={{ color: "red" }}>*</span>
 										</Typography>
 										<TextField
@@ -2167,9 +2120,7 @@ function BuatGalangDanaPageContent() {
 											value={receiverName}
 											onChange={(e) => setReceiverName(e.target.value)}
 											fullWidth
-											multiline
-											minRows={2}
-											placeholder="Contoh: Masjid Al-Iman / Sekolah X / Posko A"
+											placeholder="Contoh: Ahmad Fauzi, Ibu Siti, Anak-anak Panti Harapan"
 											error={
 												receiverName.length > 0 &&
 												receiverName.trim().length < 3
@@ -2198,9 +2149,7 @@ function BuatGalangDanaPageContent() {
 											value={goal}
 											onChange={(e) => setGoal(e.target.value)}
 											fullWidth
-											multiline
-											minRows={3}
-											placeholder="Contoh: pembangunan ulang fasilitas yang rusak..."
+											placeholder="Contoh: Bantuan pendidikan, santunan anak yatim"
 											error={goal.length > 0 && goal.trim().length < 10}
 											helperText={
 												goal.length > 0 && goal.trim().length < 10 ? (
@@ -2244,7 +2193,7 @@ function BuatGalangDanaPageContent() {
 
 									<Box>
 										<Typography sx={{ fontWeight: 600, fontSize: 14, mb: 0.6 }}>
-											Jumlah penerima manfaat{" "}
+											Jumlah penerima manfaat (orang){" "}
 											<span style={{ color: "rgba(15,23,42,.55)" }}>(opsional)</span>
 										</Typography>
 										<TextField
@@ -2536,110 +2485,20 @@ function BuatGalangDanaPageContent() {
 											)}
 									</Box>
 
-									<Box>
-										<Typography
-											sx={{ fontWeight: 600, fontSize: 14, mb: 0.75 }}
-										>
-											Upload foto galang dana{" "}
-											<span style={{ color: "red" }}>*</span>
-											<span
-												style={{
-													color: "rgba(15,23,42,.55)",
-													fontSize: 12,
-													fontWeight: 400,
-													marginLeft: 4,
-												}}
-											>
-												(Max 3MB)
-											</span>
-										</Typography>
-
-										<Paper
-											variant="outlined"
-											sx={{ borderRadius: 3, p: 1.25, textAlign: "center" }}
-										>
-											<input
-												id="cover-upload-other"
-												type="file"
-												accept="image/*"
-												hidden
-												onChange={(e) => {
-													const f = e.target.files?.[0];
-													if (f) {
-														setCoverNameOther(f.name);
-														setCoverFileOther(f);
-														setCoverPreviewOther(URL.createObjectURL(f));
-													} else {
-														setCoverNameOther("");
-														setCoverFileOther(null);
-														setCoverPreviewOther("");
-													}
-												}}
-											/>
-											<Button
-												component="label"
-												htmlFor="cover-upload-other"
-												startIcon={<PhotoCameraRoundedIcon />}
-												variant="text"
-												sx={{ fontWeight: 700 }}
-											>
-												Upload Foto
-											</Button>
-
-											{coverPreviewOther ? (
-												<Box
-													component="img"
-													src={coverPreviewOther}
-													alt="Preview"
-													sx={{
-														width: "100%",
-														height: 200,
-														objectFit: "cover",
-														borderRadius: 2,
-														mt: 1,
-													}}
-												/>
-											) : null}
-
-											{coverNameOther && !coverPreviewOther ? (
-												<Typography
-													sx={{
-														mt: 0.75,
-														fontSize: 12.5,
-														color: "text.secondary",
-													}}
-												>
-													Terpilih: <b>{coverNameOther}</b>
-												</Typography>
-											) : null}
-										</Paper>
-
-										<Paper
-											elevation={0}
-											sx={{
-												mt: 1.25,
-												p: 1,
-												borderRadius: 2,
-												bgcolor: "rgba(2,132,199,.06)",
-												display: "flex",
-												gap: 1,
-												alignItems: "flex-start",
-											}}
-										>
-											<InfoOutlinedIcon fontSize="small" sx={{ mt: "2px" }} />
-											<Box>
-												<Typography sx={{ fontSize: 12.5, fontWeight: 600 }}>
-													Tips
-												</Typography>
-												<Typography
-													sx={{ fontSize: 12.5, color: "text.secondary" }}
-												>
-													Upload foto yang paling menggambarkan kejadian /
-													penerima manfaat.
-												</Typography>
-											</Box>
-										</Paper>
-									</Box>
+									<FileUploadField
+										label="Upload Cover/Thumbnail Galang Dana *"
+										accept="image/*"
+										value={coverPreviewOther}
+										onUploaded={(url) => {
+											setCoverPreviewOther(url);
+											setCoverFileOther(null);
+										}}
+										onClear={() => {
+											setCoverPreviewOther("");
+											setCoverFileOther(null);
+											setCoverNameOther("");
+										}}
+									/>
 								</Stack>
 							</Box>
 						)}
