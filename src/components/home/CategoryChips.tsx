@@ -1,20 +1,12 @@
 "use client";
 
 import * as React from "react";
-import Box from "@mui/material/Box";
-import Typography from "@mui/material/Typography";
-import Chip from "@mui/material/Chip";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { LayoutGrid } from "lucide-react";
 import { Category, Campaign } from "@/types";
-import { alpha, useTheme } from "@mui/material/styles";
 import { CATEGORY_TITLE } from "@/lib/constants";
 import { getCategoryIcon } from "@/lib/categoryIcons";
-
-// Icons
-import GridViewIcon from "@mui/icons-material/GridView";
-
-const PRIMARY = "#0ba976";
 
 function buildDefaultCategories(): Category[] {
 	const pick = ["medis", "pendidikan", "bencana"];
@@ -27,11 +19,7 @@ function buildDefaultCategories(): Category[] {
 		.filter((c) => !!c.label);
 	return [
 		...base,
-		{
-			id: "lihat_semua",
-			label: "Lihat Semua",
-			icon: <GridViewIcon sx={{ fontSize: 24 }} />,
-		},
+		{ id: "lihat_semua", label: "Lihat Semua", icon: <LayoutGrid size={24} /> },
 	];
 }
 
@@ -48,251 +36,85 @@ function CategoryButton({
 	selected: boolean;
 	onClick: () => void;
 }) {
-	const theme = useTheme();
-	const primaryMain = theme.palette.primary.main;
-
 	return (
-		<Box
-			role="button"
-			tabIndex={0}
+		<button
 			onClick={onClick}
-			onKeyDown={(e) => e.key === "Enter" && onClick()}
-			className="w-full p-2 cursor-pointer select-none transition-all duration-150 ease-out active:scale-95"
-			sx={{
-				borderRadius: 1,
-				border: "none",
-				bgcolor: "transparent",
-				boxShadow: "none",
-			}}
+			className="w-full cursor-pointer select-none p-2 transition-all duration-150 active:scale-95"
 		>
-			<Box
-				className="w-14 h-14 rounded-full mx-auto grid place-items-center"
-				sx={{
-					bgcolor: selected ? alpha(primaryMain, 0.22) : "action.hover",
-					border: selected
-						? `1px solid ${alpha(primaryMain, 0.3)}`
-						: `1px solid ${alpha(theme.palette.text.primary, 0.08)}`,
-					color: selected ? primaryMain : "text.secondary",
-					"& .MuiSvgIcon-root": { fontSize: 32 },
+			<div
+				className="mx-auto grid h-14 w-14 place-items-center rounded-full border transition-colors"
+				style={{
+					backgroundColor: selected ? "rgba(11,169,118,0.22)" : "rgba(15,23,42,0.04)",
+					borderColor: selected ? "rgba(11,169,118,0.3)" : "rgba(15,23,42,0.08)",
+					color: selected ? "#0ba976" : "rgba(15,23,42,0.55)",
 				}}
 			>
 				{c.icon}
-			</Box>
-
-			<Typography
-				className="mt-2 text-[11.5px] font-black text-center leading-tight"
-				sx={{
-					color: selected ? "text.primary" : "text.secondary",
-				}}
+			</div>
+			<p
+				className={`mt-2 text-center text-[11.5px] font-black leading-tight ${selected ? "text-foreground" : "text-foreground/55"}`}
 			>
 				{c.label}
-			</Typography>
-		</Box>
-	);
-}
-
-function ProgressMini({ pct }: { pct: number }) {
-	return (
-		<Box
-			sx={{
-				height: 6,
-				borderRadius: 999,
-				bgcolor: "rgba(15,23,42,0.08)",
-				overflow: "hidden",
-			}}
-		>
-			<Box
-				sx={{
-					height: "100%",
-					width: `${Math.min(100, Math.max(0, pct))}%`,
-					bgcolor: pct > 0 ? PRIMARY : "transparent",
-					borderRadius: 999,
-					transition: "width 250ms ease",
-				}}
-			/>
-		</Box>
+			</p>
+		</button>
 	);
 }
 
 function CampaignRowCard({ item }: { item: Campaign }) {
 	const router = useRouter();
 	const [imgSrc, setImgSrc] = React.useState(item.cover || "/defaultimg.webp");
-	const pct = item.target
-		? Math.round((item.collected / item.target) * 100)
-		: 0;
-
-	const handleCardClick = () => {
-		router.push(`/donasi/${item.slug || item.id}`);
-	};
+	const pct = item.target ? Math.round((item.collected / item.target) * 100) : 0;
 
 	return (
-		<Box
-			onClick={handleCardClick}
-			sx={{
-				minWidth: 200,
-				maxWidth: 200,
-				borderRadius: 0,
-				border: "none",
-				bgcolor: "transparent",
-				boxShadow: "none",
-				overflow: "hidden",
-				position: "relative",
-				cursor: "pointer",
-				userSelect: "none",
-				transition: "transform 140ms ease",
-				"&:active": { transform: "scale(0.99)" },
-			}}
+		<div
+			onClick={() => router.push(`/donasi/${item.slug || item.id}`)}
+			className="w-[200px] min-w-[200px] shrink-0 cursor-pointer select-none snap-start overflow-hidden transition-transform active:scale-[0.99]"
 		>
-			{/* Cover */}
-			<Box sx={{ position: "relative", height: 120 }}>
-				<Box
-					className="relative w-full h-full shrink-0 overflow-hidden bg-gray-100"
-					sx={{ borderRadius: 0 }}
-				>
-					<Image
-						src={imgSrc}
-						alt={item.title}
-						fill
-						unoptimized
-						sizes="(max-width: 768px) 100vw, 400px"
-						style={{ objectFit: "cover" }}
-						onError={() => setImgSrc("/defaultimg.webp")}
-					/>
-					<Box
-						sx={{
-							position: "absolute",
-							inset: 0,
-							background:
-								"linear-gradient(to top, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.0) 70%)",
-							pointerEvents: "none",
-						}}
-					/>
+			<div className="relative h-[120px] overflow-hidden bg-slate-100">
+				<Image
+					src={imgSrc}
+					alt={item.title}
+					fill
+					unoptimized
+					sizes="200px"
+					style={{ objectFit: "cover" }}
+					onError={() => setImgSrc("/defaultimg.webp")}
+				/>
+				<div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/55 to-transparent to-70%" />
+				<span className="absolute left-2.5 top-2.5 rounded bg-white/92 px-1 py-px text-[11px] font-black backdrop-blur-lg">
+					{item.category}
+				</span>
+				<span className="absolute bottom-2.5 left-2.5 rounded-full bg-foreground/72 px-1 py-px text-[10px] font-black text-white backdrop-blur-lg">
+					{item.daysLeft} hari
+				</span>
+			</div>
 
-					<Box sx={{ position: "absolute", top: 10, left: 10 }}>
-						<Chip
-							label={item.category}
-							size="small"
-							sx={{
-								height: 22,
-								bgcolor: "rgba(255,255,255,0.92)",
-								backdropFilter: "blur(10px)",
-								fontWeight: 900,
-								"& .MuiChip-label": { px: 1, fontSize: 11 },
-							}}
-						/>
-					</Box>
-
-					<Box
-						sx={{
-							position: "absolute",
-							bottom: 10,
-							left: 10,
-							px: 1,
-							py: "2px",
-							borderRadius: 999,
-							fontSize: 10,
-							fontWeight: 900,
-							color: "#fff",
-							bgcolor: "rgba(15,23,42,0.72)",
-							backdropFilter: "blur(10px)",
-						}}
-					>
-						{item.daysLeft} hari
-					</Box>
-				</Box>
-			</Box>
-
-			{/* Body */}
-			<Box sx={{ p: 1.25, bgcolor: "#fff" }}>
-				<Typography
-					sx={{
-						fontSize: 13,
-						fontWeight: 900,
-						color: "text.primary",
-						lineHeight: 1.25,
-						display: "-webkit-box",
-						WebkitLineClamp: 2,
-						WebkitBoxOrient: "vertical",
-						overflow: "hidden",
-						minHeight: 34,
-					}}
-				>
+			<div className="bg-white p-[5px]">
+				<p className="line-clamp-2 min-h-[34px] text-[13px] font-black leading-tight text-foreground">
 					{item.title}
-				</Typography>
-
-				<Box
-					sx={{
-						display: "flex",
-						alignItems: "center",
-						gap: 0.75,
-						mt: 0.8,
-					}}
-				>
-					<Typography sx={{ fontSize: 11, color: "rgba(15,23,42,.60)" }}>
-						{item.organizer}
-					</Typography>
-					{item.organizerVerifiedAt ? (
-						<Chip
-							label={
-								item.organizerVerifiedAs === "organization" ? "ORG" : "PER"
-							}
-							size="small"
-							sx={{
-								height: 18,
-								bgcolor: "rgba(11,169,118,0.14)",
-								color: PRIMARY,
-								fontWeight: 900,
-								"& .MuiChip-label": { px: 0.8, fontSize: 9 },
-							}}
-						/>
-					) : null}
-				</Box>
-
-				<Box sx={{ mt: 1.5 }}>
-					<Box
-						sx={{
-							display: "flex",
-							alignItems: "center",
-							justifyContent: "space-between",
-							mb: 0.5,
-						}}
-					>
-						<Typography
-							sx={{
-								fontSize: 10,
-								fontWeight: 700,
-								color: "rgba(15,23,42,.50)",
-							}}
-						>
-							Terkumpul
-						</Typography>
-						<Typography
-							sx={{
-								fontSize: 10,
-								fontWeight: 900,
-								color: PRIMARY,
-							}}
-						>
-							{pct}%
-						</Typography>
-					</Box>
-					<ProgressMini pct={pct} />
-					<Box
-						sx={{
-							display: "flex",
-							justifyContent: "space-between",
-							mt: 0.5,
-						}}
-					>
-						<Typography
-							sx={{ fontSize: 11, fontWeight: 900, color: "text.primary" }}
-						>
-							Rp {rupiah(item.collected)}
-						</Typography>
-					</Box>
-				</Box>
-			</Box>
-		</Box>
+				</p>
+				<div className="mt-[3px] flex items-center gap-[3px]">
+					<span className="text-[11px] text-foreground/60">{item.organizer}</span>
+					{item.organizerVerifiedAt && (
+						<span className="rounded bg-primary/14 px-[3px] py-px text-[9px] font-black text-primary">
+							{item.organizerVerifiedAs === "organization" ? "ORG" : "PER"}
+						</span>
+					)}
+				</div>
+				<div className="mt-1.5">
+					<div className="mb-0.5 flex items-center justify-between">
+						<span className="text-[10px] font-bold text-foreground/50">Terkumpul</span>
+						<span className="text-[10px] font-black text-primary">{pct}%</span>
+					</div>
+					<div className="h-1.5 overflow-hidden rounded-full bg-foreground/8">
+						<div className="h-full rounded-full bg-primary transition-all duration-300" style={{ width: `${Math.min(100, Math.max(0, pct))}%` }} />
+					</div>
+					<p className="mt-0.5 text-[11px] font-black text-foreground">
+						Rp {rupiah(item.collected)}
+					</p>
+				</div>
+			</div>
+		</div>
 	);
 }
 
@@ -307,12 +129,8 @@ export default function CategoryChips({
 	const [activeId, setActiveId] = React.useState<string>("bencana");
 
 	const categoriesList = React.useMemo<Category[]>(() => {
-		const base =
-			categories && categories.length > 0
-				? categories
-				: buildDefaultCategories();
-		const allowed = new Set(["medis", "pendidikan", "bencana"]);
 		if (categories && categories.length > 0) {
+			const allowed = new Set(["medis", "pendidikan", "bencana"]);
 			const filtered = categories
 				.filter((c) => allowed.has(c.id))
 				.map((c) => ({
@@ -322,14 +140,10 @@ export default function CategoryChips({
 				}));
 			return [
 				...filtered,
-				{
-					id: "lihat_semua",
-					label: "Lihat Semua",
-					icon: <GridViewIcon sx={{ fontSize: 24 }} />,
-				},
+				{ id: "lihat_semua", label: "Lihat Semua", icon: <LayoutGrid size={24} /> },
 			];
 		}
-		return base;
+		return buildDefaultCategories();
 	}, [categories]);
 
 	const filtered = React.useMemo(() => {
@@ -338,12 +152,7 @@ export default function CategoryChips({
 		if (!selected) return campaigns;
 		const label = selected.label.toLowerCase();
 		const syn: Record<string, string[]> = {
-			medis: [
-				"medis",
-				"kesehatan",
-				"bantuan medis",
-				"bantuan medis & kesehatan",
-			],
+			medis: ["medis", "kesehatan", "bantuan medis", "bantuan medis & kesehatan"],
 			pendidikan: ["pendidikan", "bantuan pendidikan"],
 			bencana: ["bencana", "bencana alam"],
 		};
@@ -356,22 +165,12 @@ export default function CategoryChips({
 	}, [activeId, campaigns, categoriesList]);
 
 	return (
-		<Box sx={{ px: 2, mt: 3 }}>
-			<Box
-				sx={{
-					display: "flex",
-					justifyContent: "space-between",
-					alignItems: "center",
-					mb: 2,
-				}}
-			>
-				<Typography sx={{ fontSize: 16, fontWeight: 900, color: "#0f172a" }}>
-					Kategori Pilihan
-				</Typography>
-			</Box>
+		<div className="mt-3 px-2">
+			<div className="mb-2 flex items-center justify-between">
+				<h2 className="text-base font-black text-foreground">Kategori Pilihan</h2>
+			</div>
 
-			{/* Chips Grid */}
-			<Box className="grid grid-cols-4 gap-2">
+			<div className="grid grid-cols-4 gap-2">
 				{categoriesList.map((cat) => (
 					<CategoryButton
 						key={cat.id}
@@ -386,38 +185,23 @@ export default function CategoryChips({
 						}}
 					/>
 				))}
-			</Box>
+			</div>
 
-			{/* Filtered List - Horizontal Scroll */}
-			<Box sx={{ mt: 3 }}>
+			<div className="mt-3">
 				{filtered.length > 0 ? (
-					<Box
-						sx={{
-							display: "flex",
-							gap: 1.5,
-							overflowX: "auto",
-							pb: 0,
-							scrollSnapType: "x mandatory",
-							WebkitOverflowScrolling: "touch",
-							"&::-webkit-scrollbar": { display: "none" },
-							msOverflowStyle: "none",
-							scrollbarWidth: "none",
-						}}
-					>
-						{filtered.map((item, i) => (
-							<Box key={item.id} sx={{ scrollSnapAlign: "start" }}>
-								<CampaignRowCard item={item} />
-							</Box>
+					<div className="no-scrollbar flex snap-x snap-mandatory gap-1.5 overflow-x-auto">
+						{filtered.map((item) => (
+							<CampaignRowCard key={item.id} item={item} />
 						))}
-					</Box>
+					</div>
 				) : (
-					<Typography className="text-center text-gray-500 text-sm py-8">
+					<p className="py-8 text-center text-sm text-slate-500">
 						Belum ada penggalangan dana di kategori ini
-					</Typography>
+					</p>
 				)}
-			</Box>
+			</div>
 
-			<Box sx={{ mt: 2, height: 1, bgcolor: "rgba(15,23,42,0.06)" }} />
-		</Box>
+			<div className="mt-2 h-px bg-foreground/6" />
+		</div>
 	);
 }

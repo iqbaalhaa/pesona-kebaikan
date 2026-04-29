@@ -60,7 +60,7 @@ export default function NotificationPopover({ overlay = false }: NotificationPop
 			</button>
 
 			{open && (
-				<div className="absolute right-0 top-12 z-[1200] w-80 overflow-hidden rounded-2xl bg-surface shadow-[0_10px_40px_-10px_rgba(0,0,0,0.2)]">
+				<div className="fixed inset-x-0 top-[60px] z-[1200] mx-2 sm:absolute sm:inset-x-auto sm:top-12 sm:right-0 sm:mx-0 sm:w-96 overflow-hidden rounded-2xl bg-surface shadow-[0_10px_40px_-10px_rgba(0,0,0,0.2)]">
 					{/* Tabs */}
 					<div className="flex border-b border-divider">
 						{(["KABAR", "PESAN"] as const).map((t) => (
@@ -103,7 +103,7 @@ export default function NotificationPopover({ overlay = false }: NotificationPop
 										</span>
 										<div className="min-w-0 flex-1">
 											<p className="text-sm font-bold text-foreground">{item.title}</p>
-											<p className="mt-0.5 mb-0.5 text-xs leading-snug text-slate-500">{item.message}</p>
+											<p className="mt-0.5 mb-0.5 text-xs leading-snug text-slate-500 break-words">{item.message}</p>
 											<p className="text-[11px] text-slate-400">
 												{item.isBroadcast ? "Untuk semua pengguna" : "Untuk Anda"}
 												{" · "}

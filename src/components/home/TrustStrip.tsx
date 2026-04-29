@@ -1,167 +1,66 @@
 "use client";
 
-import * as React from "react";
-import Box from "@mui/material/Box";
-import Typography from "@mui/material/Typography";
-import ButtonBase from "@mui/material/ButtonBase";
 import Link from "next/link";
-import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
-import CachedIcon from "@mui/icons-material/Cached";
-import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
+import { ShieldCheck, RefreshCw, Receipt } from "lucide-react";
 
-const PRIMARY = "#0ba976";
+const items = [
+	{
+		icon: ShieldCheck,
+		title: "Verifikasi Penggalang",
+		desc: "Identitas penggalang dana terverifikasi valid",
+	},
+	{
+		icon: RefreshCw,
+		title: "Update Rutin Kampanye",
+		desc: "Kabar terbaru penggunaan dana secara berkala",
+	},
+	{
+		icon: Receipt,
+		title: "Laporan Transparan",
+		desc: "Bukti penyaluran dana dapat diakses publik",
+	},
+];
 
 function TrustItem({
 	icon: Icon,
 	title,
 	desc,
-	href,
 }: {
 	icon: React.ElementType;
 	title: string;
-	desc?: string;
-	href?: string;
+	desc: string;
 }) {
 	return (
-		<ButtonBase
-			component={href ? Link : "div"}
-			href={href}
-			sx={{
-				display: "flex",
-				gap: 2,
-				textAlign: "left",
-				width: "100%",
-				justifyContent: "flex-start",
-				p: 2,
-				borderRadius: 3,
-				transition: "all 0.3s ease",
-				border: "1px solid transparent",
-				"&:hover": {
-					bgcolor: "rgba(11,169,118,0.04)",
-					borderColor: "rgba(11,169,118,0.2)",
-					transform: "translateY(-2px)",
-					boxShadow: "0 4px 12px rgba(11,169,118,0.08)",
-					"& .icon-box": {
-						bgcolor: PRIMARY,
-						color: "white",
-						transform: "scale(1.1)",
-					},
-				},
-			}}
-		>
-			<Box
-				className="icon-box"
-				sx={{
-					width: 48,
-					height: 48,
-					borderRadius: "14px",
-					display: "grid",
-					placeItems: "center",
-					bgcolor: "rgba(11,169,118,0.1)",
-					color: PRIMARY,
-					flexShrink: 0,
-					transition: "all 0.3s ease",
-				}}
-			>
-				<Icon sx={{ fontSize: 24 }} />
-			</Box>
-
-			<Box
-				sx={{
-					minWidth: 0,
-					display: "flex",
-					flexDirection: "column",
-					justifyContent: "center",
-				}}
-			>
-				<Typography
-					sx={{
-						fontSize: 14,
-						fontWeight: 700,
-						color: "#1e293b",
-						lineHeight: 1.2,
-						mb: 0.5,
-						letterSpacing: "-0.01em",
-					}}
-				>
+		<div className="group flex w-full gap-2 rounded-xl border border-transparent p-2 text-left transition-all hover:-translate-y-0.5 hover:border-primary/20 hover:bg-primary/4 hover:shadow-[0_4px_12px_rgba(11,169,118,0.08)]">
+			<div className="grid h-12 w-12 shrink-0 place-items-center rounded-[14px] bg-primary/10 text-primary transition-all group-hover:scale-110 group-hover:bg-primary group-hover:text-white">
+				<Icon size={24} />
+			</div>
+			<div className="flex min-w-0 flex-col justify-center">
+				<p className="mb-0.5 text-sm font-bold leading-tight tracking-tight text-slate-800">
 					{title}
-				</Typography>
-				{desc && (
-					<Typography
-						sx={{
-							fontSize: 12,
-							color: "#64748b",
-							lineHeight: 1.4,
-						}}
-					>
-						{desc}
-					</Typography>
-				)}
-			</Box>
-		</ButtonBase>
+				</p>
+				<p className="text-xs leading-snug text-slate-500">{desc}</p>
+			</div>
+		</div>
 	);
 }
 
 export default function TrustStrip() {
 	return (
-		<Box sx={{ px: 2, mt: 3 }}>
-			<Box
-				sx={{
-					p: 2,
-					bgcolor: "white",
-					boxShadow: "0 10px 40px -10px rgba(0,0,0,0.05)",
-					border: "1px solid rgba(241, 245, 249, 1)",
-				}}
-			>
-				{/* Header */}
-				<Box
-					sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2, px: 1 }}
-				>
-					<Box
-						sx={{
-							width: 4,
-							height: 24,
-							borderRadius: 4,
-							bgcolor: PRIMARY,
-						}}
-					/>
-					<Typography
-						sx={{
-							fontSize: 16,
-							fontWeight: 800,
-							color: "#0f172a",
-							letterSpacing: "-0.02em",
-						}}
-					>
+		<div className="mt-3 px-2">
+			<div className="border border-slate-100 bg-white p-2 shadow-[0_10px_40px_-10px_rgba(0,0,0,0.05)]">
+				<div className="mb-2 flex items-center gap-1.5 px-1">
+					<div className="h-6 w-1 rounded bg-primary" />
+					<h3 className="text-base font-extrabold tracking-tight text-foreground">
 						Aman & Transparan
-					</Typography>
-				</Box>
-
-				{/* 3 kolom */}
-				<Box
-					sx={{
-						display: "grid",
-						gridTemplateColumns: "1fr",
-						gap: 1.5,
-					}}
-				>
-					<TrustItem
-						icon={VerifiedUserIcon}
-						title="Verifikasi Penggalang"
-						desc="Identitas penggalang dana terverifikasi valid"
-					/>
-					<TrustItem
-						icon={CachedIcon}
-						title="Update Rutin Kampanye"
-						desc="Kabar terbaru penggunaan dana secara berkala"
-					/>
-					<TrustItem
-						icon={ReceiptLongIcon}
-						title="Laporan Transparan"
-						desc="Bukti penyaluran dana dapat diakses publik"
-					/>
-				</Box>
-			</Box>
-		</Box>
+					</h3>
+				</div>
+				<div className="grid grid-cols-1 gap-1.5">
+					{items.map((item) => (
+						<TrustItem key={item.title} {...item} />
+					))}
+				</div>
+			</div>
+		</div>
 	);
 }

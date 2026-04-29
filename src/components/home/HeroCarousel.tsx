@@ -1,9 +1,7 @@
 "use client";
 
 import * as React from "react";
-import Box from "@mui/material/Box";
 import Image from "next/image";
-import Typography from "@mui/material/Typography";
 import Link from "next/link";
 
 export interface CarouselItem {
@@ -20,7 +18,6 @@ const defaultSlides: CarouselItem[] = [
 
 function SlideImage({ src, priority }: { src: string; priority: boolean }) {
 	const [imgSrc, setImgSrc] = React.useState(src);
-
 	return (
 		<Image
 			src={imgSrc}
@@ -35,30 +32,17 @@ function SlideImage({ src, priority }: { src: string; priority: boolean }) {
 	);
 }
 
-export default function HeroCarousel({
-	items = [],
-}: {
-	items?: CarouselItem[];
-}) {
+export default function HeroCarousel({ items = [] }: { items?: CarouselItem[] }) {
 	const [active, setActive] = React.useState(0);
 	const displaySlides = items.length > 0 ? items : defaultSlides;
 
 	React.useEffect(() => {
-		const t = setInterval(
-			() => setActive((p) => (p + 1) % displaySlides.length),
-			4500
-		);
+		const t = setInterval(() => setActive((p) => (p + 1) % displaySlides.length), 4500);
 		return () => clearInterval(t);
 	}, [displaySlides.length]);
 
 	return (
-		<Box
-			className="relative w-full h-[360px] overflow-hidden bg-[#0b1220]"
-			sx={{
-				borderBottomLeftRadius: { md: 1 },
-				borderBottomRightRadius: { md: 1 },
-			}}
-		>
+		<div className="relative h-[360px] w-full overflow-hidden bg-[#0b1220] md:rounded-b">
 			{displaySlides.map((s, i) => {
 				const Content = (
 					<>
@@ -66,41 +50,29 @@ export default function HeroCarousel({
 						<div className="absolute inset-0 bg-gradient-to-b from-black/92 via-black/75 to-transparent to-58% from-0% via-24%" />
 					</>
 				);
-
 				return (
-					<Box
+					<div
 						key={s.id || i}
-						className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${
-							i === active ? "opacity-100" : "opacity-0"
-						}`}
-						sx={{
-							zIndex: i === active ? 10 : 0,
-							pointerEvents: i === active ? "auto" : "none",
-						}}
+						className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${i === active ? "z-10 opacity-100" : "pointer-events-none z-0 opacity-0"}`}
 					>
 						{s.link ? (
-							<Link href={s.link} className="block w-full h-full relative">
-								{Content}
-							</Link>
+							<Link href={s.link} className="relative block h-full w-full">{Content}</Link>
 						) : (
-							<div className="w-full h-full relative">{Content}</div>
+							<div className="relative h-full w-full">{Content}</div>
 						)}
-					</Box>
+					</div>
 				);
 			})}
-			<Box className="absolute inset-0 flex items-center justify-center text-center px-4 pt-16 pointer-events-none z-20">
-				<Box className="max-w-[320px]">
-					<Typography
-						variant="h1"
-						className="text-white text-[22px] font-black leading-[1.15]"
-					>
+			<div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center px-4 pt-16 text-center">
+				<div className="max-w-[320px]">
+					<h1 className="text-[22px] font-black leading-[1.15] text-white">
 						{displaySlides[active]?.title || "Mau berbuat baik apa hari ini?"}
-					</Typography>
-					<Typography className="mt-1 text-white/85 text-[13px]">
+					</h1>
+					<p className="mt-1 text-[13px] text-white/85">
 						Donasi cepat, transparan, dan terasa dampaknya.
-					</Typography>
-				</Box>
-			</Box>
-		</Box>
+					</p>
+				</div>
+			</div>
+		</div>
 	);
 }

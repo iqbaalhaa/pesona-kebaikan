@@ -3,25 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-
-import Box from "@mui/material/Box";
-import Typography from "@mui/material/Typography";
-import ButtonBase from "@mui/material/ButtonBase";
-import Backdrop from "@mui/material/Backdrop";
-import Paper from "@mui/material/Paper";
-import Grow from "@mui/material/Grow";
-import IconButton from "@mui/material/IconButton";
-import CloseIcon from "@mui/icons-material/Close";
-import Portal from "@mui/material/Portal";
-import { alpha } from "@mui/material/styles";
-
-import VolunteerActivismIcon from "@mui/icons-material/VolunteerActivism";
-import MosqueIcon from "@mui/icons-material/Mosque";
-import CampaignIcon from "@mui/icons-material/Campaign";
-import EventRepeatIcon from "@mui/icons-material/EventRepeat";
-import type { SvgIconComponent } from "@mui/icons-material";
-
-const BRAND = "#0ba976";
+import { Heart, Building, Megaphone, CalendarClock, X } from "lucide-react";
 
 type MenuStatus = "new" | "soon";
 type MenuItem = {
@@ -29,246 +11,104 @@ type MenuItem = {
 	label: string;
 	href?: string;
 	status?: MenuStatus;
-	Icon: SvgIconComponent;
+	icon: React.ElementType;
 };
 
 const MENUS: readonly MenuItem[] = [
-	{
-		id: "donasi",
-		label: "Donasi",
-		href: "/donasi",
-		status: "new",
-		Icon: VolunteerActivismIcon,
-	},
-	{ id: "zakat", label: "Zakat", status: "soon", Icon: MosqueIcon },
-	{
-		id: "galang-dana",
-		label: "Galang Dana",
-		href: "/galang-dana",
-		Icon: CampaignIcon,
-	},
-	{
-		id: "donasi-otomatis",
-		label: "Donasi Otomatis",
-		status: "soon",
-		Icon: EventRepeatIcon,
-	},
+	{ id: "donasi", label: "Donasi", href: "/donasi", status: "new", icon: Heart },
+	{ id: "zakat", label: "Zakat", status: "soon", icon: Building },
+	{ id: "galang-dana", label: "Galang Dana", href: "/galang-dana", icon: Megaphone },
+	{ id: "donasi-otomatis", label: "Donasi Otomatis", status: "soon", icon: CalendarClock },
 ];
 
 export default function QuickMenu() {
 	const router = useRouter();
-
-	const [open, setOpen] = React.useState(false);
-	const [msg, setMsg] = React.useState("");
-	const [toastKey, setToastKey] = React.useState(0);
-
+	const [toast, setToast] = React.useState<string | null>(null);
 	const timerRef = React.useRef<number | null>(null);
 
 	const showToast = React.useCallback((text: string) => {
-		setMsg(text);
-		setToastKey((k) => k + 1); // restart animation
-		setOpen(true);
+		setToast(text);
+		if (timerRef.current) window.clearTimeout(timerRef.current);
+		timerRef.current = window.setTimeout(() => setToast(null), 2200);
 	}, []);
 
-	// auto close (restart tiap kali toastKey berubah)
 	React.useEffect(() => {
-		if (!open) return;
-
-		if (timerRef.current) window.clearTimeout(timerRef.current);
-		timerRef.current = window.setTimeout(() => setOpen(false), 2200);
-
-		return () => {
-			if (timerRef.current) window.clearTimeout(timerRef.current);
-		};
-	}, [open, toastKey]);
+		return () => { if (timerRef.current) window.clearTimeout(timerRef.current); };
+	}, []);
 
 	const handleActivate = React.useCallback(
 		(m: MenuItem) => {
-			if (m.href) {
-				router.push(m.href);
-				return;
-			}
+			if (m.href) { router.push(m.href); return; }
 			showToast(`${m.label} — fitur segera hadir`);
 		},
 		[router, showToast],
 	);
 
 	return (
-		<Box sx={{ px: 2, mt: 2, position: "relative", zIndex: 2 }}>
-			<Typography
-				sx={{ fontSize: 16, fontWeight: 800, color: "text.primary", mb: 1.5 }}
-			>
+		<div className="relative z-2 mt-2 px-2">
+			<h2 className="mb-1.5 text-base font-extrabold text-foreground">
 				Mau berbuat baik apa hari ini?
-			</Typography>
+			</h2>
 
-			<Box
-				sx={{
-					display: "grid",
-					gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
-					gap: 1.25,
-				}}
-			>
+			<div className="grid grid-cols-4 gap-[5px]">
 				{MENUS.map((m) => {
-					const content = (
-						<ButtonBase
+					const Icon = m.icon;
+					const inner = (
+						<button
 							onClick={() => handleActivate(m)}
-							sx={(theme) => ({
-								width: "100%",
-								textAlign: "center",
-								py: 1,
-								borderRadius: 1,
-								position: "relative",
-								display: "block",
-								transition: "transform 120ms ease, background-color 120ms ease",
-								"&:active": { transform: "scale(0.98)" },
-							})}
+							className="relative block w-full cursor-pointer rounded-lg py-1 text-center transition-transform active:scale-[0.98]"
 						>
-							<Box
-								sx={(theme) => ({
-									mx: "auto",
-									width: 58,
-									height: 58,
-									borderRadius: 999,
-									display: "grid",
-									placeItems: "center",
-									bgcolor: alpha(theme.palette.success.main, 0.08),
-									border: `1px solid ${alpha(theme.palette.success.main, 0.12)}`,
-									boxShadow: "0 4px 12px rgba(11,169,118,0.08)",
-									overflow: "hidden",
-								})}
-							>
-								<m.Icon sx={{ fontSize: 34 }} color="primary" />
-							</Box>
+							<div className="mx-auto grid h-[58px] w-[58px] place-items-center overflow-hidden rounded-full border border-primary/12 bg-primary/8 shadow-[0_4px_12px_rgba(11,169,118,0.08)]">
+								<Icon size={34} className="text-primary" />
+							</div>
 
 							{m.status && (
-								<Box
-									sx={(theme) => ({
-										position: "absolute",
-										top: 4,
-										right: 10,
-										bgcolor:
-											m.status === "soon"
-												? theme.palette.error.main
-												: theme.palette.success.main,
-										color: "white",
-										fontSize: "0.5rem",
-										fontWeight: 900,
-										px: 0.45,
-										py: 0.12,
-										borderRadius: 0.6,
-										boxShadow: 1,
-										zIndex: 2,
-									})}
+								<span
+									className={`absolute right-2.5 top-1 z-2 rounded px-[2px] py-px text-[0.5rem] font-black text-white shadow ${m.status === "soon" ? "bg-red-500" : "bg-green-500"}`}
 								>
 									{m.status === "soon" ? "SOON" : "NEW"}
-								</Box>
+								</span>
 							)}
 
-							<Typography
-								sx={{
-									mt: 0.9,
-									fontSize: 11,
-									fontWeight: 700,
-									color: "text.primary",
-									lineHeight: 1.2,
-									px: 0.5,
-									display: "-webkit-box",
-									WebkitLineClamp: 2,
-									WebkitBoxOrient: "vertical",
-									overflow: "hidden",
-								}}
-							>
+							<p className="mt-[3px] line-clamp-2 px-0.5 text-[11px] font-bold leading-tight text-foreground">
 								{m.label}
-							</Typography>
-						</ButtonBase>
+							</p>
+						</button>
 					);
 
 					return m.href ? (
-						<Box
-							key={m.id}
-							component={Link}
-							href={m.href}
-							sx={{ textDecoration: "none" }}
-						>
-							{content}
-						</Box>
+						<Link key={m.id} href={m.href} className="no-underline">{inner}</Link>
 					) : (
-						<Box key={m.id}>{content}</Box>
+						<div key={m.id}>{inner}</div>
 					);
 				})}
-			</Box>
+			</div>
 
-			<Box sx={{ mt: 2, height: 1, bgcolor: "divider" }} />
+			<div className="mt-2 h-px bg-divider" />
 
-			<Portal>
-				<Backdrop
-					key={toastKey}
-					open={open}
-					onClick={() => setOpen(false)}
-					sx={{
-						zIndex: 13000,
-						position: "fixed",
-						inset: 0,
-						display: "flex",
-						alignItems: "center",
-						justifyContent: "center",
-						p: 2,
-						// lebih soft, tidak bikin gelap berat
-						backgroundColor: alpha("#0f172a", 0.06),
-					}}
+			{/* Toast */}
+			{toast && (
+				<div
+					className="fixed inset-0 z-[13000] flex items-center justify-center bg-foreground/6 p-2"
+					onClick={() => setToast(null)}
 				>
-					<Grow in={open} timeout={160}>
-						<Paper
-							onClick={(e) => e.stopPropagation()}
-							elevation={0}
-							sx={{
-								borderRadius: 3,
-								bgcolor: "background.paper",
-								color: "text.primary",
-								px: 2,
-								py: 1.25,
-								minWidth: 220,
-								maxWidth: "min(420px, calc(100vw - 32px))",
-								display: "flex",
-								alignItems: "center",
-								gap: 1,
-								border: `1px solid ${alpha(BRAND, 0.28)}`,
-								boxShadow: "0 14px 34px rgba(15,23,42,.14)",
-								position: "relative",
-								overflow: "hidden",
-								// aksen brand di kiri
-								"&::before": {
-									content: '""',
-									position: "absolute",
-									left: 0,
-									top: 0,
-									bottom: 0,
-									width: 6,
-									backgroundColor: BRAND,
-								},
-							}}
+					<div
+						onClick={(e) => e.stopPropagation()}
+						className="relative flex min-w-[220px] max-w-[min(420px,calc(100vw-32px))] items-center gap-1 overflow-hidden rounded-xl border border-primary/28 bg-surface px-2 py-[5px] shadow-[0_14px_34px_rgba(15,23,42,0.14)] animate-in fade-in zoom-in-95"
+					>
+						<div className="absolute bottom-0 left-0 top-0 w-1.5 bg-primary" />
+						<p className="flex-1 text-[13px] font-extrabold leading-tight text-foreground">
+							{toast}
+						</p>
+						<button
+							onClick={() => setToast(null)}
+							className="shrink-0 rounded-lg p-1 text-foreground/70 transition-colors hover:bg-primary/10"
 						>
-							<Typography
-								sx={{ fontSize: 13, fontWeight: 800, lineHeight: 1.3, flex: 1 }}
-							>
-								{msg}
-							</Typography>
-
-							<IconButton
-								size="small"
-								onClick={() => setOpen(false)}
-								sx={{
-									color: alpha("#0f172a", 0.7),
-									"&:hover": { bgcolor: alpha(BRAND, 0.1) },
-								}}
-								aria-label="Close"
-							>
-								<CloseIcon fontSize="small" />
-							</IconButton>
-						</Paper>
-					</Grow>
-				</Backdrop>
-			</Portal>
-		</Box>
+							<X size={16} />
+						</button>
+					</div>
+				</div>
+			)}
+		</div>
 	);
 }

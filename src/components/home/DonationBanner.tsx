@@ -1,77 +1,17 @@
 "use client";
 
-import * as React from "react";
-import Box from "@mui/material/Box";
-import Typography from "@mui/material/Typography";
-import Paper from "@mui/material/Paper";
-import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
-import AccountBalanceIcon from "@mui/icons-material/AccountBalance";
-import CreditCardIcon from "@mui/icons-material/CreditCard";
-import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
-import SecurityIcon from "@mui/icons-material/Security";
+import { Wallet, Building2, CreditCard, Receipt, Shield } from "lucide-react";
 
 const PRIMARY = "#0ba976";
 
-function PayChip({
-	label,
-	icon: Icon,
-}: {
-	label: string;
-	icon: React.ElementType;
-}) {
+function PayChip({ label, icon: Icon }: { label: string; icon: React.ElementType }) {
 	return (
-		<Paper
-			variant="outlined"
-			sx={{
-				minWidth: 140,
-				flexShrink: 0,
-				display: "flex",
-				alignItems: "center",
-				gap: 1.5,
-				p: 1.5,
-				borderRadius: 3,
-				bgcolor: "white",
-				borderColor: "rgba(226, 232, 240, 0.8)",
-				transition: "all 0.3s ease",
-				cursor: "default",
-				"&:hover": {
-					borderColor: PRIMARY,
-					transform: "translateY(-2px)",
-					boxShadow: "0 4px 12px rgba(11,169,118,0.08)",
-					"& .icon-wrapper": {
-						bgcolor: PRIMARY,
-						color: "white",
-					},
-				},
-			}}
-		>
-			<Box
-				className="icon-wrapper"
-				sx={{
-					width: 36,
-					height: 36,
-					borderRadius: "10px",
-					display: "grid",
-					placeItems: "center",
-					bgcolor: "rgba(11,169,118,0.1)",
-					color: PRIMARY,
-					flexShrink: 0,
-					transition: "all 0.3s ease",
-				}}
-			>
-				<Icon sx={{ fontSize: 18 }} />
-			</Box>
-			<Typography
-				sx={{
-					fontSize: 13,
-					fontWeight: 700,
-					color: "#1e293b",
-					lineHeight: 1.2,
-				}}
-			>
-				{label}
-			</Typography>
-		</Paper>
+		<div className="group flex min-w-[140px] shrink-0 items-center gap-1.5 rounded-xl border border-slate-200/80 bg-white p-1.5 transition-all hover:-translate-y-0.5 hover:border-primary hover:shadow-[0_4px_12px_rgba(11,169,118,0.08)]">
+			<div className="grid h-9 w-9 shrink-0 place-items-center rounded-[10px] bg-primary/10 text-primary transition-all group-hover:bg-primary group-hover:text-white">
+				<Icon size={18} />
+			</div>
+			<p className="text-[13px] font-bold leading-tight text-slate-800">{label}</p>
+		</div>
 	);
 }
 
@@ -79,135 +19,44 @@ export default function DonationBanner() {
 	const MIN_DONATION = Number(process.env.NEXT_PUBLIC_MIN_DONATION ?? 1);
 
 	return (
-		<Box sx={{ px: 2, mt: 3 }}>
-			<Box
-				sx={{
-					p: 3,
-					bgcolor: "white",
-					boxShadow: "0 10px 40px -10px rgba(0,0,0,0.05)",
-					border: "1px solid rgba(241, 245, 249, 1)",
-					position: "relative",
-					overflow: "hidden",
-				}}
-			>
-				{/* Decorative Background Blob */}
-				<Box
-					sx={{
-						position: "absolute",
-						top: -20,
-						right: -20,
-						width: 100,
-						height: 100,
-						borderRadius: "50%",
-						bgcolor: "rgba(11,169,118,0.03)",
-						zIndex: 0,
-					}}
-				/>
+		<div className="mt-3 px-2">
+			<div className="relative overflow-hidden border border-slate-100 bg-white p-3 shadow-[0_10px_40px_-10px_rgba(0,0,0,0.05)]">
+				<div className="pointer-events-none absolute -right-5 -top-5 h-[100px] w-[100px] rounded-full bg-primary/3" />
 
-				{/* Top row: Minimum Donation */}
-				<Box
-					sx={{
-						display: "flex",
-						alignItems: "flex-start",
-						justifyContent: "space-between",
-						gap: 2,
-						position: "relative",
-						zIndex: 1,
-					}}
-				>
-					<Box>
-						<Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
-							<SecurityIcon sx={{ fontSize: 16, color: PRIMARY }} />
-							<Typography
-								sx={{
-									fontSize: 12,
-									fontWeight: 700,
-									color: PRIMARY,
-									letterSpacing: "0.05em",
-									textTransform: "uppercase",
-								}}
-							>
+				<div className="relative z-1 flex items-start justify-between gap-2">
+					<div>
+						<div className="mb-1 flex items-center gap-1">
+							<Shield size={16} className="text-primary" />
+							<span className="text-xs font-bold uppercase tracking-wider text-primary">
 								Donasi Aman
-							</Typography>
-						</Box>
-						<Typography
-							sx={{
-								fontSize: 13,
-								fontWeight: 600,
-								color: "#64748b",
-								mb: 0.5,
-							}}
-						>
+							</span>
+						</div>
+						<p className="mb-0.5 text-[13px] font-semibold text-slate-500">
 							Minimum Donasi Mulai
-						</Typography>
-						<Typography
-							sx={{
-								fontSize: 28,
-								fontWeight: 800,
-								color: "#0f172a",
-								lineHeight: 1,
-								letterSpacing: "-0.02em",
-							}}
-						>
+						</p>
+						<p className="text-[28px] font-extrabold leading-none tracking-tight text-foreground">
 							Rp{MIN_DONATION.toLocaleString("id-ID")}
-						</Typography>
-					</Box>
+						</p>
+					</div>
+					<div className="hidden rounded-2xl bg-primary/6 p-1.5 text-primary sm:block">
+						<Shield size={32} />
+					</div>
+				</div>
 
-					<Box
-						sx={{
-							p: 1.5,
-							borderRadius: "16px",
-							bgcolor: "rgba(11,169,118,0.06)",
-							color: PRIMARY,
-							display: { xs: "none", sm: "block" },
-						}}
-					>
-						<SecurityIcon sx={{ fontSize: 32 }} />
-					</Box>
-				</Box>
+				<div className="my-3 h-px w-full bg-slate-200/60" />
 
-				<Box
-					sx={{
-						my: 3,
-						height: "1px",
-						bgcolor: "rgba(226, 232, 240, 0.6)",
-						width: "100%",
-					}}
-				/>
-
-				{/* Payment Methods */}
-				<Box sx={{ position: "relative", zIndex: 1 }}>
-					<Typography
-						sx={{
-							fontSize: 14,
-							fontWeight: 700,
-							color: "#1e293b",
-							mb: 2,
-						}}
-					>
+				<div className="relative z-1">
+					<p className="mb-2 text-sm font-bold text-slate-800">
 						Metode Pembayaran Lengkap
-					</Typography>
-
-					<Box
-						sx={{
-							display: "flex",
-							gap: 1.5,
-							overflowX: "auto",
-							pb: 1,
-							mx: -1,
-							px: 1,
-							WebkitOverflowScrolling: "touch",
-							"&::-webkit-scrollbar": { display: "none" },
-							scrollbarWidth: "none",
-						}}
-					>
-						<PayChip label="E-Wallet" icon={AccountBalanceWalletIcon} />
-						<PayChip label="Virtual Account" icon={ReceiptLongIcon} />
-						<PayChip label="Bank Transfer" icon={AccountBalanceIcon} />
-						<PayChip label="Kartu Kredit" icon={CreditCardIcon} />
-					</Box>
-				</Box>
-			</Box>
-		</Box>
+					</p>
+					<div className="no-scrollbar -mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1">
+						<PayChip label="E-Wallet" icon={Wallet} />
+						<PayChip label="Virtual Account" icon={Receipt} />
+						<PayChip label="Bank Transfer" icon={Building2} />
+						<PayChip label="Kartu Kredit" icon={CreditCard} />
+					</div>
+				</div>
+			</div>
+		</div>
 	);
 }
