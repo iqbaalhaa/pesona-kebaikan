@@ -24,31 +24,24 @@ import {
 import ZoomInRoundedIcon from "@mui/icons-material/ZoomInRounded";
 import { alpha } from "@mui/material/styles";
 import * as echarts from "echarts/core";
-import { MapChart } from "echarts/charts";
+import { MapChart, LineChart, BarChart, PieChart } from "echarts/charts";
 import {
 	TooltipComponent,
 	VisualMapComponent,
+	GridComponent,
 } from "echarts/components";
 import { CanvasRenderer } from "echarts/renderers";
 
-echarts.use([MapChart, TooltipComponent, VisualMapComponent, CanvasRenderer]);
-
-import {
-	ResponsiveContainer,
-	AreaChart,
-	Area,
-	XAxis,
-	YAxis,
-	CartesianGrid,
-	Tooltip,
-	BarChart,
-	Bar,
-	Cell,
-	PieChart,
-	Pie,
+echarts.use([
+	MapChart,
 	LineChart,
-	Line,
-} from "recharts";
+	BarChart,
+	PieChart,
+	TooltipComponent,
+	VisualMapComponent,
+	GridComponent,
+	CanvasRenderer,
+]);
 
 import CampaignRoundedIcon from "@mui/icons-material/CampaignRounded";
 import VerifiedRoundedIcon from "@mui/icons-material/VerifiedRounded";
@@ -67,6 +60,33 @@ import PersonRoundedIcon from "@mui/icons-material/PersonRounded";
 export function fmtIDR(n: number) {
 	const s = Math.round(n || 0).toString();
 	return "Rp" + s.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+}
+
+function EChart({
+	option,
+	height = 320,
+}: {
+	option: echarts.EChartsCoreOption;
+	height?: number;
+}) {
+	const ref = React.useRef<HTMLDivElement>(null);
+	const chartRef = React.useRef<echarts.ECharts | null>(null);
+
+	React.useEffect(() => {
+		if (!ref.current) return;
+		const chart = echarts.init(ref.current);
+		chartRef.current = chart;
+		chart.setOption(option);
+		const onResize = () => chart.resize();
+		window.addEventListener("resize", onResize);
+		return () => {
+			window.removeEventListener("resize", onResize);
+			chart.dispose();
+			chartRef.current = null;
+		};
+	}, [option]);
+
+	return <Box ref={ref} sx={{ width: "100%", height }} />;
 }
 
 function clamp2() {
@@ -1019,53 +1039,11 @@ export default function DashboardClient({
 		"users",
 	);
 
-	function normalizeProvName(s: string) {
-		const x = s.toLowerCase().trim();
-		if (x.includes("daerah khusus ibu")) return "dki jakarta";
-		if (x.includes("yogyakarta")) return "di yogyakarta";
-		if (x.includes("nanggroe aceh") || x === "aceh") return "aceh";
-		return x.replace("provinsi ", "").replace("propinsi ", "");
-	}
-
-	function getValueByProvince(name: string) {
-		const norm = normalizeProvName(name);
-		const found =
-			provinceStats.find(
-				(p) =>
-					normalizeProvName(p.name) === norm ||
-					normalizeProvName(p.name).includes(norm) ||
-					norm.includes(normalizeProvName(p.name)),
-			) ?? null;
-		if (!found) return 0;
-		return mapMetric === "users" ? found.users : found.donation;
-	}
-
 	const metricValues = provinceStats.map((p: ProvinceStat) =>
 		mapMetric === "users" ? p.users : p.donation,
 	);
 	const metricMin = Math.min(...metricValues);
 	const metricMax = Math.max(...metricValues);
-
-	function colorFor(value: number) {
-		const range = metricMax - metricMin || 1;
-		const ratio = Math.min(1, Math.max(0, (value - metricMin) / range));
-		const base = theme.palette.primary.main;
-		const low = alpha(base, 0.18);
-		const mid = alpha(base, 0.36);
-		const hi = alpha(base, 0.62);
-		if (ratio < 0.33) return low;
-		if (ratio < 0.66) return mid;
-		return hi;
-	}
-
-	// tooltip style shared
-	const tooltipStyle = {
-		backgroundColor: theme.palette.background.paper,
-		borderRadius: 12,
-		border: "1px solid " + alpha(theme.palette.divider, 0.12),
-		boxShadow: "0 10px 28px rgba(0,0,0,0.10)",
-		fontWeight: 800,
-	} as const;
 
 	return (
 		<Box sx={{ width: "100%", maxWidth: "100%", overflowX: "hidden" }}>
@@ -1272,73 +1250,55 @@ export default function DashboardClient({
 							}
 							height={320}
 						>
-							<ResponsiveContainer width="100%" height="100%">
-								<AreaChart data={donation7d}>
-									<defs>
-										<linearGradient
-											id="donationFill"
-											x1="0"
-											y1="0"
-											x2="0"
-											y2="1"
-										>
-											<stop
-												offset="5%"
-												stopColor={theme.palette.primary.main}
-												stopOpacity={0.22}
-											/>
-											<stop
-												offset="95%"
-												stopColor={theme.palette.primary.main}
-												stopOpacity={0}
-											/>
-										</linearGradient>
-									</defs>
-
-									<CartesianGrid
-										strokeDasharray="3 3"
-										vertical={false}
-										stroke={alpha(theme.palette.divider, 0.1)}
-									/>
-									<XAxis
-										dataKey="name"
-										axisLine={false}
-										tickLine={false}
-										tick={{
-											fill: theme.palette.text.secondary,
+							<EChart
+								height={320}
+								option={{
+									tooltip: {
+										trigger: "axis",
+										backgroundColor: theme.palette.background.paper,
+										borderColor: alpha(theme.palette.divider, 0.12),
+										textStyle: { color: theme.palette.text.primary, fontWeight: 800 },
+										formatter: (params: any) => {
+											const p = Array.isArray(params) ? params[0] : params;
+											return `${p.name}<br/>Donasi: Rp${Number(p.value || 0).toLocaleString("id-ID")}`;
+										},
+									},
+									grid: { left: 60, right: 16, top: 16, bottom: 40 },
+									xAxis: {
+										type: "category",
+										data: donation7d.map((d: any) => d.name),
+										axisLine: { show: false },
+										axisTick: { show: false },
+										axisLabel: { color: theme.palette.text.secondary, fontSize: 12, fontWeight: 700 },
+									},
+									yAxis: {
+										type: "value",
+										axisLine: { show: false },
+										axisTick: { show: false },
+										splitLine: { lineStyle: { type: "dashed", color: alpha(theme.palette.divider, 0.1) } },
+										axisLabel: {
+											color: theme.palette.text.secondary,
 											fontSize: 12,
 											fontWeight: 700,
-										}}
-										dy={10}
-									/>
-									<YAxis
-										axisLine={false}
-										tickLine={false}
-										tick={{
-											fill: theme.palette.text.secondary,
-											fontSize: 12,
-											fontWeight: 700,
-										}}
-										tickFormatter={(value) =>
-											`${Math.round(value / 1000000)}jt`
-										}
-									/>
-									<Tooltip
-										contentStyle={tooltipStyle}
-										formatter={(value: any) => [
-											`Rp${Number(value || 0).toLocaleString("id-ID")}`,
-											"Donasi",
-										]}
-									/>
-									<Area
-										type="monotone"
-										dataKey="value"
-										stroke={theme.palette.primary.main}
-										strokeWidth={3}
-										fill="url(#donationFill)"
-									/>
-								</AreaChart>
-							</ResponsiveContainer>
+											formatter: (v: number) => `${Math.round(v / 1000000)}jt`,
+										},
+									},
+									series: [{
+										type: "line",
+										data: donation7d.map((d: any) => d.value),
+										smooth: true,
+										lineStyle: { width: 3, color: theme.palette.primary.main },
+										itemStyle: { color: theme.palette.primary.main },
+										areaStyle: {
+											color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+												{ offset: 0, color: alpha(theme.palette.primary.main, 0.22) },
+												{ offset: 1, color: alpha(theme.palette.primary.main, 0) },
+											]),
+										},
+										symbol: "none",
+									}],
+								}}
+							/>
 						</ChartCard>
 					</Grid>
 
@@ -1360,35 +1320,37 @@ export default function DashboardClient({
 							}
 							height={320}
 						>
-							<ResponsiveContainer width="100%" height="100%">
-								<PieChart>
-									<Tooltip contentStyle={tooltipStyle} />
-									<Pie
-										data={payMethodDist}
-										dataKey="value"
-										nameKey="name"
-										innerRadius={70}
-										outerRadius={105}
-										paddingAngle={3}
-										stroke={alpha(theme.palette.background.paper, 0.0)}
-									>
-										{payMethodDist.map((_: any, i: number) => (
-											<Cell
-												key={i}
-												fill={
-													[
-														theme.palette.primary.main,
-														theme.palette.info.main,
-														theme.palette.success.main,
-														theme.palette.warning.main,
-														theme.palette.error.main,
-													][i % 5]
-												}
-											/>
-										))}
-									</Pie>
-								</PieChart>
-							</ResponsiveContainer>
+							<EChart
+								height={320}
+								option={{
+									tooltip: {
+										trigger: "item",
+										backgroundColor: theme.palette.background.paper,
+										borderColor: alpha(theme.palette.divider, 0.12),
+										textStyle: { color: theme.palette.text.primary, fontWeight: 800 },
+									},
+									series: [{
+										type: "pie",
+										radius: ["55%", "80%"],
+										padAngle: 3,
+										itemStyle: { borderWidth: 0 },
+										label: { show: false },
+										data: payMethodDist.map((d: any, i: number) => ({
+											name: d.name,
+											value: d.value,
+											itemStyle: {
+												color: [
+													theme.palette.primary.main,
+													theme.palette.info.main,
+													theme.palette.success.main,
+													theme.palette.warning.main,
+													theme.palette.error.main,
+												][i % 5],
+											},
+										})),
+									}],
+								}}
+							/>
 						</ChartCard>
 					</Grid>
 
@@ -1478,58 +1440,45 @@ export default function DashboardClient({
 							subtitle="Campaign per kategori"
 							height={300}
 						>
-							<ResponsiveContainer width="100%" height="100%">
-								<BarChart
-									layout="vertical"
-									data={categoryDist}
-									margin={{ left: 10, right: 10, top: 5, bottom: 5 }}
-								>
-									<CartesianGrid
-										strokeDasharray="3 3"
-										horizontal
-										vertical={false}
-										stroke={alpha(theme.palette.divider, 0.1)}
-									/>
-									<XAxis type="number" hide />
-									<YAxis
-										dataKey="name"
-										type="category"
-										axisLine={false}
-										tickLine={false}
-										tick={{
-											fill: theme.palette.text.secondary,
-											fontSize: 11,
-											fontWeight: 800,
-										}}
-										width={86}
-									/>
-									<Tooltip
-										cursor={{ fill: alpha(theme.palette.primary.main, 0.05) }}
-										contentStyle={tooltipStyle}
-									/>
-									<Bar
-										dataKey="value"
-										radius={[0, 6, 6, 0]}
-										barSize={22}
-										fill={theme.palette.primary.main}
-									>
-										{categoryDist.map((_: any, index: number) => (
-											<Cell
-												key={`cell-${index}`}
-												fill={
-													[
-														theme.palette.primary.main,
-														theme.palette.info.main,
-														theme.palette.success.main,
-														theme.palette.warning.main,
-														theme.palette.error.main,
-													][index % 5]
-												}
-											/>
-										))}
-									</Bar>
-								</BarChart>
-							</ResponsiveContainer>
+							<EChart
+								height={300}
+								option={{
+									tooltip: {
+										trigger: "axis",
+										axisPointer: { type: "shadow" },
+										backgroundColor: theme.palette.background.paper,
+										borderColor: alpha(theme.palette.divider, 0.12),
+										textStyle: { color: theme.palette.text.primary, fontWeight: 800 },
+									},
+									grid: { left: 96, right: 16, top: 8, bottom: 8 },
+									xAxis: { type: "value", show: false },
+									yAxis: {
+										type: "category",
+										data: categoryDist.map((d: any) => d.name),
+										axisLine: { show: false },
+										axisTick: { show: false },
+										axisLabel: { color: theme.palette.text.secondary, fontSize: 11, fontWeight: 800 },
+										inverse: true,
+									},
+									series: [{
+										type: "bar",
+										data: categoryDist.map((d: any, i: number) => ({
+											value: d.value,
+											itemStyle: {
+												color: [
+													theme.palette.primary.main,
+													theme.palette.info.main,
+													theme.palette.success.main,
+													theme.palette.warning.main,
+													theme.palette.error.main,
+												][i % 5],
+												borderRadius: [0, 6, 6, 0],
+											},
+										})),
+										barWidth: 22,
+									}],
+								}}
+							/>
 						</ChartCard>
 					</Grid>
 
@@ -1551,48 +1500,46 @@ export default function DashboardClient({
 							}
 							height={300}
 						>
-							<ResponsiveContainer width="100%" height="100%">
-								<LineChart
-									data={campaignCreated14d}
-									margin={{ left: 10, right: 10 }}
-								>
-									<CartesianGrid
-										strokeDasharray="3 3"
-										vertical={false}
-										stroke={alpha(theme.palette.divider, 0.1)}
-									/>
-									<XAxis
-										dataKey="day"
-										axisLine={false}
-										tickLine={false}
-										tick={{
-											fill: theme.palette.text.secondary,
+							<EChart
+								height={300}
+								option={{
+									tooltip: {
+										trigger: "axis",
+										backgroundColor: theme.palette.background.paper,
+										borderColor: alpha(theme.palette.divider, 0.12),
+										textStyle: { color: theme.palette.text.primary, fontWeight: 800 },
+									},
+									grid: { left: 40, right: 16, top: 16, bottom: 40 },
+									xAxis: {
+										type: "category",
+										data: campaignCreated14d.map((d: any) => d.day),
+										axisLine: { show: false },
+										axisTick: { show: false },
+										axisLabel: {
+											color: theme.palette.text.secondary,
 											fontSize: 11,
 											fontWeight: 800,
-										}}
-										interval={2}
-										dy={10}
-									/>
-									<YAxis
-										axisLine={false}
-										tickLine={false}
-										tick={{
-											fill: theme.palette.text.secondary,
-											fontSize: 11,
-											fontWeight: 800,
-										}}
-										allowDecimals={false}
-									/>
-									<Tooltip contentStyle={tooltipStyle} />
-									<Line
-										type="monotone"
-										dataKey="value"
-										stroke={theme.palette.info.main}
-										strokeWidth={3}
-										dot={false}
-									/>
-								</LineChart>
-							</ResponsiveContainer>
+											interval: 2,
+										},
+									},
+									yAxis: {
+										type: "value",
+										axisLine: { show: false },
+										axisTick: { show: false },
+										splitLine: { lineStyle: { type: "dashed", color: alpha(theme.palette.divider, 0.1) } },
+										axisLabel: { color: theme.palette.text.secondary, fontSize: 11, fontWeight: 800 },
+										minInterval: 1,
+									},
+									series: [{
+										type: "line",
+										data: campaignCreated14d.map((d: any) => d.value),
+										smooth: true,
+										lineStyle: { width: 3, color: theme.palette.info.main },
+										itemStyle: { color: theme.palette.info.main },
+										symbol: "none",
+									}],
+								}}
+							/>
 						</ChartCard>
 					</Grid>
 

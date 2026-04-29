@@ -3,11 +3,33 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { uploadFile } from "@/actions/upload";
-import { CampaignStatus, Prisma, NotificationType } from "@prisma/client";
+import { CampaignStatus, Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { CATEGORY_TITLE } from "@/lib/constants";
-import { createNotification } from "@/actions/notification";
 import { validateCampaignType } from "@/lib/campaignValidation";
+
+export {
+	updateCampaignStatus,
+	updateCampaignFee,
+	requestCampaignChange,
+	getCampaignChangeRequests,
+	resolveCampaignChangeRequest,
+	addCampaignMedia,
+	updateCampaignMedicalDocs,
+	createCampaignUpdate,
+	getCampaignUpdates,
+	requestWithdrawal,
+} from "@/actions/campaign-admin";
+
+export {
+	getLatestDonations,
+	getUrgentCampaigns,
+	getPopularCampaigns,
+	getFeaturedCampaigns,
+	getAllActiveCampaigns,
+	getQuickDonationCampaign,
+	getQuickDonationCampaignId,
+} from "@/actions/campaign-public";
 
 const QUICK_DONATION_SLUG = "donasi-cepat";
 
@@ -65,9 +87,8 @@ export async function createCampaign(formData: FormData) {
 		}
 
 		const categoryKey = formData.get("category") as string;
-		const type = formData.get("type") as string; // 'sakit' or 'lainnya'
+		const type = formData.get("type") as string;
 
-		// Validate type & category
 		const validation = validateCampaignType(type, categoryKey);
 		if (!validation.valid) {
 			return { success: false, error: validation.error };
@@ -106,7 +127,6 @@ export async function createCampaign(formData: FormData) {
 		const suratRsFile = formData.get("surat_rs") as File;
 		let medicalDocs = (metadata as any)?.medicalDocs || {};
 
-		// Parallel upload promises
 		const uploadPromises: Promise<{
 			type: "resume" | "exam" | "cover";
 			res: any;
@@ -128,7 +148,6 @@ export async function createCampaign(formData: FormData) {
 			);
 		}
 
-		// File upload
 		const coverFile = formData.get("cover") as File;
 		if (coverFile && coverFile.size > 0) {
 			const fd = new FormData();
@@ -156,12 +175,6 @@ export async function createCampaign(formData: FormData) {
 						error: result.res.error || "Gagal mengupload cover image",
 					};
 				}
-				// For medical docs, we might want to log error but proceed?
-				// Or fail? The original code would have failed if await threw or returned error (though uploadFile catches).
-				// But uploadFile returns { success: false } on error.
-				// The original code checks `if (uploadRes.success && uploadRes.url)` and assigns.
-				// It didn't return error for medical docs failure, just skipped assignment.
-				// So we maintain that behavior for docs.
 			}
 		}
 
@@ -169,7 +182,6 @@ export async function createCampaign(formData: FormData) {
 			metadata = { ...(metadata || {}), medicalDocs };
 		}
 
-		// Category
 		let category = await prisma.campaignCategory.findUnique({
 			where: { slug: categoryKey },
 		});
@@ -197,21 +209,15 @@ export async function createCampaign(formData: FormData) {
 			}
 		}
 
-		// Target amount
 		const target = parseFloat(targetStr.replace(/[^\d]/g, "")) || 0;
 
-		// Dates
 		const start = new Date();
 		const end = new Date();
 		if (duration && duration !== "custom") {
 			end.setDate(end.getDate() + parseInt(duration));
 		} else {
-			// Default 30 days if custom or not specified
 			end.setDate(end.getDate() + 30);
 		}
-
-		// Create Campaign
-		// status is already defined above
 
 		const campaign = await prisma.campaign.create({
 			data: {
@@ -284,7 +290,6 @@ export async function getCampaigns(
 	const where: Prisma.CampaignWhereInput = {};
 
 	if (filter !== "all") {
-		// Map 'ended' to COMPLETED for filter
 		if (filter === "ended") {
 			where.status = "COMPLETED";
 		} else {
@@ -292,12 +297,10 @@ export async function getCampaigns(
 		}
 	}
 
-	// Exclude quick donation campaign from public listing unless requested
 	if (!includeQuickDonation) {
 		where.NOT = {
 			slug: QUICK_DONATION_SLUG,
 		};
-		// Exclude campaigns that have already ended for public contexts
 		where.end = { gte: new Date() };
 	}
 
@@ -343,11 +346,8 @@ export async function getCampaigns(
 	let orderBy: Prisma.CampaignOrderByWithRelationInput = { createdAt: "desc" };
 
 	if (sortBy === "ending_soon") {
-		// Show ending soonest first, but only future ones
 		orderBy = { end: "asc" };
-		// We might want to filter out expired ones if not handled by status
 	} else if (sortBy === "most_collected") {
-		// Approximate by number of donations
 		orderBy = { donations: { _count: "desc" } };
 	} else if (sortBy === "oldest") {
 		orderBy = { createdAt: "asc" };
@@ -356,11 +356,9 @@ export async function getCampaigns(
 	}
 
 	try {
-		// Fetch fundraisers if this is a public list (no userId filter) and no specific category filter
 		let fundraisers: any[] = [];
 		let totalFundraisers = 0;
 
-		// Only fetch fundraisers if we are in public view (not my campaigns)
 		if (!userId) {
 			const frWhere: any = {};
 			if (search) {
@@ -369,23 +367,11 @@ export async function getCampaigns(
 			if (provinceId) {
 				frWhere.createdBy = { provinceId };
 			}
-			// Fundraisers don't have categories directly, they inherit from campaign.
-			// Complex filtering might be needed if category is selected.
-			
-			// For simplicity, we fetch fundraisers and campaigns separately and merge them.
-			// But pagination is tricky. 
-			// Strategy: Fetch campaigns normally. Fetch fundraisers separately. 
-			// Merge and slice? Or just append?
-			
-			// If we want them mixed in, we need to fetch enough of both and sort.
-			// Let's try fetching fundraisers and merging them into the results.
-			
-			const frLimit = Math.ceil(limit / 2); // Fetch some fundraisers
-			
+
 			[fundraisers, totalFundraisers] = await Promise.all([
 				prisma.fundraiser.findMany({
 					where: frWhere,
-					take: limit, // Fetch up to limit to allow mixing
+					take: limit,
 					orderBy: { createdAt: "desc" },
 					include: {
 						campaign: {
@@ -442,7 +428,6 @@ export async function getCampaigns(
 			});
 		}
 
-		// Map campaigns
 		const campaignRows = campaigns.map((c) => {
 			const validDonations = c.donations.filter((d) =>
 				["PAID", "paid", "SETTLED", "COMPLETED"].includes(d.status),
@@ -501,12 +486,10 @@ export async function getCampaigns(
 			};
 		});
 
-		// Map fundraisers to campaign-like structure
 		const fundraiserRows = fundraisers.map((fr) => {
 			const c = fr.campaign;
-			if (!c) return null; // Should not happen due to DB constraints but safe check
+			if (!c) return null;
 
-			// Calculate specific fundraiser collected amount
 			const validDonations = fr.donations.filter((d: any) =>
 				["PAID", "paid", "SETTLED", "COMPLETED"].includes(d.status),
 			);
@@ -515,7 +498,6 @@ export async function getCampaigns(
 				0,
 			);
 
-			// Days left (same as campaign)
 			let daysLeft = 0;
 			if (c.end) {
 				daysLeft = Math.ceil(
@@ -535,46 +517,37 @@ export async function getCampaigns(
 
 			return {
 				id: fr.id,
-				slug: `fundraiser/${fr.slug}`, // Special slug format for frontend routing if needed, or handle in component
-				title: fr.title, // Use fundraiser title
+				slug: `fundraiser/${fr.slug}`,
+				title: fr.title,
 				category: c.category.name,
 				type:
 					c.category.name === "Bantuan Medis & Kesehatan" ? "sakit" : "lainnya",
-				ownerName: fr.createdBy.name || "Fundraiser", // Fundraiser creator
-				target: Number(fr.target), // Fundraiser target
+				ownerName: fr.createdBy.name || "Fundraiser",
+				target: Number(fr.target),
 				collected,
 				donors: validDonations.length,
-				status: c.status.toLowerCase(), // Inherit status from campaign
+				status: c.status.toLowerCase(),
 				updatedAt: new Date(fr.updatedAt).toISOString(),
 				createdAt: new Date(fr.createdAt).toISOString(),
 				categorySlug: slugKey || "lainnya",
 				daysLeft: daysLeft > 0 ? daysLeft : 0,
-				isVerified: false, // Fundraisers themselves aren't verified in the same way? Or maybe check user verification
+				isVerified: false,
 				verifiedAt: null,
 				verifiedAs: null,
 				isEmergency: false,
 				thumbnail,
 				metadata: null,
 				description: `Fundraiser untuk: ${c.title}`,
-				isFundraiser: true, // Flag to identify
+				isFundraiser: true,
 				fundraiserSlug: fr.slug
 			};
 		}).filter(Boolean);
 
-		// Merge and sort
-		// Note: This simple merge breaks strict pagination but satisfies the requirement to show them.
-		// A proper solution would require a union query or advanced search engine (Elasticsearch/Algolia).
-		// For now, we mix them.
-		
 		let mixedRows = [...campaignRows, ...fundraiserRows];
-		
-		// Sort again
+
 		if (sortBy === "newest") {
 			mixedRows.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 		}
-		
-		// Re-slice to limit if needed, or just return all (might be slightly more than limit)
-		// Returning all fetched helps populate the grid.
 
 		return {
 			success: true,
@@ -649,7 +622,6 @@ export async function getCampaignById(id: string) {
 			return { success: false, error: "Campaign not found" };
 		}
 
-		// Optimized: Fetch donation stats and list separately to avoid loading all donations
 		const validStatuses = ["PAID", "paid", "SETTLED", "COMPLETED"];
 
 		const [donationStats, recentDonations] = await Promise.all([
@@ -670,7 +642,7 @@ export async function getCampaignById(id: string) {
 					status: { in: validStatuses },
 				},
 				orderBy: { createdAt: "desc" },
-				take: 50, // Limit to 50 recent donations
+				take: 50,
 			}),
 		]);
 
@@ -839,7 +811,6 @@ export async function finishCampaign(campaignId: string) {
 			};
 		}
 
-		// Allow owner or admin to finish campaign
 		if (
 			campaign.createdById !== session.user.id &&
 			session.user.role !== "ADMIN"
@@ -864,460 +835,6 @@ export async function finishCampaign(campaignId: string) {
 	} catch (error) {
 		console.error("Finish campaign error:", error);
 		return { success: false, error: "Failed to finish campaign" };
-	}
-}
-
-export async function updateCampaignStatus(
-	campaignId: string,
-	status: "ACTIVE" | "REJECTED" | "COMPLETED" | "PAUSED",
-	reason?: string,
-) {
-	try {
-		const session = await auth();
-		if (!session?.user?.id) {
-			return { success: false, error: "Unauthorized" };
-		}
-
-		if (status === "REJECTED") {
-			if (!reason || reason.trim().length < 10) {
-				return {
-					success: false,
-					error: "Alasan penolakan wajib diisi (minimal 10 karakter)",
-				};
-			}
-		}
-
-		const prev = await prisma.campaign.findUnique({
-			where: { id: campaignId },
-			select: {
-				createdById: true,
-				title: true,
-				status: true,
-				slug: true,
-				start: true,
-				end: true,
-				metadata: true,
-			},
-		});
-
-		if (status === "COMPLETED" && prev?.slug === QUICK_DONATION_SLUG) {
-			return {
-				success: false,
-				error: "Quick donation campaign cannot be completed",
-			};
-		}
-
-		const updateData: Prisma.CampaignUpdateInput = { status };
-
-		if (status === "REJECTED") {
-			updateData.rejectionReason = reason;
-			updateData.rejectedAt = new Date();
-			updateData.rejectedBy = { connect: { id: session.user.id } };
-		}
-
-		if (
-			status === "ACTIVE" &&
-			prev?.status === "COMPLETED" &&
-			prev.slug !== QUICK_DONATION_SLUG
-		) {
-			const now = new Date();
-			const dayMs = 24 * 60 * 60 * 1000;
-			const extensionDays = 30;
-			const newEnd = new Date(now.getTime() + extensionDays * dayMs);
-
-			updateData.end = newEnd;
-
-			const prevMeta = (prev as any).metadata || {};
-			const existingRestartInfo = (prevMeta as any).restartInfo || {};
-
-			let initialDurationDays = existingRestartInfo.initialDurationDays || 0;
-
-			if (!initialDurationDays && prev.start && prev.end) {
-				const diffMs =
-					new Date(prev.end).getTime() - new Date(prev.start).getTime();
-				initialDurationDays = Math.max(1, Math.ceil(diffMs / dayMs));
-			}
-
-			if (!initialDurationDays) {
-				initialDurationDays = extensionDays;
-			}
-
-			const restartInfo = {
-				initialDurationDays,
-				restartCount: (existingRestartInfo.restartCount || 0) + 1,
-				extensionDays,
-			};
-
-			updateData.metadata = {
-				...(prevMeta || {}),
-				restartInfo,
-			} as any;
-		}
-
-		await prisma.campaign.update({
-			where: { id: campaignId },
-			data: updateData,
-		});
-
-		if (status === "ACTIVE" && prev?.createdById && prev.status !== "ACTIVE") {
-			await createNotification(
-				prev.createdById,
-				"Campaign Disetujui",
-				`Campaign "${prev.title}" telah disetujui dan sekarang aktif.`,
-				NotificationType.KABAR,
-			);
-		}
-
-		if (status === "REJECTED" && prev?.createdById) {
-			await createNotification(
-				prev.createdById,
-				"Campaign Ditolak",
-				`Campaign "${prev.title}" ditolak. Alasan: ${reason}`,
-				NotificationType.KABAR,
-			);
-		}
-
-		revalidatePath("/admin/campaign");
-		revalidatePath(`/admin/campaign/${campaignId}`);
-		revalidatePath("/");
-
-		return { success: true };
-	} catch (error: any) {
-		console.error("Update campaign status error:", error);
-		return {
-			success: false,
-			error: error.message || "Failed to update status",
-		};
-	}
-}
-
-export async function updateCampaignFee(
-	campaignId: string,
-	foundationFee: number,
-) {
-	try {
-		const session = await auth();
-		if (!session?.user || session.user.role !== "ADMIN") {
-			return { success: false, error: "Unauthorized" };
-		}
-
-		if (foundationFee < 0 || foundationFee > 100) {
-			return {
-				success: false,
-				error: "Fee yayasan harus di antara 0% dan 100%",
-			};
-		}
-
-		const updated = await prisma.campaign.update({
-			where: { id: campaignId },
-			data: { foundationFee },
-			select: { slug: true },
-		});
-
-		revalidatePath("/admin/campaign");
-		revalidatePath(`/admin/campaign/${campaignId}`);
-		if (updated.slug) {
-			revalidatePath(`/galang-dana/${updated.slug}`);
-		}
-		revalidatePath("/galang-dana");
-		revalidatePath("/");
-
-		return { success: true };
-	} catch (error: any) {
-		console.error("Update campaign fee error:", error);
-		return {
-			success: false,
-			error: error.message || "Failed to update campaign fee",
-		};
-	}
-}
-
-export async function requestCampaignChange(
-	campaignId: string,
-	extraDays: number | null,
-	extraTarget: number | null,
-	reason?: string,
-) {
-	try {
-		const session = await auth();
-		if (!session?.user?.id) {
-			return { success: false, error: "Unauthorized" };
-		}
-
-		const campaign = await prisma.campaign.findUnique({
-			where: { id: campaignId },
-			select: { id: true, title: true, createdById: true },
-		});
-
-		if (!campaign) {
-			return { success: false, error: "Campaign not found" };
-		}
-
-		if (campaign.createdById !== session.user.id) {
-			return { success: false, error: "Forbidden" };
-		}
-
-		const safeExtraDays = extraDays && extraDays > 0 ? extraDays : null;
-		const safeExtraTarget = extraTarget && extraTarget > 0 ? extraTarget : null;
-
-		await prisma.campaignChangeRequest.create({
-			data: {
-				campaignId: campaign.id,
-				userId: session.user.id,
-				extraDays: safeExtraDays ?? undefined,
-				extraTarget: safeExtraTarget
-					? new Prisma.Decimal(safeExtraTarget)
-					: undefined,
-				note: reason && reason.trim() ? reason.trim() : undefined,
-			},
-		});
-
-		const admins = await prisma.user.findMany({
-			where: { role: "ADMIN" },
-			select: { id: true },
-		});
-
-		if (admins.length > 0) {
-			let changeSummary = "";
-
-			if (safeExtraDays && safeExtraTarget) {
-				changeSummary = `Perpanjangan ${safeExtraDays} hari dan penambahan target Rp${safeExtraTarget.toLocaleString(
-					"id-ID",
-				)}`;
-			} else if (safeExtraDays) {
-				changeSummary = `Perpanjangan ${safeExtraDays} hari`;
-			} else if (safeExtraTarget) {
-				changeSummary = `Penambahan target Rp${safeExtraTarget.toLocaleString(
-					"id-ID",
-				)}`;
-			} else {
-				changeSummary = "Perubahan campaign";
-			}
-
-			const message = `Pengajuan perubahan campaign "${campaign.title}" oleh fundraiser. ${changeSummary}. CAMPAIGN_CHANGE_REQUEST:${campaign.id}`;
-
-			await prisma.notification.createMany({
-				data: admins.map((admin) => ({
-					userId: admin.id,
-					title: "Pengajuan Perubahan Campaign",
-					message,
-					type: NotificationType.KABAR,
-				})),
-			});
-		}
-
-		return { success: true };
-	} catch (error) {
-		console.error("Request campaign change error:", error);
-		return { success: false, error: "Failed to create request" };
-	}
-}
-
-export async function getCampaignChangeRequests(
-	page = 1,
-	limit = 20,
-	status: "all" | "PENDING" | "APPROVED" | "REJECTED" = "all",
-) {
-	try {
-		const where: any = {};
-		if (status !== "all") {
-			where.status = status;
-		}
-
-		const [requests, total] = await Promise.all([
-			prisma.campaignChangeRequest.findMany({
-				skip: (page - 1) * limit,
-				take: limit,
-				orderBy: { createdAt: "desc" },
-				where,
-				include: {
-					campaign: { select: { id: true, title: true, slug: true } },
-					user: { select: { id: true, name: true, email: true } },
-				},
-			}),
-			prisma.campaignChangeRequest.count({ where }),
-		]);
-
-		const plainRequests = requests.map((r) => ({
-			...r,
-			extraTarget: r.extraTarget ? Number(r.extraTarget) : null,
-		}));
-
-		return {
-			requests: plainRequests,
-			total,
-			totalPages: Math.ceil(total / limit),
-		};
-	} catch (error) {
-		console.error("Get campaign change requests error:", error);
-		return { requests: [], total: 0, totalPages: 0 };
-	}
-}
-
-export async function resolveCampaignChangeRequest(
-	requestId: string,
-	decision: "APPROVE" | "REJECT",
-	options?: {
-		applyDays?: boolean;
-		applyTarget?: boolean;
-		extraDaysOverride?: number | null;
-		extraTargetOverride?: number | null;
-		note?: string | null;
-	},
-) {
-	try {
-		const session = await auth();
-		if (!session?.user || session.user.role !== "ADMIN") {
-			return { success: false, error: "Unauthorized" };
-		}
-
-		const req = await prisma.campaignChangeRequest.findUnique({
-			where: { id: requestId },
-			include: {
-				campaign: {
-					select: {
-						id: true,
-						title: true,
-						slug: true,
-						target: true,
-						end: true,
-						createdById: true,
-					},
-				},
-			},
-		});
-
-		if (!req) {
-			return { success: false, error: "Request not found" };
-		}
-
-		if (req.status !== "PENDING") {
-			return { success: false, error: "Request already processed" };
-		}
-
-		if (decision === "REJECT") {
-			await prisma.campaignChangeRequest.update({
-				where: { id: requestId },
-				data: {
-					status: "REJECTED",
-					note: options?.note || null,
-					processedAt: new Date(),
-					processedById: session.user.id,
-				},
-			});
-
-			if (req.campaign?.createdById) {
-				await createNotification(
-					req.campaign.createdById,
-					"Pengajuan Perubahan Ditolak",
-					`Pengajuan perubahan untuk campaign "${req.campaign.title}" ditolak admin.`,
-					NotificationType.KABAR,
-				);
-			}
-
-			revalidatePath("/admin/pengajuan-campaign");
-			if (req.campaign) {
-				revalidatePath("/admin/campaign");
-				revalidatePath(`/admin/campaign/${req.campaign.id}`);
-				if (req.campaign.slug) {
-					revalidatePath(`/galang-dana/${req.campaign.slug}`);
-				}
-			}
-
-			return { success: true };
-		}
-
-		const campaign = req.campaign;
-		if (!campaign) {
-			return { success: false, error: "Campaign not found for request" };
-		}
-
-		const updates: Prisma.CampaignUpdateInput = {};
-
-		const useDays =
-			typeof options?.applyDays === "boolean"
-				? options.applyDays
-				: !!req.extraDays;
-		const useTarget =
-			typeof options?.applyTarget === "boolean"
-				? options.applyTarget
-				: !!req.extraTarget;
-
-		const daysValue =
-			typeof options?.extraDaysOverride === "number"
-				? options.extraDaysOverride
-				: req.extraDays || 0;
-		const targetValueRaw =
-			typeof options?.extraTargetOverride === "number"
-				? options.extraTargetOverride
-				: req.extraTarget
-					? Number(req.extraTarget)
-					: 0;
-
-		if (useDays && daysValue && daysValue > 0) {
-			const baseEnd = campaign.end ? new Date(campaign.end) : new Date();
-			baseEnd.setDate(baseEnd.getDate() + daysValue);
-			updates.end = baseEnd;
-		}
-
-		if (useTarget && targetValueRaw && targetValueRaw > 0) {
-			const currentTarget = Number(campaign.target || 0);
-			const extra = Number(targetValueRaw);
-			const nextTarget = currentTarget + (Number.isNaN(extra) ? 0 : extra);
-			updates.target = nextTarget;
-		}
-
-		if (Object.keys(updates).length > 0) {
-			await prisma.campaign.update({
-				where: { id: campaign.id },
-				data: updates,
-			});
-		}
-
-		let summary = "";
-		const days = useDays ? daysValue || 0 : 0;
-		const extraTarget = useTarget ? targetValueRaw || 0 : 0;
-
-		if (days && extraTarget) {
-			summary = `Perpanjangan ${days} hari dan penambahan target Rp${extraTarget.toLocaleString(
-				"id-ID",
-			)}`;
-		} else if (days) {
-			summary = `Perpanjangan ${days} hari`;
-		} else if (extraTarget) {
-			summary = `Penambahan target Rp${extraTarget.toLocaleString("id-ID")}`;
-		}
-
-		await prisma.campaignChangeRequest.update({
-			where: { id: requestId },
-			data: {
-				status: "APPROVED",
-				note: summary || null,
-				processedAt: new Date(),
-				processedById: session.user.id,
-			},
-		});
-
-		if (campaign.createdById) {
-			await createNotification(
-				campaign.createdById,
-				"Pengajuan Perubahan Disetujui",
-				`Pengajuan perubahan untuk campaign "${campaign.title}" disetujui. ${summary}`,
-				NotificationType.KABAR,
-			);
-		}
-
-		revalidatePath("/admin/pengajuan-campaign");
-		revalidatePath("/admin/campaign");
-		revalidatePath(`/admin/campaign/${campaign.id}`);
-		if (campaign.slug) {
-			revalidatePath(`/galang-dana/${campaign.slug}`);
-		}
-
-		return { success: true };
-	} catch (error) {
-		console.error("Resolve campaign change request error:", error);
-		return { success: false, error: "Failed to process request" };
 	}
 }
 
@@ -1352,7 +869,6 @@ export async function updateCampaign(id: string, formData: FormData) {
 		const suratRsFile = formData.get("surat_rs") as File;
 		let medicalDocs = (metadata as any)?.medicalDocs || {};
 
-		// Parallel upload promises
 		const uploadPromises: Promise<{
 			type: "resume" | "exam" | "cover";
 			res: any;
@@ -1418,7 +934,6 @@ export async function updateCampaign(id: string, formData: FormData) {
 		}
 
 		if (!category) {
-			// Fallback to "Lainnya" if still not found
 			category = await prisma.campaignCategory.findFirst({
 				where: { name: "Lainnya" },
 			});
@@ -1428,15 +943,12 @@ export async function updateCampaign(id: string, formData: FormData) {
 			return { success: false, error: "Invalid category" };
 		}
 
-		// File upload (Cover)
 		if (coverUploadRes && coverUploadRes.success && coverUploadRes.url) {
-			// Unset existing thumbnails
 			await prisma.campaignMedia.updateMany({
 				where: { campaignId: id },
 				data: { isThumbnail: false },
 			});
 
-			// Create new thumbnail
 			await prisma.campaignMedia.create({
 				data: {
 					campaignId: id,
@@ -1514,7 +1026,7 @@ export async function updateCampaignStory(
 		if (cta !== undefined) {
 			const isSakit =
 				campaign.category.name === "Bantuan Medis & Kesehatan" ||
-				metadata.type === "sakit"; // fallback check
+				metadata.type === "sakit";
 
 			if (isSakit) {
 				metadata = { ...metadata, cta };
@@ -1543,57 +1055,6 @@ export async function updateCampaignStory(
 	}
 }
 
-export async function requestWithdrawal(data: {
-	campaignId: string;
-	amount: number;
-	bankName: string;
-	bankAccount: string;
-	accountHolder: string;
-	notes?: string;
-}) {
-	const session = await auth();
-	if (!session?.user?.id) {
-		return { success: false, error: "Unauthorized" };
-	}
-
-	try {
-		const campaign = await prisma.campaign.findUnique({
-			where: { id: data.campaignId },
-		});
-
-		if (!campaign) {
-			return { success: false, error: "Campaign not found" };
-		}
-
-		if (
-			campaign.createdById !== session.user.id &&
-			session.user.role !== "ADMIN"
-		) {
-			return { success: false, error: "Forbidden" };
-		}
-
-		await prisma.withdrawal.create({
-			data: {
-				campaignId: data.campaignId,
-				amount: data.amount,
-				bankName: data.bankName,
-				bankAccount: data.bankAccount,
-				accountHolder: data.accountHolder,
-				notes: data.notes,
-				status: "PENDING",
-			},
-		});
-
-		revalidatePath(`/galang-dana/${campaign.slug || campaign.id}`);
-		revalidatePath("/admin/pencairan");
-
-		return { success: true };
-	} catch (error) {
-		console.error("Request withdrawal error:", error);
-		return { success: false, error: "Failed to request withdrawal" };
-	}
-}
-
 export async function deleteCampaign(id: string) {
 	const session = await auth();
 	if (!session?.user?.id) {
@@ -1617,7 +1078,6 @@ export async function deleteCampaign(id: string) {
 			};
 		}
 
-		// Delete related donations first manually since schema doesn't have cascade
 		await prisma.donation.deleteMany({
 			where: { campaignId: id },
 		});
@@ -1630,516 +1090,4 @@ export async function deleteCampaign(id: string) {
 		console.error("Delete campaign error:", error);
 		return { success: false, error: "Failed to delete campaign" };
 	}
-}
-
-export async function createCampaignUpdate(data: {
-	campaignId: string;
-	title: string;
-	content: string;
-	amount?: number;
-	images?: string[];
-}) {
-	const session = await auth();
-	if (!session?.user?.id) {
-		return { success: false, error: "Unauthorized" };
-	}
-
-	try {
-		const campaign = await prisma.campaign.findUnique({
-			where: { id: data.campaignId },
-		});
-
-		if (!campaign) return { success: false, error: "Campaign not found" };
-
-		if (
-			campaign.createdById !== session.user.id &&
-			session.user.role !== "ADMIN"
-		) {
-			return { success: false, error: "Forbidden" };
-		}
-
-		await prisma.campaignUpdate.create({
-			data: {
-				campaignId: data.campaignId,
-				title: data.title,
-				content: data.content,
-				amount: data.amount,
-				media:
-					data.images && data.images.length > 0
-						? {
-								create: data.images.map((url) => ({ url, type: "IMAGE" })),
-							}
-						: undefined,
-			},
-		});
-
-		revalidatePath(`/galang-dana/${campaign.slug || campaign.id}`);
-		return { success: true };
-	} catch (error) {
-		console.error("Create update error:", error);
-		return { success: false, error: "Failed to create update" };
-	}
-}
-
-export async function getCampaignUpdates(campaignId: string) {
-	try {
-		const updates = await prisma.campaignUpdate.findMany({
-			where: { campaignId },
-			orderBy: { createdAt: "desc" },
-			include: { media: true },
-		});
-		return { success: true, data: updates };
-	} catch (error) {
-		console.error("Get updates error:", error);
-		return { success: false, error: "Failed to fetch updates" };
-	}
-}
-
-export async function addCampaignMedia(campaignId: string, formData: FormData) {
-	const session = await auth();
-	if (!session?.user?.id) {
-		return { success: false, error: "Unauthorized" };
-	}
-
-	try {
-		const file = formData.get("file") as File;
-		const isThumbnail = formData.get("isThumbnail") === "true";
-
-		if (!file) {
-			return { success: false, error: "No file provided" };
-		}
-
-		const uploadFormData = new FormData();
-		uploadFormData.append("file", file);
-		const uploadRes = await uploadFile(uploadFormData);
-
-		if (!uploadRes.success || !uploadRes.url) {
-			return { success: false, error: "Failed to upload file" };
-		}
-
-		// If isThumbnail, unset other thumbnails
-		if (isThumbnail) {
-			await prisma.campaignMedia.updateMany({
-				where: { campaignId, isThumbnail: true },
-				data: { isThumbnail: false },
-			});
-		}
-
-		const media = await prisma.campaignMedia.create({
-			data: {
-				campaignId,
-				type: "IMAGE",
-				url: uploadRes.url,
-				isThumbnail,
-			},
-		});
-
-		revalidatePath(`/admin/campaign/${campaignId}`);
-		revalidatePath(`/donasi/${campaignId}`);
-
-		return { success: true, data: media, url: uploadRes.url };
-	} catch (error) {
-		console.error("Add campaign media error:", error);
-		return { success: false, error: "Failed to add campaign media" };
-	}
-}
-
-export async function updateCampaignMedicalDocs(
-	campaignId: string,
-	docs: { resume_medis?: string | null; surat_rs?: string | null },
-) {
-	const session = await auth();
-	if (!session?.user?.id) {
-		return { success: false, error: "Unauthorized" };
-	}
-
-	try {
-		const campaign = await prisma.campaign.findUnique({
-			where: { id: campaignId },
-			select: { metadata: true },
-		});
-
-		let metadata: any = campaign?.metadata || {};
-		let medicalDocs: any = metadata.medicalDocs || {};
-
-		if ("resume_medis" in docs) {
-			if (docs.resume_medis) {
-				medicalDocs = { ...medicalDocs, resume_medis: docs.resume_medis };
-			} else {
-				delete medicalDocs.resume_medis;
-			}
-		}
-
-		if ("surat_rs" in docs) {
-			if (docs.surat_rs) {
-				medicalDocs = { ...medicalDocs, surat_rs: docs.surat_rs };
-			} else {
-				delete medicalDocs.surat_rs;
-			}
-		}
-
-		if (Object.keys(medicalDocs).length > 0) {
-			metadata = { ...metadata, medicalDocs };
-		} else if (metadata.medicalDocs) {
-			const { medicalDocs: _removed, ...rest } = metadata;
-			metadata = rest;
-		}
-
-		await prisma.campaign.update({
-			where: { id: campaignId },
-			data: { metadata },
-		});
-
-		revalidatePath(`/admin/campaign/${campaignId}`);
-		revalidatePath("/admin/campaign/verifikasi");
-
-		return { success: true };
-	} catch (error) {
-		console.error("Update medical docs error:", error);
-		return { success: false, error: "Failed to update medical docs" };
-	}
-}
-
-export async function getLatestDonations(limit: number = 10) {
-	try {
-		const donations = await prisma.donation.findMany({
-			where: {
-				status: {
-					in: ["PAID", "paid", "SETTLED", "COMPLETED"],
-				},
-			},
-			take: limit,
-			orderBy: { createdAt: "desc" },
-			include: {
-				campaign: {
-					select: { title: true },
-				},
-			},
-		});
-
-		const data = donations.map((d) => ({
-			id: d.id,
-			name: d.isAnonymous ? "Hamba Allah" : d.donorName,
-			time: new Date(d.createdAt).toLocaleDateString("id-ID"), // Simplification
-			campaignTitle: d.campaign.title,
-			message: d.message || "Semoga berkah",
-			amiinCount: (d as any).amiinCount ?? 0,
-		}));
-
-		return { success: true, data };
-	} catch (error) {
-		console.error("Get latest donations error:", error);
-		return { success: false, error: "Failed to fetch donations" };
-	}
-}
-
-export async function getUrgentCampaigns(limit: number = 10) {
-	try {
-		const campaigns = await prisma.campaign.findMany({
-			where: {
-				status: "ACTIVE",
-				end: {
-					gte: new Date(),
-				},
-				slug: {
-					not: QUICK_DONATION_SLUG,
-				},
-			},
-			orderBy: {
-				end: "asc",
-			},
-			take: limit,
-			include: {
-				category: true,
-				createdBy: true,
-				donations: true,
-				media: true,
-			},
-		});
-
-		return {
-			success: true,
-			data: mapCampaignsToTypes(campaigns),
-		};
-	} catch (error) {
-		console.error("Get urgent campaigns error:", error);
-		return { success: false, error: "Failed to fetch urgent campaigns" };
-	}
-}
-
-export async function getPopularCampaigns(limit: number = 10) {
-	try {
-		// Fetch active campaigns
-		const campaigns = await prisma.campaign.findMany({
-			where: {
-				status: "ACTIVE",
-				end: {
-					gte: new Date(),
-				},
-				slug: {
-					not: QUICK_DONATION_SLUG,
-				},
-			},
-			orderBy: {
-				createdAt: "desc", // Default order if not sorted by donations
-			},
-			take: limit * 2, // Fetch more to sort in memory if needed
-			include: {
-				category: true,
-				createdBy: true,
-				donations: true,
-				media: true,
-			},
-		});
-
-		// Calculate popularity (e.g. number of donations)
-		const sorted = campaigns
-			.sort((a, b) => {
-				const validA = a.donations.filter((d) =>
-					["PAID", "paid", "SETTLED", "COMPLETED"].includes(d.status),
-				).length;
-				const validB = b.donations.filter((d) =>
-					["PAID", "paid", "SETTLED", "COMPLETED"].includes(d.status),
-				).length;
-				return validB - validA;
-			})
-			.slice(0, limit);
-
-		return {
-			success: true,
-			data: mapCampaignsToTypes(sorted),
-		};
-	} catch (error) {
-		console.error("Get popular campaigns error:", error);
-		return { success: false, error: "Failed to fetch popular campaigns" };
-	}
-}
-
-export async function getFeaturedCampaigns(limit: number = 10) {
-	try {
-		const campaigns = await prisma.campaign.findMany({
-			where: {
-				status: "ACTIVE",
-				end: { gte: new Date() },
-				slug: { not: QUICK_DONATION_SLUG },
-			},
-			orderBy: { createdAt: "desc" },
-			take: limit * 5,
-			include: {
-				category: true,
-				createdBy: true,
-				donations: true,
-				media: true,
-			},
-		});
-
-		let picks = campaigns.filter((c) => {
-			const m: any = (c as any).metadata || {};
-			return m?.featured === true || m?.featured === "true";
-		});
-
-		if (picks.length > 0) {
-			picks = picks
-				.map((c) => {
-					const m: any = (c as any).metadata || {};
-					const order =
-						typeof m?.featuredOrder === "number"
-							? m.featuredOrder
-							: parseInt(m?.featuredOrder || "0", 10) || 0;
-					return { c, order };
-				})
-				.sort((a, b) => a.order - b.order)
-				.map((x) => x.c)
-				.slice(0, limit);
-		} else {
-			picks = campaigns
-				.sort((a, b) => {
-					const validA = a.donations.filter((d) =>
-						["PAID", "paid", "SETTLED", "COMPLETED"].includes(d.status),
-					).length;
-					const validB = b.donations.filter((d) =>
-						["PAID", "paid", "SETTLED", "COMPLETED"].includes(d.status),
-					).length;
-					return validB - validA;
-				})
-				.slice(0, limit);
-		}
-
-		return {
-			success: true,
-			data: mapCampaignsToTypes(picks),
-		};
-	} catch (error) {
-		console.error("Get featured campaigns error:", error);
-		return { success: false, error: "Failed to fetch featured campaigns" };
-	}
-}
-
-export async function getAllActiveCampaigns(limit: number = 50) {
-	try {
-		// Fetch active campaigns
-		const campaigns = await prisma.campaign.findMany({
-			where: {
-				status: "ACTIVE",
-				end: {
-					gte: new Date(),
-				},
-				slug: {
-					not: QUICK_DONATION_SLUG,
-				},
-			},
-			orderBy: {
-				createdAt: "desc",
-			},
-			take: limit,
-			include: {
-				category: true,
-				createdBy: true,
-				donations: true,
-				media: true,
-			},
-		});
-
-		return {
-			success: true,
-			data: mapCampaignsToTypes(campaigns),
-		};
-	} catch (error) {
-		console.error("Get all active campaigns error:", error);
-		return { success: false, error: "Failed to fetch campaigns" };
-	}
-}
-
-type CampaignWithRelations = Prisma.CampaignGetPayload<{
-	include: {
-		category: true;
-		createdBy: true;
-		donations: true;
-		media: true;
-	};
-}>;
-
-function mapCampaignsToTypes(campaigns: CampaignWithRelations[]) {
-	return campaigns.map((c) => {
-		const validDonations = c.donations.filter((d) =>
-			["PAID", "paid", "SETTLED", "COMPLETED"].includes(d.status),
-		);
-		const collected = validDonations.reduce(
-			(acc, d) => acc + Number(d.amount),
-			0,
-		);
-		let daysLeft = 0;
-		if (c.end) {
-			if (c.status === "PENDING" && c.start) {
-				daysLeft = Math.ceil(
-					(new Date(c.end).getTime() - new Date(c.start).getTime()) /
-						(1000 * 60 * 60 * 24),
-				);
-			} else {
-				daysLeft = Math.ceil(
-					(new Date(c.end).getTime() - new Date().getTime()) /
-						(1000 * 60 * 60 * 24),
-				);
-			}
-		}
-		const slugKey =
-			c.category.slug ||
-			Object.entries(CATEGORY_TITLE).find(
-				([, name]) => name === c.category.name,
-			)?.[0];
-
-		return {
-			id: c.id,
-			title: c.title,
-			organizer: c.createdBy.name || "Unknown",
-			organizerVerifiedAt: c.createdBy.verifiedAt || null,
-			organizerVerifiedAs: (c.createdBy as any).verifiedAs || null,
-			categorySlug: slugKey || undefined,
-			category: c.category.name,
-			cover: c.media.find((m) => m.isThumbnail)?.url || c.media[0]?.url || "",
-			target: Number(c.target),
-			collected,
-			donors: validDonations.length,
-			daysLeft: daysLeft > 0 ? daysLeft : 0,
-			tag: c.createdBy.verifiedAt
-				? (c.createdBy as any).verifiedAs === "organization"
-					? "ORG"
-					: "PER"
-				: undefined,
-			slug: c.slug || c.id,
-			isEmergency: c.isEmergency,
-		};
-	});
-}
-
-export async function getQuickDonationCampaign() {
-	try {
-		let campaign = await prisma.campaign.findUnique({
-			where: { slug: QUICK_DONATION_SLUG },
-			include: {
-				category: true,
-				createdBy: true,
-				donations: true,
-				media: true,
-			},
-		});
-
-		if (!campaign) {
-			// Find an admin user
-			const admin = await prisma.user.findFirst({
-				where: { role: "ADMIN" },
-			});
-
-			if (!admin) {
-				return {
-					success: false,
-					error: "Admin user not found to create quick donation campaign",
-				};
-			}
-
-			// Find or create category
-			let category = await prisma.campaignCategory.findFirst({
-				where: { name: "Lainnya" },
-			});
-
-			if (!category) {
-				category = await prisma.campaignCategory.create({
-					data: { name: "Lainnya", slug: "lainnya" },
-				});
-			}
-
-			campaign = await prisma.campaign.create({
-				data: {
-					title: "Donasi Cepat",
-					slug: QUICK_DONATION_SLUG,
-					story:
-						"Campaign khusus untuk menampung donasi cepat dari halaman utama.",
-					target: 1000000000,
-					status: "ACTIVE",
-					start: new Date(),
-					categoryId: category.id,
-					createdById: admin.id,
-				},
-				include: {
-					category: true,
-					createdBy: true,
-					donations: true,
-					media: true,
-				},
-			});
-		}
-
-		return { success: true, data: campaign };
-	} catch (error) {
-		console.error("Get quick donation campaign error:", error);
-		return { success: false, error: "Failed to fetch quick donation campaign" };
-	}
-}
-
-export async function getQuickDonationCampaignId() {
-	const res = await getQuickDonationCampaign();
-	if (res.success && res.data) {
-		return res.data.id;
-	}
-	return null;
 }
