@@ -49,11 +49,8 @@ import DescriptionRoundedIcon from "@mui/icons-material/DescriptionRounded";
 import PhotoRoundedIcon from "@mui/icons-material/PhotoRounded";
 import BadgeRoundedIcon from "@mui/icons-material/BadgeRounded";
 import DeleteRoundedIcon from "@mui/icons-material/DeleteRounded";
-import {
-	deleteCampaign,
-	getCampaigns,
-	updateCampaignStatus,
-} from "@/actions/campaign";
+import { deleteCampaign, getCampaigns } from "@/actions/campaign";
+import { updateCampaignStatus } from "@/actions/campaign-admin";
 
 type CampaignType = "sakit" | "lainnya";
 type CampaignStatus = "draft" | "pending" | "active" | "ended" | "rejected";

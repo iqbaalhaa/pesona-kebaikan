@@ -3,29 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import Box from "@mui/material/Box";
-import Typography from "@mui/material/Typography";
-import Card from "@mui/material/Card";
-import CardContent from "@mui/material/CardContent";
-import CardMedia from "@mui/material/CardMedia";
-import Chip from "@mui/material/Chip";
-import Stack from "@mui/material/Stack";
-import IconButton from "@mui/material/IconButton";
-import Menu from "@mui/material/Menu";
-import MenuItem from "@mui/material/MenuItem";
-import ListItemIcon from "@mui/material/ListItemIcon";
-import ListItemText from "@mui/material/ListItemText";
-import Drawer from "@mui/material/Drawer";
-import List from "@mui/material/List";
-import ListItem from "@mui/material/ListItem";
-import ListItemButton from "@mui/material/ListItemButton";
-import useMediaQuery from "@mui/material/useMediaQuery";
-import { useTheme } from "@mui/material/styles";
-import ShareIcon from "@mui/icons-material/Share";
-import XIcon from "@mui/icons-material/X";
-import FacebookIcon from "@mui/icons-material/Facebook";
-import WhatsAppIcon from "@mui/icons-material/WhatsApp";
-import ContentCopyIcon from "@mui/icons-material/ContentCopy";
+import { Share2, Twitter, Facebook, Copy, X } from "lucide-react";
 
 type BlogPost = {
 	id: string;
@@ -41,23 +19,23 @@ type BlogListClientProps = {
 	categories: string[];
 };
 
+function WhatsAppIcon({ size = 16 }: { size?: number }) {
+	return (
+		<svg viewBox="0 0 24 24" width={size} height={size} fill="currentColor">
+			<path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
+		</svg>
+	);
+}
+
 export default function BlogListClient({
 	posts,
 	categories,
 }: BlogListClientProps) {
-	const theme = useTheme();
-	const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 	const router = useRouter();
 	const searchParams = useSearchParams();
-
 	const currentCategory = searchParams.get("category") || "Semua";
 
-	const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
-	const [selectedPostId, setSelectedPostId] = React.useState<string | null>(
-		null,
-	);
-	const open = Boolean(anchorEl);
-	const drawerOpen = Boolean(selectedPostId);
+	const [sharePostId, setSharePostId] = React.useState<string | null>(null);
 
 	const handleFilterChange = (category: string) => {
 		if (category === "Semua") {
@@ -67,31 +45,9 @@ export default function BlogListClient({
 		}
 	};
 
-	const handleShareClick = (
-		event: React.MouseEvent<HTMLElement>,
-		postId: string,
-	) => {
-		event.preventDefault();
-		event.stopPropagation();
-		if (!isMobile) {
-			setAnchorEl(event.currentTarget);
-		}
-		setSelectedPostId(postId);
-	};
-
-	const handleClose = (e?: React.MouseEvent) => {
-		if (e) {
-			e.preventDefault();
-			e.stopPropagation();
-		}
-		setAnchorEl(null);
-		setSelectedPostId(null);
-	};
-
 	const handleShare = (platform: string) => {
-		if (!selectedPostId) return;
-
-		const post = posts.find((p) => p.id === selectedPostId);
+		if (!sharePostId) return;
+		const post = posts.find((p) => p.id === sharePostId);
 		if (!post) return;
 
 		const url = `${window.location.origin}/blog/${post.id}`;
@@ -100,327 +56,163 @@ export default function BlogListClient({
 		let shareUrl = "";
 		switch (platform) {
 			case "twitter":
-				shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(
-					text,
-				)}&url=${encodeURIComponent(url)}`;
+				shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
 				break;
 			case "facebook":
-				shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(
-					url,
-				)}`;
+				shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
 				break;
 			case "whatsapp":
-				shareUrl = `https://wa.me/?text=${encodeURIComponent(
-					text + " " + url,
-				)}`;
+				shareUrl = `https://wa.me/?text=${encodeURIComponent(text + " " + url)}`;
 				break;
 			case "copy":
 				navigator.clipboard.writeText(url);
-				handleClose();
+				setSharePostId(null);
 				return;
 		}
 
 		if (shareUrl) {
 			window.open(shareUrl, "_blank", "noopener,noreferrer");
 		}
-		handleClose();
+		setSharePostId(null);
 	};
 
 	const shareOptions = [
-		{ id: "twitter", label: "X", icon: <XIcon fontSize="small" /> },
-		{
-			id: "facebook",
-			label: "Facebook",
-			icon: <FacebookIcon fontSize="small" />,
-		},
-		{
-			id: "whatsapp",
-			label: "WhatsApp",
-			icon: <WhatsAppIcon fontSize="small" />,
-		},
-		{
-			id: "copy",
-			label: "Salin Link",
-			icon: <ContentCopyIcon fontSize="small" />,
-		},
+		{ id: "twitter", label: "X", icon: <Twitter size={16} /> },
+		{ id: "facebook", label: "Facebook", icon: <Facebook size={16} /> },
+		{ id: "whatsapp", label: "WhatsApp", icon: <WhatsAppIcon size={16} /> },
+		{ id: "copy", label: "Salin Link", icon: <Copy size={16} /> },
 	];
 
 	return (
-		<Box sx={{ px: 2, pt: 2.5, maxWidth: 800, mx: "auto" }}>
-			<Box
-				sx={{
-					display: "flex",
-					alignItems: "center",
-					justifyContent: "space-between",
-					mb: 2,
-				}}
-			>
-				<Typography sx={{ fontSize: 24, fontWeight: 900, color: "#0f172a" }}>
-					Blog
-				</Typography>
-			</Box>
+		<div className="mx-auto max-w-[800px] px-2 pt-2.5">
+			<div className="mb-2 flex items-center justify-between">
+				<h1 className="text-2xl font-black text-foreground">Blog</h1>
+			</div>
 
-			<Stack
-				direction="row"
-				spacing={1}
-				sx={{ mt: 2, mb: 3, overflowX: "auto", pb: 0.5 }}
-			>
+			{/* Category filters */}
+			<div className="mt-2 mb-3 flex gap-1 overflow-x-auto pb-0.5">
 				{["Semua", ...categories].map((tag) => (
-					<Chip
+					<button
 						key={tag}
-						label={tag}
-						color={currentCategory === tag ? "primary" : "default"}
-						variant={currentCategory === tag ? "filled" : "outlined"}
 						onClick={() => handleFilterChange(tag)}
-						sx={{ fontWeight: 600, cursor: "pointer" }}
-					/>
-				))}
-			</Stack>
-
-			<Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-				{posts.length === 0 ? (
-					<Typography
-						sx={{ textAlign: "center", mt: 4, color: "text.secondary" }}
+						className={[
+							"shrink-0 cursor-pointer rounded-full px-3 py-1 text-sm font-semibold transition-colors",
+							currentCategory === tag
+								? "bg-primary text-white"
+								: "border border-foreground/15 text-foreground/70 hover:bg-foreground/5",
+						].join(" ")}
 					>
+						{tag}
+					</button>
+				))}
+			</div>
+
+			{/* Posts */}
+			<div className="flex flex-col gap-3">
+				{posts.length === 0 ? (
+					<p className="mt-4 text-center text-text-secondary">
 						Tidak ada artikel ditemukan.
-					</Typography>
+					</p>
 				) : (
 					posts.map((post) => (
-						<Link
-							key={post.id}
-							href={`/blog/${post.id}`}
-							style={{ textDecoration: "none", display: "block" }}
-						>
-							<Card
-								variant="outlined"
-								sx={{
-									display: "flex",
-									flexDirection: { xs: "column", sm: "row" },
-									gap: 2,
-									p: 2,
-									borderRadius: 3,
-									borderColor: "rgba(0,0,0,0.08)",
-									bgcolor: "#fff",
-									transition: "all 0.2s ease",
-									"&:hover": {
-										borderColor: "primary.main",
-										boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
-										transform: "translateY(-2px)",
-									},
-								}}
-							>
-								<CardMedia
-									component="img"
-									image={post.cover}
+						<Link key={post.id} href={`/blog/${post.id}`} className="block">
+							<div className="flex flex-col gap-2 rounded-xl border border-foreground/8 bg-white p-2 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary hover:shadow-md sm:flex-row dark:bg-surface">
+								<img
+									src={post.cover}
 									alt={post.title}
-									sx={{
-										width: { xs: "100%", sm: 200 },
-										height: { xs: 200, sm: 160 },
-										borderRadius: 2,
-										objectFit: "cover",
-										flexShrink: 0,
-										bgcolor: "rgba(0,0,0,0.04)",
-									}}
+									className="h-[200px] w-full shrink-0 rounded-lg bg-foreground/4 object-cover sm:h-[160px] sm:w-[200px]"
 								/>
-								<CardContent
-									sx={{
-										p: 0,
-										display: "flex",
-										flexDirection: "column",
-										justifyContent: "center",
-										flex: 1,
-										"&:last-child": { pb: 0 },
-									}}
-								>
-									<Box
-										sx={{
-											display: "flex",
-											alignItems: "center",
-											gap: 1,
-											mb: 1.5,
-										}}
-									>
-										<Chip
-											size="small"
-											label={post.tag}
+								<div className="flex flex-1 flex-col justify-center">
+									<div className="mb-1.5 flex items-center gap-1">
+										<button
 											onClick={(e) => {
 												e.preventDefault();
 												e.stopPropagation();
 												handleFilterChange(post.tag);
 											}}
-											sx={{
-												borderRadius: 1,
-												height: 24,
-												fontSize: 11,
-												fontWeight: 700,
-												cursor: "pointer",
-											}}
-											color="primary"
-											variant="filled"
-										/>
-										<Typography
-											sx={{
-												fontSize: 11.5,
-												color: "rgba(15,23,42,.55)",
-												fontWeight: 700,
-											}}
+											className="cursor-pointer rounded bg-primary px-2 py-0.5 text-[11px] font-bold text-white"
 										>
+											{post.tag}
+										</button>
+										<span className="text-[11.5px] font-bold text-foreground/55">
 											{post.date}
-										</Typography>
-									</Box>
-									<Typography
-										sx={{
-											fontSize: 18,
-											fontWeight: 800,
-											color: "#0f172a",
-											lineHeight: 1.3,
-											mb: 1,
-											display: "-webkit-box",
-											WebkitLineClamp: 2,
-											WebkitBoxOrient: "vertical",
-											overflow: "hidden",
-										}}
-									>
+										</span>
+									</div>
+									<h2 className="mb-1 line-clamp-2 text-lg font-extrabold leading-tight text-foreground">
 										{post.title}
-									</Typography>
-									<Typography
-										sx={{
-											fontSize: 14.5,
-											color: "rgba(15,23,42,.70)",
-											lineHeight: 1.6,
-											mb: 2,
-											display: "-webkit-box",
-											WebkitLineClamp: 2,
-											WebkitBoxOrient: "vertical",
-											overflow: "hidden",
-										}}
-									>
+									</h2>
+									<p className="mb-2 line-clamp-2 text-[14.5px] leading-relaxed text-foreground/70">
 										{post.excerpt}
-									</Typography>
-
-									<Box
-										sx={{
-											display: "flex",
-											alignItems: "center",
-											justifyContent: "space-between",
-											mt: "auto",
-										}}
-									>
-										<Typography
-											sx={{
-												fontSize: 13,
-												fontWeight: 700,
-												color: "primary.main",
-											}}
-										>
+									</p>
+									<div className="mt-auto flex items-center justify-between">
+										<span className="text-[13px] font-bold text-primary">
 											Baca Selengkapnya
-										</Typography>
-										<IconButton
-											size="small"
-											onClick={(e) => handleShareClick(e, post.id)}
-											sx={{
-												color: "rgba(15,23,42,.4)",
-												"&:hover": { color: "primary.main" },
+										</span>
+										<button
+											onClick={(e) => {
+												e.preventDefault();
+												e.stopPropagation();
+												setSharePostId(post.id);
 											}}
+											className="rounded-lg p-1.5 text-foreground/40 transition-colors hover:text-primary"
 										>
-											<ShareIcon fontSize="small" />
-										</IconButton>
-									</Box>
-								</CardContent>
-							</Card>
+											<Share2 size={16} />
+										</button>
+									</div>
+								</div>
+							</div>
 						</Link>
 					))
 				)}
-			</Box>
+			</div>
 
-			{isMobile ? (
-				<Drawer
-					anchor="bottom"
-					open={drawerOpen}
-					onClose={() => handleClose()}
-					PaperProps={{
-						sx: {
-							borderTopLeftRadius: 16,
-							borderTopRightRadius: 16,
-							p: 2,
-						},
-					}}
-				>
-					<Typography
-						sx={{
-							fontWeight: 800,
-							mb: 2,
-							fontSize: 16,
-							textAlign: "center",
-							color: "#0f172a",
-						}}
-					>
-						Bagikan ke
-					</Typography>
-					<List sx={{ pt: 0 }}>
-						{shareOptions.map((option) => (
-							<ListItem key={option.id} disablePadding>
-								<ListItemButton
+			{/* Share bottom sheet */}
+			{sharePostId && (
+				<>
+					<div
+						className="fixed inset-0 z-40 bg-black/40"
+						onClick={() => setSharePostId(null)}
+					/>
+					<div className="fixed inset-x-0 bottom-0 z-50 animate-[slideUp_200ms_ease] rounded-t-2xl bg-white p-4 shadow-xl dark:bg-surface">
+						<div className="mb-3 flex items-center justify-between">
+							<h3 className="text-base font-extrabold text-foreground">
+								Bagikan ke
+							</h3>
+							<button
+								onClick={() => setSharePostId(null)}
+								className="rounded-lg p-1 text-foreground/50 hover:bg-foreground/5"
+							>
+								<X size={20} />
+							</button>
+						</div>
+						<div className="flex flex-col">
+							{shareOptions.map((option) => (
+								<button
+									key={option.id}
 									onClick={() => handleShare(option.id)}
-									sx={{
-										borderRadius: 2,
-										py: 1.5,
-										display: "flex",
-										gap: 2,
-									}}
+									className="flex cursor-pointer items-center gap-3 rounded-lg px-2 py-3 text-left transition-colors hover:bg-foreground/5"
 								>
-									<ListItemIcon
-										sx={{ minWidth: 0, color: "rgba(15,23,42,.8)" }}
-									>
-										{option.icon}
-									</ListItemIcon>
-									<ListItemText
-										primary={option.label}
-										primaryTypographyProps={{
-											fontWeight: 600,
-											fontSize: 14.5,
-											color: "#0f172a",
-										}}
-									/>
-								</ListItemButton>
-							</ListItem>
-						))}
-					</List>
-				</Drawer>
-			) : (
-				<Menu
-					anchorEl={anchorEl}
-					open={open}
-					onClose={() => handleClose()}
-					onClick={(e) => {
-						e.preventDefault();
-						e.stopPropagation();
-					}}
-					PaperProps={{
-						elevation: 3,
-						sx: {
-							mt: 1,
-							borderRadius: 2,
-							minWidth: 180,
-							"& .MuiMenuItem-root": {
-								fontSize: 14,
-								fontWeight: 600,
-								color: "rgba(15,23,42,.8)",
-								py: 1,
-							},
-						},
-					}}
-					transformOrigin={{ horizontal: "right", vertical: "top" }}
-					anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
-				>
-					{shareOptions.map((option) => (
-						<MenuItem key={option.id} onClick={() => handleShare(option.id)}>
-							<ListItemIcon>{option.icon}</ListItemIcon>
-							<ListItemText>{option.label}</ListItemText>
-						</MenuItem>
-					))}
-				</Menu>
+									<span className="text-foreground/80">{option.icon}</span>
+									<span className="text-[14.5px] font-semibold text-foreground">
+										{option.label}
+									</span>
+								</button>
+							))}
+						</div>
+					</div>
+				</>
 			)}
-		</Box>
+
+			<style jsx>{`
+				@keyframes slideUp {
+					from {
+						transform: translateY(100%);
+					}
+					to {
+						transform: translateY(0);
+					}
+				}
+			`}</style>
+		</div>
 	);
 }

@@ -5,7 +5,7 @@ import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
 import Link from "next/link";
-import { keyframes } from "@mui/system";
+import { keyframes } from "@emotion/react";
 
 const PRIMARY = "#0ba976";
 

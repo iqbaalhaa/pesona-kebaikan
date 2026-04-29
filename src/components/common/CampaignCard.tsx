@@ -2,19 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import {
-	Card,
-	CardMedia,
-	CardContent,
-	Typography,
-	Chip,
-	Box,
-	Stack,
-	LinearProgress,
-	useTheme,
-	alpha,
-} from "@mui/material";
-import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
+import { ShieldCheck } from "lucide-react";
 
 export type CampaignCardProps = {
 	id: string;
@@ -34,66 +22,27 @@ function rupiah(n: number) {
 }
 
 export function CampaignCardSkeleton() {
-	const theme = useTheme();
 	return (
-		<Card
-			elevation={0}
-			sx={{
-				borderRadius: 1,
-				border: "1px solid",
-				borderColor: "divider",
-				height: "100%",
-			}}
-		>
-			<Box sx={{ width: "100%", height: 110, bgcolor: "action.hover" }} />
-			<CardContent sx={{ p: 1.25 }}>
-				<Box sx={{ display: "flex", gap: 0.5, mb: 1 }}>
-					<Box
-						sx={{
-							width: 60,
-							height: 18,
-							borderRadius: 1,
-							bgcolor: "action.hover",
-						}}
-					/>
-					<Box
-						sx={{
-							width: 74,
-							height: 18,
-							borderRadius: 1,
-							bgcolor: "action.hover",
-						}}
-					/>
-				</Box>
-				<Box
-					sx={{ height: 32, borderRadius: 1, bgcolor: "action.hover", mb: 1 }}
-				/>
-				<Box
-					sx={{
-						width: "60%",
-						height: 12,
-						borderRadius: 1,
-						bgcolor: "action.hover",
-					}}
-				/>
-				<Box sx={{ mt: 1.5 }}>
-					<LinearProgress
-						variant="indeterminate"
-						sx={{
-							height: 5,
-							borderRadius: 3,
-							bgcolor: alpha(theme.palette.primary.main, 0.1),
-							"& .MuiLinearProgress-bar": { borderRadius: 3 },
-						}}
-					/>
-				</Box>
-			</CardContent>
-		</Card>
+		<div className="h-full rounded-lg border border-divider bg-surface">
+			<div className="h-[110px] w-full animate-pulse bg-foreground/5" />
+			<div className="p-[5px]">
+				<div className="mb-1 flex gap-0.5">
+					<div className="h-[18px] w-[60px] animate-pulse rounded bg-foreground/5" />
+					<div className="h-[18px] w-[74px] animate-pulse rounded bg-foreground/5" />
+				</div>
+				<div className="mb-1 h-8 animate-pulse rounded bg-foreground/5" />
+				<div className="h-3 w-3/5 animate-pulse rounded bg-foreground/5" />
+				<div className="mt-1.5">
+					<div className="h-[5px] overflow-hidden rounded-full bg-primary/10">
+						<div className="h-full w-1/3 animate-pulse rounded-full bg-primary/30" />
+					</div>
+				</div>
+			</div>
+		</div>
 	);
 }
 
 export default function CampaignCard(props: CampaignCardProps) {
-	const theme = useTheme();
 	const x = props;
 	const isQuickDonate = x.slug === "donasi-cepat";
 	const progress =
@@ -104,168 +53,68 @@ export default function CampaignCard(props: CampaignCardProps) {
 	const [img, setImg] = React.useState(x.thumbnail || "/defaultimg.webp");
 
 	return (
-		<Link href={`/donasi/${x.slug || x.id}`} style={{ textDecoration: "none" }}>
-			<Card
-				elevation={0}
-				sx={{
-					height: "100%",
-					display: "flex",
-					flexDirection: "column",
-					borderRadius: 1,
-					border: "1px solid",
-					borderColor: "divider",
-					overflow: "hidden",
-					transition: "all 0.2s ease",
-					"&:hover": {
-						borderColor: "transparent",
-						boxShadow: "0 12px 32px rgba(0,0,0,0.08)",
-						transform: "translateY(-4px)",
-					},
-				}}
-			>
-				<CardMedia
-					component="img"
-					image={img}
+		<Link
+			href={`/donasi/${x.slug || x.id}`}
+			className="block h-full no-underline"
+		>
+			<div className="flex h-full flex-col overflow-hidden rounded-lg border border-divider bg-surface transition-all duration-200 hover:-translate-y-1 hover:border-transparent hover:shadow-[0_12px_32px_rgba(0,0,0,0.08)]">
+				<img
+					src={img}
 					alt={x.title}
 					onError={() => setImg("/defaultimg.webp")}
-					sx={{
-						width: "100%",
-						height: 110,
-						objectFit: "cover",
-						bgcolor: "#f1f5f9",
-					}}
+					className="h-[110px] w-full bg-slate-100 object-cover"
 				/>
-				<CardContent
-					sx={{
-						p: 1.25,
-						"&:last-child": { pb: 1.25 },
-						flex: 1,
-						display: "flex",
-						flexDirection: "column",
-					}}
-				>
-					<Stack
-						direction="row"
-						spacing={0.5}
-						alignItems="center"
-						flexWrap="wrap"
-						gap={0.5}
-						sx={{ mb: 0.75 }}
-					>
-						<Chip
-							label={x.category}
-							size="small"
-							sx={{
-								borderRadius: 1.5,
-								fontWeight: 600,
-								height: 18,
-								fontSize: 10,
-								bgcolor: alpha(theme.palette.primary.main, 0.08),
-								color: theme.palette.primary.main,
-							}}
-						/>
-						{x.verifiedAt ? (
-							<Chip
-								icon={<VerifiedUserIcon sx={{ fontSize: "12px !important" }} />}
-								label="Verified"
-								size="small"
-								variant="outlined"
-								sx={{
-									borderRadius: 1.5,
-									height: 18,
-									fontSize: 10,
-									borderColor: alpha(theme.palette.primary.main, 0.3),
-									color: theme.palette.primary.main,
-								}}
-							/>
-						) : null}
-					</Stack>
-
-					<Typography
-						sx={{
-							fontWeight: 800,
-							fontSize: 13,
-							lineHeight: 1.35,
-							color: "text.primary",
-							mb: 0.25,
-							minHeight: 34,
-						}}
-						className="line-clamp-2"
-					>
-						{x.title}
-					</Typography>
-
-					<Typography
-						sx={{
-							fontSize: 11,
-							color: "text.secondary",
-							mb: "auto",
-						}}
-					>
-						{x.ownerName}
-					</Typography>
-
-					<Box sx={{ mt: 1.5 }}>
-						{!isQuickDonate && (
-							<LinearProgress
-								variant="determinate"
-								value={progress}
-								sx={{
-									height: 5,
-									borderRadius: 3,
-									bgcolor: alpha(theme.palette.primary.main, 0.1),
-									"& .MuiLinearProgress-bar": { borderRadius: 3 },
-								}}
-							/>
+				<div className="flex flex-1 flex-col p-[5px]">
+					<div className="mb-[3px] flex flex-wrap items-center gap-0.5">
+						<span className="rounded-md bg-primary/8 px-1.5 py-px text-[10px] font-semibold text-primary">
+							{x.category}
+						</span>
+						{x.verifiedAt && (
+							<span className="inline-flex items-center gap-0.5 rounded-md border border-primary/30 px-1.5 py-px text-[10px] text-primary">
+								<ShieldCheck size={12} />
+								Verified
+							</span>
 						)}
-						<Box
-							sx={{
-								display: "flex",
-								justifyContent: "space-between",
-								mt: 0.75,
-								alignItems: "flex-end",
-							}}
-						>
-							<Box>
-								<Typography
-									sx={{
-										fontSize: 10,
-										color: "text.secondary",
-										fontWeight: 500,
-									}}
-								>
+					</div>
+
+					<p className="mb-[1px] line-clamp-2 min-h-[34px] text-[13px] font-extrabold leading-tight text-foreground">
+						{x.title}
+					</p>
+
+					<p className="mb-auto text-[11px] text-text-secondary">
+						{x.ownerName}
+					</p>
+
+					<div className="mt-1.5">
+						{!isQuickDonate && (
+							<div className="h-[5px] overflow-hidden rounded-full bg-primary/10">
+								<div
+									className="h-full rounded-full bg-primary transition-all duration-300"
+									style={{ width: `${progress}%` }}
+								/>
+							</div>
+						)}
+						<div className="mt-[3px] flex items-end justify-between">
+							<div>
+								<p className="text-[10px] font-medium text-text-secondary">
 									Terkumpul
-								</Typography>
-								<Typography
-									sx={{
-										fontSize: 12,
-										fontWeight: 800,
-										color: theme.palette.primary.main,
-									}}
-								>
+								</p>
+								<p className="text-xs font-extrabold text-primary">
 									Rp{rupiah(x.collected)}
-								</Typography>
-							</Box>
-							<Box sx={{ textAlign: "right" }}>
-								<Typography
-									sx={{
-										fontSize: 10,
-										color: "text.secondary",
-										fontWeight: 500,
-									}}
-								>
+								</p>
+							</div>
+							<div className="text-right">
+								<p className="text-[10px] font-medium text-text-secondary">
 									{isQuickDonate ? "Tanpa Batas" : "Sisa Hari"}
-								</Typography>
-								<Typography
-									sx={{ fontSize: 12, fontWeight: 700, color: "text.primary" }}
-								>
+								</p>
+								<p className="text-xs font-bold text-foreground">
 									{isQuickDonate ? "∞" : x.daysLeft}
-								</Typography>
-							</Box>
-						</Box>
-					</Box>
-				</CardContent>
-			</Card>
+								</p>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
 		</Link>
 	);
 }

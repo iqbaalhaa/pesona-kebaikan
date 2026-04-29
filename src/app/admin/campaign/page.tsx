@@ -43,11 +43,8 @@ import DeleteRoundedIcon from "@mui/icons-material/DeleteRounded";
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import RefreshRoundedIcon from "@mui/icons-material/RefreshRounded";
 
-import {
-	getCampaigns,
-	updateCampaignStatus,
-	deleteCampaign,
-} from "@/actions/campaign";
+import { getCampaigns, deleteCampaign } from "@/actions/campaign";
+import { updateCampaignStatus } from "@/actions/campaign-admin";
 import AdminCampaignTable from "@/components/admin/AdminCampaignTable";
 
 const PAGE_SIZE = 8;

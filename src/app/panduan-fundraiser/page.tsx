@@ -1,18 +1,5 @@
-"use server";
-
-import Box from "@mui/material/Box";
-import Typography from "@mui/material/Typography";
-import Paper from "@mui/material/Paper";
-import Container from "@mui/material/Container";
-import Stack from "@mui/material/Stack";
-import Chip from "@mui/material/Chip";
-import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import LightbulbOutlinedIcon from "@mui/icons-material/LightbulbOutlined";
-import CampaignOutlinedIcon from "@mui/icons-material/CampaignOutlined";
-import FavoriteBorderOutlinedIcon from "@mui/icons-material/FavoriteBorderOutlined";
-import SecurityOutlinedIcon from "@mui/icons-material/SecurityOutlined";
+import { Lightbulb, Megaphone, Heart, Shield } from "lucide-react";
 import { getPageContent } from "@/actions/cms";
-import type { ReactElement } from "react";
 
 export default async function FundraiseGuidePage() {
 	const content = await getPageContent("fundraiser_guide");
@@ -29,32 +16,27 @@ export default async function FundraiseGuidePage() {
     <p>Setiap donasi yang masuk melalui link kamu akan tercatat, dan kamu bisa melihat dampak kebaikan yang telah kamu sebarkan.</p>
   `;
 
-	const tips: {
-		icon: ReactElement;
-		title: string;
-		desc: string;
-		color: string;
-	}[] = [
+	const tips = [
 		{
-			icon: <LightbulbOutlinedIcon />,
+			icon: <Lightbulb size={20} />,
 			title: "Pilih campaign yang menyentuh hati",
 			desc: "Pilih cerita yang menurutmu paling layak dibantu agar lebih semangat menyebarkannya.",
 			color: "#10b981",
 		},
 		{
-			icon: <CampaignOutlinedIcon />,
+			icon: <Megaphone size={20} />,
 			title: "Bagikan ke circle terdekat",
 			desc: "Mulai dari keluarga dan teman dekat, mereka lebih mudah percaya rekomendasi kamu.",
 			color: "#0ea5e9",
 		},
 		{
-			icon: <FavoriteBorderOutlinedIcon />,
+			icon: <Heart size={20} />,
 			title: "Gunakan kata-kata personal",
 			desc: "Tambahkan alasan kenapa kamu mendukung campaign ini saat membagikan link.",
 			color: "#f59e0b",
 		},
 		{
-			icon: <SecurityOutlinedIcon />,
+			icon: <Shield size={20} />,
 			title: "Pantau donasi masuk",
 			desc: "Cek secara berkala dashboard fundraiser kamu untuk melihat perkembangan donasi.",
 			color: "#8b5cf6",
@@ -70,125 +52,69 @@ export default async function FundraiseGuidePage() {
 	];
 
 	return (
-		<Box sx={{ bgcolor: "background.default" }}>
-			<Container maxWidth="md" sx={{ px: 2, pt: 3, pb: 8 }}>
-				<Paper
-					elevation={0}
-					sx={{
-						p: 3,
-						borderRadius: 3,
-						border: "1px solid",
-						borderColor: "divider",
-						bgcolor: "background.paper",
-					}}
-				>
-					<Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-						<Chip
-							label="Panduan"
-							size="small"
-							sx={{ borderRadius: 1, fontWeight: 700 }}
-							color="success"
-							variant="outlined"
-						/>
-					</Box>
-					<Typography
-						sx={{ fontWeight: 900, fontSize: 22, mt: 1, color: "text.primary" }}
-					>
+		<div className="bg-background">
+			<div className="mx-auto max-w-2xl px-2 pb-8 pt-3">
+				<div className="rounded-xl border border-divider bg-surface p-3">
+					<span className="rounded border border-success/30 px-2 py-0.5 text-xs font-bold text-success">
+						Panduan
+					</span>
+					<h1 className="mt-1 text-[22px] font-black text-foreground">
 						{title}
-					</Typography>
-					<Typography sx={{ fontSize: 13, color: "text.secondary", mt: 0.5 }}>
+					</h1>
+					<p className="mt-0.5 text-[13px] text-text-secondary">
 						Cara mudah menebar kebaikan dengan menjadi jembatan donasi
-					</Typography>
+					</p>
 
-					<Box sx={{ mt: 4 }}>
-						<Typography
-							variant="h6"
-							sx={{ fontWeight: 800, fontSize: 18, mb: 2 }}
-						>
-							Langkah-langkah
-						</Typography>
-						<Stack spacing={2}>
+					<div className="mt-4">
+						<h2 className="mb-2 text-lg font-extrabold">Langkah-langkah</h2>
+						<div className="flex flex-col gap-2">
 							{steps.map((step, index) => (
-								<Box
-									key={index}
-									sx={{ display: "flex", gap: 2, alignItems: "flex-start" }}
-								>
-									<Box
-										sx={{
-											width: 28,
-											height: 28,
-											borderRadius: "50%",
-											bgcolor: "primary.main",
-											color: "white",
-											display: "grid",
-											placeItems: "center",
-											fontWeight: 700,
-											fontSize: 14,
-											flexShrink: 0,
-										}}
-									>
+								<div key={index} className="flex items-start gap-2">
+									<span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-primary text-sm font-bold text-white">
 										{index + 1}
-									</Box>
-									<Typography sx={{ fontSize: 15, pt: 0.25 }}>
-										{step}
-									</Typography>
-								</Box>
+									</span>
+									<p className="pt-0.5 text-[15px]">{step}</p>
+								</div>
 							))}
-						</Stack>
-					</Box>
+						</div>
+					</div>
 
-					<Box sx={{ mt: 5 }}>
-						<Typography
-							variant="h6"
-							sx={{ fontWeight: 800, fontSize: 18, mb: 2 }}
-						>
+					<div className="mt-5">
+						<h2 className="mb-2 text-lg font-extrabold">
 							Tips Sukses Fundraiser
-						</Typography>
-						<Box
-							sx={{
-								display: "grid",
-								gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" },
-								gap: 2,
-							}}
-						>
+						</h2>
+						<div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
 							{tips.map((tip, index) => (
-								<Paper
+								<div
 									key={index}
-									elevation={0}
-									sx={{
-										p: 2,
-										borderRadius: 2,
-										bgcolor: `${tip.color}08`, // 5% opacity
-										border: "1px solid",
+									className="rounded-2xl border p-2"
+									style={{
+										backgroundColor: `${tip.color}08`,
 										borderColor: `${tip.color}20`,
 									}}
 								>
-									<Box sx={{ display: "flex", gap: 1.5, mb: 1 }}>
-										<Box sx={{ color: tip.color }}>{tip.icon}</Box>
-										<Typography
-											sx={{ fontWeight: 700, fontSize: 15, color: "#1e293b" }}
-										>
+									<div className="mb-1 flex items-center gap-1.5">
+										<span style={{ color: tip.color }}>{tip.icon}</span>
+										<p className="text-[15px] font-bold text-slate-800">
 											{tip.title}
-										</Typography>
-									</Box>
-									<Typography
-										sx={{ fontSize: 13, color: "#64748b", lineHeight: 1.5 }}
-									>
+										</p>
+									</div>
+									<p className="text-[13px] leading-snug text-slate-500">
 										{tip.desc}
-									</Typography>
-								</Paper>
+									</p>
+								</div>
 							))}
-						</Box>
-					</Box>
+						</div>
+					</div>
 
-					<Box sx={{ mt: 5 }}>
+					<div className="mt-5">
 						<div
 							className="prose prose-sm max-w-none"
 							dangerouslySetInnerHTML={{ __html: html }}
 						/>
-					</Box>
-				</Paper>
-			</Container>
-		</Box>
+					</div>
+				</div>
+			</div>
+		</div>
 	);
 }

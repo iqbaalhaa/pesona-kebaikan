@@ -40,7 +40,7 @@ import CreditCardIcon from "@mui/icons-material/CreditCard";
 import { useRouter } from "next/navigation";
 import Script from "next/script";
 import { createDonation } from "@/actions/donation";
-import { getQuickDonationCampaignId } from "@/actions/campaign";
+import { getQuickDonationCampaignId } from "@/actions/campaign-public";
 
 import { getMyDonations } from "@/actions/my-donations";
 import { checkPendingDonations } from "@/actions/donation";

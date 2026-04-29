@@ -17,7 +17,7 @@ import {
 	getLatestDonations,
 	getAllActiveCampaigns,
 	getFeaturedCampaigns,
-} from "@/actions/campaign";
+} from "@/actions/campaign-public";
 import type { Campaign } from "@/types";
 import { prisma } from "@/lib/prisma";
 import type { Category } from "@/types";

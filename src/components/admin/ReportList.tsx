@@ -43,7 +43,7 @@ import {
 	DialogContentText,
 	DialogActions,
 } from "@mui/material";
-import { updateCampaignStatus } from "@/actions/campaign";
+import { updateCampaignStatus } from "@/actions/campaign-admin";
 import { getReports, updateReportStatus } from "@/actions/report";
 import { format, formatDistanceToNow } from "date-fns";
 import { id } from "date-fns/locale";

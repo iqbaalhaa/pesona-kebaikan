@@ -13,7 +13,7 @@ import {
 	InputAdornment,
 } from "@mui/material";
 import TrendingUpRoundedIcon from "@mui/icons-material/TrendingUpRounded";
-import { requestCampaignChange } from "@/actions/campaign";
+import { requestCampaignChange } from "@/actions/campaign-admin";
 
 type OwnerExtendTargetButtonProps = {
 	campaignId: string;

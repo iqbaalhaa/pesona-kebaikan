@@ -29,7 +29,7 @@ import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
 import AccountBalanceWalletRoundedIcon from "@mui/icons-material/AccountBalanceWalletRounded";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import { LinkIconButton } from "@/components/ui/LinkButton";
-import { requestWithdrawal, createCampaignUpdate } from "@/actions/campaign";
+import { requestWithdrawal, createCampaignUpdate } from "@/actions/campaign-admin";
 import { useRouter } from "next/navigation";
 import { getBankName } from "@/lib/banks";
 

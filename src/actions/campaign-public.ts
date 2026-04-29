@@ -15,7 +15,7 @@ type CampaignWithRelations = Prisma.CampaignGetPayload<{
 	};
 }>;
 
-export function mapCampaignsToTypes(campaigns: CampaignWithRelations[]) {
+function mapCampaignsToTypes(campaigns: CampaignWithRelations[]) {
 	return campaigns.map((c) => {
 		const validDonations = c.donations.filter((d) =>
 			["PAID", "paid", "SETTLED", "COMPLETED"].includes(d.status),

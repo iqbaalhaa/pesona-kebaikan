@@ -32,7 +32,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import {
 	getCampaignChangeRequests,
 	resolveCampaignChangeRequest,
-} from "@/actions/campaign";
+} from "@/actions/campaign-admin";
 
 type ChangeRequestRow = {
 	id: string;

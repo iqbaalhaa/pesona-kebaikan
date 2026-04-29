@@ -50,14 +50,16 @@ import PlayCircleFilledRoundedIcon from "@mui/icons-material/PlayCircleFilledRou
 
 import {
 	getCampaignById,
-	updateCampaignStatus,
-	updateCampaignFee,
 	deleteCampaign,
-	addCampaignMedia,
 	finishCampaign,
 	updateCampaignStory,
-	updateCampaignMedicalDocs,
 } from "@/actions/campaign";
+import {
+	updateCampaignStatus,
+	updateCampaignFee,
+	addCampaignMedia,
+	updateCampaignMedicalDocs,
+} from "@/actions/campaign-admin";
 import { getCampaignTransactions } from "@/actions/admin";
 import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
 import HourglassBottomRoundedIcon from "@mui/icons-material/HourglassBottomRounded";

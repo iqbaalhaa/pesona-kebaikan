@@ -13,7 +13,7 @@ import Alert from "@mui/material/Alert";
 
 import type { Campaign } from "@/types";
 import { createDonation, cancelPendingDonation } from "@/actions/donation";
-import { getQuickDonationCampaignId } from "@/actions/campaign";
+import { getQuickDonationCampaignId } from "@/actions/campaign-public";
 
 const PRIMARY = "#0ba976";
 const MIN_DONATION = Number(process.env.NEXT_PUBLIC_MIN_DONATION ?? 1);

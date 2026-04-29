@@ -8,28 +8,6 @@ import { revalidatePath } from "next/cache";
 import { CATEGORY_TITLE } from "@/lib/constants";
 import { validateCampaignType } from "@/lib/campaignValidation";
 
-export {
-	updateCampaignStatus,
-	updateCampaignFee,
-	requestCampaignChange,
-	getCampaignChangeRequests,
-	resolveCampaignChangeRequest,
-	addCampaignMedia,
-	updateCampaignMedicalDocs,
-	createCampaignUpdate,
-	getCampaignUpdates,
-	requestWithdrawal,
-} from "@/actions/campaign-admin";
-
-export {
-	getLatestDonations,
-	getUrgentCampaigns,
-	getPopularCampaigns,
-	getFeaturedCampaigns,
-	getAllActiveCampaigns,
-	getQuickDonationCampaign,
-	getQuickDonationCampaignId,
-} from "@/actions/campaign-public";
 
 const QUICK_DONATION_SLUG = "donasi-cepat";
 
