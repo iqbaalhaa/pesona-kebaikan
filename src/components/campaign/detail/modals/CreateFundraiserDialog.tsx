@@ -120,14 +120,6 @@ export default function CreateFundraiserDialog({
 		}
 	}, [createdSlug]);
 
-	const localSlugify = (v: string) =>
-		v
-			.toLowerCase()
-			.trim()
-			.replace(/[^\w\s-]/g, "")
-			.replace(/\s+/g, "-")
-			.replace(/-+/g, "-");
-
 	const copyToClipboard = async (text: string) => {
 		try {
 			await navigator.clipboard.writeText(text);
@@ -335,35 +327,6 @@ export default function CreateFundraiserDialog({
 							size="small"
 						/>
 
-						<TextField
-							label="Slug Kustom"
-							value={slug}
-							onChange={(e) => handleSlugChange(e.target.value)}
-							placeholder="Kosongkan untuk otomatis dari judul"
-							fullWidth
-							size="small"
-							helperText={
-								slug.trim()
-									? slugChecking
-										? "Memeriksa ketersediaan slug…"
-										: slugAvailable === true
-											? `Slug tersedia: ${slugNormalized}`
-											: slugAvailable === false
-												? `Slug tidak tersedia: ${slugNormalized}`
-												: ""
-									: "Kosongkan jika ingin otomatis dari judul"
-							}
-							color={slugAvailable === true ? "success" : slugAvailable === false ? "error" : "primary"}
-						/>
-
-						{liveUrl && (
-							<Box sx={{ display: "flex", alignItems: "center", gap: 1, border: "1px solid #e2e8f0", borderRadius: 2, p: 1, bgcolor: "#f8fafc" }}>
-								<Typography sx={{ flex: 1, fontSize: 12, color: "#334155", wordBreak: "break-all" }}>
-									{liveUrl}
-								</Typography>
-								<Button size="small" onClick={() => copyToClipboard(liveUrl)}>Salin</Button>
-							</Box>
-						)}
 
 						<TextField
 							label="Target Dana"
