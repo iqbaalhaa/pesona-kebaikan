@@ -18,7 +18,7 @@ export default function CampaignBottomNav({
 
 	return (
 		<Paper
-			elevation={3}
+			elevation={0}
 			sx={{
 				position: "fixed",
 				bottom: 0,
@@ -27,29 +27,34 @@ export default function CampaignBottomNav({
 				width: "100%",
 				maxWidth: { xs: "100%", sm: 480 },
 				zIndex: 1000,
-				p: 2,
+				px: 2,
+				py: 1.5,
 				borderTop: "1px solid #e2e8f0",
 				bgcolor: "white",
+				pb: "calc(0.75rem + env(safe-area-inset-bottom))",
 			}}
 		>
-			<Container maxWidth="md" sx={{ display: "flex", gap: 2 }}>
+			<Container maxWidth="md" sx={{ display: "flex", gap: 1.5, p: 0 }}>
 				<Button
 					variant="outlined"
 					onClick={() => setOpenShareModal(true)}
+					startIcon={<ShareIcon sx={{ fontSize: 18 }} />}
 					sx={{
-						minWidth: 48,
-						width: 48,
-						height: 48,
+						height: 44,
 						borderRadius: "12px",
-						borderColor: "#e2e8f0",
-						color: "#64748b",
+						borderColor: "primary.main",
+						color: "primary.main",
+						fontWeight: 700,
+						fontSize: 14,
+						textTransform: "none",
+						px: 2.5,
+						whiteSpace: "nowrap",
 					}}
 				>
-					<ShareIcon />
+					Bagikan
 				</Button>
 				<Button
 					variant="contained"
-					color="primary"
 					fullWidth
 					disabled={data.status === "ended" || data.status === "rejected"}
 					onClick={() => {
@@ -60,9 +65,14 @@ export default function CampaignBottomNav({
 						}
 					}}
 					sx={{
+						height: 44,
 						borderRadius: "12px",
 						fontWeight: 700,
-						fontSize: 16,
+						fontSize: 15,
+						textTransform: "none",
+						bgcolor: "primary.main",
+						boxShadow: "none",
+						"&:hover": { boxShadow: "0 4px 12px rgba(11,169,118,0.3)" },
 						"&.Mui-disabled": {
 							bgcolor: "#cbd5e1",
 							color: "#94a3b8",

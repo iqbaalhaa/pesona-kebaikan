@@ -15,7 +15,15 @@ interface SimpleAppBarProps {
 export default function SimpleAppBar({ variant = "solid" }: SimpleAppBarProps) {
 	const router = useRouter();
 	const [logoSrc, setLogoSrc] = React.useState("/brand/logo.png");
+	const [scrolled, setScrolled] = React.useState(false);
 	const isOverlay = variant === "overlay";
+
+	React.useEffect(() => {
+		const onScroll = () => setScrolled(window.scrollY > 20);
+		onScroll();
+		window.addEventListener("scroll", onScroll, { passive: true });
+		return () => window.removeEventListener("scroll", onScroll);
+	}, []);
 
 	const handleSearch = React.useCallback(async (query: string) => {
 		const res = await getCampaigns(1, 5, "all", query);
@@ -32,16 +40,25 @@ export default function SimpleAppBar({ variant = "solid" }: SimpleAppBarProps) {
 		return [];
 	}, []);
 
+	const showCompact = isOverlay ? scrolled : scrolled;
+
 	return (
 		<header
 			className="fixed left-1/2 top-0 z-[1100] w-full max-w-[480px] -translate-x-1/2 transition-all duration-300"
 			style={{
-				backgroundColor: isOverlay ? "rgba(255,255,255,0.06)" : "var(--surface)",
-				backdropFilter: isOverlay ? "blur(12px)" : "none",
+				backgroundColor: showCompact
+					? "var(--brand)"
+					: isOverlay
+						? "rgba(255,255,255,0.06)"
+						: "var(--surface)",
+				backdropFilter: isOverlay && !showCompact ? "blur(12px)" : "none",
 			}}
 		>
-			<div className="flex h-16 items-center gap-1.5 px-2">
-				<Link href="/" className="shrink-0">
+			<div className={`flex items-center gap-1.5 px-2 transition-all duration-300 ${showCompact ? "h-11" : "h-14"}`}>
+				<Link
+					href="/"
+					className={`shrink-0 transition-all duration-300 overflow-hidden ${showCompact ? "w-0 opacity-0" : "w-auto opacity-100"}`}
+				>
 					<Image
 						src={logoSrc}
 						alt="Pesona Kebaikan"
@@ -60,10 +77,12 @@ export default function SimpleAppBar({ variant = "solid" }: SimpleAppBarProps) {
 					onSearch={handleSearch}
 					onSelect={(r) => router.push(`/donasi/${r.id}`)}
 					onSubmit={(q) => router.push(`/donasi?q=${encodeURIComponent(q)}`)}
-					overlay={isOverlay}
+					overlay={isOverlay || showCompact}
 				/>
 
-				<NotificationPopover overlay={isOverlay} />
+				<div className={`transition-all duration-300 overflow-hidden ${showCompact ? "w-0 opacity-0" : "w-auto opacity-100"}`}>
+					<NotificationPopover overlay={isOverlay} />
+				</div>
 			</div>
 		</header>
 	);

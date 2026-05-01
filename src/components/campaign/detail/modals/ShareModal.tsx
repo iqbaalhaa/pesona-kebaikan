@@ -14,19 +14,39 @@ import WhatsAppIcon from "@mui/icons-material/WhatsApp";
 import FacebookIcon from "@mui/icons-material/Facebook";
 import XIcon from "@mui/icons-material/X";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
+import ShareIcon from "@mui/icons-material/Share";
+import { Button } from "@mui/material";
 import { Transition } from "../utils";
 
 interface ShareModalProps {
 	open: boolean;
 	onClose: () => void;
 	handleShareAction: (platform: string) => void;
+	shareUrl?: string;
+	shareTitle?: string;
 }
 
 export default function ShareModal({
 	open,
 	onClose,
 	handleShareAction,
+	shareUrl,
+	shareTitle,
 }: ShareModalProps) {
+	const hasNativeShare = typeof navigator !== "undefined" && !!navigator.share;
+
+	const handleNativeShare = async () => {
+		if (!navigator.share) return;
+		try {
+			await navigator.share({
+				title: shareTitle || "Bagikan kebaikan",
+				text: `Yuk bantu donasi untuk "${shareTitle}"! Setiap kontribusi sangat berarti.`,
+				url: shareUrl || window.location.href,
+			});
+			onClose();
+		} catch {}
+	};
+
 	return (
 		<Dialog
 			open={open}
@@ -52,6 +72,23 @@ export default function ShareModal({
 				</IconButton>
 			</Box>
 			<DialogContent>
+				{hasNativeShare && (
+					<Button
+						variant="contained"
+						fullWidth
+						startIcon={<ShareIcon />}
+						onClick={handleNativeShare}
+						sx={{
+							borderRadius: 3,
+							fontWeight: 700,
+							textTransform: "none",
+							mb: 2,
+							py: 1.2,
+						}}
+					>
+						Bagikan
+					</Button>
+				)}
 				<Box
 					sx={{
 						display: "grid",

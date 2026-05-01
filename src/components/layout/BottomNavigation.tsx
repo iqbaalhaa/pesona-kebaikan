@@ -49,7 +49,7 @@ export default function SimpleBottomNavigation() {
 			ref={ref}
 			className="fixed bottom-0 left-1/2 z-[1100] w-full max-w-[480px] -translate-x-1/2 overflow-hidden bg-white pb-[env(safe-area-inset-bottom)]"
 		>
-			<nav aria-label="Navigasi utama" className="flex h-[72px] items-center justify-around px-2">
+			<nav aria-label="Navigasi utama" className="flex h-[56px] items-center justify-around px-2">
 				{menus.map((menu) => {
 					const active = isActive(pathname, menu.path);
 					const Icon = menu.icon;
@@ -67,7 +67,7 @@ export default function SimpleBottomNavigation() {
 							].join(" ")}
 						>
 							<Icon
-								size={24}
+								size={22}
 								className={`transition-transform duration-150 ${active ? "scale-105 drop-shadow-[0_10px_18px_var(--color-primary-shadow)]" : ""}`}
 							/>
 							<span

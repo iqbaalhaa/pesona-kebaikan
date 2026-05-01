@@ -2,21 +2,20 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import {
 	Box,
 	Button,
 	Container,
-	Grid,
-	TextField,
 	Typography,
 	Paper,
-	InputAdornment,
 	Switch,
 	CircularProgress,
 	Snackbar,
 	Alert,
 	FormControlLabel,
 } from "@mui/material";
+import { Input, Textarea } from "@/components/ui/Input";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import { createDonation } from "@/actions/donation";
@@ -49,10 +48,19 @@ export default function DonationForm({
 }: Props) {
 	const router = useRouter();
 	const theme = useTheme();
+	const { data: session } = useSession();
 	const [amount, setAmount] = React.useState<number | "">("");
 	const [customAmount, setCustomAmount] = React.useState<string>("");
 	const [donorName, setDonorName] = React.useState("");
 	const [donorPhone, setDonorPhone] = React.useState("");
+
+	React.useEffect(() => {
+		if (session?.user) {
+			if (session.user.name && !donorName) setDonorName(session.user.name);
+			const phone = (session.user as any)?.phone;
+			if (phone && !donorPhone) setDonorPhone(phone);
+		}
+	}, [session]);
 	const [message, setMessage] = React.useState("");
 	const [isAnonymous, setIsAnonymous] = React.useState(false);
 	const [loading, setLoading] = React.useState(false);
@@ -179,7 +187,7 @@ export default function DonationForm({
 	};
 
 	return (
-		<Container maxWidth="sm" sx={{ py: 4, pb: 12, position: "relative" }}>
+		<Container maxWidth="sm" sx={{ py: 2, pb: 10, position: "relative" }}>
 			<Script
 				src={
 					process.env.NEXT_PUBLIC_MIDTRANS_IS_PRODUCTION === "true"
@@ -189,252 +197,148 @@ export default function DonationForm({
 				data-client-key={process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY || ""}
 				strategy="afterInteractive"
 			/>
-			<Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
+			<Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
 				<Button
 					onClick={() => router.back()}
 					sx={{
-						minWidth: 44,
-						width: 44,
-						height: 44,
+						minWidth: 36,
+						width: 36,
+						height: 36,
 						borderRadius: "50%",
 						bgcolor: "white",
 						color: "text.primary",
-						boxShadow: "0 10px 24px rgba(2,6,23,0.08)",
+						boxShadow: "0 4px 12px rgba(2,6,23,0.08)",
 						position: "absolute",
 						left: 16,
-						top: 24,
+						top: 14,
 						zIndex: 10,
 						border: "1px solid #e2e8f0",
 						"&:hover": { bgcolor: "#f8fafc" },
 					}}
 				>
-					<ArrowBackIcon />
+					<ArrowBackIcon sx={{ fontSize: 20 }} />
 				</Button>
 				<Typography
-					variant="h6"
 					sx={{
 						fontWeight: 800,
-						lineHeight: 1.2,
+						fontSize: 16,
 						width: "100%",
 						textAlign: "center",
-						letterSpacing: 0.2,
 					}}
 				>
 					Donasi
 				</Typography>
 			</Box>
 
-			<Paper
-				elevation={0}
-				sx={{
-					p: 3,
-					mb: 3,
-					borderRadius: 4,
-					bgcolor: "background.paper",
-					boxShadow: "0 12px 40px rgba(2,6,23,0.08)",
-					border: "1px solid #e6edf7",
-					backgroundImage:
-						"linear-gradient(135deg, rgba(255,255,255,1), rgba(248,250,252,0.9))",
-				}}
-			>
-				<Typography variant="body2" color="text.secondary" gutterBottom>
-					Anda akan berdonasi untuk:
-				</Typography>
-				<Typography variant="subtitle1" fontWeight={800}>
-					{campaignTitle}
-				</Typography>
-			</Paper>
+			<div className="mb-3 border-b border-slate-100 pb-3">
+				<p className="text-[11px] text-slate-400">Donasi untuk</p>
+				<p className="text-[14px] font-bold leading-tight text-foreground line-clamp-2">{campaignTitle}</p>
+			</div>
 
 			{/* Nominal Donasi */}
-			<Box sx={{ mb: 4 }}>
-				<Typography variant="subtitle1" fontWeight={700} gutterBottom>
+			<Box sx={{ mb: 2.5 }}>
+				<Typography sx={{ fontWeight: 700, fontSize: 14, mb: 1 }}>
 					Pilih Nominal Donasi
 				</Typography>
 				<Box
 					sx={{
 						display: "grid",
-						gridTemplateColumns: { xs: "repeat(2, 1fr)", sm: "repeat(3, 1fr)" },
-						gap: 2,
-						mb: 2,
+						gridTemplateColumns: "repeat(3, 1fr)",
+						gap: 1,
+						mb: 1.5,
 					}}
 				>
 					{PRESET_AMOUNTS.map((val) => (
-						<Box key={val}>
-							<Button
-								variant={amount === val ? "contained" : "outlined"}
-								fullWidth
-								onClick={() => handleAmountSelect(val)}
-								sx={{
-									borderColor: amount === val ? "transparent" : "#e2e8f0",
-									color: amount === val ? "white" : "text.primary",
-									boxShadow:
-										amount === val
-											? `0 10px 24px ${alpha(theme.palette.primary.main, 0.35)}`
-											: "none",
-									borderRadius: 3,
-									fontWeight: 700,
-									py: 1.25,
-									backgroundImage:
-										amount === val
-											? `linear-gradient(135deg, ${theme.palette.primary.main}, ${darken(
-													theme.palette.primary.main,
-													0.08,
-												)})`
-											: "none",
-									bgcolor: amount === val ? "primary.main" : "rgba(0,0,0,0.02)",
-									"&:hover": {
-										boxShadow:
-											amount === val
-												? `0 12px 28px ${alpha(
-														theme.palette.primary.main,
-														0.45,
-													)}`
-												: "none",
-										borderColor: "primary.main",
-										bgcolor:
-											amount === val ? "primary.dark" : "rgba(2,6,23,0.04)",
-									},
-								}}
-							>
-								{val.toLocaleString("id-ID")}
-							</Button>
-						</Box>
+						<Button
+							key={val}
+							variant={amount === val ? "contained" : "outlined"}
+							fullWidth
+							onClick={() => handleAmountSelect(val)}
+							sx={{
+								borderColor: amount === val ? "transparent" : "#e2e8f0",
+								color: amount === val ? "white" : "text.primary",
+								boxShadow: "none",
+								borderRadius: 2.5,
+								fontWeight: 700,
+								fontSize: 13,
+								py: 0.8,
+								bgcolor: amount === val ? "primary.main" : "rgba(0,0,0,0.02)",
+								"&:hover": {
+									boxShadow: "none",
+									borderColor: "primary.main",
+									bgcolor: amount === val ? "primary.dark" : "rgba(2,6,23,0.04)",
+								},
+							}}
+						>
+							{val.toLocaleString("id-ID")}
+						</Button>
 					))}
 				</Box>
-				<TextField
-					fullWidth
+				<Input
 					placeholder="Nominal Lainnya"
 					value={customAmount}
 					onChange={handleCustomAmountChange}
-					InputProps={{
-						startAdornment: (
-							<InputAdornment position="start">Rp</InputAdornment>
-						),
-					}}
+					startAdornment={<span>Rp</span>}
 					helperText={`Minimal Rp ${MIN_DONATION.toLocaleString("id-ID")}`}
-					sx={{
-						"& .MuiInputBase-root": {
-							borderRadius: 3,
-							boxShadow: "none",
-							transition: "all .2s ease",
-						},
-						"& .MuiOutlinedInput-root.Mui-focused": {
-							boxShadow: `0 0 0 4px ${alpha(theme.palette.primary.main, 0.15)}`,
-						},
-						"& .MuiInputLabel-root": { fontSize: 14 },
-					}}
 				/>
 			</Box>
 
+			<div className="my-3 h-px bg-slate-100" />
+
 			{/* Data Diri */}
-			<Box sx={{ mb: 4 }}>
-				<Typography variant="subtitle1" fontWeight={700} gutterBottom>
+			<Box sx={{ mb: 2.5 }}>
+				<Typography sx={{ fontWeight: 700, fontSize: 14, mb: 1.5 }}>
 					Data Donatur
 				</Typography>
-				{!isAnonymous && (
-					<>
-						<TextField
-							fullWidth
-							label="Nama Lengkap"
-							value={donorName}
-							onChange={(e) => setDonorName(e.target.value)}
-							sx={{
-								mb: 2,
-								"& .MuiOutlinedInput-root.Mui-focused": {
-									boxShadow: `0 0 0 4px ${alpha(
-										theme.palette.primary.main,
-										0.15,
-									)}`,
-								},
-							}}
-						/>
-						<TextField
-							fullWidth
-							label="Nomor WhatsApp / HP"
-							value={donorPhone}
-							onChange={(e) => setDonorPhone(e.target.value)}
-							sx={{
-								mb: 2,
-								"& .MuiOutlinedInput-root.Mui-focused": {
-									boxShadow: `0 0 0 4px ${alpha(
-										theme.palette.primary.main,
-										0.15,
-									)}`,
-								},
-							}}
-							type="tel"
-						/>
-					</>
-				)}
+				<div className="mb-2.5">
+					<Input
+						placeholder="Nama Lengkap"
+						value={donorName}
+						onChange={(e) => { if (!isAnonymous) setDonorName(e.target.value); }}
+						readOnly={isAnonymous}
+						className={isAnonymous ? "bg-slate-50 text-slate-400" : ""}
+					/>
+				</div>
+				<div className="mb-2.5">
+					<Input
+						placeholder="Nomor WhatsApp / HP"
+						value={donorPhone}
+						onChange={(e) => setDonorPhone(e.target.value)}
+						type="tel"
+					/>
+				</div>
 
 				<FormControlLabel
 					control={
 						<Switch
+							size="small"
 							checked={isAnonymous}
 							onChange={(e) => {
 								setIsAnonymous(e.target.checked);
 								if (e.target.checked) {
 									setDonorName("Hamba Allah");
-									setDonorPhone("000000000000"); // Dummy or handle in backend
 								} else {
 									setDonorName("");
-									setDonorPhone("");
 								}
 							}}
 						/>
 					}
-					label="Sembunyikan nama saya (Hamba Allah)"
+					label={<Typography sx={{ fontSize: 13 }}>Sembunyikan nama saya (Hamba Allah)</Typography>}
 				/>
-				{isAnonymous && (
-					<Typography
-						variant="caption"
-						color="text.secondary"
-						display="block"
-						sx={{ mt: 1 }}
-					>
-						Kami tetap membutuhkan nomor HP untuk mengirimkan konfirmasi donasi,
-						namun nama Anda akan disamarkan di halaman publik.
-					</Typography>
-				)}
-				{isAnonymous && (
-					<TextField
-						fullWidth
-						label="Nomor WhatsApp / HP (Penting)"
-						value={donorPhone}
-						onChange={(e) => setDonorPhone(e.target.value)}
-						sx={{
-							mt: 2,
-							"& .MuiOutlinedInput-root.Mui-focused": {
-								boxShadow: `0 0 0 4px ${alpha(
-									theme.palette.primary.main,
-									0.15,
-								)}`,
-							},
-						}}
-						type="tel"
-					/>
-				)}
 			</Box>
 
+			<div className="my-3 h-px bg-slate-100" />
+
 			{/* Pesan */}
-			<Box sx={{ mb: 4 }}>
-				<Typography variant="subtitle1" fontWeight={700} gutterBottom>
+			<Box sx={{ mb: 2.5 }}>
+				<Typography sx={{ fontWeight: 700, fontSize: 14, mb: 1.5 }}>
 					Doa & Dukungan (Opsional)
 				</Typography>
-				<TextField
-					fullWidth
-					multiline
-					rows={3}
-					placeholder="Tulis doa atau dukungan untuk penggalang dana..."
+				<Textarea
+					rows={2}
+					placeholder="Tulis doa atau dukungan..."
 					value={message}
 					onChange={(e) => setMessage(e.target.value)}
-					sx={{
-						"& .MuiOutlinedInput-root": { borderRadius: 3 },
-						"& .MuiOutlinedInput-root.Mui-focused": {
-							boxShadow: `0 0 0 4px ${alpha(theme.palette.primary.main, 0.15)}`,
-						},
-						"& .MuiInputLabel-root": { fontSize: 14 },
-					}}
 				/>
 			</Box>
 
@@ -442,7 +346,7 @@ export default function DonationForm({
 			<Box
 				sx={{
 					position: "fixed",
-					bottom: { xs: 0, sm: "3px" },
+					bottom: 0,
 					left: { xs: 0, sm: "50%" },
 					transform: { xs: "none", sm: "translateX(-50%)" },
 					width: "100%",
@@ -451,43 +355,36 @@ export default function DonationForm({
 				}}
 			>
 				<Paper
-					elevation={3}
+					elevation={0}
 					sx={{
-						p: 2,
+						px: 2,
+						pt: 1.5,
+						pb: "calc(0.75rem + env(safe-area-inset-bottom))",
 						borderTop: "1px solid #e2e8f0",
 						borderRadius: 0,
-						backgroundImage:
-							"linear-gradient(180deg, rgba(255,255,255,0.95), rgba(248,250,252,0.9))",
-						backdropFilter: "blur(6px)",
+						bgcolor: "white",
 					}}
 				>
 					<Button
 						variant="contained"
 						color="primary"
 						fullWidth
-						size="large"
 						onClick={handleSubmit}
 						disabled={loading}
 						sx={{
-							fontWeight: 800,
+							fontWeight: 700,
+							fontSize: 15,
 							borderRadius: 3,
-							boxShadow: `0 12px 28px ${alpha(theme.palette.primary.main, 0.35)}`,
-							backgroundImage: `linear-gradient(135deg, ${theme.palette.primary.main}, ${darken(
-								theme.palette.primary.main,
-								0.08,
-							)})`,
-							"&:hover": {
-								boxShadow: `0 14px 34px ${alpha(
-									theme.palette.primary.main,
-									0.45,
-								)}`,
-							},
+							py: 1.2,
+							textTransform: "none",
+							boxShadow: "none",
+							"&:hover": { boxShadow: "0 4px 12px rgba(11,169,118,0.3)" },
 						}}
 					>
 						{loading ? (
-							<CircularProgress size={24} color="inherit" />
+							<CircularProgress size={22} color="inherit" />
 						) : (
-							`Lanjut Pembayaran`
+							"Lanjut Pembayaran"
 						)}
 					</Button>
 					<Box
@@ -495,13 +392,13 @@ export default function DonationForm({
 							display: "flex",
 							alignItems: "center",
 							justifyContent: "center",
-							mt: 1.5,
+							mt: 1,
 							color: "text.secondary",
-							gap: 1,
+							gap: 0.5,
 						}}
 					>
-						<LockOutlinedIcon fontSize="small" />
-						<Typography variant="caption">
+						<LockOutlinedIcon sx={{ fontSize: 14 }} />
+						<Typography sx={{ fontSize: 11 }}>
 							Pembayaran aman & terenkripsi. Dilindungi oleh Midtrans.
 						</Typography>
 					</Box>

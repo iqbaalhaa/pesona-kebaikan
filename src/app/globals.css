@@ -69,6 +69,14 @@ body {
 	line-height: 1.6; /* Lebih lega untuk keterbacaan */
 }
 
+/* Search overlay placeholder */
+.search-overlay::placeholder {
+	color: rgba(255, 255, 255, 0.6) !important;
+}
+.search-overlay::-webkit-search-cancel-button {
+	filter: invert(1);
+}
+
 /* Hide scrollbar for Chrome, Safari and Opera */
 .no-scrollbar::-webkit-scrollbar {
 	display: none;
@@ -107,14 +115,6 @@ body {
 	background: rgba(15, 23, 42, 0.06);
 	border-radius: 999px;
 }
-input,
-textarea,
-select,
-.MuiInputBase-input,
-.MuiOutlinedInput-root {
-	background-color: #ffffff !important;
-}
-
 .dark input,
 .dark textarea,
 .dark select,

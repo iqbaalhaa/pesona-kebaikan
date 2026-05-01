@@ -631,6 +631,8 @@ export default function CampaignDetailView({
 				open={openShareModal}
 				onClose={() => setOpenShareModal(false)}
 				handleShareAction={handleShareAction}
+				shareUrl={typeof window !== "undefined" ? window.location.href : ""}
+				shareTitle={data.title}
 			/>
 
 			<FundDetailsModal
@@ -826,6 +828,8 @@ export default function CampaignDetailView({
 				campaignSlug={data.slug || data.id}
 				campaignTitle={data.title}
 				campaignTarget={Number(data.target)}
+				userName={session?.user?.name || ""}
+				userLoggedIn={!!session?.user}
 			/>
 		</Box>
 	);

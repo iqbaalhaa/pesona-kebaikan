@@ -12,10 +12,8 @@ import {
 	Snackbar,
 	InputAdornment,
 	Dialog,
-	DialogTitle,
 	DialogContent,
 	DialogActions,
-	LinearProgress,
 } from "@mui/material";
 import MuiAlert from "@mui/material/Alert";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
@@ -57,10 +55,6 @@ export default function CreateFundraiserClient({
 	const slugCheckRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
 	const [createdSlug, setCreatedSlug] = React.useState<string | null>(null);
-	const [countdown, setCountdown] = React.useState<number | null>(null);
-	const countdownRef = React.useRef<ReturnType<typeof setInterval> | null>(
-		null,
-	);
 
 	const [snack, setSnack] = React.useState<{
 		open: boolean;
@@ -75,29 +69,8 @@ export default function CreateFundraiserClient({
 	React.useEffect(() => {
 		return () => {
 			if (slugCheckRef.current) clearTimeout(slugCheckRef.current);
-			if (countdownRef.current) clearInterval(countdownRef.current);
 		};
 	}, []);
-
-	React.useEffect(() => {
-		if (createdSlug) {
-			setCountdown(10);
-			countdownRef.current = setInterval(() => {
-				setCountdown((prev) => {
-					if (prev === null || prev <= 1) {
-						if (countdownRef.current) clearInterval(countdownRef.current);
-						// Redirect
-						const url = process.env.NEXT_PUBLIC_APP_URL
-							? `${process.env.NEXT_PUBLIC_APP_URL}/donasi/fundraiser/${createdSlug}`
-							: `/donasi/fundraiser/${createdSlug}`;
-						window.location.href = url;
-						return 0;
-					}
-					return prev - 1;
-				});
-			}, 1000);
-		}
-	}, [createdSlug]);
 
 	const localSlugify = (v: string) =>
 		v
@@ -425,111 +398,65 @@ export default function CreateFundraiserClient({
 					open={!!createdSlug}
 					maxWidth="sm"
 					fullWidth
-					PaperProps={{
-						sx: { borderRadius: 3, p: 2, textAlign: "center" },
-					}}
+					PaperProps={{ sx: { borderRadius: 3 } }}
 				>
-					<DialogContent sx={{ pt: 4, pb: 2 }}>
-						<Box
-							sx={{
-								display: "flex",
-								justifyContent: "center",
-								mb: 2,
-							}}
-						>
-							<CheckCircleIcon sx={{ fontSize: 64, color: "#22c55e" }} />
-						</Box>
-						<Typography variant="h5" fontWeight={700} gutterBottom>
-							Fundraiser Berhasil Dibuat!
-						</Typography>
-						<Typography color="text.secondary" sx={{ mb: 3 }}>
-							Selamat! Halaman penggalangan dana Anda sudah siap. Sebarkan
-							kebaikan sekarang juga.
-						</Typography>
-
-						<Paper
-							elevation={0}
-							sx={{
-								p: 2,
-								bgcolor: "#f8fafc",
-								border: "1px solid #e2e8f0",
-								borderRadius: 2,
-								mb: 3,
-							}}
-						>
-							<Typography
-								variant="caption"
-								display="block"
-								color="text.secondary"
-								align="left"
-								gutterBottom
-							>
-								Link Fundraiser Anda:
+					<DialogContent sx={{ pt: 4, pb: 3 }}>
+						<div className="text-center mb-4">
+							<CheckCircleIcon sx={{ fontSize: 56, color: "#22c55e", mb: 1.5 }} />
+							<Typography sx={{ fontWeight: 800, fontSize: 18, mb: 0.5 }}>
+								Fundraising Berhasil Dibuat!
 							</Typography>
-							<Box
-								sx={{
-									display: "flex",
-									alignItems: "center",
-									gap: 1,
-								}}
-							>
-								<Typography
-									sx={{
-										flex: 1,
-										fontSize: 14,
-										fontWeight: 600,
-										color: "#334155",
-										wordBreak: "break-all",
-										textAlign: "left",
-									}}
-								>
-									{previewUrl}
-								</Typography>
-								<Button
-									size="small"
-									startIcon={<ContentCopyIcon />}
-									onClick={() => copyToClipboard(previewUrl)}
-								>
-									Salin
-								</Button>
-							</Box>
-						</Paper>
+							<Typography sx={{ fontSize: 13, color: "text.secondary" }}>
+								Sebarkan ke teman dan keluarga untuk mengumpulkan lebih banyak donasi.
+							</Typography>
+						</div>
 
-						<Box sx={{ width: "100%", mb: 1 }}>
-							<Box
-								sx={{
-									display: "flex",
-									justifyContent: "space-between",
-									mb: 0.5,
-								}}
+						<div className="rounded-xl bg-slate-50 border border-slate-200 p-3 mb-4">
+							<p className="text-[11px] text-slate-400 mb-1">Link fundraising kamu:</p>
+							<p className="text-[13px] text-slate-700 font-medium break-all mb-2">{previewUrl}</p>
+							<button
+								onClick={() => copyToClipboard(previewUrl)}
+								className="flex items-center gap-1.5 text-[13px] font-bold text-primary hover:underline"
 							>
-								<Typography variant="caption" color="text.secondary">
-									Mengalihkan otomatis...
-								</Typography>
-								<Typography variant="caption" fontWeight={700}>
-									{countdown}s
-								</Typography>
-							</Box>
-							<LinearProgress
-								variant="determinate"
-								value={((10 - (countdown || 0)) / 10) * 100}
-								sx={{ borderRadius: 4, height: 6 }}
-							/>
-						</Box>
+								<ContentCopyIcon sx={{ fontSize: 16 }} />
+								Salin Link
+							</button>
+						</div>
+
+						{typeof navigator !== "undefined" && navigator.share && (
+							<Button
+								variant="outlined"
+								fullWidth
+								onClick={async () => {
+									try {
+										await navigator.share({
+											title: "Bantu donasi",
+											text: `Yuk bantu donasi! Setiap kontribusi sangat berarti.`,
+											url: previewUrl,
+										});
+									} catch {}
+								}}
+								sx={{ borderRadius: 3, fontWeight: 700, mb: 2, textTransform: "none" }}
+							>
+								Bagikan
+							</Button>
+						)}
 					</DialogContent>
-					<DialogActions sx={{ justifyContent: "center", pb: 3, px: 3 }}>
+					<DialogActions sx={{ px: 3, pb: 3, flexDirection: "column", gap: 1 }}>
 						<Button
 							variant="contained"
-							color="primary"
 							fullWidth
-							size="large"
-							startIcon={<LaunchIcon />}
-							onClick={() => {
-								if (previewUrl) window.location.href = previewUrl;
-							}}
-							sx={{ borderRadius: 2, fontWeight: 700 }}
+							onClick={() => { if (previewUrl) window.location.href = previewUrl; }}
+							sx={{ borderRadius: 3, fontWeight: 700, textTransform: "none" }}
 						>
-							Buka Fundraiser Sekarang
+							Lihat Halaman Fundraising
+						</Button>
+						<Button
+							fullWidth
+							onClick={() => router.push(`/donasi/${campaignSlug}`)}
+							sx={{ color: "text.secondary", fontWeight: 600, textTransform: "none" }}
+						>
+							Kembali ke Campaign
 						</Button>
 					</DialogActions>
 				</Dialog>

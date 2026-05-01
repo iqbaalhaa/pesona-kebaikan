@@ -66,10 +66,6 @@ export default function SearchDropdown({
 		return () => document.removeEventListener("mousedown", handler);
 	}, []);
 
-	const inputClasses = overlay
-		? "bg-white/14 border-white/28 text-white placeholder:text-white/70 focus:border-primary"
-		: "bg-foreground/4 border-transparent text-foreground placeholder:text-foreground/50 focus:border-primary";
-
 	const dropdownBg = overlay
 		? "bg-[rgba(20,20,20,0.85)] backdrop-blur-xl border border-white/10"
 		: "bg-surface shadow-lg";
@@ -79,8 +75,9 @@ export default function SearchDropdown({
 			<div className="relative">
 				<Search
 					size={18}
-					className={`pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 ${overlay ? "text-white/90" : "text-foreground/40"}`}
+					className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2"
 					strokeWidth={2.5}
+					style={{ color: overlay ? "rgba(255,255,255,0.9)" : "rgba(15,23,42,0.4)" }}
 				/>
 				<input
 					type="search"
@@ -98,7 +95,16 @@ export default function SearchDropdown({
 							setOpen(false);
 						}
 					}}
-					className={`h-10 w-full rounded-xl border pl-10 pr-3 text-[13px] outline-none backdrop-blur-lg transition-colors ${inputClasses}`}
+					className={`h-10 w-full rounded-xl border pl-10 pr-3 text-[13px] outline-none transition-colors ${overlay ? "search-overlay" : ""}`}
+					style={overlay ? {
+						backgroundColor: "rgba(255,255,255,0.15)",
+						borderColor: "rgba(255,255,255,0.25)",
+						color: "#ffffff",
+					} : {
+						backgroundColor: "#ffffff",
+						borderColor: "transparent",
+						color: "var(--foreground)",
+					}}
 				/>
 			</div>
 

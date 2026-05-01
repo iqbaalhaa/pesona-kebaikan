@@ -26,6 +26,7 @@ import VrpanoIcon from "@mui/icons-material/Vrpano";
 import PersonPinIcon from "@mui/icons-material/PersonPin";
 import StarOutlineIcon from "@mui/icons-material/StarOutline";
 import TrendingUpRoundedIcon from "@mui/icons-material/TrendingUpRounded";
+import ViewCarouselIcon from "@mui/icons-material/ViewCarousel";
 
 type MenuItem = {
 	label: string;
@@ -39,6 +40,7 @@ const menus: { title: string; items: MenuItem[] }[] = [
 		items: [
 			{ label: "Dashboard", href: "/admin", icon: <DashboardIcon fontSize="small" /> },
 			{ label: "Carousel", href: "/admin/carousel", icon: <VrpanoIcon fontSize="small" /> },
+			{ label: "Banner", href: "/admin/banner", icon: <ViewCarouselIcon fontSize="small" /> },
 			{ label: "Campaign Pilihan", href: "/admin/campaign-pilihan", icon: <StarOutlineIcon fontSize="small" /> },
 		],
 	},

@@ -5,10 +5,9 @@ import UrgentSection from "@/components/home/UrgentSection";
 import CategoryChips from "@/components/home/CategoryChips";
 import PopularSection from "@/components/home/PopularSection";
 import FeaturedSection from "@/components/home/FeaturedSection";
-import TrustStrip from "@/components/home/TrustStrip";
-import DonationBanner from "@/components/home/DonationBanner";
 import PrayerSection from "@/components/home/PrayerSection";
-import FundraiserCTA from "@/components/home/FundraiserCTA";
+import BannerSection, { BannerItem } from "@/components/home/BannerSection";
+import ExploreSection from "@/components/home/ExploreSection";
 import MiniFooter from "@/components/home/MiniFooter";
 import QuickDonate from "@/components/home/QuickDonate";
 import {
@@ -31,6 +30,7 @@ export default async function Home() {
 		allCampaignsRes,
 		carouselRes,
 		featuredTitleRes,
+		bannerRes,
 	] = await Promise.all([
 		getUrgentCampaigns(10),
 		getPopularCampaigns(10),
@@ -55,6 +55,10 @@ export default async function Home() {
 			},
 		}),
 		prisma.notifyKey.findUnique({ where: { key: "home_featured_title" } }),
+		prisma.banner.findMany({
+			where: { isActive: true },
+			orderBy: { order: "asc" },
+		}),
 	]);
 
 	const urgentCampaigns: Campaign[] = Array.isArray(urgentRes.data)
@@ -88,7 +92,13 @@ export default async function Home() {
 		};
 	});
 
-	// Category chips will handle its own category icons and defaults
+	const bannerItems: BannerItem[] = bannerRes.map((b) => ({
+		id: b.id,
+		image: b.image,
+		title: b.title || undefined,
+		link: b.link || undefined,
+	}));
+
 	const featuredTitle =
 		(featuredTitleRes as any)?.value?.trim() || "Pilihan Pesona Kebaikan";
 
@@ -102,9 +112,8 @@ export default async function Home() {
 			<CategoryChips campaigns={allCampaigns} />
 			<PopularSection campaigns={popularCampaigns} />
 			<PrayerSection prayers={latestDonations} />
-			<TrustStrip />
-			<DonationBanner />
-			<FundraiserCTA />
+			<BannerSection items={bannerItems} />
+			<ExploreSection />
 			<MiniFooter />
 		</Box>
 	);

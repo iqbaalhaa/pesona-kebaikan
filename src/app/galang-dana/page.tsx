@@ -173,12 +173,6 @@ export default function GalangDanaSayaPage() {
 	const theme = useTheme();
 	const { status } = useSession();
 
-	React.useEffect(() => {
-		if (status === "unauthenticated") {
-			router.replace("/auth/login?callbackUrl=/galang-dana");
-		}
-	}, [status, router]);
-
 	const BOTTOM_NAV_H = 64;
 
 	const [tab, setTab] = React.useState<StatusKey>("all");
@@ -262,6 +256,86 @@ export default function GalangDanaSayaPage() {
 		return (
 			<Box sx={{ minHeight: "100dvh", display: "grid", placeItems: "center" }}>
 				<LinearProgress sx={{ width: 120, borderRadius: 99 }} />
+			</Box>
+		);
+	}
+
+	if (status === "unauthenticated") {
+		return (
+			<Box
+				sx={{
+					minHeight: "100dvh",
+					bgcolor: "background.default",
+					display: "flex",
+					flexDirection: "column",
+					pb: `calc(${BOTTOM_NAV_H}px + 24px)`,
+				}}
+			>
+				<Box
+					sx={{
+						flex: 1,
+						display: "flex",
+						flexDirection: "column",
+						alignItems: "center",
+						justifyContent: "center",
+						px: 3,
+						textAlign: "center",
+					}}
+				>
+					<Box
+						sx={{
+							width: 100,
+							height: 100,
+							borderRadius: "50%",
+							background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.15)} 0%, ${alpha(theme.palette.primary.light, 0.1)} 100%)`,
+							display: "grid",
+							placeItems: "center",
+							mb: 3,
+						}}
+					>
+						<FavoriteRoundedIcon sx={{ fontSize: 48, color: "primary.main" }} />
+					</Box>
+
+					<Typography sx={{ fontWeight: 900, fontSize: 22, mb: 1, color: "text.primary" }}>
+						Mulai Berbuat Kebaikan
+					</Typography>
+					<Typography sx={{ fontSize: 14, color: "text.secondary", maxWidth: 300, lineHeight: 1.6, mb: 4 }}>
+						Masuk ke akunmu untuk mulai menggalang dana dan membantu mereka yang membutuhkan.
+					</Typography>
+
+					<Button
+						component={Link}
+						href="/auth/login?callbackUrl=/galang-dana"
+						variant="contained"
+						size="large"
+						sx={{
+							borderRadius: 99,
+							fontWeight: 700,
+							textTransform: "none",
+							px: 5,
+							py: 1.5,
+							fontSize: 15,
+							boxShadow: "0 8px 24px rgba(11, 169, 118, 0.3)",
+						}}
+					>
+						Masuk untuk Berbuat Kebaikan
+					</Button>
+
+					<Button
+						component={Link}
+						href="/auth/register"
+						variant="text"
+						sx={{
+							mt: 1.5,
+							fontWeight: 600,
+							textTransform: "none",
+							color: "text.secondary",
+							fontSize: 13,
+						}}
+					>
+						Belum punya akun? Daftar
+					</Button>
+				</Box>
 			</Box>
 		);
 	}

@@ -4,20 +4,20 @@ import * as React from "react";
 import {
 	Box,
 	Typography,
-	TextField,
 	Button,
-	InputAdornment,
 	Dialog,
 	DialogTitle,
 	DialogContent,
 	DialogActions,
-	LinearProgress,
 	IconButton,
 } from "@mui/material";
+import { Input } from "@/components/ui/Input";
 import MuiAlert from "@mui/material/Alert";
 import Snackbar from "@mui/material/Snackbar";
+import Link from "next/link";
 import CloseIcon from "@mui/icons-material/Close";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import LoginIcon from "@mui/icons-material/Login";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import LaunchIcon from "@mui/icons-material/Launch";
 import { createFundraiser, checkFundraiserSlug } from "@/actions/fundraiser";
@@ -28,6 +28,8 @@ interface CreateFundraiserDialogProps {
 	campaignSlug: string;
 	campaignTitle?: string;
 	campaignTarget?: number;
+	userName?: string;
+	userLoggedIn?: boolean;
 }
 
 function formatIDR(numStr: string) {
@@ -51,6 +53,8 @@ export default function CreateFundraiserDialog({
 	campaignSlug,
 	campaignTitle = "",
 	campaignTarget,
+	userName = "",
+	userLoggedIn = false,
 }: CreateFundraiserDialogProps) {
 	const [loading, setLoading] = React.useState(false);
 	const [title, setTitle] = React.useState("");
@@ -66,8 +70,6 @@ export default function CreateFundraiserDialog({
 	const slugCheckRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
 	const [createdSlug, setCreatedSlug] = React.useState<string | null>(null);
-	const [countdown, setCountdown] = React.useState<number | null>(null);
-	const countdownRef = React.useRef<ReturnType<typeof setInterval> | null>(null);
 
 	const [snack, setSnack] = React.useState<{
 		open: boolean;
@@ -78,15 +80,21 @@ export default function CreateFundraiserDialog({
 	React.useEffect(() => {
 		return () => {
 			if (slugCheckRef.current) clearTimeout(slugCheckRef.current);
-			if (countdownRef.current) clearInterval(countdownRef.current);
 		};
 	}, []);
 
 	React.useEffect(() => {
 		if (open) {
-			const defaultTitle = campaignTitle ? `Fundraiser ${campaignTitle}` : "";
+			const name = userName || "Aku";
+			const defaultTitle = campaignTitle
+				? `${name} Bantu ${campaignTitle}`
+				: `${name} Galang Dana`;
 			setTitle(defaultTitle);
-			setSlugNormalized(defaultTitle ? localSlugify(defaultTitle) : "");
+			const defaultSlug = userName
+				? localSlugify(`${userName}-${campaignSlug}`)
+				: localSlugify(defaultTitle);
+			setSlug(defaultSlug);
+			setSlugNormalized(defaultSlug);
 		} else {
 			setTitle("");
 			setTarget("");
@@ -96,29 +104,8 @@ export default function CreateFundraiserDialog({
 			setSlugAvailable(null);
 			setSlugNormalized("");
 			setCreatedSlug(null);
-			setCountdown(null);
-			if (countdownRef.current) clearInterval(countdownRef.current);
 		}
 	}, [open, campaignTitle]);
-
-	React.useEffect(() => {
-		if (createdSlug) {
-			setCountdown(10);
-			countdownRef.current = setInterval(() => {
-				setCountdown((prev) => {
-					if (prev === null || prev <= 1) {
-						if (countdownRef.current) clearInterval(countdownRef.current);
-						const url = process.env.NEXT_PUBLIC_APP_URL
-							? `${process.env.NEXT_PUBLIC_APP_URL}/donasi/fundraiser/${createdSlug}`
-							: `/donasi/fundraiser/${createdSlug}`;
-						window.location.href = url;
-						return 0;
-					}
-					return prev - 1;
-				});
-			}, 1000);
-		}
-	}, [createdSlug]);
 
 	const copyToClipboard = async (text: string) => {
 		try {
@@ -183,6 +170,10 @@ export default function CreateFundraiserDialog({
 				? `/donasi/fundraiser/${createdSlug}`
 				: "";
 
+	const shareText = createdSlug
+		? `Yuk bantu donasi untuk "${campaignTitle}"! Setiap kontribusi sangat berarti.\n\n${previewUrl}`
+		: "";
+
 	const handleTargetChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const raw = e.target.value.replace(/\D/g, "");
 		if (!raw) {
@@ -240,44 +231,75 @@ export default function CreateFundraiserDialog({
 	};
 
 	if (createdSlug) {
+		const handleNativeShare = async () => {
+			if (navigator.share) {
+				try {
+					await navigator.share({
+						title: `Bantu donasi: ${campaignTitle}`,
+						text: `Yuk bantu donasi untuk "${campaignTitle}"! Setiap kontribusi sangat berarti.`,
+						url: previewUrl,
+					});
+				} catch {}
+			}
+		};
+
+		const hasNativeShare = typeof navigator !== "undefined" && !!navigator.share;
+
 		return (
 			<>
 				<Dialog open={open} fullWidth maxWidth="sm" PaperProps={{ sx: { borderRadius: 3 } }}>
-					<DialogContent sx={{ pt: 4, pb: 2, textAlign: "center" }}>
-						<CheckCircleIcon sx={{ fontSize: 64, color: "#22c55e", mb: 2 }} />
-						<Typography variant="h6" fontWeight={700} gutterBottom>
-							Fundraising Berhasil Dibuat!
-						</Typography>
-						<Typography color="text.secondary" sx={{ fontSize: 14, mb: 3 }}>
-							Halaman penggalangan dana Anda sudah siap. Sebarkan kebaikan sekarang.
-						</Typography>
-
-						<Box sx={{ p: 1.5, bgcolor: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 2, mb: 3 }}>
-							<Typography sx={{ fontSize: 13, color: "#334155", wordBreak: "break-all", mb: 1 }}>
-								{previewUrl}
+					<DialogContent sx={{ pt: 4, pb: 3 }}>
+						<div className="text-center mb-4">
+							<CheckCircleIcon sx={{ fontSize: 56, color: "#22c55e", mb: 1.5 }} />
+							<Typography sx={{ fontWeight: 800, fontSize: 18, mb: 0.5 }}>
+								Fundraising Berhasil Dibuat!
 							</Typography>
-							<Button size="small" startIcon={<ContentCopyIcon />} onClick={() => copyToClipboard(previewUrl)}>
-								Salin Link
-							</Button>
-						</Box>
+							<Typography sx={{ fontSize: 13, color: "text.secondary" }}>
+								Sebarkan ke teman dan keluarga untuk mengumpulkan lebih banyak donasi.
+							</Typography>
+						</div>
 
-						<Box sx={{ mb: 1 }}>
-							<Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}>
-								<Typography variant="caption" color="text.secondary">Mengalihkan otomatis...</Typography>
-								<Typography variant="caption" fontWeight={700}>{countdown}s</Typography>
-							</Box>
-							<LinearProgress variant="determinate" value={((10 - (countdown || 0)) / 10) * 100} sx={{ borderRadius: 4, height: 6 }} />
-						</Box>
+						<div className="rounded-xl bg-slate-50 border border-slate-200 p-3 mb-4">
+							<p className="text-[11px] text-slate-400 mb-1">Link fundraising kamu:</p>
+							<p className="text-[13px] text-slate-700 font-medium break-all mb-2">{previewUrl}</p>
+							<div className="flex gap-2">
+								<button
+									onClick={() => copyToClipboard(previewUrl)}
+									className="flex items-center gap-1.5 text-[13px] font-bold text-primary hover:underline"
+								>
+									<ContentCopyIcon sx={{ fontSize: 16 }} />
+									Salin Link
+								</button>
+							</div>
+						</div>
+
+						{hasNativeShare && (
+							<Button
+								variant="outlined"
+								fullWidth
+								onClick={handleNativeShare}
+								sx={{ borderRadius: 3, fontWeight: 700, mb: 2, textTransform: "none" }}
+								startIcon={<LaunchIcon />}
+							>
+								Bagikan
+							</Button>
+						)}
 					</DialogContent>
-					<DialogActions sx={{ justifyContent: "center", pb: 3, px: 3 }}>
+					<DialogActions sx={{ px: 3, pb: 3, flexDirection: "column", gap: 1 }}>
 						<Button
 							variant="contained"
 							fullWidth
-							startIcon={<LaunchIcon />}
 							onClick={() => { if (previewUrl) window.location.href = previewUrl; }}
-							sx={{ borderRadius: 2, fontWeight: 700 }}
+							sx={{ borderRadius: 3, fontWeight: 700, textTransform: "none" }}
 						>
-							Buka Fundraising Sekarang
+							Lihat Halaman Fundraising
+						</Button>
+						<Button
+							fullWidth
+							onClick={onClose}
+							sx={{ color: "text.secondary", fontWeight: 600, textTransform: "none" }}
+						>
+							Tutup
 						</Button>
 					</DialogActions>
 				</Dialog>
@@ -285,6 +307,34 @@ export default function CreateFundraiserDialog({
 					<MuiAlert severity={snack.type} onClose={() => setSnack((s) => ({ ...s, open: false }))} variant="filled">{snack.msg}</MuiAlert>
 				</Snackbar>
 			</>
+		);
+	}
+
+	if (!userLoggedIn) {
+		return (
+			<Dialog open={open} onClose={onClose} fullWidth maxWidth="sm" PaperProps={{ sx: { borderRadius: 3 } }}>
+				<DialogContent sx={{ pt: 4, pb: 2, textAlign: "center" }}>
+					<LoginIcon sx={{ fontSize: 48, color: "primary.main", mb: 2 }} />
+					<Typography sx={{ fontWeight: 800, fontSize: 18, mb: 1 }}>
+						Masuk untuk Membuat Fundraising
+					</Typography>
+					<Typography sx={{ fontSize: 13, color: "text.secondary", mb: 3 }}>
+						Kamu perlu masuk terlebih dahulu agar bisa membuat halaman fundraising dengan link unikmu.
+					</Typography>
+					<Button
+						component={Link}
+						href={`/auth/login?callbackUrl=/donasi/${campaignSlug}`}
+						variant="contained"
+						fullWidth
+						sx={{ borderRadius: 2, fontWeight: 700, mb: 1 }}
+					>
+						Masuk Sekarang
+					</Button>
+					<Button onClick={onClose} fullWidth sx={{ color: "text.secondary" }}>
+						Nanti Saja
+					</Button>
+				</DialogContent>
+			</Dialog>
 		);
 	}
 
@@ -312,9 +362,10 @@ export default function CreateFundraiserDialog({
 						</Box>
 					</Box>
 
-					<Box component="form" id="create-fundraiser-form" onSubmit={handleSubmit} sx={{ display: "grid", gap: 2 }}>
-						<TextField
+					<form id="create-fundraiser-form" onSubmit={handleSubmit} className="flex flex-col gap-3">
+						<Input
 							label="Judul Fundraising"
+							placeholder="Contoh: Aku Bantu Kampanye Ini"
 							value={title}
 							onChange={(e) => {
 								setTitle(e.target.value);
@@ -323,28 +374,32 @@ export default function CreateFundraiserDialog({
 								setSlugAvailable(null);
 							}}
 							required
-							fullWidth
-							size="small"
 						/>
 
-
-						<TextField
+						<Input
 							label="Target Dana"
+							placeholder="Nominal target"
 							value={targetStr}
 							onChange={handleTargetChange}
 							required
-							fullWidth
-							size="small"
-							error={!!targetError}
+							startAdornment={<span>Rp</span>}
+							error={targetError || undefined}
 							helperText={
-								targetError ||
-								(campaignTarget
-									? `Maksimal: Rp ${formatIDR(campaignTarget.toString())}`
-									: "Minimal Rp 10.000")
+								!targetError
+									? campaignTarget
+										? `Maksimal: Rp ${formatIDR(campaignTarget.toString())}`
+										: "Minimal Rp 10.000"
+									: undefined
 							}
-							InputProps={{ startAdornment: <InputAdornment position="start">Rp</InputAdornment> }}
 						/>
-					</Box>
+
+						{liveUrl && (
+							<div className="rounded-lg bg-slate-50 px-3 py-2">
+								<p className="text-[11px] text-slate-400 mb-0.5">Link fundraising kamu:</p>
+								<p className="text-[12px] text-slate-600 break-all">{liveUrl}</p>
+							</div>
+						)}
+					</form>
 				</DialogContent>
 				<DialogActions sx={{ px: 3, pb: 3 }}>
 					<Button onClick={onClose} sx={{ color: "text.secondary", fontWeight: 600 }} disabled={loading}>
@@ -357,7 +412,7 @@ export default function CreateFundraiserDialog({
 						disabled={!canSubmit}
 						sx={{ borderRadius: 2, fontWeight: 800 }}
 					>
-						{loading ? "Membuat..." : slugChecking ? "Memeriksa slug..." : "Buat Fundraising"}
+						{loading ? "Membuat..." : slugChecking ? "Memeriksa..." : "Buat Fundraising"}
 					</Button>
 				</DialogActions>
 			</Dialog>
