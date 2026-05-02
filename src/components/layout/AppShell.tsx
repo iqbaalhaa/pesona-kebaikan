@@ -11,6 +11,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 	const isAdmin = pathname.startsWith("/admin");
 	const isAuth = pathname.startsWith("/auth");
 	const isDonasiDetail = pathname.startsWith("/donasi/");
+	const isBlogDetail = /^\/blog\/[^/]+$/.test(pathname);
 	const isFundraiserGuide = pathname.startsWith("/panduan-fundraiser");
 	const isIndependentScreen =
 		pathname === "/donasi" ||
@@ -24,7 +25,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 	const isGalangDanaBuat = pathname === "/galang-dana/buat";
 	const isGalangDanaKategori = pathname === "/galang-dana/kategori";
 	const shouldHideNav =
-		isAuth || isDonasiDetail || isGalangDanaBuat || isGalangDanaKategori || isFundraiserGuide;
+		isAuth || isDonasiDetail || isBlogDetail || isGalangDanaBuat || isGalangDanaKategori || isFundraiserGuide;
 	const shouldHideAppBar = shouldHideNav || isIndependentScreen;
 
 	const [scrolled, setScrolled] = React.useState(false);

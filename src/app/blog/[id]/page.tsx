@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Metadata } from "next";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, ChevronRight, ArrowLeft } from "lucide-react";
 import { FacebookIcon, InstagramIcon, TwitterIcon, WhatsAppIcon } from "@/components/ui/SocialIcons";
 import { blogService } from "@/services/blogService";
 import { CopyLinkButton } from "@/components/blog/CopyLinkButton";
@@ -66,7 +66,18 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function BlogDetailPage({ params }: Props) {
 	const resolvedParams = await params;
-	const blog = await blogService.getBlogById(resolvedParams.id);
+	const [blog, allBlogsRes] = await Promise.all([
+		blogService.getBlogById(resolvedParams.id),
+		blogService.getBlogs({ page: 1, limit: 50 }),
+	]);
+
+	const allBlogs = allBlogsRes.data || [];
+	const currentIdx = allBlogs.findIndex((b: any) => b.id === resolvedParams.id);
+	const prevBlog = currentIdx > 0 ? allBlogs[currentIdx - 1] : null;
+	const nextBlog = currentIdx < allBlogs.length - 1 ? allBlogs[currentIdx + 1] : null;
+	const relatedBlogs = allBlogs
+		.filter((b: any) => b.id !== resolvedParams.id && b.categoryId === blog?.categoryId)
+		.slice(0, 3);
 
 	if (!blog) {
 		return (
@@ -149,28 +160,27 @@ export default async function BlogDetailPage({ params }: Props) {
 	];
 
 	return (
-		<div className="mx-auto max-w-[800px] px-2 pb-4 pt-2.5">
+		<div className="mx-auto max-w-[800px] px-4 pb-6 pt-3">
 			<script
 				type="application/ld+json"
 				dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
 			/>
 
-			<div className="mb-2 flex items-center justify-between">
+			<div className="mb-3">
 				<Link
 					href="/blog"
-					className="inline-flex items-center gap-1 text-sm font-extrabold text-primary"
+					className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition-colors hover:bg-slate-50"
 				>
-					<ChevronLeft size={16} />
-					Kembali
+					<ArrowLeft size={18} />
 				</Link>
 			</div>
 
 			<div className="flex flex-col gap-1">
-				<div className="flex flex-row items-center gap-1">
-					<span className="rounded bg-foreground/8 px-2 py-0.5 text-xs font-bold">
+				<div className="flex flex-row items-center gap-1.5">
+					<span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-bold text-primary">
 						{blog.category?.name || "Uncategorized"}
 					</span>
-					<span className="text-xs font-extrabold text-foreground/55">
+					<span className="text-xs text-slate-400">
 						{new Date(blog.createdAt).toLocaleDateString("id-ID", {
 							day: "2-digit",
 							month: "short",
@@ -178,7 +188,7 @@ export default async function BlogDetailPage({ params }: Props) {
 						})}
 					</span>
 				</div>
-				<h1 className="text-[22px] font-black leading-tight text-foreground md:text-[32px]">
+				<h1 className="mt-1 text-[20px] font-black leading-tight text-foreground md:text-[28px]">
 					{blog.title}
 				</h1>
 			</div>
@@ -230,6 +240,69 @@ export default async function BlogDetailPage({ params }: Props) {
 					<CopyLinkButton url={postUrl} />
 				</div>
 			</div>
+
+			{/* Prev / Next */}
+			{(prevBlog || nextBlog) && (
+				<div className="mt-6 grid grid-cols-2 gap-3">
+					{prevBlog ? (
+						<Link href={`/blog/${prevBlog.id}`} className="group flex flex-col gap-1 rounded-xl border border-slate-100 bg-white p-3 transition-colors hover:border-primary/30">
+							<span className="flex items-center gap-1 text-[11px] font-bold text-slate-400">
+								<ChevronLeft size={14} /> Sebelumnya
+							</span>
+							<span className="text-[13px] font-bold leading-tight text-slate-700 line-clamp-2 group-hover:text-primary">
+								{prevBlog.title}
+							</span>
+						</Link>
+					) : <div />}
+					{nextBlog ? (
+						<Link href={`/blog/${nextBlog.id}`} className="group flex flex-col items-end gap-1 rounded-xl border border-slate-100 bg-white p-3 text-right transition-colors hover:border-primary/30">
+							<span className="flex items-center gap-1 text-[11px] font-bold text-slate-400">
+								Berikutnya <ChevronRight size={14} />
+							</span>
+							<span className="text-[13px] font-bold leading-tight text-slate-700 line-clamp-2 group-hover:text-primary">
+								{nextBlog.title}
+							</span>
+						</Link>
+					) : <div />}
+				</div>
+			)}
+
+			{/* Related Articles */}
+			{relatedBlogs.length > 0 && (
+				<div className="mt-6">
+					<h3 className="mb-3 text-[15px] font-black text-foreground">Artikel Terkait</h3>
+					<div className="flex flex-col gap-3">
+						{relatedBlogs.map((rb: any) => {
+							const rbCover = rb.heroImage || rb.gallery?.[0]?.url || "/defaultimg.webp";
+							return (
+								<Link
+									key={rb.id}
+									href={`/blog/${rb.id}`}
+									className="flex gap-3 rounded-xl border border-slate-100 bg-white p-2.5 transition-colors hover:border-primary/30"
+								>
+									<img
+										src={rbCover}
+										alt={rb.title}
+										className="h-16 w-16 shrink-0 rounded-lg object-cover"
+									/>
+									<div className="min-w-0 flex-1">
+										<p className="text-[13px] font-bold leading-tight text-slate-800 line-clamp-2">
+											{rb.title}
+										</p>
+										<p className="mt-1 text-[11px] text-slate-400">
+											{new Date(rb.createdAt).toLocaleDateString("id-ID", {
+												day: "2-digit",
+												month: "short",
+												year: "numeric",
+											})}
+										</p>
+									</div>
+								</Link>
+							);
+						})}
+					</div>
+				</div>
+			)}
 		</div>
 	);
 }

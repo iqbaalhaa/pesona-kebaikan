@@ -11,7 +11,6 @@ import {
 	IconButton,
 	Stack,
 	Divider,
-	TextField,
 	Button,
 	RadioGroup,
 	FormControlLabel,
@@ -21,9 +20,10 @@ import {
 	Snackbar,
 	Alert,
 	Chip,
-	InputAdornment,
 	ButtonBase,
 } from "@mui/material";
+
+import { Input, Textarea } from "@/components/ui/Input";
 
 import ArrowBackIosNewRoundedIcon from "@mui/icons-material/ArrowBackIosNewRounded";
 import ChevronLeftRoundedIcon from "@mui/icons-material/ChevronLeftRounded";
@@ -1224,13 +1224,10 @@ function BuatGalangDanaPageContent() {
 										/>
 										{who === "other" && (
 											<Box sx={{ px: 1.5, pb: 1.5, mt: -0.5 }}>
-												<TextField
-													size="small"
-													fullWidth
+												<Input
 													placeholder="Sebutkan hubungan dengan pasien"
 													value={whoOther}
 													onChange={(e) => setWhoOther(e.target.value)}
-													sx={{ "& .MuiInputBase-input": { fontSize: 13.5 } }}
 												/>
 											</Box>
 										)}
@@ -1244,15 +1241,9 @@ function BuatGalangDanaPageContent() {
 										>
 											Nama Rumah Sakit <span style={{ color: "red" }}>*</span>
 										</Typography>
-										<TextField
-											size="small"
-											sx={{
-												"& .MuiInputBase-input": { fontSize: 13.5 },
-												"& .MuiInputLabel-root": { fontSize: 13.5 },
-											}}
+										<Input
 											value={hospital}
 											onChange={(e) => setHospital(e.target.value)}
-											fullWidth
 											placeholder="Masukkan nama rumah sakit"
 										/>
 									</Box>
@@ -1267,29 +1258,17 @@ function BuatGalangDanaPageContent() {
 										sx={{ color: "text.secondary", fontSize: 12.5, mb: 1 }}
 									></Typography>
 
-									<TextField
-										size="small"
-										sx={{
-											"& .MuiInputBase-input": { fontSize: 13.5 },
-											"& .MuiInputLabel-root": { fontSize: 13.5 },
-										}}
+									<Input
 										value={phone}
 										onChange={(e) =>
 											setPhone(onlyDigits(e.target.value).slice(0, 15))
 										}
-										fullWidth
 										placeholder="Pastikan nomor aktif memiliki WA"
 										inputMode="numeric"
-										error={phone.length > 0 && phone.length < 10}
-										helperText={
-											phone.length > 0 && phone.length < 10 ? (
-												<Typography
-													component="span"
-													sx={{ fontSize: 11, color: "error.main" }}
-												>
-													Nomor ponsel belum lengkap (minimal 10 digit)
-												</Typography>
-											) : null
+										error={
+											phone.length > 0 && phone.length < 10
+												? "Nomor ponsel belum lengkap (minimal 10 digit)"
+												: undefined
 										}
 									/>
 								</Box>
@@ -1304,52 +1283,21 @@ function BuatGalangDanaPageContent() {
 								</Typography>
 
 								<Stack spacing={1.25}>
-									<TextField
-										size="small"
-										sx={{
-											"& .MuiInputBase-input": { fontSize: 13.5 },
-											"& .MuiInputLabel-root": { fontSize: 13.5 },
-										}}
-										label={
-											<>
-												Nama pasien <span style={{ color: "red" }}>*</span>
-											</>
-										}
+									<Input
+										placeholder="Nama pasien *"
 										value={patientName}
 										onChange={(e) => setPatientName(e.target.value)}
-										fullWidth
 									/>
-									<TextField
-										size="small"
-										sx={{
-											"& .MuiInputBase-input": { fontSize: 13.5 },
-											"& .MuiInputLabel-root": { fontSize: 13.5 },
-										}}
-										label={
-											<>
-												Usia pasien <span style={{ color: "red" }}>*</span>
-											</>
-										}
+									<Input
+										placeholder="Usia pasien *"
 										value={patientAge}
 										onChange={(e) => setPatientAge(onlyDigits(e.target.value))}
 										inputMode="numeric"
-										fullWidth
 									/>
-									<TextField
-										size="small"
-										sx={{
-											"& .MuiInputBase-input": { fontSize: 13.5 },
-											"& .MuiInputLabel-root": { fontSize: 13.5 },
-										}}
-										label={
-											<>
-												Domisili pasien (kota/kab){" "}
-												<span style={{ color: "red" }}>*</span>
-											</>
-										}
+									<Input
+										placeholder="Domisili pasien (kota/kab) *"
 										value={patientCity}
 										onChange={(e) => setPatientCity(e.target.value)}
-										fullWidth
 									/>
 
 									<Paper variant="outlined" sx={{ borderRadius: 2, p: 1 }}>
@@ -1425,15 +1373,9 @@ function BuatGalangDanaPageContent() {
 										>
 											Nama Rumah Sakit <span style={{ color: "red" }}>*</span>
 										</Typography>
-										<TextField
-											size="small"
-											sx={{
-												"& .MuiInputBase-input": { fontSize: 13.5 },
-												"& .MuiInputLabel-root": { fontSize: 13.5 },
-											}}
+										<Input
 											value={hospital}
 											onChange={(e) => setHospital(e.target.value)}
-											fullWidth
 											placeholder="Masukkan nama rumah sakit"
 										/>
 									</Box>
@@ -1444,23 +1386,15 @@ function BuatGalangDanaPageContent() {
 										Upaya pengobatan yang sudah atau sedang dilakukan{" "}
 										<span style={{ color: "red" }}>*</span>
 									</Typography>
-									<TextField
-										size="small"
-										sx={{
-											"& .MuiInputBase-input": { fontSize: 13.5 },
-											"& .MuiInputLabel-root": { fontSize: 13.5 },
-										}}
+									<Textarea
 										value={treatment}
 										onChange={(e) => setTreatment(e.target.value)}
-										fullWidth
-										multiline
-										minRows={4}
+										rows={4}
 										placeholder="Jelaskan secara lengkap upaya apa yang dilakukan dan tempat dilakukan..."
-										error={treatment.length > 0 && treatment.length < 55}
-										helperText={
+										error={
 											treatment.length > 0 && treatment.length < 55
 												? `Minimal 55 karakter (${treatment.length}/55)`
-												: ""
+												: undefined
 										}
 									/>
 								</Box>
@@ -1558,22 +1492,12 @@ function BuatGalangDanaPageContent() {
 									<span style={{ color: "red" }}>*</span>
 								</Typography>
 
-								<TextField
-									size="small"
-									sx={{
-										"& .MuiInputBase-input": { fontSize: 13.5 },
-										"& .MuiInputLabel-root": { fontSize: 13.5 },
-									}}
+								<Input
 									value={formatIDR(target)}
 									onChange={(e) => setTarget(e.target.value)}
-									fullWidth
 									placeholder="Masukkan jumlah kebutuhan biaya"
 									inputMode="numeric"
-									InputProps={{
-										startAdornment: (
-											<InputAdornment position="start">Rp</InputAdornment>
-										),
-									}}
+									startAdornment={<span>Rp</span>}
 								/>
 
 								<Box sx={{ mt: 2 }}>
@@ -1646,23 +1570,15 @@ function BuatGalangDanaPageContent() {
 										Isi rincian penggunaan dana{" "}
 										<span style={{ color: "red" }}>*</span>
 									</Typography>
-									<TextField
-										size="small"
-										sx={{
-											"& .MuiInputBase-input": { fontSize: 13.5 },
-											"& .MuiInputLabel-root": { fontSize: 13.5 },
-										}}
+									<Textarea
 										value={usage}
 										onChange={(e) => setUsage(e.target.value)}
-										fullWidth
-										multiline
-										minRows={4}
+										rows={4}
 										placeholder="Contoh: vitamin Rp2.000.000, rawat inap 10 hari Rp5.000.000, operasi Rp20.000.000"
-										error={usage.length > 0 && usage.trim().length < 55}
-										helperText={
+										error={
 											usage.length > 0 && usage.trim().length < 55
 												? `Minimal 55 karakter (${usage.trim().length}/55)`
-												: ""
+												: undefined
 										}
 									/>
 								</Box>
@@ -1724,12 +1640,7 @@ function BuatGalangDanaPageContent() {
 								</Typography>
 
 								<Stack spacing={1.25}>
-									<TextField
-										size="small"
-										sx={{
-											"& .MuiInputBase-input": { fontSize: 13.5 },
-											"& .MuiInputLabel-root": { fontSize: 13.5 },
-										}}
+									<Input
 										value={title}
 										onChange={(e) => {
 											const value = e.target.value.slice(0, 55);
@@ -1740,7 +1651,6 @@ function BuatGalangDanaPageContent() {
 												setSlugError("");
 											}
 										}}
-										fullWidth
 										placeholder="Contoh: Bantu Abi melawan kanker hati"
 										helperText={`${title.length}/55`}
 									/>
@@ -1752,12 +1662,7 @@ function BuatGalangDanaPageContent() {
 											Tentukan link untuk galang dana ini{" "}
 											<span style={{ color: "red" }}>*</span>
 										</Typography>
-										<TextField
-											size="small"
-											sx={{
-												"& .MuiInputBase-input": { fontSize: 13.5 },
-												"& .MuiInputLabel-root": { fontSize: 13.5 },
-											}}
+										<Input
 											value={slug}
 											onChange={(e) => {
 												setSlugTouched(true);
@@ -1801,15 +1706,15 @@ function BuatGalangDanaPageContent() {
 													setSlugChecking(false);
 												}
 											}}
-											error={!!slugError}
+											error={slugError || undefined}
 											helperText={
-												slugError ||
-												(slugChecking
-													? "Memeriksa ketersediaan URL..."
-													: "contoh: bantudolawan...")
+												!slugError
+													? (slugChecking
+														? "Memeriksa ketersediaan URL..."
+														: "contoh: bantudolawan...")
+													: undefined
 											}
-											fullWidth
-											inputProps={{ maxLength: 60 }}
+											maxLength={60}
 											placeholder="contoh: bantudolawan..."
 										/>
 										{!slugError && !slugChecking && slug && slugAvailable && (
@@ -1940,12 +1845,10 @@ function BuatGalangDanaPageContent() {
 											Nama kamu sesuai KTP{" "}
 											<span style={{ color: "red" }}>*</span>
 										</Typography>
-										<TextField
-											size="small"
-											sx={{ "& .MuiInputBase-input": { fontSize: 13.5 } }}
+										<Input
 											value={ktpName}
 											onChange={(e) => setKtpName(e.target.value)}
-											fullWidth
+											placeholder="Nama sesuai KTP"
 										/>
 									</Box>
 
@@ -1959,25 +1862,17 @@ function BuatGalangDanaPageContent() {
 										>
 											Seluruh notifikasi akan dikirim melalui nomor ini
 										</Typography>
-										<TextField
-											size="small"
-											sx={{ "& .MuiInputBase-input": { fontSize: 13.5 } }}
+										<Input
 											value={phoneOther}
 											onChange={(e) =>
 												setPhoneOther(onlyDigits(e.target.value).slice(0, 15))
 											}
-											fullWidth
 											inputMode="numeric"
-											error={phoneOther.length > 0 && phoneOther.length < 10}
-											helperText={
-												phoneOther.length > 0 && phoneOther.length < 10 ? (
-													<Typography
-														component="span"
-														sx={{ fontSize: 11, color: "error.main" }}
-													>
-														Nomor ponsel belum lengkap (minimal 10 digit)
-													</Typography>
-												) : null
+											placeholder="Masukkan no. ponsel"
+											error={
+												phoneOther.length > 0 && phoneOther.length < 10
+													? "Nomor ponsel belum lengkap (minimal 10 digit)"
+													: undefined
 											}
 										/>
 									</Box>
@@ -1987,12 +1882,9 @@ function BuatGalangDanaPageContent() {
 											Pekerjaan kamu saat ini{" "}
 											<span style={{ color: "red" }}>*</span>
 										</Typography>
-										<TextField
-											size="small"
-											sx={{ "& .MuiInputBase-input": { fontSize: 13.5 } }}
+										<Input
 											value={job}
 											onChange={(e) => setJob(e.target.value)}
-											fullWidth
 											placeholder="Contoh: Karyawan swasta, Pelajar"
 										/>
 									</Box>
@@ -2002,12 +1894,9 @@ function BuatGalangDanaPageContent() {
 											Nama sekolah/tempat kerja{" "}
 											<span style={{ color: "red" }}>*</span>
 										</Typography>
-										<TextField
-											size="small"
-											sx={{ "& .MuiInputBase-input": { fontSize: 13.5 } }}
+										<Input
 											value={workplace}
 											onChange={(e) => setWorkplace(e.target.value)}
-											fullWidth
 											placeholder="Masukkan nama sekolah/tempat kerja"
 										/>
 									</Box>
@@ -2072,17 +1961,13 @@ function BuatGalangDanaPageContent() {
 										</Box>
 
 										{soc ? (
-											<TextField
-												size="small"
-												sx={{
-													mt: 1,
-													"& .MuiInputBase-input": { fontSize: 13.5 },
-												}}
-												value={socHandle}
-												onChange={(e) => setSocHandle(e.target.value)}
-												fullWidth
-												placeholder={`Link/username ${soc}`}
-											/>
+											<div className="mt-2">
+												<Input
+													value={socHandle}
+													onChange={(e) => setSocHandle(e.target.value)}
+													placeholder={`Link/username ${soc}`}
+												/>
+											</div>
 										) : null}
 									</Box>
 								</Stack>
@@ -2098,27 +1983,15 @@ function BuatGalangDanaPageContent() {
 											Nama penerima manfaat{" "}
 											<span style={{ color: "red" }}>*</span>
 										</Typography>
-										<TextField
-											size="small"
-											sx={{ "& .MuiInputBase-input": { fontSize: 13.5 } }}
+										<Input
 											value={receiverName}
 											onChange={(e) => setReceiverName(e.target.value)}
-											fullWidth
 											placeholder="Contoh: Ahmad Fauzi, Ibu Siti, Anak-anak Panti Harapan"
 											error={
 												receiverName.length > 0 &&
 												receiverName.trim().length < 3
-											}
-											helperText={
-												receiverName.length > 0 &&
-												receiverName.trim().length < 3 ? (
-													<Typography
-														component="span"
-														sx={{ fontSize: 11, color: "error.main" }}
-													>
-														Minimal 3 karakter
-													</Typography>
-												) : null
+													? "Minimal 3 karakter"
+													: undefined
 											}
 										/>
 									</Box>
@@ -2127,23 +2000,14 @@ function BuatGalangDanaPageContent() {
 										<Typography sx={{ fontWeight: 600, fontSize: 14, mb: 0.6 }}>
 											Tujuan galang dana <span style={{ color: "red" }}>*</span>
 										</Typography>
-										<TextField
-											size="small"
-											sx={{ "& .MuiInputBase-input": { fontSize: 13.5 } }}
+										<Input
 											value={goal}
 											onChange={(e) => setGoal(e.target.value)}
-											fullWidth
 											placeholder="Contoh: Bantuan pendidikan, santunan anak yatim"
-											error={goal.length > 0 && goal.trim().length < 10}
-											helperText={
-												goal.length > 0 && goal.trim().length < 10 ? (
-													<Typography
-														component="span"
-														sx={{ fontSize: 11, color: "error.main" }}
-													>
-														Minimal 10 karakter
-													</Typography>
-												) : null
+											error={
+												goal.length > 0 && goal.trim().length < 10
+													? "Minimal 10 karakter"
+													: undefined
 											}
 										/>
 									</Box>
@@ -2152,25 +2016,15 @@ function BuatGalangDanaPageContent() {
 										<Typography sx={{ fontWeight: 600, fontSize: 14, mb: 0.6 }}>
 											Lokasi <span style={{ color: "red" }}>*</span>
 										</Typography>
-										<TextField
-											size="small"
-											sx={{ "& .MuiInputBase-input": { fontSize: 13.5 } }}
+										<Textarea
 											value={location}
 											onChange={(e) => setLocation(e.target.value)}
-											fullWidth
-											multiline
-											minRows={2}
+											rows={2}
 											placeholder="Contoh: Kelurahan..., Kecamatan..., Kota/Kab..."
-											error={location.length > 0 && location.trim().length < 8}
-											helperText={
-												location.length > 0 && location.trim().length < 8 ? (
-													<Typography
-														component="span"
-														sx={{ fontSize: 11, color: "error.main" }}
-													>
-														Minimal 8 karakter
-													</Typography>
-												) : null
+											error={
+												location.length > 0 && location.trim().length < 8
+													? "Minimal 8 karakter"
+													: undefined
 											}
 										/>
 									</Box>
@@ -2180,12 +2034,9 @@ function BuatGalangDanaPageContent() {
 											Jumlah penerima manfaat (orang){" "}
 											<span style={{ color: "rgba(15,23,42,.55)" }}>(opsional)</span>
 										</Typography>
-										<TextField
-											size="small"
-											sx={{ "& .MuiInputBase-input": { fontSize: 13.5 } }}
+										<Input
 											value={beneficiaries}
 											onChange={(e) => setBeneficiaries(onlyDigits(e.target.value))}
-											fullWidth
 											inputMode="numeric"
 											placeholder="Contoh: 100"
 										/>
@@ -2202,22 +2053,12 @@ function BuatGalangDanaPageContent() {
 									<span style={{ color: "red" }}>*</span>
 								</Typography>
 
-								<TextField
-									size="small"
-									sx={{
-										"& .MuiInputBase-input": { fontSize: 13.5 },
-										"& .MuiInputLabel-root": { fontSize: 13.5 },
-									}}
+								<Input
 									value={formatIDR(targetOther)}
 									onChange={(e) => setTargetOther(e.target.value)}
-									fullWidth
 									placeholder="Masukkan jumlah kebutuhan biaya"
 									inputMode="numeric"
-									InputProps={{
-										startAdornment: (
-											<InputAdornment position="start">Rp</InputAdornment>
-										),
-									}}
+									startAdornment={<span>Rp</span>}
 								/>
 
 								<Box sx={{ mt: 2 }}>
@@ -2290,25 +2131,15 @@ function BuatGalangDanaPageContent() {
 										Isi rincian penggunaan dana{" "}
 										<span style={{ color: "red" }}>*</span>
 									</Typography>
-									<TextField
-										size="small"
-										sx={{
-											"& .MuiInputBase-input": { fontSize: 13.5 },
-											"& .MuiInputLabel-root": { fontSize: 13.5 },
-										}}
+									<Textarea
 										value={usageOther}
 										onChange={(e) => setUsageOther(e.target.value)}
-										fullWidth
-										multiline
-										minRows={4}
+										rows={4}
 										placeholder="Contoh: biaya bahan bangunan Rp2.000.000, biaya tukang Rp10.000.000"
 										error={
 											usageOther.length > 0 && usageOther.trim().length < 55
-										}
-										helperText={
-											usageOther.length > 0 && usageOther.trim().length < 55
 												? `Minimal 55 karakter (${usageOther.trim().length}/55)`
-												: ""
+												: undefined
 										}
 									/>
 								</Box>
@@ -2324,12 +2155,7 @@ function BuatGalangDanaPageContent() {
 								</Typography>
 
 								<Stack spacing={1.25}>
-									<TextField
-										size="small"
-										sx={{
-											"& .MuiInputBase-input": { fontSize: 13.5 },
-											"& .MuiInputLabel-root": { fontSize: 13.5 },
-										}}
+									<Input
 										value={titleOther}
 										onChange={(e) => {
 											const value = e.target.value.slice(0, 55);
@@ -2340,7 +2166,6 @@ function BuatGalangDanaPageContent() {
 												setSlugOtherError("");
 											}
 										}}
-										fullWidth
 										placeholder="Contoh: Bantu renovasi masjid terdampak bencana"
 										helperText={`${titleOther.length}/55`}
 									/>
@@ -2396,12 +2221,7 @@ function BuatGalangDanaPageContent() {
 											Tentukan link untuk galang dana ini{" "}
 											<span style={{ color: "red" }}>*</span>
 										</Typography>
-										<TextField
-											size="small"
-											sx={{
-												"& .MuiInputBase-input": { fontSize: 13.5 },
-												"& .MuiInputLabel-root": { fontSize: 13.5 },
-											}}
+										<Input
 											value={slugOther}
 											onChange={(e) => {
 												setSlugOtherTouched(true);
@@ -2442,15 +2262,15 @@ function BuatGalangDanaPageContent() {
 													setSlugOtherChecking(false);
 												}
 											}}
-											error={!!slugOtherError}
+											error={slugOtherError || undefined}
 											helperText={
-												slugOtherError ||
-												(slugOtherChecking
-													? "Memeriksa ketersediaan URL..."
-													: "contoh: bantu-renovasi...")
+												!slugOtherError
+													? (slugOtherChecking
+														? "Memeriksa ketersediaan URL..."
+														: "contoh: bantu-renovasi...")
+													: undefined
 											}
-											fullWidth
-											inputProps={{ maxLength: 60 }}
+											maxLength={60}
 											placeholder="contoh: bantu-renovasi..."
 										/>
 										{!slugOtherError &&

@@ -80,7 +80,7 @@ export default function SimpleAppBar({ variant = "solid" }: SimpleAppBarProps) {
 					overlay={isOverlay || showCompact}
 				/>
 
-				<div className={`transition-all duration-300 overflow-hidden ${showCompact ? "w-0 opacity-0" : "w-auto opacity-100"}`}>
+				<div className={`relative z-10 shrink-0 transition-all duration-300 overflow-hidden ${showCompact ? "w-0 opacity-0" : "w-auto opacity-100"}`}>
 					<NotificationPopover overlay={isOverlay} />
 				</div>
 			</div>
