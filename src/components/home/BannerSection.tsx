@@ -66,19 +66,36 @@ export default function BannerSection({ items }: { items: BannerItem[] }) {
 				</div>
 
 				{items.length > 1 && (
-					<div className="mt-2 flex justify-center gap-1.5">
-						{items.map((_, i) => (
-							<button
-								key={i}
-								onClick={() => setCurrent(i)}
-								className={`h-2 rounded-full transition-all ${
-									i === current
-										? "w-5 bg-primary"
-										: "w-2 bg-slate-300"
-								}`}
-							/>
-						))}
-					</div>
+					<>
+						<button
+							onClick={() => setCurrent((p) => (p - 1 + items.length) % items.length)}
+							aria-label="Slide sebelumnya"
+							className="absolute left-2 top-1/2 z-10 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm transition hover:bg-black/60 active:scale-95"
+						>
+							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
+								<polyline points="15 18 9 12 15 6" />
+							</svg>
+						</button>
+						<button
+							onClick={() => setCurrent((p) => (p + 1) % items.length)}
+							aria-label="Slide berikutnya"
+							className="absolute right-2 top-1/2 z-10 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm transition hover:bg-black/60 active:scale-95"
+						>
+							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
+								<polyline points="9 18 15 12 9 6" />
+							</svg>
+						</button>
+						<div className="absolute bottom-2 left-1/2 z-10 flex -translate-x-1/2 gap-1.5">
+							{items.map((_, i) => (
+								<button
+									key={i}
+									onClick={() => setCurrent(i)}
+									aria-label={`Ke slide ${i + 1}`}
+									className={`h-1.5 rounded-full transition-all duration-300 ${i === current ? "w-5 bg-white" : "w-1.5 bg-white/60"}`}
+								/>
+							))}
+						</div>
+					</>
 				)}
 			</div>
 		</div>

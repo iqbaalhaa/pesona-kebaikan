@@ -42,7 +42,7 @@ export default function HeroCarousel({ items = [] }: { items?: CarouselItem[] })
 	}, [displaySlides.length]);
 
 	return (
-		<div role="region" aria-roledescription="carousel" aria-label="Banner kampanye" className="relative z-0 h-[420px] w-full overflow-hidden bg-[#0b1220] md:rounded-b">
+		<div role="region" aria-roledescription="carousel" aria-label="Banner kampanye" className="relative z-0 aspect-[4/5] w-full overflow-hidden bg-[#0b1220] md:rounded-b">
 			{displaySlides.map((s, i) => {
 				const Content = (
 					<>
@@ -63,16 +63,50 @@ export default function HeroCarousel({ items = [] }: { items?: CarouselItem[] })
 					</div>
 				);
 			})}
-			<div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center px-4 pt-16 text-center">
-				<div className="max-w-[320px]">
-					<h1 className="text-[22px] font-black leading-[1.15] text-white">
-						{displaySlides[active]?.title || "Mau berbuat baik apa hari ini?"}
-					</h1>
-					<p className="mt-1 text-[13px] text-white/85">
-						Donasi cepat, transparan, dan terasa dampaknya.
-					</p>
+			{displaySlides[active]?.title && (
+				<div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center px-4 pt-16 text-center">
+					<div className="max-w-[320px]">
+						<h1 className="text-[22px] font-black leading-[1.15] text-white">
+							{displaySlides[active].title}
+						</h1>
+						<p className="mt-1 text-[13px] text-white/85">
+							Donasi cepat, transparan, dan terasa dampaknya.
+						</p>
+					</div>
 				</div>
-			</div>
+			)}
+			{displaySlides.length > 1 && (
+				<>
+					<button
+						onClick={() => setActive((p) => (p - 1 + displaySlides.length) % displaySlides.length)}
+						aria-label="Slide sebelumnya"
+						className="absolute left-3 top-1/2 z-30 -translate-y-1/2 flex h-9 w-9 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm transition hover:bg-black/60 active:scale-95"
+					>
+						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+							<polyline points="15 18 9 12 15 6" />
+						</svg>
+					</button>
+					<button
+						onClick={() => setActive((p) => (p + 1) % displaySlides.length)}
+						aria-label="Slide berikutnya"
+						className="absolute right-3 top-1/2 z-30 -translate-y-1/2 flex h-9 w-9 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm transition hover:bg-black/60 active:scale-95"
+					>
+						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+							<polyline points="9 18 15 12 9 6" />
+						</svg>
+					</button>
+					<div className="absolute bottom-4 left-1/2 z-30 flex -translate-x-1/2 gap-1.5">
+						{displaySlides.map((_, i) => (
+							<button
+								key={i}
+								onClick={() => setActive(i)}
+								aria-label={`Ke slide ${i + 1}`}
+								className={`h-1.5 rounded-full transition-all duration-300 ${i === active ? "w-5 bg-white" : "w-1.5 bg-white/50"}`}
+							/>
+						))}
+					</div>
+				</>
+			)}
 		</div>
 	);
 }
