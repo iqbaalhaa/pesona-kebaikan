@@ -4,7 +4,7 @@ import { getPaymentProvider } from '@/lib/payment'
 
 export async function POST(req: Request) {
   try {
-    const origin = new URL(req.url).origin
+    const origin = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, '') || new URL(req.url).origin
     const body = await req.json()
     const donationId = body?.donationId as string | undefined
 

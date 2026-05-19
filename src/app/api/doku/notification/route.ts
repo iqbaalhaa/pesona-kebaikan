@@ -7,6 +7,10 @@ import { DokuProvider } from '@/lib/payment/providers/doku-provider'
 
 const provider = new DokuProvider()
 
+export async function GET() {
+  return NextResponse.json({ ok: true, endpoint: '/api/doku/notification' })
+}
+
 export async function POST(req: Request) {
   try {
     const rawBody = await req.text()

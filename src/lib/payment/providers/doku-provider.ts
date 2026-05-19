@@ -80,8 +80,7 @@ export class DokuProvider implements PaymentProvider {
     }
 
     const data = await res.json()
-    console.log('DOKU checkout response:', JSON.stringify(data))
-    const redirectUrl = data?.payment?.url as string | undefined
+    const redirectUrl = (data?.response?.payment?.url ?? data?.payment?.url) as string | undefined
     if (!redirectUrl) throw new Error('DOKU tidak mengembalikan payment URL: ' + JSON.stringify(data))
 
     return { provider: 'doku', redirectUrl }
