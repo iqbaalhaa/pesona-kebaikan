@@ -32,6 +32,12 @@ export class DokuProvider implements PaymentProvider {
     return process.env.DOKU_IS_PRODUCTION === 'true' ? BASE_PROD : BASE_SANDBOX
   }
 
+  private get paymentMethodTypes(): string[] {
+    const env = process.env.DOKU_PAYMENT_METHODS
+    if (!env) return []
+    return env.split(',').map((s) => s.trim()).filter(Boolean)
+  }
+
   async createCheckout(req: CheckoutRequest): Promise<CheckoutResult> {
     const requestId = randomUUID()
     const timestamp = new Date().toISOString().replace(/\.\d{3}Z$/, 'Z')
@@ -49,7 +55,10 @@ export class DokuProvider implements PaymentProvider {
         callback_url: req.finishUrl,
         auto_redirect: true,
       },
-      payment: { payment_due_date: 60 },
+      payment: {
+        payment_due_date: 60,
+        ...(this.paymentMethodTypes.length ? { payment_method_types: this.paymentMethodTypes } : {}),
+      },
       customer: {
         name: req.donorName,
         ...(/^\d{5,16}$/.test(req.donorPhone?.replace(/\D/g, '') || '') ? { phone: req.donorPhone!.replace(/\D/g, '') } : {}),
