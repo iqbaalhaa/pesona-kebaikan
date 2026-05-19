@@ -52,7 +52,7 @@ export class DokuProvider implements PaymentProvider {
       payment: { payment_due_date: 60 },
       customer: {
         name: req.donorName,
-        phone: req.donorPhone || '',
+        ...(req.donorPhone ? { phone: req.donorPhone } : {}),
       },
       additional_info: {
         override_notification_url: req.notificationUrl,
