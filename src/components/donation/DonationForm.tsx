@@ -24,6 +24,7 @@ import { useTheme, alpha, darken } from "@mui/material/styles";
 
 const PRESET_AMOUNTS = [10000, 20000, 50000, 100000, 200000, 500000];
 const MIN_DONATION = Number(process.env.NEXT_PUBLIC_MIN_DONATION ?? 1);
+const PAYMENT_PROVIDER = process.env.NEXT_PUBLIC_PAYMENT_PROVIDER || 'midtrans';
 
 type Props = {
 	campaignId: string;
@@ -112,61 +113,57 @@ export default function DonationForm({
 				if ((window as any).snap?.show) {
 					(window as any).snap.show();
 				}
-				const r = await fetch("/api/midtrans/snap-token", {
+				const r = await fetch("/api/payment/checkout", {
 					method: "POST",
 					headers: { "Content-Type": "application/json" },
 					body: JSON.stringify({ donationId }),
 				});
 				const j = await r.json();
-				if (j.success && j.token && (window as any).snap) {
-					const isProd =
-						process.env.NEXT_PUBLIC_MIDTRANS_IS_PRODUCTION === "true";
+				if (j.success) {
 					const amountNumber = Number(amount);
-					const amountParam = isFinite(amountNumber)
-						? amountNumber.toString()
-						: "";
+					const amountParam = isFinite(amountNumber) ? amountNumber.toString() : "";
 					const methodLabel = "E-Wallet";
 
-					(window as any).snap.pay(j.token, {
-						language: "id",
-						...(isProd ? { uiMode: "qr" } : {}),
-						onSuccess: () => {
-							const qs = new URLSearchParams({
-								donation_success: "true",
-								donation_status: "paid",
-								donation_amount: amountParam,
-								donation_method: methodLabel,
-							});
-							if (fundraiserSlug) {
-								router.push(
-									`/donasi/fundraiser/${fundraiserSlug}?${qs.toString()}`,
-								);
-							} else {
-								router.push(`/donasi/${campaignSlug}?${qs.toString()}`);
-							}
-						},
-						onPending: () => {
-							const qs = new URLSearchParams({
-								donation_success: "true",
-								donation_status: "pending",
-								donation_amount: amountParam,
-								donation_method: methodLabel,
-							});
-							if (fundraiserSlug) {
-								router.push(
-									`/donasi/fundraiser/${fundraiserSlug}?${qs.toString()}`,
-								);
-							} else {
-								router.push(`/donasi/${campaignSlug}?${qs.toString()}`);
-							}
-						},
-						onError: () => {
-							setError("Pembayaran gagal");
-						},
-						onClose: () => {
-							setError("Pembayaran belum selesai");
-						},
-					});
+					if (j.provider === "midtrans" && j.token && (window as any).snap) {
+						const isProd = process.env.NEXT_PUBLIC_MIDTRANS_IS_PRODUCTION === "true";
+						(window as any).snap.pay(j.token, {
+							language: "id",
+							...(isProd ? { uiMode: "qr" } : {}),
+							onSuccess: () => {
+								const qs = new URLSearchParams({
+									donation_success: "true",
+									donation_status: "paid",
+									donation_amount: amountParam,
+									donation_method: methodLabel,
+								});
+								if (fundraiserSlug) {
+									router.push(`/donasi/fundraiser/${fundraiserSlug}?${qs.toString()}`);
+								} else {
+									router.push(`/donasi/${campaignSlug}?${qs.toString()}`);
+								}
+							},
+							onPending: () => {
+								const qs = new URLSearchParams({
+									donation_success: "true",
+									donation_status: "pending",
+									donation_amount: amountParam,
+									donation_method: methodLabel,
+								});
+								if (fundraiserSlug) {
+									router.push(`/donasi/fundraiser/${fundraiserSlug}?${qs.toString()}`);
+								} else {
+									router.push(`/donasi/${campaignSlug}?${qs.toString()}`);
+								}
+							},
+							onError: () => { setError("Pembayaran gagal"); },
+							onClose: () => { setError("Pembayaran belum selesai"); },
+						});
+					} else if (j.redirect_url) {
+						window.location.href = j.redirect_url;
+					} else {
+						if ((window as any).snap?.hide) (window as any).snap.hide();
+						setError(j.error || "Gagal memulai pembayaran");
+					}
 				} else {
 					if ((window as any).snap?.hide) {
 						(window as any).snap.hide();
@@ -188,15 +185,17 @@ export default function DonationForm({
 
 	return (
 		<Container maxWidth="sm" sx={{ py: 2, pb: 10, position: "relative" }}>
-			<Script
-				src={
-					process.env.NEXT_PUBLIC_MIDTRANS_IS_PRODUCTION === "true"
-						? "https://app.midtrans.com/snap/snap.js"
-						: "https://app.sandbox.midtrans.com/snap/snap.js"
-				}
-				data-client-key={process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY || ""}
-				strategy="afterInteractive"
-			/>
+			{PAYMENT_PROVIDER === 'midtrans' && (
+				<Script
+					src={
+						process.env.NEXT_PUBLIC_MIDTRANS_IS_PRODUCTION === "true"
+							? "https://app.midtrans.com/snap/snap.js"
+							: "https://app.sandbox.midtrans.com/snap/snap.js"
+					}
+					data-client-key={process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY || ""}
+					strategy="afterInteractive"
+				/>
+			)}
 			<Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
 				<Button
 					onClick={() => router.back()}
@@ -399,7 +398,7 @@ export default function DonationForm({
 					>
 						<LockOutlinedIcon sx={{ fontSize: 14 }} />
 						<Typography sx={{ fontSize: 11 }}>
-							Pembayaran aman & terenkripsi. Dilindungi oleh Midtrans.
+							Pembayaran aman & terenkripsi.
 						</Typography>
 					</Box>
 				</Paper>
