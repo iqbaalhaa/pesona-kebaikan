@@ -33,7 +33,7 @@ export async function POST(req: Request) {
       donorPhone: donation.donorPhone || '',
       items: [{ id: donation.campaignId, name: itemName, price: amount, quantity: 1 }],
       notificationUrl: `${origin}/api/${provider.name}/notification`,
-      finishUrl: `${origin}/donasi/${campaignSlug}?donation_success=true`,
+      finishUrl: `${origin}/donasi/${campaignSlug}?donation_success=true&donation_status=paid&donation_amount=${amount}`,
     })
 
     return NextResponse.json({
