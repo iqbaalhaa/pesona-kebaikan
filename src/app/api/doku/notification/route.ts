@@ -19,7 +19,7 @@ export async function POST(req: Request) {
 
     let result
     try {
-      result = await provider.verifyAndParseNotification(body, req.headers)
+      result = await provider.verifyAndParseNotification(rawBody, req.headers)
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Verifikasi gagal'
       console.error('DOKU notification verify error:', msg)

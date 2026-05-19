@@ -7,7 +7,7 @@ import {
 	checkMidtransStatus,
 	mapMidtransToInternal,
 } from "@/lib/midtrans-status";
-import { calculateMidtransFee } from "@/lib/fee-calculator";
+import { calculatePaymentFee } from "@/lib/fee-calculator";
 import { createNotification } from "@/actions/notification";
 import { NotificationType } from "@prisma/client";
 
@@ -100,7 +100,7 @@ export async function createDonation(
 				campaignId: input.campaignId,
 				fundraiserId: input.fundraiserId,
 				amount: input.amount,
-				fee: calculateMidtransFee(input.amount, input.paymentMethod),
+				fee: calculatePaymentFee(input.amount, input.paymentMethod),
 				donorName: input.donorName,
 				donorPhone: input.donorPhone,
 				message: input.message,
