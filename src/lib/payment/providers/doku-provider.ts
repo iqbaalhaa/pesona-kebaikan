@@ -45,6 +45,7 @@ export class DokuProvider implements PaymentProvider {
     const body = JSON.stringify({
       order: {
         invoice_number: req.orderId,
+        language: 'ID',
         line_items: req.items.map((i) => ({
           name: i.name,
           price: i.price,
