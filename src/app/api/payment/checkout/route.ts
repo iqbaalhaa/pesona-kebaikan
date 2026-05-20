@@ -25,6 +25,10 @@ export async function POST(req: Request) {
     const amount = Math.max(1, Math.round(Number(donation.amount)))
     const itemName = `Donasi - ${donation.campaign?.title || 'Campaign'}`.slice(0, 50)
     const campaignSlug = donation.campaign?.slug || donation.campaignId
+    const isQuickDonation = campaignSlug === 'donasi-cepat'
+    const finishUrl = isQuickDonation
+      ? `${origin}/?donation_success=true&donation_status=paid&donation_amount=${amount}`
+      : `${origin}/donasi/${campaignSlug}?donation_success=true&donation_status=paid&donation_amount=${amount}`
 
     const result = await provider.createCheckout({
       orderId: donation.id,
@@ -33,7 +37,7 @@ export async function POST(req: Request) {
       donorPhone: donation.donorPhone || '',
       items: [{ id: donation.campaignId, name: itemName, price: amount, quantity: 1 }],
       notificationUrl: `${origin}/api/${provider.name}/notification`,
-      finishUrl: `${origin}/donasi/${campaignSlug}?donation_success=true&donation_status=paid&donation_amount=${amount}`,
+      finishUrl,
     })
 
     return NextResponse.json({
