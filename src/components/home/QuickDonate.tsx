@@ -151,6 +151,14 @@ export default function QuickDonate() {
 		}
 	}, [searchParams]);
 
+	// Show success state when redirected back from DOKU payment
+	React.useEffect(() => {
+		if (searchParams?.get("donation_success") === "true") {
+			setSuccess(true);
+			setOpen(false);
+		}
+	}, [searchParams]);
+
 	const finalAmount = React.useMemo(() => {
 		const clean = custom.replace(/[^\d]/g, "");
 		const n = clean ? Number(clean) : 0;

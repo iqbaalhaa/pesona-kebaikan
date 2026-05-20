@@ -17,6 +17,7 @@ import {
 	Link,
 } from "@mui/material";
 import { Transition, formatIDR } from "../utils";
+import { formatDateTime } from "@/lib/date";
 import AccountBalanceWalletRoundedIcon from "@mui/icons-material/AccountBalanceWalletRounded";
 import AccessTimeRoundedIcon from "@mui/icons-material/AccessTimeRounded";
 import ReceiptLongRoundedIcon from "@mui/icons-material/ReceiptLongRounded";
@@ -86,15 +87,7 @@ export default function FundDetailsModal({
 		value.toFixed(2).replace(/\.?0+$/, "");
 
 	// Format UpdatedAt
-	const formattedDate = updatedAt
-		? new Intl.DateTimeFormat("id-ID", {
-				day: "numeric",
-				month: "short",
-				year: "numeric",
-				hour: "2-digit",
-				minute: "2-digit",
-			}).format(new Date(updatedAt))
-		: "-";
+	const formattedDate = formatDateTime(updatedAt);
 
 	return (
 		<Dialog

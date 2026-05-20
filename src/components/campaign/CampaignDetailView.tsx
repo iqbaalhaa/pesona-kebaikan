@@ -145,6 +145,9 @@ export default function CampaignDetailView({
 	React.useEffect(() => {
 		const checkStatus = async () => {
 			if (donationSuccessParam === "true") {
+				// Replace URL synchronously so back button skips the ?donation_success params
+				window.history.replaceState(null, '', `/donasi/${data.slug || data.id}`);
+
 				setDonationSuccessOpen(true);
 				setDonationStatus(donationStatusParam === "paid" ? "paid" : "pending");
 
@@ -155,9 +158,6 @@ export default function CampaignDetailView({
 					amount: isFinite(amountNum) ? amountNum : undefined,
 					method: donationMethodParam || undefined,
 				});
-
-				// Clean up URL first
-				router.replace(`/donasi/${data.slug || data.id}`, { scroll: false });
 
 				// Check payment status actively (useful for localhost/when webhook is delayed)
 				try {

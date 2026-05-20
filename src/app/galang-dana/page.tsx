@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { getMyCampaigns } from "@/actions/campaign";
+import { formatDateTime } from "@/lib/date";
 
 import HealingRoundedIcon from "@mui/icons-material/HealingRounded";
 import FavoriteRoundedIcon from "@mui/icons-material/FavoriteRounded";
@@ -191,7 +192,7 @@ export default function GalangDanaSayaPage() {
 				type: c.type === "sakit" ? "sakit" : "lainnya",
 				stepsDone: calculateStepsDone(c),
 				stepsTotal: 7,
-				updatedAt: c.updatedAt,
+				updatedAt: formatDateTime(c.updatedAt),
 				thumbnail: c.thumbnail,
 				collected: c.collected,
 				target: c.target,

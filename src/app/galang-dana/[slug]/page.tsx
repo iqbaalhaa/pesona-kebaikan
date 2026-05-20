@@ -316,6 +316,28 @@ export default async function CampaignDetailPage({
 								</>
 							)}
 						</Typography>
+
+						<LinkButton
+							href={`/galang-dana/${campaign.slug || campaign.id}/pencairan?tab=1`}
+							variant="outlined"
+							size="small"
+							startIcon={<AccountBalanceWalletRoundedIcon />}
+							sx={{
+								mt: 2,
+								borderRadius: 2,
+								borderColor: "rgba(255,255,255,0.4)",
+								color: "white",
+								textTransform: "none",
+								fontWeight: 600,
+								fontSize: 13,
+								"&:hover": {
+									borderColor: "rgba(255,255,255,0.7)",
+									bgcolor: "rgba(255,255,255,0.1)",
+								},
+							}}
+						>
+							Tarik Dana
+						</LinkButton>
 					</CardContent>
 				</Card>
 
@@ -377,10 +399,10 @@ export default async function CampaignDetailPage({
 				</Typography>
 				<Stack spacing={1.5} sx={{ mb: 4 }}>
 					<LinkButton
-						href={`/galang-dana/${campaign.slug || campaign.id}/pencairan`}
+						href={`/galang-dana/${campaign.slug || campaign.id}/pencairan?tab=0`}
 						variant="contained"
 						fullWidth
-						startIcon={<AccountBalanceWalletRoundedIcon />}
+						startIcon={<AddPhotoAlternateRoundedIcon />}
 						endIcon={<ChevronRightRoundedIcon />}
 						sx={{
 							justifyContent: "space-between",
@@ -399,10 +421,10 @@ export default async function CampaignDetailPage({
 					>
 						<Box sx={{ textAlign: "left" }}>
 							<Typography variant="body2" fontWeight={700}>
-								Update & Pencairan
+								Buat Kabar Terbaru
 							</Typography>
 							<Typography variant="caption" color="text.secondary">
-								Buat kabar terbaru atau tarik dana
+								Sampaikan perkembangan campaign ke donatur
 							</Typography>
 						</Box>
 					</LinkButton>

@@ -12,6 +12,7 @@ const BASE_PROD = 'https://api.doku.com'
 const BASE_SANDBOX = 'https://api-sandbox.doku.com'
 const CHECKOUT_TARGET = '/checkout/v1/payment'
 const NOTIFICATION_PATH = '/api/doku/notification'
+const INQUIRY_TARGET = '/orders/v1/inquiry'
 
 export class DokuProvider implements PaymentProvider {
   readonly name: PaymentProviderName = 'doku'
@@ -133,6 +134,37 @@ export class DokuProvider implements PaymentProvider {
       case 'FAILED':
       case 'EXPIRED': return 'FAILED'
       default: return null
+    }
+  }
+
+  async checkStatus(invoiceNumber: string): Promise<{ status: string } | null> {
+    try {
+      const requestId = randomUUID()
+      const timestamp = new Date().toISOString().replace(/\.\d{3}Z$/, 'Z')
+      const target = `${INQUIRY_TARGET}/${invoiceNumber}`
+      const stringToSign = [
+        `Client-Id:${this.clientId}`,
+        `Request-Id:${requestId}`,
+        `Request-Timestamp:${timestamp}`,
+        `Request-Target:${target}`,
+      ].join('\n')
+      const signature = 'HMACSHA256=' + createHmac('sha256', this.secretKey).update(stringToSign).digest('base64')
+
+      const res = await fetch(`${this.baseUrl}${target}`, {
+        headers: {
+          'Client-Id': this.clientId,
+          'Request-Id': requestId,
+          'Request-Timestamp': timestamp,
+          Signature: signature,
+          Accept: 'application/json',
+        },
+        cache: 'no-store',
+      })
+      if (!res.ok) return null
+      const data = await res.json()
+      return { status: (data?.transaction?.status as string) || '' }
+    } catch {
+      return null
     }
   }
 

@@ -5,8 +5,10 @@ import WithdrawalList from "./client";
 
 export default async function PencairanPage({
 	params,
+	searchParams,
 }: {
 	params: Promise<{ slug: string }>;
+	searchParams: Promise<{ tab?: string }>;
 }) {
 	const session = await auth();
 	if (!session?.user?.id) {
@@ -14,6 +16,8 @@ export default async function PencairanPage({
 	}
 
 	const { slug } = await params;
+	const { tab } = await searchParams;
+	const initialTab = tab === "1" ? 1 : 0;
 
 	const campaign = await prisma.campaign.findFirst({
 		where: {
@@ -92,6 +96,7 @@ export default async function PencairanPage({
 			campaign={campaignData}
 			withdrawals={withdrawals}
 			updates={updates}
+			initialTab={initialTab}
 		/>
 	);
 }

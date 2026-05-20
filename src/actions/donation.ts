@@ -7,6 +7,7 @@ import {
 	checkMidtransStatus,
 	mapMidtransToInternal,
 } from "@/lib/midtrans-status";
+import { DokuProvider } from "@/lib/payment/providers/doku-provider";
 import { calculatePaymentFee } from "@/lib/fee-calculator";
 import { createNotification } from "@/actions/notification";
 import { NotificationType } from "@prisma/client";
@@ -187,38 +188,51 @@ export async function checkPendingDonations(campaignId?: string) {
 
 		let updatedCount = 0;
 
+		const paymentProvider = (process.env.PAYMENT_PROVIDER || 'midtrans').toLowerCase();
+		const dokuProvider = paymentProvider === 'doku' ? new DokuProvider() : null;
+
 		await Promise.all(
 			pendingDonations.map(async (d) => {
-				const midtransData = await checkMidtransStatus(d.id);
-				if (midtransData && midtransData.transaction_status) {
-					const newStatus = mapMidtransToInternal(
-						midtransData.transaction_status,
-						midtransData.fraud_status,
-					);
+				let newStatus: string | null = null;
 
-					if (newStatus !== "PENDING" && newStatus !== d.status) {
-						// Update DB
-						await prisma.donation.update({
-							where: { id: d.id },
-							data: { status: newStatus },
+				if (dokuProvider) {
+					const dokuData = await dokuProvider.checkStatus(d.id);
+					if (dokuData?.status) {
+						const s = dokuData.status.toUpperCase();
+						if (s === 'SUCCESS') newStatus = 'PAID';
+						else if (s === 'FAILED' || s === 'EXPIRED') newStatus = 'FAILED';
+					}
+				} else {
+					const midtransData = await checkMidtransStatus(d.id);
+					if (midtransData?.transaction_status) {
+						newStatus = mapMidtransToInternal(
+							midtransData.transaction_status,
+							midtransData.fraud_status,
+						);
+					}
+				}
+
+				if (newStatus && newStatus !== "PENDING" && newStatus !== d.status) {
+					await prisma.donation.update({
+						where: { id: d.id },
+						data: { status: newStatus },
+					});
+					updatedCount++;
+					if (newStatus === "PAID" && d.userId) {
+						const amountNum = Number(d.amount);
+						const amountStr = isFinite(amountNum)
+							? amountNum.toLocaleString("id-ID")
+							: `${d.amount}`;
+						const campaign = await prisma.campaign.findUnique({
+							where: { id: d.campaignId },
+							select: { title: true },
 						});
-						updatedCount++;
-						if (newStatus === "PAID" && d.userId) {
-							const amountNum = Number(d.amount);
-							const amountStr = isFinite(amountNum)
-								? amountNum.toLocaleString("id-ID")
-								: `${d.amount}`;
-							const campaign = await prisma.campaign.findUnique({
-								where: { id: d.campaignId },
-								select: { title: true },
-							});
-							await createNotification(
-								d.userId,
-								"Donasi Berhasil",
-								`Terima kasih. Donasi Rp ${amountStr} ke ${campaign?.title || "Campaign"} telah berhasil.`,
-								NotificationType.KABAR,
-							);
-						}
+						await createNotification(
+							d.userId,
+							"Donasi Berhasil",
+							`Terima kasih. Donasi Rp ${amountStr} ke ${campaign?.title || "Campaign"} telah berhasil.`,
+							NotificationType.KABAR,
+						);
 					}
 				}
 			}),

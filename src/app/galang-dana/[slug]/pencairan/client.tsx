@@ -51,13 +51,15 @@ export default function WithdrawalList({
 	campaign,
 	withdrawals,
 	updates,
+	initialTab = 0,
 }: {
 	campaign: any;
 	withdrawals: any[];
 	updates: any[];
+	initialTab?: number;
 }) {
 	const router = useRouter();
-	const [activeTab, setActiveTab] = useState(0);
+	const [activeTab, setActiveTab] = useState(initialTab);
 
 	// Withdrawal State
 	const [openWithdrawal, setOpenWithdrawal] = useState(false);
@@ -525,7 +527,7 @@ export default function WithdrawalList({
 								</Typography>
 							</Box>
 							<Chip
-								label="Dana bersih setelah fee"
+								label="Bersih setelah potongan"
 								size="small"
 								sx={{
 									alignSelf: "center",
