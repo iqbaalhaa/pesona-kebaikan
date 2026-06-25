@@ -141,10 +141,21 @@ export default function VerificationDialog({
 
 	React.useEffect(() => {
 		if (open && session?.user) {
+			// Restore previously chosen type from localStorage (pre-submit choice)
+			try {
+				const saved = localStorage.getItem("verificationType");
+				if (saved === "individu" || saved === "organisasi") {
+					setVerificationType(saved);
+				}
+			} catch {}
+
 			getVerificationStatus().then((res) => {
 				if (res.success && res.data) {
-					const { phoneVerified, emailVerified } = res.data;
+					const { phoneVerified, emailVerified, verificationType: savedType } =
+						res.data;
 					setIsEmailVerified(!!emailVerified);
+					// DB type (from a submitted request) wins over localStorage
+					if (savedType) setVerificationType(savedType);
 					if (phoneVerified) {
 						setActiveStep(emailVerified ? 2 : 1);
 					}
@@ -152,6 +163,15 @@ export default function VerificationDialog({
 			});
 		}
 	}, [open, session]);
+
+	// Persist type choice so reopening the dialog keeps it
+	React.useEffect(() => {
+		try {
+			if (verificationType) {
+				localStorage.setItem("verificationType", verificationType);
+			}
+		} catch {}
+	}, [verificationType]);
 
 	React.useEffect(() => {
 		if (activeStep === 1 && isEmailVerified) {
@@ -438,7 +458,12 @@ export default function VerificationDialog({
 								<CloseIcon />
 							</IconButton>
 							<Button
-								onClick={() => setVerificationType(null)}
+								onClick={() => {
+									try {
+										localStorage.removeItem("verificationType");
+									} catch {}
+									setVerificationType(null);
+								}}
 								size="small"
 								sx={{
 									color: "white",

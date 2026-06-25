@@ -102,12 +102,27 @@ export async function updateCampaignStatus(
 		});
 
 		if (status === "ACTIVE" && prev?.createdById && prev.status !== "ACTIVE") {
+			// Publishing a campaign auto-verifies its owner (only if not already verified).
+			const verifyRes = await prisma.user.updateMany({
+				where: { id: prev.createdById, verifiedAt: null },
+				data: { verifiedAt: new Date(), verifiedAs: "personal" },
+			});
+
 			await createNotification(
 				prev.createdById,
 				"Campaign Disetujui",
 				`Campaign "${prev.title}" telah disetujui dan sekarang aktif.`,
 				NotificationType.KABAR,
 			);
+
+			if (verifyRes.count > 0) {
+				await createNotification(
+					prev.createdById,
+					"Akun Terverifikasi",
+					"Selamat! Akun Anda otomatis terverifikasi setelah campaign Anda dipublikasikan.",
+					NotificationType.KABAR,
+				);
+			}
 		}
 
 		if (status === "REJECTED" && prev?.createdById) {

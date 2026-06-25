@@ -2,8 +2,6 @@
 
 import * as React from "react";
 import { useSession } from "next-auth/react";
-import Snackbar from "@mui/material/Snackbar";
-import Alert from "@mui/material/Alert";
 import VerificationDialog from "./VerificationDialog";
 import { getMyProfile } from "@/actions/user";
 
@@ -46,7 +44,6 @@ export default function VerificationGuard({
 		loading: true,
 	});
 	const [openDialog, setOpenDialog] = React.useState(false);
-	const [snack, setSnack] = React.useState(false);
 
 	const refresh = React.useCallback(async () => {
 		try {
@@ -74,12 +71,9 @@ export default function VerificationGuard({
 	const requireVerified = React.useCallback(
 		(onOk: () => void) => {
 			if (state.loading) return;
-			if (state.verified) {
+			// Allowed once the user has submitted verification (pending) or is fully approved.
+			if (state.verified || state.pending) {
 				onOk();
-				return;
-			}
-			if (state.pending) {
-				setSnack(true);
 				return;
 			}
 			setOpenDialog(true);
@@ -97,23 +91,6 @@ export default function VerificationGuard({
 				userEmail={session?.user?.email}
 				onSuccess={refresh}
 			/>
-
-			<Snackbar
-				open={snack}
-				autoHideDuration={4000}
-				onClose={() => setSnack(false)}
-				anchorOrigin={{ vertical: "top", horizontal: "center" }}
-				sx={{ zIndex: 99999 }}
-			>
-				<Alert
-					severity="info"
-					variant="filled"
-					onClose={() => setSnack(false)}
-					sx={{ fontWeight: 600 }}
-				>
-					Verifikasi akunmu sedang diproses (1x24 jam). Mohon tunggu.
-				</Alert>
-			</Snackbar>
 		</>
 	);
 }

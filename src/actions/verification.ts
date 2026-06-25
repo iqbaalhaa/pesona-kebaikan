@@ -51,14 +51,30 @@ export async function getVerificationStatus() {
 
 	const user = await prisma.user.findUnique({
 		where: { email: session.user.email },
-		select: { phoneVerified: true, emailVerified: true },
+		select: {
+			phoneVerified: true,
+			emailVerified: true,
+			verificationRequests: {
+				orderBy: { createdAt: "desc" },
+				take: 1,
+				select: { type: true },
+			},
+		},
 	});
+
+	const latestType = user?.verificationRequests?.[0]?.type;
 
 	return {
 		success: true,
 		data: {
 			phoneVerified: user?.phoneVerified,
 			emailVerified: user?.emailVerified,
+			verificationType:
+				latestType === VerifiedAs.organization
+					? ("organisasi" as const)
+					: latestType === VerifiedAs.personal
+						? ("individu" as const)
+						: null,
 		},
 	};
 }
