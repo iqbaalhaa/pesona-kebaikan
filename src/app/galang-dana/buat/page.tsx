@@ -216,6 +216,21 @@ function BuatGalangDanaPageContent() {
 			router.replace("/galang-dana/kategori");
 	}, [isLainnya, isSakit, category, router, draftId]);
 
+	// Prefill data diri with the logged-in user's info (new campaign only).
+	React.useEffect(() => {
+		if (draftId) return;
+		if (status !== "authenticated") return;
+		const u = session?.user as { name?: string | null; phone?: string | null } | undefined;
+		if (!u) return;
+		if (u.name) {
+			setKtpName((v) => v || u.name!);
+		}
+		if (u.phone) {
+			setPhone((v) => v || u.phone!);
+			setPhoneOther((v) => v || u.phone!);
+		}
+	}, [draftId, status, session]);
+
 	React.useEffect(() => {
 		if (!draftId) return;
 

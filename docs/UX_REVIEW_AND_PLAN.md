@@ -102,16 +102,16 @@ Four phases, ordered by impact ÷ effort. Each phase self-contained and shippabl
 - [x] M10 — `MAX_DONATION` guard (env `NEXT_PUBLIC_MAX_DONATION`, default 1 miliar). `DonationForm.tsx`
 - **Verify:** typecheck clean. Manual: submit bad phone, >max amount, simulate gateway error, complete happy path.
 
-## Phase 3 — Accessibility batch
+## Phase 3 — Accessibility batch ✅ DONE
 **Goal:** Pass WCAG AA on forms + nav.
-- [ ] H5 — `aria-label` per OTP digit input. `VerificationDialog.tsx:550`
-- [ ] H7 — Wrap RadioGroups in `<fieldset>/<legend>`. `buat/page.tsx:1166`
-- [ ] H8 — Associate MUI labels with field IDs (`htmlFor` / MUI label prop).
-- [ ] H6 — Inline validation on auth forms (email format, password live). `auth/login`, `auth/register`
-- [ ] M5 — Live confirm-password match feedback. `auth/register`
-- [ ] H9 — Bottom nav label `text-[10px]` → `text-[12px]`. `BottomNavigation.tsx:74`
-- [ ] M9 — `aria-live="polite"` on search results. `SearchDropdown.tsx:111`
-- **Verify:** keyboard tab-through; screen reader (NVDA/VoiceOver) on OTP + search.
+- [x] H5 — OTP is single `StyledTextField` (label-associated, not per-digit grid). Added `inputMode=numeric`, `autoComplete=one-time-code`, `maxLength`, `aria-label` to both WA + Email OTP. `VerificationDialog.tsx`
+- [x] H7 — `aria-label` on all 7 RadioGroups (renders `role=radiogroup` w/ accessible name). `buat/page.tsx`
+- [x] H8 — `aria-label` on auth `StyledTextField`s (name/email/password/confirm) — separate Typography labels weren't associated. `auth/login`, `auth/register`. _Note: buat/page StyledTextFields not yet swept — follow-up._
+- [x] H6 — Inline email-format validation (onBlur) on login + register. `auth/login`, `auth/register`
+- [x] M5 — Live confirm-password match feedback ("Password cocok"/"tidak cocok"). `auth/register`
+- [x] H9 — Bottom nav label bumped (user set `text-[11px]`). `BottomNavigation.tsx`
+- [x] M9 — `role=listbox` + `aria-live=polite` + `aria-busy` on results; `role=option` per result. `SearchDropdown.tsx`
+- **Verify:** typecheck clean. Manual: keyboard tab-through; screen reader (NVDA) on OTP + search + radios.
 
 ## Phase 4 — Polish
 **Goal:** Clarity + perceived quality.
