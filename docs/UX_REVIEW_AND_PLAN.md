@@ -92,15 +92,15 @@ Four phases, ordered by impact ÷ effort. Each phase self-contained and shippabl
 - [x] C1c — Detect `prefers-color-scheme: dark` on first load (before localStorage fallback). `ThemeWrapper.tsx`
 - **Verify:** typecheck clean. Manual: toggle dark mode on `/`, `/donasi`, notifications popover; check contrast ≥4.5:1.
 
-## Phase 2 — Donation conversion (protect revenue)
+## Phase 2 — Donation conversion (protect revenue) ✅ DONE
 **Goal:** Reduce drop-off + payment-gateway failures.
-- [ ] C2 — Validate phone format (`08xx`, min 10 digits) before submit; inline error. `DonationForm.tsx:91`
-- [ ] H4 — Field-level error highlight (not just Snackbar). `DonationForm.tsx:407`
-- [ ] H3 — Distinct error messages: network vs declined vs validation. `DonationForm.tsx:171`
-- [ ] H2 — Persistent/dismissible success confirmation (not 6s auto-close). `CampaignDetailView.tsx:817`
-- [ ] H1 — Payment-method selection UI (or explicit hint if single method). `DonationForm.tsx:108`
-- [ ] M10 — Add max donation amount guard.
-- **Verify:** submit with bad phone, simulate gateway error, complete happy path.
+- [x] C2 — `validatePhone()` (08/62/8 prefix, 10–15 digits) before submit; inline field error. `DonationForm.tsx`
+- [x] H4 — Field-level error highlight via Input `error` prop (amount/name/phone), clear-on-change. `DonationForm.tsx`
+- [x] H3 — Distinct messages: offline (`navigator.onLine`) vs system vs payment declined/closed. `DonationForm.tsx`
+- [x] H2 — Success confirmation persistent (removed `autoHideDuration`, clickaway-guarded). `CampaignDetailView.tsx` (also covers fundraiser route — reuses same component)
+- [x] H1 — Payment-method hint added (Midtrans Snap handles actual selection in popup). `DonationForm.tsx`
+- [x] M10 — `MAX_DONATION` guard (env `NEXT_PUBLIC_MAX_DONATION`, default 1 miliar). `DonationForm.tsx`
+- **Verify:** typecheck clean. Manual: submit bad phone, >max amount, simulate gateway error, complete happy path.
 
 ## Phase 3 — Accessibility batch
 **Goal:** Pass WCAG AA on forms + nav.
