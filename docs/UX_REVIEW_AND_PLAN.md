@@ -84,13 +84,13 @@
 
 Four phases, ordered by impact ÷ effort. Each phase self-contained and shippable.
 
-## Phase 1 — Dark mode + dead CSS (fast, self-contained)
+## Phase 1 — Dark mode + dead CSS (fast, self-contained) ✅ DONE
 **Goal:** No visible breakage in dark mode; desktop header renders correctly.
-- [ ] C3 — Remove conflicting inline `backgroundColor`, let Tailwind `lg:` classes apply (or move all to style object). `AppBar.tsx:47`
-- [ ] C1a — AppBar overlay variant: respect dark theme (conditional colors via theme/CSS var, not hardcoded white). `AppBar.tsx:51-54`
-- [ ] C1b — Replace hardcoded `bg-green-50`/`text-green-600`/`text-slate-500` with semantic CSS vars / `dark:` variants. `NotificationPopover.tsx:104,109`
-- [ ] C1c — Detect `prefers-color-scheme: dark` on first load (before localStorage fallback). `ThemeWrapper.tsx:18`
-- **Verify:** toggle dark mode on `/`, `/donasi`, notifications popover; check contrast ≥4.5:1.
+- [x] C3 — Removed conflicting inline `backgroundColor`; bg now fully Tailwind (responsive + dark-adaptive via `--surface`). `AppBar.tsx`
+- [x] C1a — AppBar overlay variant: desktop always solid surface; mobile overlay `dark:bg-black/20`. `AppBar.tsx`
+- [x] C1b — Hardcoded `bg-green-50`/`bg-blue-50`/`text-slate-500/400` → `dark:` variants + `text-foreground/60,40`. `NotificationPopover.tsx`
+- [x] C1c — Detect `prefers-color-scheme: dark` on first load (before localStorage fallback). `ThemeWrapper.tsx`
+- **Verify:** typecheck clean. Manual: toggle dark mode on `/`, `/donasi`, notifications popover; check contrast ≥4.5:1.
 
 ## Phase 2 — Donation conversion (protect revenue)
 **Goal:** Reduce drop-off + payment-gateway failures.

@@ -805,8 +805,10 @@ export default function CampaignDetailView({
 
 			<Snackbar
 				open={donationSuccessOpen}
-				autoHideDuration={6000}
-				onClose={() => setDonationSuccessOpen(false)}
+				onClose={(_e, reason) => {
+					if (reason === "clickaway") return;
+					setDonationSuccessOpen(false);
+				}}
 				anchorOrigin={{ vertical: "top", horizontal: "center" }}
 			>
 				<Alert

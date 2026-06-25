@@ -18,9 +18,11 @@ export default function ThemeWrapper({
 	const [mode, setMode] = React.useState<"light" | "dark">("light");
 
 	React.useEffect(() => {
-		const savedMode = localStorage.getItem("themeMode") as "light" | "dark";
-		if (savedMode) {
+		const savedMode = localStorage.getItem("themeMode") as "light" | "dark" | null;
+		if (savedMode === "light" || savedMode === "dark") {
 			setMode(savedMode);
+		} else if (window.matchMedia?.("(prefers-color-scheme: dark)").matches) {
+			setMode("dark");
 		}
 	}, []);
 

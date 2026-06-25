@@ -24,7 +24,17 @@ import { useTheme, alpha, darken } from "@mui/material/styles";
 
 const PRESET_AMOUNTS = [10000, 20000, 50000, 100000, 200000, 500000];
 const MIN_DONATION = Number(process.env.NEXT_PUBLIC_MIN_DONATION ?? 1);
+const MAX_DONATION = Number(process.env.NEXT_PUBLIC_MAX_DONATION ?? 1_000_000_000);
 const PAYMENT_PROVIDER = process.env.NEXT_PUBLIC_PAYMENT_PROVIDER || 'midtrans';
+
+function validatePhone(raw: string): string {
+	const d = raw.replace(/\D/g, "");
+	if (!d) return "Nomor HP wajib diisi";
+	if (!/^(0|62|8)/.test(d)) return "Format nomor HP tidak valid (contoh: 08xxxxxxxxxx)";
+	if (d.length < 10) return "Nomor HP minimal 10 digit";
+	if (d.length > 15) return "Nomor HP terlalu panjang";
+	return "";
+}
 
 type Props = {
 	campaignId: string;
@@ -66,10 +76,16 @@ export default function DonationForm({
 	const [isAnonymous, setIsAnonymous] = React.useState(false);
 	const [loading, setLoading] = React.useState(false);
 	const [error, setError] = React.useState("");
+	const [fieldErrors, setFieldErrors] = React.useState<{
+		amount?: string;
+		name?: string;
+		phone?: string;
+	}>({});
 
 	const handleAmountSelect = (val: number) => {
 		setAmount(val);
 		setCustomAmount(formatIDR(val.toString()));
+		if (fieldErrors.amount) setFieldErrors((p) => ({ ...p, amount: undefined }));
 	};
 
 	const handleCustomAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -77,22 +93,30 @@ export default function DonationForm({
 		const digits = e.target.value.replace(/\D/g, "");
 		setCustomAmount(formatted);
 		setAmount(digits ? parseInt(digits) : "");
+		if (fieldErrors.amount) setFieldErrors((p) => ({ ...p, amount: undefined }));
 	};
 
 	const handleSubmit = async () => {
+		const errs: { amount?: string; name?: string; phone?: string } = {};
+
 		if (!amount || Number(amount) < MIN_DONATION) {
-			setError(`Minimal donasi Rp ${MIN_DONATION.toLocaleString("id-ID")}`);
-			return;
+			errs.amount = `Minimal donasi Rp ${MIN_DONATION.toLocaleString("id-ID")}`;
+		} else if (Number(amount) > MAX_DONATION) {
+			errs.amount = `Maksimal donasi Rp ${MAX_DONATION.toLocaleString("id-ID")}`;
 		}
-		if (!donorName) {
-			setError("Nama donatur wajib diisi");
-			return;
+		if (!donorName.trim()) {
+			errs.name = "Nama donatur wajib diisi";
 		}
-		if (!donorPhone) {
-			setError("Nomor HP wajib diisi");
+		const phoneErr = validatePhone(donorPhone);
+		if (phoneErr) errs.phone = phoneErr;
+
+		if (errs.amount || errs.name || errs.phone) {
+			setFieldErrors(errs);
+			setError("Periksa kembali data yang ditandai merah");
 			return;
 		}
 
+		setFieldErrors({});
 		setLoading(true);
 		setError("");
 
@@ -155,8 +179,8 @@ export default function DonationForm({
 									router.push(`/donasi/${campaignSlug}?${qs.toString()}`);
 								}
 							},
-							onError: () => { setError("Pembayaran gagal"); },
-							onClose: () => { setError("Pembayaran belum selesai"); },
+							onError: () => { setError("Pembayaran ditolak. Coba metode pembayaran lain atau ulangi."); },
+							onClose: () => { setError("Pembayaran belum selesai. Donasi Anda belum tercatat."); },
 						});
 					} else if (j.redirect_url) {
 						window.location.href = j.redirect_url;
@@ -177,7 +201,11 @@ export default function DonationForm({
 			if ((window as any).snap?.hide) {
 				(window as any).snap.hide();
 			}
-			setError("Terjadi kesalahan sistem");
+			if (typeof navigator !== "undefined" && !navigator.onLine) {
+				setError("Koneksi internet terputus. Periksa jaringan Anda lalu coba lagi.");
+			} else {
+				setError("Terjadi kesalahan sistem. Silakan coba beberapa saat lagi.");
+			}
 		} finally {
 			setLoading(false);
 		}
@@ -278,6 +306,7 @@ export default function DonationForm({
 					value={customAmount}
 					onChange={handleCustomAmountChange}
 					startAdornment={<span>Rp</span>}
+					error={fieldErrors.amount}
 					helperText={`Minimal Rp ${MIN_DONATION.toLocaleString("id-ID")}`}
 				/>
 			</Box>
@@ -293,8 +322,12 @@ export default function DonationForm({
 					<Input
 						placeholder="Nama Lengkap"
 						value={donorName}
-						onChange={(e) => { if (!isAnonymous) setDonorName(e.target.value); }}
+						onChange={(e) => {
+							if (!isAnonymous) setDonorName(e.target.value);
+							if (fieldErrors.name) setFieldErrors((p) => ({ ...p, name: undefined }));
+						}}
 						readOnly={isAnonymous}
+						error={fieldErrors.name}
 						className={isAnonymous ? "bg-slate-50 text-slate-400" : ""}
 					/>
 				</div>
@@ -302,8 +335,14 @@ export default function DonationForm({
 					<Input
 						placeholder="Nomor WhatsApp / HP"
 						value={donorPhone}
-						onChange={(e) => setDonorPhone(e.target.value)}
+						onChange={(e) => {
+							setDonorPhone(e.target.value);
+							if (fieldErrors.phone) setFieldErrors((p) => ({ ...p, phone: undefined }));
+						}}
 						type="tel"
+						inputMode="numeric"
+						error={fieldErrors.phone}
+						helperText="Contoh: 081234567890 — pastikan aktif WhatsApp"
 					/>
 				</div>
 
@@ -364,6 +403,16 @@ export default function DonationForm({
 						bgcolor: "white",
 					}}
 				>
+					<Typography
+						sx={{
+							fontSize: 11,
+							color: "text.secondary",
+							textAlign: "center",
+							mb: 0.75,
+						}}
+					>
+						Metode pembayaran (QRIS, e-wallet, bank) dipilih di langkah berikutnya
+					</Typography>
 					<Button
 						variant="contained"
 						color="primary"

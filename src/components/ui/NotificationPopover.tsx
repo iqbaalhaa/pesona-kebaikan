@@ -101,13 +101,13 @@ export default function NotificationPopover({ overlay = false, desktopSolid = fa
 										}}
 										className={`flex w-full items-start gap-2.5 px-3 py-2.5 text-left transition-colors ${item.isRead ? "" : "bg-primary/5"}`}
 									>
-										<span className={`mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-full ${item.type === "KABAR" ? "bg-green-50 text-green-600" : "bg-blue-50 text-blue-600"}`}>
+										<span className={`mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-full ${item.type === "KABAR" ? "bg-green-50 text-green-600 dark:bg-green-500/15 dark:text-green-400" : "bg-blue-50 text-blue-600 dark:bg-blue-500/15 dark:text-blue-400"}`}>
 											{item.type === "KABAR" ? <Megaphone size={18} /> : <ShieldCheck size={18} />}
 										</span>
 										<div className="min-w-0 flex-1">
 											<p className="text-sm font-bold text-foreground">{item.title}</p>
-											<p className="mt-0.5 mb-0.5 text-xs leading-snug text-slate-500 break-words">{item.message}</p>
-											<p className="text-[11px] text-slate-400">
+											<p className="mt-0.5 mb-0.5 text-xs leading-snug text-foreground/60 break-words">{item.message}</p>
+											<p className="text-[11px] text-foreground/40">
 												{item.isBroadcast ? "Untuk semua pengguna" : "Untuk Anda"}
 												{" · "}
 												{new Date(item.createdAt).toLocaleDateString("id-ID", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
