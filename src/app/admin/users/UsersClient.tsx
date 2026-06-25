@@ -25,24 +25,33 @@ import {
 	TableRow,
 	Typography,
 	Alert,
+	MenuItem as SelectMenuItem,
 } from "@mui/material";
 import { Add, MoreVert, Search, Edit, Delete } from "@mui/icons-material";
-import { ChangeEvent, FormEvent, useEffect, useState } from "react";
+import {
+	ChangeEvent,
+	FormEvent,
+	useEffect,
+	useState,
+	useTransition,
+} from "react";
 import { useRouter } from "next/navigation";
 import type { UserStats } from "@/actions/user";
+import { getUsers, createUser, updateUser, deleteUser } from "@/actions/user";
+import type { Role } from "@prisma/client";
 
 type UserRow = {
-  id: string;
-  name: string | null;
-  email: string;
-  role: string;
-  createdAt: string | Date;
+	id: string;
+	name: string | null;
+	email: string;
+	role: string;
+	createdAt: string | Date;
 };
 
 interface UsersClientProps {
-  initialUsers: UserRow[];
-  initialTotal: number;
-  stats: UserStats;
+	initialUsers: UserRow[];
+	initialTotal: number;
+	stats: UserStats;
 }
 
 export default function UsersClient({
@@ -50,25 +59,28 @@ export default function UsersClient({
 	initialTotal,
 	stats,
 }: UsersClientProps) {
-	const [users, setUsers] = useState(initialUsers);
+	const [users, setUsers] = useState<UserRow[]>(initialUsers);
 	const [total, setTotal] = useState(initialTotal);
 	const [page, setPage] = useState(1);
-	const [rowsPerPage, setRowsPerPage] = useState(10);
+	const [rowsPerPage] = useState(10);
 	const [searchQuery, setSearchQuery] = useState("");
 	const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 	const [selectedUser, setSelectedUser] = useState<UserRow | null>(null);
 	const [isAddUserDialogOpen, setAddUserDialogOpen] = useState(false);
 	const [isEditUserDialogOpen, setEditUserDialogOpen] = useState(false);
 	const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
+	const [isPending, startTransition] = useTransition();
 	const [newUser, setNewUser] = useState({
 		name: "",
 		email: "",
 		password: "",
+		role: "USER" as Role,
 	});
 	const [editUser, setEditUser] = useState({
 		id: "",
 		name: "",
 		email: "",
+		role: "USER" as Role,
 	});
 
 	const [snackbar, setSnackbar] = useState<{
@@ -94,28 +106,30 @@ export default function UsersClient({
 		setSnackbar((prev) => ({ ...prev, open: false }));
 	};
 
-	const fetchUsers = async (
-		page: number,
-		rowsPerPage: number,
-		query: string,
-	) => {
-		const response = await fetch(
-			`/api/users?page=${page}&limit=${rowsPerPage}&search=${query}`,
-		);
-		const data = await response.json();
-		setUsers(data.users);
-		setTotal(data.total);
+	const loadUsers = async (page: number, query: string) => {
+		try {
+			const data = await getUsers(query, "all", "all", page, rowsPerPage);
+			setUsers(data.users as UserRow[]);
+			setTotal(data.total);
+		} catch {
+			showSnackbar("Gagal memuat pengguna", "error");
+		}
 	};
 
 	useEffect(() => {
-		fetchUsers(page, rowsPerPage, searchQuery);
-	}, [page, rowsPerPage, searchQuery]);
+		const t = setTimeout(() => {
+			loadUsers(page, searchQuery);
+		}, 300);
+		return () => clearTimeout(t);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [page, searchQuery]);
 
 	const handleSearchChange = (event: ChangeEvent<HTMLInputElement>) => {
+		setPage(1);
 		setSearchQuery(event.target.value);
 	};
 
-	const handlePageChange = (event: ChangeEvent<unknown>, value: number) => {
+	const handlePageChange = (_event: ChangeEvent<unknown>, value: number) => {
 		setPage(value);
 	};
 
@@ -133,6 +147,7 @@ export default function UsersClient({
 	};
 
 	const handleAddUserDialogOpen = () => {
+		setNewUser({ name: "", email: "", password: "", role: "USER" as Role });
 		setAddUserDialogOpen(true);
 	};
 
@@ -141,7 +156,12 @@ export default function UsersClient({
 	};
 
 	const handleEditUserDialogOpen = (user: UserRow) => {
-		setEditUser({ id: user.id, name: user.name ?? "", email: user.email });
+		setEditUser({
+			id: user.id,
+			name: user.name ?? "",
+			email: user.email,
+			role: (user.role as Role) ?? ("USER" as Role),
+		});
 		setEditUserDialogOpen(true);
 		handleMenuClose();
 	};
@@ -153,85 +173,66 @@ export default function UsersClient({
 	const handleDeleteDialogOpen = (user: UserRow) => {
 		setSelectedUser(user);
 		setDeleteDialogOpen(true);
-		handleMenuClose();
+		setAnchorEl(null);
 	};
 
 	const handleDeleteDialogClose = () => {
 		setDeleteDialogOpen(false);
 	};
 
-	const handleAddUser = async (event: FormEvent) => {
+	const handleAddUser = (event: FormEvent) => {
 		event.preventDefault();
-		try {
-			const response = await fetch("/api/users", {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify(newUser),
+		startTransition(async () => {
+			const res = await createUser({
+				name: newUser.name,
+				email: newUser.email,
+				password: newUser.password,
+				role: newUser.role,
 			});
-			if (response.ok) {
+			if (res.success) {
 				showSnackbar("Pengguna berhasil ditambahkan", "success");
-				fetchUsers(page, rowsPerPage, searchQuery);
 				handleAddUserDialogClose();
+				await loadUsers(page, searchQuery);
 				router.refresh();
 			} else {
-				const errorData = await response.json();
-				showSnackbar(
-					errorData.message || "Gagal menambahkan pengguna",
-					"error",
-				);
+				showSnackbar(res.error || "Gagal menambahkan pengguna", "error");
 			}
-		} catch (error) {
-			showSnackbar("Terjadi kesalahan", "error");
-		}
+		});
 	};
 
-	const handleUpdateUser = async (event: FormEvent) => {
+	const handleUpdateUser = (event: FormEvent) => {
 		event.preventDefault();
-		try {
-			const response = await fetch(`/api/users/${editUser.id}`, {
-				method: "PUT",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ name: editUser.name, email: editUser.email }),
+		startTransition(async () => {
+			const res = await updateUser(editUser.id, {
+				name: editUser.name,
+				email: editUser.email,
+				role: editUser.role,
 			});
-			if (response.ok) {
+			if (res.success) {
 				showSnackbar("Pengguna berhasil diperbarui", "success");
-				fetchUsers(page, rowsPerPage, searchQuery);
 				handleEditUserDialogClose();
+				await loadUsers(page, searchQuery);
 				router.refresh();
 			} else {
-				const errorData = await response.json();
-				showSnackbar(
-					errorData.message || "Gagal memperbarui pengguna",
-					"error",
-				);
+				showSnackbar(res.error || "Gagal memperbarui pengguna", "error");
 			}
-		} catch (error) {
-			showSnackbar("Terjadi kesalahan", "error");
-		}
+		});
 	};
 
-	const handleDeleteUser = async () => {
-		if (selectedUser) {
-			try {
-				const response = await fetch(`/api/users/${selectedUser.id}`, {
-					method: "DELETE",
-				});
-				if (response.ok) {
-					showSnackbar("Pengguna berhasil dihapus", "success");
-					fetchUsers(page, rowsPerPage, searchQuery);
-					handleDeleteDialogClose();
-					router.refresh();
-				} else {
-					const errorData = await response.json();
-					showSnackbar(
-						errorData.message || "Gagal menghapus pengguna",
-						"error",
-					);
-				}
-			} catch (error) {
-				showSnackbar("Terjadi kesalahan", "error");
+	const handleDeleteUser = () => {
+		if (!selectedUser) return;
+		const id = selectedUser.id;
+		startTransition(async () => {
+			const res = await deleteUser(id);
+			if (res.success) {
+				showSnackbar("Pengguna berhasil dihapus", "success");
+				handleDeleteDialogClose();
+				await loadUsers(page, searchQuery);
+				router.refresh();
+			} else {
+				showSnackbar(res.error || "Gagal menghapus pengguna", "error");
 			}
-		}
+		});
 	};
 
 	return (
@@ -257,9 +258,7 @@ export default function UsersClient({
 					<Card>
 						<CardContent>
 							<Typography variant="h6">Pengguna Baru (30 Hari)</Typography>
-							<Typography variant="h4">
-								{stats.newUsersLast30Days}
-							</Typography>
+							<Typography variant="h4">{stats.newUsersLast30Days}</Typography>
 						</CardContent>
 					</Card>
 				</Grid>
@@ -312,80 +311,205 @@ export default function UsersClient({
 						</TableRow>
 					</TableHead>
 					<TableBody>
-						{users.map((user) => (
-							<TableRow key={user.id}>
-								<TableCell>{user.name}</TableCell>
-								<TableCell>{user.email}</TableCell>
-								<TableCell>{user.role}</TableCell>
-								<TableCell>
-									{new Date(user.createdAt).toLocaleDateString()}
-								</TableCell>
-								<TableCell align="right">
-									<IconButton onClick={(event) => handleMenuClick(event, user)}>
-										<MoreVert />
-									</IconButton>
-									<Menu
-										anchorEl={anchorEl}
-										open={Boolean(anchorEl) && selectedUser?.id === user.id}
-										onClose={handleMenuClose}
-									>
-										<MenuItem onClick={() => handleEditUserDialogOpen(user)}>
-											<Edit fontSize="small" className="mr-2" />
-											Edit
-										</MenuItem>
-										<MenuItem onClick={() => handleDeleteDialogOpen(user)}>
-											<Delete fontSize="small" className="mr-2" />
-											Hapus
-										</MenuItem>
-									</Menu>
+						{users.length === 0 ? (
+							<TableRow>
+								<TableCell colSpan={5} align="center">
+									Tidak ada pengguna
 								</TableCell>
 							</TableRow>
-						))}
+						) : (
+							users.map((user) => (
+								<TableRow key={user.id}>
+									<TableCell>{user.name}</TableCell>
+									<TableCell>{user.email}</TableCell>
+									<TableCell>{user.role}</TableCell>
+									<TableCell>
+										{new Date(user.createdAt).toLocaleDateString()}
+									</TableCell>
+									<TableCell align="right">
+										<IconButton onClick={(event) => handleMenuClick(event, user)}>
+											<MoreVert />
+										</IconButton>
+										<Menu
+											anchorEl={anchorEl}
+											open={Boolean(anchorEl) && selectedUser?.id === user.id}
+											onClose={handleMenuClose}
+										>
+											<MenuItem onClick={() => handleEditUserDialogOpen(user)}>
+												<Edit fontSize="small" className="mr-2" />
+												Edit
+											</MenuItem>
+											<MenuItem onClick={() => handleDeleteDialogOpen(user)}>
+												<Delete fontSize="small" className="mr-2" />
+												Hapus
+											</MenuItem>
+										</Menu>
+									</TableCell>
+								</TableRow>
+							))
+						)}
 					</TableBody>
 				</Table>
 			</TableContainer>
 
 			<div className="flex justify-center mt-4">
 				<Pagination
-					count={Math.ceil(total / rowsPerPage)}
+					count={Math.max(1, Math.ceil(total / rowsPerPage))}
 					page={page}
 					onChange={handlePageChange}
 					color="primary"
 				/>
 			</div>
 
-      {/* Delete Confirmation Dialog */}
-      <Dialog open={isDeleteDialogOpen} onClose={handleDeleteDialogClose}>
-        <DialogTitle>Konfirmasi Hapus</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            Apakah Anda yakin ingin menghapus pengguna{" "}
-            <strong>{selectedUser?.name}</strong>?
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleDeleteDialogClose}>Batal</Button>
-          <Button onClick={handleDeleteUser} color="error" variant="contained">
-            Hapus
-          </Button>
-        </DialogActions>
-      </Dialog>
+			{/* Add User Dialog */}
+			<Dialog
+				open={isAddUserDialogOpen}
+				onClose={handleAddUserDialogClose}
+				fullWidth
+				maxWidth="sm"
+			>
+				<form onSubmit={handleAddUser}>
+					<DialogTitle>Tambah Pengguna</DialogTitle>
+					<DialogContent className="flex flex-col gap-4 pt-2">
+						<StyledTextField
+							label="Nama"
+							value={newUser.name}
+							onChange={(e) =>
+								setNewUser((p) => ({ ...p, name: e.target.value }))
+							}
+							required
+							fullWidth
+						/>
+						<StyledTextField
+							label="Email"
+							type="email"
+							value={newUser.email}
+							onChange={(e) =>
+								setNewUser((p) => ({ ...p, email: e.target.value }))
+							}
+							required
+							fullWidth
+						/>
+						<StyledTextField
+							label="Password"
+							type="password"
+							value={newUser.password}
+							onChange={(e) =>
+								setNewUser((p) => ({ ...p, password: e.target.value }))
+							}
+							required
+							fullWidth
+						/>
+						<StyledTextField
+							select
+							label="Role"
+							value={newUser.role}
+							onChange={(e) =>
+								setNewUser((p) => ({ ...p, role: e.target.value as Role }))
+							}
+							fullWidth
+						>
+							<SelectMenuItem value="USER">USER</SelectMenuItem>
+							<SelectMenuItem value="ADMIN">ADMIN</SelectMenuItem>
+						</StyledTextField>
+					</DialogContent>
+					<DialogActions>
+						<Button onClick={handleAddUserDialogClose}>Batal</Button>
+						<Button type="submit" variant="contained" disabled={isPending}>
+							Simpan
+						</Button>
+					</DialogActions>
+				</form>
+			</Dialog>
 
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={4000}
-        onClose={handleCloseSnackbar}
-        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-      >
-        <Alert
-          onClose={handleCloseSnackbar}
-          severity={snackbar.severity}
-          variant="filled"
-          sx={{ borderRadius: 999, fontWeight: 700 }}
-        >
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
-    </div>
-  );
+			{/* Edit User Dialog */}
+			<Dialog
+				open={isEditUserDialogOpen}
+				onClose={handleEditUserDialogClose}
+				fullWidth
+				maxWidth="sm"
+			>
+				<form onSubmit={handleUpdateUser}>
+					<DialogTitle>Edit Pengguna</DialogTitle>
+					<DialogContent className="flex flex-col gap-4 pt-2">
+						<StyledTextField
+							label="Nama"
+							value={editUser.name}
+							onChange={(e) =>
+								setEditUser((p) => ({ ...p, name: e.target.value }))
+							}
+							required
+							fullWidth
+						/>
+						<StyledTextField
+							label="Email"
+							type="email"
+							value={editUser.email}
+							onChange={(e) =>
+								setEditUser((p) => ({ ...p, email: e.target.value }))
+							}
+							required
+							fullWidth
+						/>
+						<StyledTextField
+							select
+							label="Role"
+							value={editUser.role}
+							onChange={(e) =>
+								setEditUser((p) => ({ ...p, role: e.target.value as Role }))
+							}
+							fullWidth
+						>
+							<SelectMenuItem value="USER">USER</SelectMenuItem>
+							<SelectMenuItem value="ADMIN">ADMIN</SelectMenuItem>
+						</StyledTextField>
+					</DialogContent>
+					<DialogActions>
+						<Button onClick={handleEditUserDialogClose}>Batal</Button>
+						<Button type="submit" variant="contained" disabled={isPending}>
+							Simpan
+						</Button>
+					</DialogActions>
+				</form>
+			</Dialog>
+
+			{/* Delete Confirmation Dialog */}
+			<Dialog open={isDeleteDialogOpen} onClose={handleDeleteDialogClose}>
+				<DialogTitle>Konfirmasi Hapus</DialogTitle>
+				<DialogContent>
+					<DialogContentText>
+						Apakah Anda yakin ingin menghapus pengguna{" "}
+						<strong>{selectedUser?.name}</strong>?
+					</DialogContentText>
+				</DialogContent>
+				<DialogActions>
+					<Button onClick={handleDeleteDialogClose}>Batal</Button>
+					<Button
+						onClick={handleDeleteUser}
+						color="error"
+						variant="contained"
+						disabled={isPending}
+					>
+						Hapus
+					</Button>
+				</DialogActions>
+			</Dialog>
+
+			<Snackbar
+				open={snackbar.open}
+				autoHideDuration={4000}
+				onClose={handleCloseSnackbar}
+				anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+			>
+				<Alert
+					onClose={handleCloseSnackbar}
+					severity={snackbar.severity}
+					variant="filled"
+					sx={{ borderRadius: 999, fontWeight: 700 }}
+				>
+					{snackbar.message}
+				</Alert>
+			</Snackbar>
+		</div>
+	);
 }
