@@ -3,6 +3,7 @@ import { getNotifyKey, getNotifyKeys } from "@/actions/settings";
 import { redirect } from "next/navigation";
 import SettingsForm from "./SettingsForm";
 import EmailSettingsForm from "./EmailSettingsForm";
+import TestWhatsappForm from "./TestWhatsappForm";
 
 export default async function SettingsPage() {
 	const session = await auth();
@@ -82,6 +83,11 @@ export default async function SettingsPage() {
 					label="WhatsApp Application Secret"
 					placeholder="Masukkan Application Secret"
 				/>
+
+				<div className="mt-6 pt-6 border-t border-gray-100">
+					<h3 className="text-md font-semibold mb-4">Tes Kirim Pesan</h3>
+					<TestWhatsappForm />
+				</div>
 			</div>
 
 			<div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
