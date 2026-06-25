@@ -67,11 +67,11 @@ export default function SimpleBottomNavigation() {
 							].join(" ")}
 						>
 							<Icon
-								size={22}
+								size={24}
 								className={`transition-transform duration-150 ${active ? "scale-105 drop-shadow-[0_10px_18px_var(--color-primary-shadow)]" : ""}`}
 							/>
 							<span
-								className={`text-[10px] ${active ? "font-bold text-primary" : ""}`}
+								className={`whitespace-nowrap text-[11px] leading-none ${active ? "font-bold text-primary" : ""}`}
 							>
 								{menu.label}
 							</span>

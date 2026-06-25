@@ -569,6 +569,12 @@ export default function VerificationDialog({
 													fullWidth
 													placeholder="Masukkan 6 digit kode"
 													disabled={waLoading}
+													inputProps={{
+														inputMode: "numeric",
+														autoComplete: "one-time-code",
+														maxLength: 6,
+														"aria-label": "Kode OTP WhatsApp 6 digit",
+													}}
 												/>
 											</Box>
 										</Stack>
@@ -650,6 +656,12 @@ export default function VerificationDialog({
 												fullWidth
 												placeholder="Masukkan 6 digit kode"
 												disabled={emailLoading}
+												inputProps={{
+													inputMode: "numeric",
+													autoComplete: "one-time-code",
+													maxLength: 6,
+													"aria-label": "Kode OTP Email 6 digit",
+												}}
 											/>
 											<Button
 												variant="outlined"

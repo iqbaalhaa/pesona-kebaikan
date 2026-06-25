@@ -39,6 +39,12 @@ export default function LoginPage() {
 		email: "",
 		password: "",
 	});
+	const [emailTouched, setEmailTouched] = useState(false);
+
+	const emailError =
+		emailTouched && formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)
+			? "Format email tidak valid"
+			: "";
 
 	const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		setFormData({
@@ -223,6 +229,10 @@ export default function LoginPage() {
 									required
 									value={formData.email}
 									onChange={handleChange}
+									onBlur={() => setEmailTouched(true)}
+									error={!!emailError}
+									helperText={emailError}
+									inputProps={{ "aria-label": "Email" }}
 									InputProps={{
 										startAdornment: (
 											<InputAdornment position="start">
@@ -274,6 +284,7 @@ export default function LoginPage() {
 									required
 									value={formData.password}
 									onChange={handleChange}
+									inputProps={{ "aria-label": "Password" }}
 									InputProps={{
 										startAdornment: (
 											<InputAdornment position="start">

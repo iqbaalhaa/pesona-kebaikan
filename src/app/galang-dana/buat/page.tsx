@@ -1169,6 +1169,7 @@ function BuatGalangDanaPageContent() {
 								</Typography>
 
 								<RadioGroup
+									aria-label="Siapa yang sakit?"
 									value={who}
 									onChange={(e) => setWho(e.target.value)}
 								>
@@ -1306,6 +1307,7 @@ function BuatGalangDanaPageContent() {
 										</Typography>
 										<RadioGroup
 											row
+											aria-label="Jenis kelamin pasien"
 											value={patientGender}
 											onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
 												setPatientGender(e.target.value as "L" | "P" | "")
@@ -1335,6 +1337,7 @@ function BuatGalangDanaPageContent() {
 								</Typography>
 
 								<RadioGroup
+									aria-label="Apakah pasien sedang menjalani rawat inap?"
 									value={inpatient}
 									onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
 										setInpatient(e.target.value as "ya" | "tidak" | "")
@@ -1406,6 +1409,7 @@ function BuatGalangDanaPageContent() {
 									</Typography>
 
 									<RadioGroup
+										aria-label="Sumber biaya pengobatan sebelumnya"
 										value={prevCost}
 										onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
 											setPrevCost(e.target.value as "mandiri" | "asuransi" | "")
@@ -1507,6 +1511,7 @@ function BuatGalangDanaPageContent() {
 									</Typography>
 
 									<RadioGroup
+										aria-label="Lama galang dana berlangsung"
 										value={duration}
 										onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
 											const val = e.target.value as
@@ -1595,6 +1600,7 @@ function BuatGalangDanaPageContent() {
 									</Typography>
 
 									<RadioGroup
+										aria-label="Pilih rekening bank penggalangan dana"
 										value={bank}
 										onChange={(e) => setBank(e.target.value)}
 									>
@@ -2068,6 +2074,7 @@ function BuatGalangDanaPageContent() {
 									</Typography>
 
 									<RadioGroup
+										aria-label="Lama galang dana berlangsung"
 										value={durationOther}
 										onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
 											const val = e.target.value as

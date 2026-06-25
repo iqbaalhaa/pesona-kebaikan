@@ -59,12 +59,23 @@ export default function RegisterPage() {
 		});
 	};
 
+	const [emailTouched, setEmailTouched] = useState(false);
+
 	const passwordCriteria = {
 		minLength: formData.password.length >= 8,
 		hasUppercase: /[A-Z]/.test(formData.password),
 		hasNumber: /[0-9]/.test(formData.password),
 		hasSymbol: /[!@#$%^&*(),.?":{}|<>]|[^a-zA-Z0-9]/.test(formData.password),
 	};
+
+	const emailError =
+		emailTouched && formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)
+			? "Format email tidak valid"
+			: "";
+
+	const confirmMismatch =
+		formData.confirmPassword.length > 0 &&
+		formData.password !== formData.confirmPassword;
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
@@ -256,6 +267,7 @@ export default function RegisterPage() {
 								required
 								value={formData.name}
 								onChange={handleChange}
+								inputProps={{ "aria-label": "Nama Lengkap" }}
 								InputProps={{
 									startAdornment: (
 										<InputAdornment position="start">
@@ -289,6 +301,10 @@ export default function RegisterPage() {
 								required
 								value={formData.email}
 								onChange={handleChange}
+								onBlur={() => setEmailTouched(true)}
+								error={!!emailError}
+								helperText={emailError}
+								inputProps={{ "aria-label": "Email" }}
 								InputProps={{
 									startAdornment: (
 										<InputAdornment position="start">
@@ -322,6 +338,7 @@ export default function RegisterPage() {
 								required
 								value={formData.password}
 								onChange={handleChange}
+								inputProps={{ "aria-label": "Password" }}
 								InputProps={{
 									startAdornment: (
 										<InputAdornment position="start">
@@ -413,6 +430,15 @@ export default function RegisterPage() {
 								required
 								value={formData.confirmPassword}
 								onChange={handleChange}
+								error={confirmMismatch}
+								helperText={
+									confirmMismatch
+										? "Password tidak cocok"
+										: formData.confirmPassword.length > 0
+											? "Password cocok"
+											: ""
+								}
+								inputProps={{ "aria-label": "Konfirmasi Password" }}
 								InputProps={{
 									startAdornment: (
 										<InputAdornment position="start">
