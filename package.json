@@ -10,6 +10,7 @@
 		"start": "next start",
 		"lint": "eslint \"src/**/*.{ts,tsx,js,jsx}\"",
 		"typecheck": "tsc -p tsconfig.json --noEmit",
+		"seed:categories": "tsx prisma/seed-categories.ts",
 		"test": "tsx tests/run.ts"
 	},
 	"dependencies": {
