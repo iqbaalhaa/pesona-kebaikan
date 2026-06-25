@@ -1,9 +1,6 @@
 import { prisma } from "@/lib/prisma";
 
-const WA_NOTIFY_API = "https://wanotify.depatidigital.com/public/wa/v1";
-// Note: In a real app, this should be an env var, but using the provided secret for now
-const WA_SECRET_DEFAULT =
-	"b568e335a1ef1f599f1644262abad403afefcc558dbeb2230c12aabaf16bc9de";
+const WA_NOTIFY_API = "https://semata.depatidigital.com/public/wa/v1";
 
 function formatPhoneNumber(phone: string) {
 	let cleaned = phone.replace(/\D/g, "");
@@ -37,8 +34,11 @@ export async function sendWhatsAppMessage(to: string, message: string) {
 			throw new Error("WhatsApp Application ID belum dikonfigurasi.");
 		}
 
-		const secret =
-			applicationSecretKey?.value || legacySecretKey?.value || WA_SECRET_DEFAULT;
+		const secret = applicationSecretKey?.value || legacySecretKey?.value;
+
+		if (!secret) {
+			throw new Error("WhatsApp Application Secret belum dikonfigurasi.");
+		}
 
 		const url = `${WA_NOTIFY_API}/applications/${applicationId}/send`;
 
@@ -51,7 +51,7 @@ export async function sendWhatsAppMessage(to: string, message: string) {
 				"X-Secret-Key": secret,
 			},
 			body: JSON.stringify({
-				to: formattedTo,
+				phone: formattedTo,
 				message,
 				priority: "high",
 				secret: secret,
@@ -89,7 +89,16 @@ export async function sendWhatsAppMessage(to: string, message: string) {
 				);
 			}
 
-			throw new Error(data.message || "Gagal mengirim pesan WhatsApp");
+			throw new Error(
+				data.error || data.message || "Gagal mengirim pesan WhatsApp",
+			);
+		}
+
+		if (data.ok === false) {
+			console.error("WhatsApp API Error:", data);
+			throw new Error(
+				data.error || data.message || "Gagal mengirim pesan WhatsApp",
+			);
 		}
 
 		return { success: true, data };
