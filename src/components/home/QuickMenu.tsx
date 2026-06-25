@@ -45,24 +45,25 @@ export default function QuickMenu() {
 	);
 
 	return (
-		<div className="relative z-2 mt-5 px-4">
+		<div className="relative z-2 mt-5 px-4 lg:px-6">
 			<h2 className="mb-3 text-[15px] font-black text-foreground">
 				Mau berbuat baik apa hari ini?
 			</h2>
 
-			<div className="grid grid-cols-2 gap-2.5">
+			<div className="grid grid-cols-2 gap-2.5 lg:grid-cols-4">
 				{MENUS.map((m) => {
 					const Icon = m.icon;
+					const isSoon = m.status === "soon";
 					const inner = (
 						<button
 							onClick={() => handleActivate(m)}
-							className="relative flex w-full cursor-pointer flex-col items-center justify-center rounded-2xl border border-divider bg-white py-5 text-center transition-all active:scale-[0.98]"
+							className={`relative flex w-full cursor-pointer flex-col items-center justify-center rounded-2xl border border-divider py-5 text-center transition-all active:scale-[0.98] ${isSoon ? "cursor-not-allowed bg-slate-50" : "bg-white"}`}
 						>
-							<div className="grid h-14 w-14 place-items-center rounded-2xl bg-primary/10">
-								<Icon size={26} className="text-primary" />
+							<div className={`grid h-14 w-14 place-items-center rounded-2xl ${isSoon ? "bg-foreground/10" : "bg-primary/10"}`}>
+								<Icon size={26} className={isSoon ? "text-foreground/45" : "text-primary"} />
 							</div>
 
-							<span className="mt-2 text-[12px] font-bold leading-tight text-foreground">
+							<span className={`mt-2 text-[12px] font-bold leading-tight ${isSoon ? "text-foreground/50" : "text-foreground"}`}>
 								{m.label}
 							</span>
 

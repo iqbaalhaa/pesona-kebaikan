@@ -44,7 +44,7 @@ export default function SimpleAppBar({ variant = "solid" }: SimpleAppBarProps) {
 
 	return (
 		<header
-			className="fixed left-1/2 top-0 z-[1100] w-full max-w-[480px] -translate-x-1/2 transition-all duration-300 lg:max-w-[960px]"
+			className={`fixed left-1/2 top-0 z-[1100] w-full max-w-[480px] -translate-x-1/2 transition-all duration-300 lg:left-0 lg:max-w-none lg:translate-x-0 lg:backdrop-blur-none ${showCompact ? "" : "lg:!bg-[var(--surface)] lg:border-b lg:border-divider"}`}
 			style={{
 				backgroundColor: showCompact
 					? "var(--brand)"
@@ -54,7 +54,7 @@ export default function SimpleAppBar({ variant = "solid" }: SimpleAppBarProps) {
 				backdropFilter: isOverlay && !showCompact ? "blur(12px)" : "none",
 			}}
 		>
-			<div className={`flex items-center gap-1.5 px-2 transition-all duration-300 ${showCompact ? "h-11" : "h-14"}`}>
+			<div className={`mx-auto flex items-center gap-1.5 px-3 transition-all duration-300 lg:max-w-[960px] lg:px-6 ${showCompact ? "h-13" : "h-14"}`}>
 				<Link
 					href="/"
 					className={`shrink-0 transition-all duration-300 overflow-hidden ${showCompact ? "w-0 opacity-0" : "w-auto opacity-100"}`}
@@ -80,8 +80,8 @@ export default function SimpleAppBar({ variant = "solid" }: SimpleAppBarProps) {
 					overlay={isOverlay || showCompact}
 				/>
 
-				<div className={`relative z-10 shrink-0 transition-all duration-300 overflow-hidden ${showCompact ? "w-0 opacity-0" : "w-auto opacity-100"}`}>
-					<NotificationPopover overlay={isOverlay} />
+				<div className="relative z-10 shrink-0 overflow-visible">
+					<NotificationPopover overlay={isOverlay || showCompact} desktopSolid={!showCompact} />
 				</div>
 			</div>
 		</header>

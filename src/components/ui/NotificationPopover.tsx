@@ -8,9 +8,10 @@ import { getNotifications, markAsRead } from "@/actions/notification";
 
 interface NotificationPopoverProps {
 	overlay?: boolean;
+	desktopSolid?: boolean;
 }
 
-export default function NotificationPopover({ overlay = false }: NotificationPopoverProps) {
+export default function NotificationPopover({ overlay = false, desktopSolid = false }: NotificationPopoverProps) {
 	const router = useRouter();
 	const { data: session } = useSession();
 	const [open, setOpen] = React.useState(false);
@@ -51,7 +52,7 @@ export default function NotificationPopover({ overlay = false }: NotificationPop
 				aria-label={unreadCount > 0 ? `Notifikasi, ${unreadCount} belum dibaca` : "Notifikasi"}
 				aria-expanded={open}
 				onClick={() => { setOpen(!open); if (!open) fetchNotifications(); }}
-				className={`relative grid h-10 w-10 place-items-center rounded-xl border backdrop-blur-lg ${iconBorder} ${iconBg} ${iconColor}`}
+				className={`relative grid h-10 w-10 place-items-center rounded-xl border backdrop-blur-lg ${iconBorder} ${iconBg} ${iconColor} ${desktopSolid ? "lg:!border-foreground/10 lg:!bg-foreground/5 lg:!text-foreground" : ""}`}
 			>
 				<Bell size={20} aria-hidden="true" />
 				{unreadCount > 0 && (
