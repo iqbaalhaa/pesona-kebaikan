@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { getMyCampaigns } from "@/actions/campaign";
 import { formatDateTime } from "@/lib/date";
+import VerificationGuard from "@/components/profile/VerificationGuard";
 
 import HealingRoundedIcon from "@mui/icons-material/HealingRounded";
 import FavoriteRoundedIcon from "@mui/icons-material/FavoriteRounded";
@@ -342,6 +343,8 @@ export default function GalangDanaSayaPage() {
 	}
 
 	return (
+		<VerificationGuard>
+			{({ requireVerified }) => (
 		<Box
 			sx={{
 				pb: `calc(${BOTTOM_NAV_H}px + 24px)`,
@@ -426,7 +429,7 @@ export default function GalangDanaSayaPage() {
 						</Box>
 
 						<Button
-							onClick={() => setOpenPick(true)}
+							onClick={() => requireVerified(() => setOpenPick(true))}
 							variant="contained"
 							startIcon={<AddRoundedIcon />}
 							sx={{
@@ -628,7 +631,7 @@ export default function GalangDanaSayaPage() {
 									sekarang!
 								</Typography>
 								<Button
-									onClick={() => setOpenPick(true)}
+									onClick={() => requireVerified(() => setOpenPick(true))}
 									variant="text"
 									color="primary"
 									sx={{ mt: 2, fontWeight: 700 }}
@@ -1030,6 +1033,8 @@ export default function GalangDanaSayaPage() {
 				</DialogActions>
 			</Dialog>
 		</Box>
+			)}
+		</VerificationGuard>
 	);
 }
 
