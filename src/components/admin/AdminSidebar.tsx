@@ -197,7 +197,7 @@ export default function AdminSidebar({
 											}
                       ${
 												isVerifyMenu
-													? "border border-emerald-500/40 bg-gradient-to-r from-emerald-50/80 via-white to-emerald-50/80 dark:from-emerald-500/10 dark:via-[#0f172a] dark:to-emerald-500/5"
+													? "border border-emerald-500/40 bg-gradient-to-r from-emerald-50/80 via-white to-emerald-50/80"
 													: "border border-transparent"
 											}
                     `}
@@ -209,8 +209,8 @@ export default function AdminSidebar({
                         transition-colors
                         ${
 													isActive
-														? "bg-white dark:bg-[#0f172a] shadow-sm"
-														: "bg-white dark:bg-[#0f172a] group-hover:bg-slate-50 dark:group-hover:bg-[#0b1324]"
+														? "bg-white shadow-sm"
+														: "bg-white group-hover:bg-slate-50"
 												}
                         ${
 													isVerifyMenu
@@ -227,11 +227,11 @@ export default function AdminSidebar({
 											{React.cloneElement(m.icon as React.ReactElement<any>, {
 												className: isVerifyMenu
 													? isActive
-														? "text-emerald-600 dark:text-emerald-400"
-														: "text-emerald-500 dark:text-emerald-300 group-hover:text-emerald-600 dark:group-hover:text-emerald-300"
+														? "text-emerald-600"
+														: "text-emerald-500 group-hover:text-emerald-600"
 													: isActive
-														? "text-green-600 dark:text-green-400"
-														: "text-slate-500 dark:text-slate-400 group-hover:text-slate-700 dark:group-hover:text-slate-300",
+														? "text-green-600"
+														: "text-slate-500 group-hover:text-slate-700",
 											})}
 										</span>
 
@@ -239,14 +239,14 @@ export default function AdminSidebar({
 											<span
 												className={`block text-sm font-extrabold leading-tight ${
 													isActive
-														? "text-slate-900 dark:text-white"
-														: "text-slate-700 dark:text-slate-200"
+														? "text-slate-900"
+														: "text-slate-700"
 												}`}
 											>
 												{m.label}
 											</span>
 											{isCampaignMenu && (
-												<span className="mt-1 inline-flex items-center gap-1.5 rounded-full bg-slate-50 px-2 py-0.5 text-[10px] font-semibold text-slate-700 shadow-sm ring-1 ring-slate-300/60 dark:bg-slate-800/60 dark:text-slate-200">
+												<span className="mt-1 inline-flex items-center gap-1.5 rounded-full bg-slate-50 px-2 py-0.5 text-[10px] font-semibold text-slate-700 shadow-sm ring-1 ring-slate-300/60">
 													<span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
 													<span>
 														{activeCampaignCount === null
@@ -256,7 +256,7 @@ export default function AdminSidebar({
 												</span>
 											)}
 											{isVerifyMenu && reviewCount !== null && reviewCount > 0 && (
-												<span className="mt-1 inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 shadow-sm ring-1 ring-emerald-500/40 dark:bg-emerald-500/10 dark:text-emerald-200">
+												<span className="mt-1 inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 shadow-sm ring-1 ring-emerald-500/40">
 													<span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
 													<span>{reviewCount} antrian</span>
 												</span>
@@ -288,8 +288,8 @@ export default function AdminSidebar({
           hidden lg:block
           h-[calc(100vh-48px)] overflow-hidden sticky top-6
           rounded-[16px]
-          border border-slate-200/70 dark:border-slate-800/70
-          bg-white/90 dark:bg-[#0f172a]/80
+          border border-slate-200/70
+          bg-white/90
           backdrop-blur
           shadow-[0_10px_28px_rgba(15,23,42,0.06)]
         "

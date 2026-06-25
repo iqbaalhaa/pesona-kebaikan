@@ -79,6 +79,7 @@ export default function VerificationDialog({
 
 	const [emailOtp, setEmailOtp] = React.useState<string>("");
 	const [emailLoading, setEmailLoading] = React.useState<boolean>(false);
+	const [spamDialogOpen, setSpamDialogOpen] = React.useState<boolean>(false);
 
 	const [waCooldown, setWaCooldown] = React.useState<number>(0);
 	const [otpPhone, setOtpPhone] = React.useState<string | null>(null);
@@ -672,10 +673,14 @@ export default function VerificationDialog({
 													try {
 														const res = await requestEmailVerification();
 														// setEmailDebug(res.debug);
-														showSnackbar(
-															res.success || res.error || "Terjadi kesalahan",
-															res.success ? "success" : "error",
-														);
+														if (res.success) {
+															setSpamDialogOpen(true);
+														} else {
+															showSnackbar(
+																res.error || "Terjadi kesalahan",
+																"error",
+															);
+														}
 													} finally {
 														setEmailLoading(false);
 													}
@@ -1076,6 +1081,58 @@ export default function VerificationDialog({
 						</DialogContent>
 					</>
 				)}
+			</Dialog>
+			<Dialog
+				open={spamDialogOpen}
+				onClose={() => setSpamDialogOpen(false)}
+				maxWidth="xs"
+				fullWidth
+				PaperProps={{ sx: { borderRadius: 3 } }}
+			>
+				<Box sx={{ p: 3, textAlign: "center" }}>
+					<Box
+						sx={{
+							width: 64,
+							height: 64,
+							borderRadius: "50%",
+							bgcolor: "rgba(11,169,118,0.1)",
+							display: "grid",
+							placeItems: "center",
+							color: "#0ba976",
+							mx: "auto",
+							mb: 2,
+						}}
+					>
+						<CheckCircleIcon sx={{ fontSize: 36 }} />
+					</Box>
+					<Typography variant="h6" sx={{ fontWeight: 800, mb: 1 }}>
+						Kode OTP Terkirim
+					</Typography>
+					<Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+						Kami telah mengirim kode OTP ke{" "}
+						<b>{userEmail || "email Anda"}</b>.
+					</Typography>
+					<Alert severity="warning" sx={{ borderRadius: 2, textAlign: "left", mb: 3 }}>
+						Cek kotak masuk (Inbox). Jika tidak ada, periksa folder{" "}
+						<b>Spam/Promosi</b>.
+					</Alert>
+					<Button
+						variant="contained"
+						fullWidth
+						onClick={() => setSpamDialogOpen(false)}
+						sx={{
+							bgcolor: "#0ba976",
+							textTransform: "none",
+							fontWeight: 700,
+							borderRadius: 2,
+							boxShadow: "none",
+							py: 1.25,
+							"&:hover": { bgcolor: "#51b860", boxShadow: "none" },
+						}}
+					>
+						Mengerti
+					</Button>
+				</Box>
 			</Dialog>
 			<Snackbar
 				open={snackbar.open}
