@@ -11,6 +11,7 @@
 		"lint": "eslint \"src/**/*.{ts,tsx,js,jsx}\"",
 		"typecheck": "tsc -p tsconfig.json --noEmit",
 		"seed:categories": "tsx prisma/seed-categories.ts",
+		"seed:address": "tsx prisma/seed-address.ts",
 		"test": "tsx tests/run.ts"
 	},
 	"dependencies": {
