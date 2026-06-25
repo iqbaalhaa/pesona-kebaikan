@@ -2380,8 +2380,8 @@ function BuatGalangDanaPageContent() {
 			</Box>
 
 			{/* Bottom actions */}
-			<div className="fixed inset-x-0 bottom-0 z-[99] mx-auto max-w-[480px] border-t border-divider bg-white pb-[env(safe-area-inset-bottom)]">
-				<div className="mx-auto max-w-[480px] px-4 py-3">
+			<div className="fixed inset-x-0 bottom-0 z-[99] mx-auto max-w-[480px] border-t border-divider bg-white pb-[env(safe-area-inset-bottom)] lg:max-w-[960px]">
+				<div className="mx-auto max-w-[480px] px-4 py-3 lg:max-w-[960px] lg:px-6">
 					<div className="flex items-center gap-3">
 						<button
 							onClick={goPrev}

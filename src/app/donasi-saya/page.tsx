@@ -510,7 +510,7 @@ export default function MyDonationPage() {
 	}
 
 	return (
-		<Box sx={{ pb: 12, maxWidth: 600, mx: "auto", "@media (min-width:1024px)": { maxWidth: 960 } }}>
+		<Box sx={{ pb: 12 }}>
 			<Script
 				src={
 					process.env.NEXT_PUBLIC_MIDTRANS_IS_PRODUCTION === "true"
@@ -540,7 +540,7 @@ export default function MyDonationPage() {
 					Riwayat dan status donasi kamu
 				</Typography>
 			</Box>
-			<Box sx={{ px: 2 }}>
+			<Box sx={{ px: 2, maxWidth: 640, mx: "auto" }}>
 
 			{missingPhone && donations.length === 0 && (
 				<Alert severity="warning" sx={{ borderRadius: 2, mb: 3 }}>

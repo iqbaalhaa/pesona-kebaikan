@@ -7,8 +7,8 @@ import { Home, FileText, Receipt, Megaphone, User } from "lucide-react";
 const menus = [
 	{ label: "Home", path: "/", icon: Home },
 	{ label: "Blog", path: "/blog", icon: FileText },
-	{ label: "Donasi Saya", path: "/donasi-saya", icon: Receipt },
 	{ label: "Galang Dana", path: "/galang-dana", icon: Megaphone },
+	{ label: "Donasi Saya", path: "/donasi-saya", icon: Receipt },
 	{ label: "Profil", path: "/profil", icon: User },
 ];
 
@@ -49,7 +49,7 @@ export default function SimpleBottomNavigation() {
 			ref={ref}
 			className="fixed bottom-0 left-1/2 z-[1100] w-full max-w-[480px] -translate-x-1/2 overflow-hidden bg-white pb-[env(safe-area-inset-bottom)] lg:max-w-[960px]"
 		>
-			<nav aria-label="Navigasi utama" className="flex h-[56px] items-center justify-around px-2">
+			<nav aria-label="Navigasi utama" className="mx-auto flex h-[56px] max-w-[480px] items-center justify-around px-2">
 				{menus.map((menu) => {
 					const active = isActive(pathname, menu.path);
 					const Icon = menu.icon;
@@ -60,7 +60,7 @@ export default function SimpleBottomNavigation() {
 							aria-current={active ? "page" : undefined}
 							onClick={() => router.push(menu.path)}
 							className={[
-								"flex cursor-pointer flex-col items-center gap-0.5 rounded-full px-2 py-1.5 transition-all duration-150",
+								"flex flex-1 cursor-pointer flex-col items-center gap-0.5 rounded-full px-2 py-1.5 transition-all duration-150",
 								active
 									? "text-primary"
 									: "text-foreground/60 hover:bg-foreground/4",

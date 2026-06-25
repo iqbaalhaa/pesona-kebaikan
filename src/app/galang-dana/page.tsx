@@ -433,15 +433,18 @@ export default function GalangDanaSayaPage() {
 								bgcolor: "white",
 								color: "primary.main",
 								borderRadius: 3,
-								fontWeight: 700,
+								fontWeight: 800,
+								fontSize: 15,
 								textTransform: "none",
-								py: 1.2,
-								px: 3,
-								alignSelf: "flex-start",
-								boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+								py: 1.5,
+								px: 5,
+								alignSelf: "center",
+								boxShadow: "0 6px 18px rgba(0,0,0,0.18)",
 								"&:hover": {
-									bgcolor: "rgba(255,255,255,0.9)",
+									bgcolor: "rgba(255,255,255,0.92)",
+									transform: "translateY(-1px)",
 								},
+								transition: "all 0.2s ease",
 							}}
 						>
 							Buat Galang Dana

@@ -3,8 +3,11 @@
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import Container from "@mui/material/Container";
+import Paper from "@mui/material/Paper";
+import Stack from "@mui/material/Stack";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import { getPageContent } from "@/actions/cms";
+import BackButton from "./BackButton";
 
 export default async function FundraiseGuidePage() {
 	const content = await getPageContent("fundraise_guide");
@@ -50,6 +53,30 @@ export default async function FundraiseGuidePage() {
 
 	return (
 		<Box sx={{ bgcolor: "background.default" }}>
+			<Paper
+				elevation={0}
+				square
+				sx={{
+					position: "sticky",
+					top: 0,
+					zIndex: 1100,
+					borderBottom: "1px solid",
+					borderColor: "divider",
+					bgcolor: "background.paper",
+				}}
+			>
+				<Stack
+					direction="row"
+					alignItems="center"
+					spacing={1}
+					sx={{ height: 56, px: 2 }}
+				>
+					<BackButton />
+					<Typography sx={{ fontSize: 16, fontWeight: 700 }}>
+						{title}
+					</Typography>
+				</Stack>
+			</Paper>
 			<Container maxWidth="md" sx={{ px: 2, pt: 3, pb: 8 }}>
 				<Typography
 					sx={{ fontWeight: 900, fontSize: 24, color: "text.primary" }}
