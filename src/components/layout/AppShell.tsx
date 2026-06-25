@@ -41,7 +41,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 	if (isAdmin) return <>{children}</>;
 
 	return (
-		<div className="relative mx-auto flex min-h-dvh w-full max-w-[480px] flex-col bg-background sm:max-w-[480px]">
+		<div className="relative mx-auto flex min-h-dvh w-full max-w-[480px] flex-col bg-background lg:max-w-[960px]">
 			{!shouldHideAppBar && <SimpleAppBar variant={appBarVariant} />}
 
 			<main

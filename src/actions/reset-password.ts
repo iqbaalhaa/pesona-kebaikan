@@ -27,7 +27,7 @@ export const requestPasswordReset = async (email: string) => {
 			return { error: "Gagal mengirim email. Silakan coba lagi." };
 		}
 
-		return { success: "Email reset password telah dikirim!" };
+		return { success: "Email reset password telah dikirim! Cek kotak masuk (Inbox), jika tidak ada periksa folder Spam/Promosi." };
 	} catch (error) {
 		console.error(error);
 		return { error: "Terjadi kesalahan sistem" };

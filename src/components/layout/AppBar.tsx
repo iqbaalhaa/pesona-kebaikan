@@ -44,7 +44,7 @@ export default function SimpleAppBar({ variant = "solid" }: SimpleAppBarProps) {
 
 	return (
 		<header
-			className="fixed left-1/2 top-0 z-[1100] w-full max-w-[480px] -translate-x-1/2 transition-all duration-300"
+			className="fixed left-1/2 top-0 z-[1100] w-full max-w-[480px] -translate-x-1/2 transition-all duration-300 lg:max-w-[960px]"
 			style={{
 				backgroundColor: showCompact
 					? "var(--brand)"

@@ -104,8 +104,10 @@ export default async function Home() {
 
 	return (
 		<Box sx={{ pb: 2 }}>
-			<HeroCarousel items={heroItems} />
-			<QuickDonate />
+			<div className="lg:grid lg:grid-cols-[1.5fr_1fr] lg:items-stretch lg:gap-6 lg:px-6 lg:pt-6">
+				<HeroCarousel items={heroItems} />
+				<QuickDonate />
+			</div>
 			<QuickMenu />
 			<FeaturedSection campaigns={featuredCampaigns} title={featuredTitle} />
 			<UrgentSection campaigns={urgentCampaigns} />

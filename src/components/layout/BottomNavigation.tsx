@@ -47,7 +47,7 @@ export default function SimpleBottomNavigation() {
 	return (
 		<div
 			ref={ref}
-			className="fixed bottom-0 left-1/2 z-[1100] w-full max-w-[480px] -translate-x-1/2 overflow-hidden bg-white pb-[env(safe-area-inset-bottom)]"
+			className="fixed bottom-0 left-1/2 z-[1100] w-full max-w-[480px] -translate-x-1/2 overflow-hidden bg-white pb-[env(safe-area-inset-bottom)] lg:max-w-[960px]"
 		>
 			<nav aria-label="Navigasi utama" className="flex h-[56px] items-center justify-around px-2">
 				{menus.map((menu) => {

@@ -613,7 +613,8 @@ export default function VerificationDialog({
 									<StepContent>
 										<Alert severity="info" sx={{ mb: 2, borderRadius: 2 }}>
 											Kode verifikasi (OTP) akan dikirim ke{" "}
-											<b>{userEmail || "email anda"}</b>
+											<b>{userEmail || "email anda"}</b>. Cek kotak masuk
+											(Inbox), jika tidak ada periksa folder Spam/Promosi.
 										</Alert>
 
 										<Box sx={{ mb: 3 }}>

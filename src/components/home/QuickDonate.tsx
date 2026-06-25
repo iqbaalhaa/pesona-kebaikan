@@ -376,6 +376,7 @@ export default function QuickDonate() {
 				mt: "-40px",
 				position: "relative",
 				zIndex: 2,
+				"@media (min-width:1024px)": { mt: 0 },
 			}}
 		>
 			{PAYMENT_PROVIDER === 'midtrans' && (
@@ -398,6 +399,7 @@ export default function QuickDonate() {
 					p: 2,
 					position: "relative",
 					overflow: "hidden",
+					"@media (min-width:1024px)": { mx: 0, height: "100%" },
 				}}
 			>
 				<Box

@@ -35,7 +35,7 @@ export default function ForgotPasswordPage() {
 			if (result.error) {
 				setError(result.error);
 			} else {
-				setSuccess(result.success || "Link reset password telah dikirim ke email Anda.");
+				setSuccess(result.success || "Link reset password telah dikirim ke email Anda. Cek kotak masuk (Inbox), jika tidak ada periksa folder Spam/Promosi.");
 			}
 		} catch (err) {
 			setError("Terjadi kesalahan sistem");

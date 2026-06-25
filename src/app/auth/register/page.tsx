@@ -538,7 +538,7 @@ export default function RegisterPage() {
 					<Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
 						{verificationSuccess
 							? "Akun Anda telah berhasil diverifikasi. Mengalihkan ke halaman login..."
-							: `Kami telah mengirimkan kode OTP ke email ${registeredEmail}. Silakan cek kotak masuk Anda.`}
+							: `Kami telah mengirimkan kode OTP ke email ${registeredEmail}. Silakan cek kotak masuk (Inbox) Anda. Jika tidak ada, periksa folder Spam/Promosi.`}
 					</Typography>
 
 					{!verificationSuccess && (

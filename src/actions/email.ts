@@ -52,7 +52,7 @@ export async function requestEmailVerification() {
     if (!sent.ok) {
       return { error: mapSmtpError(sent.message), debug: sent.debug };
     }
-    return { success: "Kode verifikasi telah dikirim ke email Anda", debug: sent.debug };
+    return { success: "Kode verifikasi telah dikirim ke email Anda. Cek kotak masuk (Inbox), jika tidak ada periksa folder Spam/Promosi.", debug: sent.debug };
   } catch (error) {
     console.error("Send verification email error:", error);
     return { error: "Gagal mengirim email verifikasi" };
