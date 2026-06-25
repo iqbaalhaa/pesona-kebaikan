@@ -104,19 +104,19 @@ export default function BlogListClient({
 			</div>
 
 			{/* Posts */}
-			<div className="flex flex-col gap-3">
+			<div className="flex flex-col gap-3 lg:grid lg:grid-cols-2 lg:gap-4">
 				{posts.length === 0 ? (
-					<p className="mt-4 text-center text-text-secondary">
+					<p className="mt-4 text-center text-text-secondary lg:col-span-2">
 						Tidak ada artikel ditemukan.
 					</p>
 				) : (
 					posts.map((post) => (
-						<Link key={post.id} href={`/blog/${post.id}`} className="block">
-							<div className="flex flex-col gap-2 rounded-xl border border-foreground/8 bg-white p-2 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary hover:shadow-md sm:flex-row dark:bg-surface">
+						<Link key={post.id} href={`/blog/${post.id}`} className="block h-full">
+							<div className="flex h-full flex-col gap-2 rounded-xl border border-foreground/8 bg-white p-2 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary hover:shadow-md sm:flex-row lg:flex-col dark:bg-surface">
 								<img
 									src={post.cover}
 									alt={post.title}
-									className="h-[200px] w-full shrink-0 rounded-lg bg-foreground/4 object-cover sm:h-[160px] sm:w-[200px]"
+									className="h-[200px] w-full shrink-0 rounded-lg bg-foreground/4 object-cover sm:h-[160px] sm:w-[200px] lg:h-[180px] lg:w-full"
 								/>
 								<div className="flex flex-1 flex-col justify-center">
 									<div className="mb-1.5 flex items-center gap-1">

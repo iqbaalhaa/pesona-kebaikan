@@ -377,7 +377,7 @@ export default function GalangDanaSayaPage() {
 				</Typography>
 			</Box>
 
-			<Container maxWidth="sm" sx={{ px: 2, mt: 3 }}>
+			<Container maxWidth="md" sx={{ px: 2, mt: 3 }}>
 				{/* Hero Card for Creation */}
 				<Paper
 					elevation={0}
@@ -634,7 +634,17 @@ export default function GalangDanaSayaPage() {
 								</Button>
 							</Paper>
 						) : (
-							<Stack spacing={2}>
+							<Box
+								sx={{
+									display: "grid",
+									gridTemplateColumns: "1fr",
+									gap: 2,
+									alignItems: "start",
+									"@media (min-width:1024px)": {
+										gridTemplateColumns: "1fr 1fr",
+									},
+								}}
+							>
 								{filtered.map((x) => {
 									const isDraft = x.status === "draft";
 									const isQuickDonate = x.slug === "donasi-cepat";
@@ -847,7 +857,7 @@ export default function GalangDanaSayaPage() {
 										</Paper>
 									);
 								})}
-							</Stack>
+							</Box>
 						)}
 					</Box>
 				</Box>

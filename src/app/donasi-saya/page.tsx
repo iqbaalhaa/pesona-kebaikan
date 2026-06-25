@@ -510,7 +510,7 @@ export default function MyDonationPage() {
 	}
 
 	return (
-		<Box sx={{ pb: 12, maxWidth: 600, mx: "auto" }}>
+		<Box sx={{ pb: 12, maxWidth: 600, mx: "auto", "@media (min-width:1024px)": { maxWidth: 960 } }}>
 			<Script
 				src={
 					process.env.NEXT_PUBLIC_MIDTRANS_IS_PRODUCTION === "true"
