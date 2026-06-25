@@ -30,9 +30,9 @@ export default function TermsPage() {
 		<PageContainer>
 			<ProfileHeader title="Syarat & Ketentuan" />
 
-			<div className="mb-3 flex items-center gap-2 rounded-xl bg-slate-100 p-2 dark:bg-slate-800">
+			<div className="mb-3 flex items-center gap-2 rounded-xl bg-slate-100 p-2">
 				<Gavel size={20} className="shrink-0 text-slate-500" />
-				<p className="text-[13px] leading-snug text-slate-600 dark:text-slate-400">
+				<p className="text-[13px] leading-snug text-slate-600">
 					Harap membaca syarat dan ketentuan ini dengan saksama sebelum
 					menggunakan platform Pesona Kebaikan.
 				</p>

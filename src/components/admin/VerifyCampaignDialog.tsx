@@ -60,15 +60,15 @@ export default function VerifyCampaignDialog({
 										className="font-semibold"
 									/>
 								</div>
-								<div className="mt-2 text-sm text-gray-600 dark:text-gray-300">
+								<div className="mt-2 text-sm text-gray-600">
 									{data.description || "Tidak ada deskripsi"}
 								</div>
 								<div className="mt-3 grid grid-cols-2 gap-3">
-									<div className="rounded-lg bg-gray-50 dark:bg-[#0b1324] p-3">
+									<div className="rounded-lg bg-gray-50 p-3">
 										<div className="text-xs text-gray-500">Target</div>
 										<div className="text-sm font-semibold">{data.target}</div>
 									</div>
-									<div className="rounded-lg bg-gray-50 dark:bg-[#0b1324] p-3">
+									<div className="rounded-lg bg-gray-50 p-3">
 										<div className="text-xs text-gray-500">Terkumpul</div>
 										<div className="text-sm font-semibold">
 											{data.collected}
@@ -80,13 +80,13 @@ export default function VerifyCampaignDialog({
 
 						<Grid container spacing={2}>
 							<Grid size={{ xs: 12, md: 6 }}>
-								<div className="rounded-lg border border-gray-200 dark:border-gray-700 p-3">
+								<div className="rounded-lg border border-gray-200 p-3">
 									<div className="text-xs text-gray-500">Penggalang</div>
 									<div className="text-sm font-semibold">{data.creator}</div>
 								</div>
 							</Grid>
 							<Grid size={{ xs: 12, md: 6 }}>
-								<div className="rounded-lg border border-gray-200 dark:border-gray-700 p-3">
+								<div className="rounded-lg border border-gray-200 p-3">
 									<div className="text-xs text-gray-500">Kontak</div>
 									<div className="text-sm font-semibold">
 										{data.contactPhone || "-"}
@@ -94,13 +94,13 @@ export default function VerifyCampaignDialog({
 								</div>
 							</Grid>
 							<Grid size={{ xs: 12, md: 6 }}>
-								<div className="rounded-lg border border-gray-200 dark:border-gray-700 p-3">
+								<div className="rounded-lg border border-gray-200 p-3">
 									<div className="text-xs text-gray-500">Tanggal</div>
 									<div className="text-sm font-semibold">{data.date}</div>
 								</div>
 							</Grid>
 							<Grid size={{ xs: 12, md: 6 }}>
-								<div className="rounded-lg border border-gray-200 dark:border-gray-700 p-3">
+								<div className="rounded-lg border border-gray-200 p-3">
 									<div className="text-xs text-gray-500">Status Saat Ini</div>
 									<div className="text-sm font-semibold">{data.status}</div>
 								</div>

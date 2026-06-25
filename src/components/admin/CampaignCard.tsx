@@ -39,7 +39,7 @@ export default function CampaignCard({
 	const [imgSrc, setImgSrc] = React.useState(data.image || "/defaultimg.webp");
 
 	return (
-		<Card className="h-full border border-gray-200 dark:border-gray-800 dark:bg-[#0f172a]">
+		<Card className="h-full border border-gray-200">
 			<CardContent className="p-3">
 				<div className="relative mb-3">
 					<div className="relative h-28 w-full rounded-lg overflow-hidden">
@@ -67,31 +67,31 @@ export default function CampaignCard({
 						sx={{ fontSize: 11, height: 20 }}
 						className={`${
 							data.status === "Verified"
-								? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+								? "bg-green-100 text-green-700"
 								: ""
 						} ${
 							data.status === "Pending"
-								? "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400"
+								? "bg-orange-100 text-orange-700"
 								: ""
 						} ${
 							data.status === "Ended"
-								? "bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300"
+								? "bg-gray-100 text-gray-700"
 								: ""
 						} font-semibold border-none`}
 					/>
 				</div>
 				<div className="mt-3 grid grid-cols-2 gap-2">
-					<div className="rounded-lg bg-gray-50 dark:bg-[#0b1324] p-2">
+					<div className="rounded-lg bg-gray-50 p-2">
 						<div className="text-[11px] text-gray-500">Target</div>
 						<div className="text-xs font-semibold">{data.target}</div>
 					</div>
-					<div className="rounded-lg bg-gray-50 dark:bg-[#0b1324] p-2">
+					<div className="rounded-lg bg-gray-50 p-2">
 						<div className="text-[11px] text-gray-500">Terkumpul</div>
 						<div className="text-xs font-semibold">{data.collected}</div>
 					</div>
 				</div>
 				<div className="mt-3 flex items-center justify-between">
-					<div className="text-xs text-gray-600 dark:text-gray-300">
+					<div className="text-xs text-gray-600">
 						Oleh {data.creator}
 					</div>
 					<div className="flex gap-1">
@@ -108,14 +108,14 @@ export default function CampaignCard({
 						) : null}
 						<IconButton
 							size="small"
-							className="text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+							className="text-blue-600 hover:bg-blue-50"
 							onClick={() => onEdit(data)}
 						>
 							<EditIcon fontSize="small" />
 						</IconButton>
 						<IconButton
 							size="small"
-							className="text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
+							className="text-red-600 hover:bg-red-50"
 							onClick={() => onDelete(data)}
 						>
 							<DeleteIcon fontSize="small" />

@@ -52,7 +52,7 @@ export default function SimpleAppBar({ variant = "solid" }: SimpleAppBarProps) {
 				showCompact
 					? "bg-[var(--brand)] lg:!bg-[var(--brand)] lg:border-transparent"
 					: isOverlay
-						? "bg-white/10 backdrop-blur-md dark:bg-black/20"
+						? "bg-white/10 backdrop-blur-md"
 						: "bg-[var(--surface)] border-b border-divider",
 			].join(" ")}
 		>

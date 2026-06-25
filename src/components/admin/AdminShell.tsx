@@ -17,7 +17,7 @@ export default function AdminShell({
 
 	return (
 		<div
-			className="min-h-[100lvh] w-full bg-gradient-to-br from-primary/[0.15] to-[#F6F8FC] dark:from-primary/[0.05] dark:to-[#0b1220] transition-colors duration-300"
+			className="min-h-[100lvh] w-full bg-gradient-to-br from-primary/[0.15] to-[#F6F8FC] transition-colors duration-300"
 			style={
 				{
 					["--radius" as any]: "16px",

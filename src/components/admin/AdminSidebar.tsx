@@ -147,7 +147,7 @@ export default function AdminSidebar({
 		<div className="h-full flex flex-col">
 			{/* Brand */}
 			<div className="flex items-center gap-3 px-5 py-4">
-				<div className="relative h-10 w-10 overflow-hidden rounded-xl border border-slate-200/70 bg-slate-50 dark:border-slate-800/70 dark:bg-[#0b1324]">
+				<div className="relative h-10 w-10 overflow-hidden rounded-xl border border-slate-200/70 bg-slate-50">
 					<Image
 						src="/brand/logo.png"
 						alt="Pesona Kebaikan"
@@ -159,21 +159,21 @@ export default function AdminSidebar({
 				</div>
 
 				<div className="min-w-0">
-					<div className="text-[15px] font-extrabold tracking-tight text-slate-900 dark:text-slate-50">
+					<div className="text-[15px] font-extrabold tracking-tight text-slate-900">
 						Pesona Kebaikan
 					</div>
-					<div className="text-xs text-slate-500 dark:text-slate-400">
+					<div className="text-xs text-slate-500">
 						Admin Panel
 					</div>
 				</div>
 			</div>
 
 			<div className="flex-1 overflow-y-auto px-4 pb-4">
-				<div className="mb-2 h-px bg-slate-200/70 dark:bg-slate-800/70" />
+				<div className="mb-2 h-px bg-slate-200/70" />
 
 				{menus.map((section) => (
 					<div key={section.title} className="mb-3 last:mb-0">
-						<div className="px-1 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+						<div className="px-1 text-[11px] font-bold uppercase tracking-wider text-slate-500">
 							{section.title}
 						</div>
 
@@ -192,8 +192,8 @@ export default function AdminSidebar({
                       transition-colors
                       ${
 												isActive
-													? "bg-slate-100 dark:bg-[#1e293b] text-slate-900 dark:text-slate-50"
-													: "text-slate-800 dark:text-slate-100 hover:bg-slate-50 dark:hover:bg-[#0b1324]"
+													? "bg-slate-100 text-slate-900"
+													: "text-slate-800 hover:bg-slate-50"
 											}
                       ${
 												isVerifyMenu
@@ -205,7 +205,7 @@ export default function AdminSidebar({
 										<span
 											className={`
                         inline-flex h-9 w-9 flex-shrink-0 items-center justify-center
-                        rounded-xl border border-slate-200/70 dark:border-slate-800/70
+                        rounded-xl border border-slate-200/70
                         transition-colors
                         ${
 													isActive

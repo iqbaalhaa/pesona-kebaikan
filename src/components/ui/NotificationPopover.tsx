@@ -101,7 +101,7 @@ export default function NotificationPopover({ overlay = false, desktopSolid = fa
 										}}
 										className={`flex w-full items-start gap-2.5 px-3 py-2.5 text-left transition-colors ${item.isRead ? "" : "bg-primary/5"}`}
 									>
-										<span className={`mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-full ${item.type === "KABAR" ? "bg-green-50 text-green-600 dark:bg-green-500/15 dark:text-green-400" : "bg-blue-50 text-blue-600 dark:bg-blue-500/15 dark:text-blue-400"}`}>
+										<span className={`mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-full ${item.type === "KABAR" ? "bg-green-50 text-green-600" : "bg-blue-50 text-blue-600"}`}>
 											{item.type === "KABAR" ? <Megaphone size={18} /> : <ShieldCheck size={18} />}
 										</span>
 										<div className="min-w-0 flex-1">
@@ -121,7 +121,7 @@ export default function NotificationPopover({ overlay = false, desktopSolid = fa
 					</div>
 
 					{/* Footer */}
-					<div className="border-t border-divider bg-slate-50 p-1.5 text-center dark:bg-foreground/5">
+					<div className="border-t border-divider bg-slate-50 p-1.5 text-center">
 						<button
 							onClick={() => { setOpen(false); router.push("/notifikasi"); }}
 							className="cursor-pointer text-xs font-semibold text-primary hover:underline"

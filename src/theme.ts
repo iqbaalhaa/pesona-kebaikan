@@ -68,24 +68,3 @@ export const lightTheme = createTheme({
     },
   },
 });
-
-export const darkTheme = createTheme({
-  ...baseTheme,
-  palette: {
-    mode: "dark",
-    primary: {
-      main: PRIMARY_COLOR,
-      light: alpha(PRIMARY_COLOR, 0.5),
-      dark: alpha(PRIMARY_COLOR, 0.9),
-      contrastText: "#000000",
-    },
-    background: {
-      default: "#0b1220",
-      paper: "rgba(11, 18, 32, 0.85)",
-    },
-    text: {
-      primary: "#f8fafc",
-      secondary: "rgba(248, 250, 252, 0.6)",
-    },
-  },
-});

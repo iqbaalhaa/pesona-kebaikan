@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useContext } from "react";
+import React, { useState } from "react";
 import Avatar from "@mui/material/Avatar";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
@@ -18,10 +18,6 @@ import PersonIcon from "@mui/icons-material/Person";
 import LogoutIcon from "@mui/icons-material/Logout";
 import SettingsIcon from "@mui/icons-material/Settings";
 import MenuIcon from "@mui/icons-material/Menu";
-import LightModeIcon from "@mui/icons-material/LightMode";
-import DarkModeIcon from "@mui/icons-material/DarkMode";
-import { ColorModeContext } from "@/components/layout/ThemeWrapper";
-import { useTheme } from "@mui/material/styles";
 import { signOut } from "next-auth/react";
 import { useSession } from "next-auth/react";
 import { getNotifications } from "@/actions/notification";
@@ -31,8 +27,6 @@ export default function AdminHeader({
 }: {
 	onMobileToggle: () => void;
 }) {
-	const theme = useTheme();
-	const colorMode = useContext(ColorModeContext);
 	const { data: session } = useSession();
 	const pathname = usePathname();
 
@@ -93,11 +87,11 @@ export default function AdminHeader({
 
 	return (
 		<div className="sticky top-0 z-10 mb-6">
-			<div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#0f172a] p-3 shadow-sm flex items-center gap-3">
+			<div className="rounded-xl border border-gray-200 bg-white p-3 shadow-sm flex items-center gap-3">
 				{/* Mobile Hamburger */}
 				<IconButton
 					onClick={onMobileToggle}
-					className="lg:hidden text-gray-500 dark:text-gray-400"
+					className="lg:hidden text-gray-500"
 				>
 					<MenuIcon />
 				</IconButton>
@@ -129,24 +123,6 @@ export default function AdminHeader({
 					))}
 				</div>
 
-				{/* Theme Toggle */}
-				<Tooltip title="Ubah Tema">
-					<IconButton
-						onClick={colorMode.toggleColorMode}
-						size="small"
-						className="!h-9 !w-9 !rounded-lg !border !border-gray-200 dark:!border-gray-800 hover:!bg-gray-50 dark:hover:!bg-[#0b1324]"
-					>
-						{theme.palette.mode === "dark" ? (
-							<LightModeIcon fontSize="small" className="text-yellow-400" />
-						) : (
-							<DarkModeIcon
-								fontSize="small"
-								className="text-gray-700 dark:text-gray-300"
-							/>
-						)}
-					</IconButton>
-				</Tooltip>
-
 				{/* Notifications */}
 				<Tooltip title="Notifikasi">
 					<IconButton
@@ -155,7 +131,7 @@ export default function AdminHeader({
 						aria-controls={openNotif ? "notifications-menu" : undefined}
 						aria-haspopup="true"
 						aria-expanded={openNotif ? "true" : undefined}
-						className="!h-9 !w-9 !rounded-lg !border !border-gray-200 dark:!border-gray-800 hover:!bg-gray-50 dark:hover:!bg-[#0b1324]"
+						className="!h-9 !w-9 !rounded-lg !border !border-gray-200 hover:!bg-gray-50"
 					>
 						<Badge
 							color="error"
@@ -164,7 +140,7 @@ export default function AdminHeader({
 						>
 							<NotificationsNoneIcon
 								fontSize="small"
-								className="text-gray-700 dark:text-gray-300"
+								className="text-gray-700"
 							/>
 						</Badge>
 					</IconButton>

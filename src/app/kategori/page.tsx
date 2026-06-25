@@ -40,10 +40,10 @@ export default function KategoriPage() {
 	return (
 		<div>
 			{/* Header */}
-			<div className="sticky top-0 z-50 flex items-center gap-1.5 border-b border-foreground/6 bg-white/80 px-2 py-1.5 backdrop-blur-md dark:bg-background/80">
+			<div className="sticky top-0 z-50 flex items-center gap-1.5 border-b border-foreground/6 bg-white/80 px-2 py-1.5 backdrop-blur-md">
 				<button
 					onClick={() => router.back()}
-					className="grid h-9 w-9 cursor-pointer place-items-center rounded-full border border-foreground/10 bg-white text-foreground transition-all active:scale-95 dark:bg-surface"
+					className="grid h-9 w-9 cursor-pointer place-items-center rounded-full border border-foreground/10 bg-white text-foreground transition-all active:scale-95"
 				>
 					<ChevronLeft size={20} />
 				</button>
@@ -59,7 +59,7 @@ export default function KategoriPage() {
 						? Array.from({ length: 12 }).map((_, i) => (
 								<div
 									key={i}
-									className="h-full rounded-2xl border border-foreground/8 bg-white p-2 shadow-sm dark:bg-surface"
+									className="h-full rounded-2xl border border-foreground/8 bg-white p-2 shadow-sm"
 								>
 									<div className="h-14 w-14 animate-pulse rounded-2xl bg-foreground/5" />
 									<div className="mt-1.5 h-4 animate-pulse rounded bg-foreground/5" />
@@ -78,7 +78,7 @@ export default function KategoriPage() {
 													`/kategori/${encodeURIComponent(slug)}`,
 												);
 											}}
-											className="flex h-full cursor-pointer flex-col items-center justify-center rounded-2xl border border-foreground/8 bg-white p-2 text-center shadow-sm transition-all active:scale-96 dark:bg-surface"
+											className="flex h-full cursor-pointer flex-col items-center justify-center rounded-2xl border border-foreground/8 bg-white p-2 text-center shadow-sm transition-all active:scale-96"
 										>
 											<div
 												className="mb-1.5 grid h-14 w-14 place-items-center rounded-2xl"
@@ -89,7 +89,7 @@ export default function KategoriPage() {
 											>
 												{icon}
 											</div>
-											<span className="text-xs font-bold leading-tight text-slate-700 dark:text-slate-300">
+											<span className="text-xs font-bold leading-tight text-slate-700">
 												{cat.name}
 											</span>
 										</button>

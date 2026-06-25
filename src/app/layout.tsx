@@ -83,7 +83,7 @@ export default async function RootLayout({
 				<NextAuthProvider session={session}>
 					<AppRouterCacheProvider options={{ enableCssLayer: true }}>
 						<ThemeWrapper>
-							<div className="min-h-dvh bg-[#F1F5F9] dark:bg-[#0b1220] transition-colors duration-300">
+							<div className="min-h-dvh bg-[#F1F5F9]">
 								<AppShell>{children}</AppShell>
 							</div>
 						</ThemeWrapper>

@@ -62,7 +62,7 @@ export default function ProfilePage() {
 
 	return (
 		<div className="pb-10">
-			<div className="sticky top-0 z-10 border-b border-divider bg-white px-4 pb-2 pt-4 dark:bg-background">
+			<div className="sticky top-0 z-10 border-b border-divider bg-white px-4 pb-2 pt-4">
 				<h1 className="text-xl font-black text-foreground">Profil Saya</h1>
 				<p className="mt-0.5 text-xs text-text-secondary">Kelola akun dan pengaturan kamu</p>
 			</div>

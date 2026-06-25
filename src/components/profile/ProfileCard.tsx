@@ -35,7 +35,7 @@ export default function ProfileCard({ user }: { user: UserCardData }) {
 			: "bg-slate-200";
 
 	return (
-		<div className="relative mb-3 flex items-center gap-2 overflow-hidden rounded-2xl border border-foreground/8 bg-white p-2.5 dark:bg-surface">
+		<div className="relative mb-3 flex items-center gap-2 overflow-hidden rounded-2xl border border-foreground/8 bg-white p-2.5">
 			{user?.image ? (
 				<img
 					src={user.image}

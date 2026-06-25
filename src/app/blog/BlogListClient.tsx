@@ -79,7 +79,7 @@ export default function BlogListClient({
 
 	return (
 		<div>
-			<div className="sticky top-0 z-10 border-b border-divider bg-white px-4 pb-2 pt-4 lg:px-6 dark:bg-background">
+			<div className="sticky top-0 z-10 border-b border-divider bg-white px-4 pb-2 pt-4 lg:px-6">
 				<h1 className="text-xl font-black text-foreground">Blog</h1>
 				<p className="mt-0.5 text-xs text-text-secondary">Artikel inspiratif seputar donasi dan kebaikan</p>
 			</div>
@@ -112,7 +112,7 @@ export default function BlogListClient({
 				) : (
 					posts.map((post) => (
 						<Link key={post.id} href={`/blog/${post.id}`} className="block h-full">
-							<div className="flex h-full flex-col gap-2 rounded-xl border border-foreground/8 bg-white p-2 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary hover:shadow-md sm:flex-row lg:flex-col dark:bg-surface">
+							<div className="flex h-full flex-col gap-2 rounded-xl border border-foreground/8 bg-white p-2 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary hover:shadow-md sm:flex-row lg:flex-col">
 								<img
 									src={post.cover}
 									alt={post.title}
@@ -167,7 +167,7 @@ export default function BlogListClient({
 						className="fixed inset-0 z-40 bg-black/40"
 						onClick={() => setSharePostId(null)}
 					/>
-					<div className="fixed inset-x-0 bottom-0 z-50 animate-[slideUp_200ms_ease] rounded-t-2xl bg-white p-4 shadow-xl dark:bg-surface">
+					<div className="fixed inset-x-0 bottom-0 z-50 animate-[slideUp_200ms_ease] rounded-t-2xl bg-white p-4 shadow-xl">
 						<div className="mb-3 flex items-center justify-between">
 							<h3 className="text-base font-extrabold text-foreground">
 								Bagikan ke

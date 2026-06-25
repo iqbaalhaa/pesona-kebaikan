@@ -46,7 +46,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
 			<main
 				id="main-content"
-				className="no-scrollbar flex-1 bg-[#F8FAFC] dark:bg-background"
+				className="no-scrollbar flex-1 bg-[#F8FAFC]"
 				style={{
 					paddingBottom: shouldHideNav ? 0 : "3.75rem",
 					paddingTop: isHome || shouldHideAppBar ? 0 : "3.5rem",
