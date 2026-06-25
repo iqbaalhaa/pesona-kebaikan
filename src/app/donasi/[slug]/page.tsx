@@ -41,7 +41,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 			: res.data.title;
 
 	const siteUrl =
-		process.env.NEXT_PUBLIC_BASE_URL || "https://pesonakebaikan.id";
+		process.env.NEXT_PUBLIC_APP_URL || "https://pesonakebaikan.id";
 	const campaignUrl = `${siteUrl}/donasi/${res.data.slug || res.data.id}`;
 
 	const plainTextDescription = res.data.description.replace(/<[^>]*>?/gm, "");
