@@ -967,6 +967,7 @@ function BuatGalangDanaPageContent() {
 					} catch {}
 					// Redirect
 					setTimeout(() => {
+						router.refresh();
 						router.push("/galang-dana");
 					}, 1500);
 				} else {
@@ -1086,6 +1087,7 @@ function BuatGalangDanaPageContent() {
 					type: "success",
 				});
 				setTimeout(() => {
+					router.refresh();
 					router.push("/galang-dana");
 				}, 1500);
 			} else {

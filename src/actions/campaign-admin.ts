@@ -57,6 +57,19 @@ export async function updateCampaignStatus(
 			updateData.rejectedBy = { connect: { id: session.user.id } };
 		}
 
+		// When approving PENDING → ACTIVE, reset start/end from today using original duration
+		if (status === "ACTIVE" && prev?.status === "PENDING" && prev.slug !== QUICK_DONATION_SLUG) {
+			const now = new Date();
+			const dayMs = 24 * 60 * 60 * 1000;
+			let durationDays = 30;
+			if (prev.start && prev.end) {
+				const diff = new Date(prev.end).getTime() - new Date(prev.start).getTime();
+				durationDays = Math.max(1, Math.ceil(diff / dayMs));
+			}
+			updateData.start = now;
+			updateData.end = new Date(now.getTime() + durationDays * dayMs);
+		}
+
 		if (
 			status === "ACTIVE" &&
 			prev?.status === "COMPLETED" &&

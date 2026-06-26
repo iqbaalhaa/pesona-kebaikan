@@ -279,7 +279,10 @@ export async function getCampaigns(
 		where.NOT = {
 			slug: QUICK_DONATION_SLUG,
 		};
-		where.end = { gte: new Date() };
+		// Only apply end-date filter for public listings, not for owner's own campaigns
+		if (!userId) {
+			where.end = { gte: new Date() };
+		}
 	}
 
 	if (search) {
