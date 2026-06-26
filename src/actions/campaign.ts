@@ -2,7 +2,7 @@
 
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { uploadFile } from "@/actions/upload";
+import { uploadFile, uploadCoverFile } from "@/actions/upload";
 import { CampaignStatus, Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { CATEGORY_TITLE } from "@/lib/constants";
@@ -131,7 +131,7 @@ export async function createCampaign(formData: FormData) {
 			const fd = new FormData();
 			fd.append("file", coverFile);
 			uploadPromises.push(
-				uploadFile(fd).then((res) => ({ type: "cover", res })),
+				uploadCoverFile(fd).then((res) => ({ type: "cover", res })),
 			);
 		}
 
@@ -876,7 +876,7 @@ export async function updateCampaign(id: string, formData: FormData) {
 			const fd = new FormData();
 			fd.append("file", coverFile);
 			uploadPromises.push(
-				uploadFile(fd).then((res) => ({ type: "cover", res })),
+				uploadCoverFile(fd).then((res) => ({ type: "cover", res })),
 			);
 		}
 

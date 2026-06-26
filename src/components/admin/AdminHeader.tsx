@@ -18,6 +18,7 @@ import PersonIcon from "@mui/icons-material/Person";
 import LogoutIcon from "@mui/icons-material/Logout";
 import SettingsIcon from "@mui/icons-material/Settings";
 import MenuIcon from "@mui/icons-material/Menu";
+import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import { signOut } from "next-auth/react";
 import { useSession } from "next-auth/react";
 import { getNotifications } from "@/actions/notification";
@@ -122,6 +123,19 @@ export default function AdminHeader({
 						</React.Fragment>
 					))}
 				</div>
+
+				{/* Public Page */}
+				<Tooltip title="Lihat halaman publik">
+					<IconButton
+						component={Link}
+						href="/"
+						target="_blank"
+						size="small"
+						className="!h-9 !w-9 !rounded-lg !border !border-gray-200 hover:!bg-gray-50"
+					>
+						<OpenInNewIcon fontSize="small" className="text-gray-700" />
+					</IconButton>
+				</Tooltip>
 
 				{/* Notifications */}
 				<Tooltip title="Notifikasi">

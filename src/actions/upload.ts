@@ -15,19 +15,25 @@ const s3Client = new S3Client({
 	forcePathStyle: true,
 });
 
-async function bufferToWebP(input: Buffer) {
-	// Dynamically import sharp to prevent crashes if module is missing/broken on server
+async function bufferToWebP(input: Buffer, width = 1600, height = 1600, fit: "inside" | "cover" = "inside") {
 	const sharpModule = await import("sharp");
 	const sharp = sharpModule.default || sharpModule;
 	// @ts-ignore
-	return sharp(input).resize(1600, 1600, { fit: "inside", withoutEnlargement: true }).webp({ quality: 80 }).toBuffer();
+	return sharp(input).rotate().resize(width, height, { fit, withoutEnlargement: fit === "inside" }).webp({ quality: 80 }).toBuffer();
 }
 
 export async function uploadImage(formData: FormData) {
 	return uploadFile(formData);
 }
 
-export async function uploadFile(formData: FormData) {
+export async function uploadCoverFile(formData: FormData) {
+	return uploadFile(formData, { width: 664, height: 357, fit: "cover" });
+}
+
+export async function uploadFile(
+	formData: FormData,
+	imageOptions?: { width: number; height: number; fit: "inside" | "cover" },
+) {
 	try {
 		const file = formData.get("file") as File;
 		if (!file) {
@@ -70,7 +76,12 @@ export async function uploadFile(formData: FormData) {
 		if (isImage) {
 			try {
 				console.log("Attempting to convert image to WebP...");
-				buffer = (await bufferToWebP(originalBuffer)) as Buffer;
+				buffer = (await bufferToWebP(
+					originalBuffer,
+					imageOptions?.width,
+					imageOptions?.height,
+					imageOptions?.fit,
+				)) as Buffer;
 				contentType = "image/webp";
 				extension = "webp";
 				console.log("Image converted to WebP successfully");

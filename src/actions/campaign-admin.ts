@@ -2,7 +2,7 @@
 
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { uploadFile } from "@/actions/upload";
+import { uploadFile, uploadCoverFile } from "@/actions/upload";
 import { CampaignStatus, Prisma, NotificationType } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { createNotification } from "@/actions/notification";
@@ -494,7 +494,9 @@ export async function addCampaignMedia(campaignId: string, formData: FormData) {
 
 		const uploadFormData = new FormData();
 		uploadFormData.append("file", file);
-		const uploadRes = await uploadFile(uploadFormData);
+		const uploadRes = isThumbnail
+			? await uploadCoverFile(uploadFormData)
+			: await uploadFile(uploadFormData);
 
 		if (!uploadRes.success || !uploadRes.url) {
 			return { success: false, error: "Failed to upload file" };

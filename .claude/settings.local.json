@@ -3,7 +3,9 @@
     "allow": [
       "Bash(rtk pnpm *)",
       "Bash(pnpm install *)",
-      "Bash(npx prisma *)"
+      "Bash(npx prisma *)",
+      "PowerShell(Get-Process | Where-Object { $_.Name -match \"node\" } | Select-Object Id, Name, Path)",
+      "PowerShell(Stop-Process -Name \"node\" -Force)"
     ]
   }
 }
