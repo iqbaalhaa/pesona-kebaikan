@@ -8,6 +8,8 @@ import {
 	Button,
 	Dialog,
 	IconButton,
+	ToggleButton,
+	ToggleButtonGroup,
 } from "@mui/material";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import StoryBuilder from "@/components/campaign/create/StoryBuilder";
@@ -36,6 +38,11 @@ export default function StoryCreationSection({
 }: StoryCreationSectionProps) {
 	const [showEditor, setShowEditor] = React.useState(defaultShowEditor);
 	const [hasSaved, setHasSaved] = React.useState(false);
+	// "guided" = ikuti panduan langkah (StoryBuilder), "free" = tulis bebas (RichTextEditor).
+	// Default ke "free" jika cerita sudah ada tanpa struktur (artinya ditulis bebas).
+	const [writeMode, setWriteMode] = React.useState<"guided" | "free">(
+		story && !storyStructure ? "free" : "guided",
+	);
 
 	// Update showEditor when defaultShowEditor changes, but only if it becomes true?
 	// Or just trust the initial value.
