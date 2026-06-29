@@ -275,7 +275,7 @@ export default function CampaignDetailView({
 	const images = imagesFromField.length > 0 ? imagesFromField : [fallbackImage];
 
 	const baseUrl =
-		process.env.NEXT_PUBLIC_APP_URL || "https://pesonakebaikan.id";
+		process.env.NEXT_PUBLIC_APP_URL || "https://pesonakebaikan.com";
 	const shareUrl = `${baseUrl}/donasi/${data.slug || data.id}`;
 	const shareText = `Bantu ${effectiveTitle} di Pesona Kebaikan`;
 

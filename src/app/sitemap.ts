@@ -4,13 +4,17 @@ import { prisma } from "@/lib/prisma";
 export const revalidate = 3600;
 
 const BASE_URL =
-  process.env.NEXT_PUBLIC_APP_URL || "https://pesonakebaikan.id";
+  process.env.NEXT_PUBLIC_APP_URL || "https://pesonakebaikan.com";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [campaigns, blogs, categories] = await Promise.all([
+  const [campaigns, fundraisers, blogs, categories] = await Promise.all([
     prisma.campaign.findMany({
       where: { status: "ACTIVE" },
       select: { slug: true, id: true, updatedAt: true },
+    }),
+    prisma.fundraiser.findMany({
+      where: { campaign: { status: "ACTIVE" } },
+      select: { slug: true, updatedAt: true },
     }),
     prisma.blog.findMany({
       select: { id: true, updatedAt: true },
@@ -39,6 +43,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.8,
   }));
 
+  const fundraiserRoutes: MetadataRoute.Sitemap = fundraisers
+    .filter((f) => f.slug)
+    .map((f) => ({
+      url: `${BASE_URL}/donasi/fundraiser/${f.slug}`,
+      lastModified: f.updatedAt,
+      changeFrequency: "daily" as const,
+      priority: 0.7,
+    }));
+
   const blogRoutes: MetadataRoute.Sitemap = blogs.map((b) => ({
     url: `${BASE_URL}/blog/${b.id}`,
     lastModified: b.updatedAt,
@@ -55,5 +68,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.6,
     }));
 
-  return [...staticRoutes, ...campaignRoutes, ...blogRoutes, ...categoryRoutes];
+  return [
+    ...staticRoutes,
+    ...campaignRoutes,
+    ...fundraiserRoutes,
+    ...blogRoutes,
+    ...categoryRoutes,
+  ];
 }

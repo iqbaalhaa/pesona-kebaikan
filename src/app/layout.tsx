@@ -16,7 +16,7 @@ const plusJakartaSans = Plus_Jakarta_Sans({
 
 const siteName = "Pesona Kebaikan";
 const siteUrl =
-	process.env.NEXT_PUBLIC_APP_URL || "https://pesonakebaikan.id";
+	process.env.NEXT_PUBLIC_APP_URL || "https://pesonakebaikan.com";
 const siteDescription =
 	"Pesona Kebaikan adalah platform donasi dan galang dana online untuk membantu sesama dengan transparan dan terpercaya.";
 

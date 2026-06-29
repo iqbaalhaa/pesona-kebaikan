@@ -22,7 +22,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 	}
 
 	const siteUrl =
-		process.env.NEXT_PUBLIC_APP_URL || "https://pesonakebaikan.id";
+		process.env.NEXT_PUBLIC_APP_URL || "https://pesonakebaikan.com";
 	const postUrl = `${siteUrl}/blog/${blog.id}`;
 	const plainTextContent = blog.content.replace(/<[^>]*>?/gm, "");
 	const description =
@@ -110,7 +110,7 @@ export default async function BlogDetailPage({ params }: Props) {
 	const video = blog.gallery.find((m) => m.type === "video")?.url;
 
 	const baseUrl =
-		process.env.NEXT_PUBLIC_APP_URL || "https://pesonakebaikan.id";
+		process.env.NEXT_PUBLIC_APP_URL || "https://pesonakebaikan.com";
 	const postUrl = `${baseUrl}/blog/${blog.id}`;
 
 	const plainTextContent = blog.content.replace(/<[^>]*>?/gm, "");
