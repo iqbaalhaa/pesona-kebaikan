@@ -201,24 +201,95 @@ export default function StoryCreationSection({
 					</Box>
 
 					<Box sx={{ p: 3, maxWidth: 600, mx: "auto", width: "100%" }}>
-						<StoryBuilder
-							category={category}
-							purposeKey={purposeKey}
-							initialData={
-								storyStructure
-									? {
-											html: story,
-											structure: storyStructure,
-										}
-									: undefined
-							}
-							onComplete={(html, structure) => {
-								onSave(html, structure);
-								setShowEditor(false);
-								setHasSaved(true);
-							}}
-							onBack={() => setShowEditor(false)}
-						/>
+						<ToggleButtonGroup
+							value={writeMode}
+							exclusive
+							fullWidth
+							size="small"
+							onChange={(_, val) => val && setWriteMode(val)}
+							sx={{ mb: 2 }}
+						>
+							<ToggleButton
+								value="guided"
+								sx={{ textTransform: "none", fontWeight: 600, borderRadius: 2 }}
+							>
+								Ikuti panduan
+							</ToggleButton>
+							<ToggleButton
+								value="free"
+								sx={{ textTransform: "none", fontWeight: 600, borderRadius: 2 }}
+							>
+								Tulis sendiri
+							</ToggleButton>
+						</ToggleButtonGroup>
+
+						{writeMode === "guided" ? (
+							<StoryBuilder
+								category={category}
+								purposeKey={purposeKey}
+								initialData={
+									storyStructure
+										? {
+												html: story,
+												structure: storyStructure,
+											}
+										: undefined
+								}
+								onComplete={(html, structure) => {
+									onSave(html, structure);
+									setShowEditor(false);
+									setHasSaved(true);
+								}}
+								onBack={() => setShowEditor(false)}
+							/>
+						) : (
+							<Box>
+								<Typography
+									sx={{ fontSize: 13, color: "text.secondary", mb: 1.5 }}
+								>
+									Tulis cerita galang dana dengan bahasamu sendiri, tanpa harus
+									mengikuti panduan.
+								</Typography>
+								<RichTextEditor
+									value={story}
+									onChange={(val) => onSave(val, undefined)}
+									placeholder="Tulis latar belakang, kondisi, kebutuhan biaya, rencana penggunaan dana, dan ajakan..."
+									minHeight={300}
+								/>
+								<Box
+									sx={{
+										display: "flex",
+										justifyContent: "space-between",
+										mt: 3,
+										pt: 2,
+										borderTop: "1px solid",
+										borderColor: "divider",
+									}}
+								>
+									<Button
+										onClick={() => setShowEditor(false)}
+										sx={{ textTransform: "none", color: "text.secondary" }}
+									>
+										Batal
+									</Button>
+									<Button
+										variant="contained"
+										onClick={() => {
+											setShowEditor(false);
+											setHasSaved(true);
+										}}
+										sx={{
+											textTransform: "none",
+											borderRadius: 2,
+											px: 3,
+											fontWeight: 700,
+										}}
+									>
+										Simpan cerita
+									</Button>
+								</Box>
+							</Box>
+						)}
 					</Box>
 				</Dialog>
 			</>
