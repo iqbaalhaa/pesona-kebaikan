@@ -46,17 +46,14 @@ export default function SimpleAppBar({ variant = "solid" }: SimpleAppBarProps) {
 		<header
 			className={[
 				"fixed left-1/2 top-0 z-[1100] w-full max-w-[480px] -translate-x-1/2 transition-all duration-300",
-				"lg:left-0 lg:max-w-none lg:translate-x-0 lg:backdrop-blur-none",
-				// Desktop (lg) is never the mobile hero overlay: always solid surface + divider.
-				"lg:bg-[var(--surface)] lg:border-b lg:border-divider",
 				showCompact
-					? "bg-[var(--brand)] lg:!bg-[var(--brand)] lg:border-transparent"
+					? "bg-[var(--brand)]"
 					: isOverlay
 						? "bg-white/10 backdrop-blur-md"
 						: "bg-[var(--surface)] border-b border-divider",
 			].join(" ")}
 		>
-			<div className={`mx-auto flex items-center gap-1.5 px-3 transition-all duration-300 lg:max-w-[960px] lg:px-6 ${showCompact ? "h-13" : "h-14"}`}>
+			<div className={`mx-auto flex items-center gap-1.5 px-3 transition-all duration-300 ${showCompact ? "h-13" : "h-14"}`}>
 				<Link
 					href="/"
 					className={`shrink-0 transition-all duration-300 overflow-hidden ${showCompact ? "w-0 opacity-0" : "w-auto opacity-100"}`}

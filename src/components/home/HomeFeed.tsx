@@ -75,7 +75,7 @@ export default function HomeFeed() {
 
 	return (
 		<>
-			<div className="lg:grid lg:grid-cols-[1.5fr_1fr] lg:items-stretch lg:gap-6 lg:px-6 lg:pt-20">
+			<div>
 				<HeroCarousel items={data.heroItems} />
 				<QuickDonate />
 			</div>
