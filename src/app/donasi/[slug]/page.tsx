@@ -57,20 +57,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 				? `${plainTextDescription.substring(0, 157)}...`
 				: plainTextDescription;
 
-	const imagesFromField =
-		Array.isArray(res.data.images) && res.data.images.length > 0
-			? res.data.images
-			: [];
-
-	const fallbackImage =
-		res.data.thumbnail ||
-		(imagesFromField.length > 0 ? imagesFromField[0] : undefined) ||
-		"/defaultimg.webp";
-
-	const ogImages =
-		imagesFromField.length > 0 ? imagesFromField : [fallbackImage];
-	const primaryImage = ogImages[0];
-
+	// OG/Twitter images are produced by the file-based opengraph-image.tsx /
+	// twitter-image.tsx routes (PNG, WhatsApp-compatible). Do not set images
+	// here — stored covers are .webp and would not render in WhatsApp.
 	return {
 		title: `${effectiveTitle} | Pesona Kebaikan`,
 		description,
@@ -84,18 +73,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 			type: "website",
 			url: campaignUrl,
 			siteName: "Pesona Kebaikan",
-			images: ogImages.map((url: string) => ({
-				url,
-				width: 1200,
-				height: 630,
-				alt: effectiveTitle,
-			})),
 		},
 		twitter: {
 			card: "summary_large_image",
 			title: effectiveTitle,
 			description,
-			images: [primaryImage],
 		},
 		alternates: {
 			canonical: campaignUrl,
