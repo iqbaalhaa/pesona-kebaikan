@@ -1757,6 +1757,8 @@ function BuatGalangDanaPageContent() {
 										label="Upload Cover/Thumbnail Galang Dana *"
 										note="Disarankan ukuran 664 x 357 piksel."
 										accept="image/*"
+										cropAspect={664 / 357}
+										aspectRatio="664/357"
 										value={coverPreview}
 										onUploaded={(url) => {
 											setCoverPreview(url);
@@ -2318,6 +2320,8 @@ function BuatGalangDanaPageContent() {
 										label="Upload Cover/Thumbnail Galang Dana *"
 										note="Disarankan ukuran 664 x 357 piksel."
 										accept="image/*"
+										cropAspect={664 / 357}
+										aspectRatio="664/357"
 										value={coverPreviewOther}
 										onUploaded={(url) => {
 											setCoverPreviewOther(url);

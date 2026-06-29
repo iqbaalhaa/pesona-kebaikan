@@ -1,9 +1,11 @@
 "use client";
 
 import * as React from "react";
-import { Camera, X, Loader2, CheckCircle, AlertCircle, RotateCcw, RotateCw } from "lucide-react";
+import { Camera, X, Loader2, CheckCircle, AlertCircle, RotateCcw, RotateCw, Crop as CropIcon } from "lucide-react";
+import Cropper, { type Area } from "react-easy-crop";
 import { uploadFile } from "@/actions/upload";
 import { rotateImageFile } from "@/lib/rotateImage";
+import getCroppedImg from "@/lib/cropImage";
 
 const MAX_FILE_MB = 3;
 const MAX_FILE_BYTES = MAX_FILE_MB * 1024 * 1024;
@@ -16,6 +18,17 @@ interface FileUploadFieldProps {
 	onClear?: () => void;
 	preview?: boolean;
 	note?: string;
+	/** Preview aspect ratio, e.g. "664/357". When set, preview matches the
+	 *  final stored crop instead of a fixed 140px box. */
+	aspectRatio?: string;
+	/** When set (e.g. 664/357), opens a crop dialog before upload so the user
+	 *  controls which part of an off-ratio image is kept. */
+	cropAspect?: number;
+}
+
+async function dataUrlToFile(dataUrl: string, name: string): Promise<File> {
+	const blob = await (await fetch(dataUrl)).blob();
+	return new File([blob], name, { type: blob.type || "image/jpeg" });
 }
 
 type UploadState = "idle" | "uploading" | "success" | "error";
@@ -28,6 +41,8 @@ export default function FileUploadField({
 	onClear,
 	preview = true,
 	note,
+	aspectRatio,
+	cropAspect,
 }: FileUploadFieldProps) {
 	const [state, setState] = React.useState<UploadState>(value ? "success" : "idle");
 	const [error, setError] = React.useState("");
@@ -36,6 +51,45 @@ export default function FileUploadField({
 	const inputRef = React.useRef<HTMLInputElement>(null);
 	// Last image File actually uploaded — kept so manual rotate can re-process it.
 	const lastFileRef = React.useRef<File | null>(null);
+
+	// Crop dialog state
+	const [cropSrc, setCropSrc] = React.useState<string | null>(null);
+	const [cropName, setCropName] = React.useState("cover.jpg");
+	const [crop, setCrop] = React.useState({ x: 0, y: 0 });
+	const [zoom, setZoom] = React.useState(1);
+	const [croppedAreaPixels, setCroppedAreaPixels] = React.useState<Area | null>(null);
+	const [cropping, setCropping] = React.useState(false);
+
+	const onCropComplete = React.useCallback((_: Area, areaPixels: Area) => {
+		setCroppedAreaPixels(areaPixels);
+	}, []);
+
+	const closeCrop = () => {
+		if (cropSrc?.startsWith("blob:")) URL.revokeObjectURL(cropSrc);
+		setCropSrc(null);
+		setCrop({ x: 0, y: 0 });
+		setZoom(1);
+		setCroppedAreaPixels(null);
+		if (inputRef.current) inputRef.current.value = "";
+	};
+
+	const confirmCrop = async () => {
+		if (!cropSrc || !croppedAreaPixels) return;
+		setCropping(true);
+		try {
+			const dataUrl = await getCroppedImg(cropSrc, croppedAreaPixels);
+			if (!dataUrl) {
+				setError("Gagal memproses crop");
+				return;
+			}
+			const file = await dataUrlToFile(dataUrl, cropName);
+			closeCrop();
+			if (preview) setPreviewUrl(URL.createObjectURL(file));
+			await uploadFileToServer(file);
+		} finally {
+			setCropping(false);
+		}
+	};
 
 	React.useEffect(() => {
 		if (value) {
@@ -74,6 +128,15 @@ export default function FileUploadField({
 		if (file.size > MAX_FILE_BYTES) {
 			setError(`Ukuran file maksimal ${MAX_FILE_MB}MB (file: ${(file.size / 1024 / 1024).toFixed(1)}MB)`);
 			setState("error");
+			return;
+		}
+
+		// Off-ratio control: let the user pick the crop before uploading.
+		if (cropAspect && file.type.startsWith("image/")) {
+			setCropName(file.name.replace(/\.[^.]+$/, "") + ".jpg");
+			setCrop({ x: 0, y: 0 });
+			setZoom(1);
+			setCropSrc(URL.createObjectURL(file));
 			return;
 		}
 
@@ -120,7 +183,8 @@ export default function FileUploadField({
 					<img
 						src={previewUrl}
 						alt="Preview"
-						className="h-[140px] w-full object-cover"
+						className={aspectRatio ? "w-full object-cover" : "h-[140px] w-full object-cover"}
+						style={aspectRatio ? { aspectRatio } : undefined}
 					/>
 					<button
 						type="button"
@@ -216,6 +280,69 @@ export default function FileUploadField({
 						}}
 					/>
 				</label>
+			)}
+
+			{/* Crop dialog */}
+			{cropSrc && cropAspect && (
+				<div className="fixed inset-0 z-[1300] flex items-center justify-center bg-black/70 p-4">
+					<div className="flex w-full max-w-lg flex-col overflow-hidden rounded-2xl bg-white shadow-xl">
+						<div className="flex items-center justify-between border-b border-gray-100 px-4 py-3">
+							<h3 className="text-sm font-semibold text-foreground">Atur Posisi Crop</h3>
+							<button
+								type="button"
+								onClick={closeCrop}
+								className="grid h-7 w-7 place-items-center rounded-full text-foreground/50 hover:bg-gray-100"
+							>
+								<X size={16} />
+							</button>
+						</div>
+
+						<div className="relative h-72 w-full bg-gray-900">
+							<Cropper
+								image={cropSrc}
+								crop={crop}
+								zoom={zoom}
+								aspect={cropAspect}
+								onCropChange={setCrop}
+								onZoomChange={setZoom}
+								onCropComplete={onCropComplete}
+							/>
+						</div>
+
+						<div className="flex items-center gap-3 px-4 py-3">
+							<span className="text-xs text-foreground/60">Zoom</span>
+							<input
+								type="range"
+								min={1}
+								max={3}
+								step={0.01}
+								value={zoom}
+								onChange={(e) => setZoom(Number(e.target.value))}
+								className="flex-1 accent-primary"
+							/>
+						</div>
+
+						<div className="flex justify-end gap-2 border-t border-gray-100 px-4 py-3">
+							<button
+								type="button"
+								onClick={closeCrop}
+								disabled={cropping}
+								className="rounded-xl px-4 py-2 text-sm font-semibold text-foreground/70 hover:bg-gray-100 disabled:opacity-50"
+							>
+								Batal
+							</button>
+							<button
+								type="button"
+								onClick={confirmCrop}
+								disabled={cropping || !croppedAreaPixels}
+								className="inline-flex items-center gap-1 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary/90 disabled:opacity-50"
+							>
+								{cropping ? <Loader2 size={16} className="animate-spin" /> : <CropIcon size={16} />}
+								{cropping ? "Memproses..." : "Terapkan"}
+							</button>
+						</div>
+					</div>
+				</div>
 			)}
 		</div>
 	);
