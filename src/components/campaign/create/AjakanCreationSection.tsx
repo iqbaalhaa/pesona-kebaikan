@@ -84,7 +84,7 @@ export default function AjakanCreationSection({
 											{displayCta}
 										</p>
 										<p className="mt-0.5 text-[8px] text-foreground/35">
-											pesonakebaikan.id
+											pesonakebaikan.com
 										</p>
 									</div>
 								</div>
@@ -92,7 +92,7 @@ export default function AjakanCreationSection({
 								<p className="text-[11px] leading-relaxed text-foreground/80">
 									Hai, aku mau minta tolong nih. Aku lagi galang dana untuk{" "}
 									<span className="font-semibold">{displayTitle}</span>.{" "}
-									<span className="text-[#25D366]">pesonakebaikan.id/dona...</span>
+									<span className="text-[#25D366]">pesonakebaikan.com/dona...</span>
 									<br />
 									Terima kasih ya 🙏
 								</p>
