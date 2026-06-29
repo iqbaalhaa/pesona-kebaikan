@@ -14,10 +14,21 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     const rawBody = await req.text()
+    console.log('[DOKU webhook] incoming', {
+      headers: {
+        'Client-Id': req.headers.get('Client-Id'),
+        'Request-Id': req.headers.get('Request-Id'),
+        'Request-Timestamp': req.headers.get('Request-Timestamp'),
+        Signature: req.headers.get('Signature'),
+      },
+      bodyPreview: rawBody.slice(0, 500),
+    })
+
     let body: unknown
     try {
       body = JSON.parse(rawBody)
     } catch {
+      console.error('[DOKU webhook] body bukan JSON valid')
       return NextResponse.json({ success: false, error: 'Body tidak valid' }, { status: 400 })
     }
 
@@ -26,12 +37,12 @@ export async function POST(req: Request) {
       result = await provider.verifyAndParseNotification(rawBody, req.headers)
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Verifikasi gagal'
-      console.error('DOKU notification verify error:', msg)
+      console.error('[DOKU webhook] verify error:', msg)
       return NextResponse.json({ success: false, error: msg }, { status: 401 })
     }
 
     const { orderId, status } = result
-    console.log('DOKU Notification:', { orderId, status })
+    console.log('[DOKU webhook] parsed', { orderId, status })
 
     if (!status) {
       return NextResponse.json({ success: true })
@@ -50,11 +61,12 @@ export async function POST(req: Request) {
     })
 
     if (!existing) {
-      console.error(`Donation not found: ${orderId}`)
+      console.error(`[DOKU webhook] donation not found: ${orderId}`)
       return NextResponse.json({ success: true })
     }
 
     await prisma.donation.update({ where: { id: orderId }, data: { status } })
+    console.log(`[DOKU webhook] donation ${orderId} status -> ${status}`)
 
     if (status === 'PAID' || status === 'SETTLED') {
       let targetUserId = existing.userId as string | undefined

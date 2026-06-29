@@ -12,7 +12,7 @@ const BASE_PROD = 'https://api.doku.com'
 const BASE_SANDBOX = 'https://api-sandbox.doku.com'
 const CHECKOUT_TARGET = '/checkout/v1/payment'
 const NOTIFICATION_PATH = '/api/doku/notification'
-const INQUIRY_TARGET = '/orders/v1/inquiry'
+const INQUIRY_TARGET = '/orders/v1/status'
 
 export class DokuProvider implements PaymentProvider {
   readonly name: PaymentProviderName = 'doku'
@@ -115,6 +115,11 @@ export class DokuProvider implements PaymentProvider {
     const expected = 'HMACSHA256=' + createHmac('sha256', this.secretKey).update(stringToSign).digest('base64')
 
     if (receivedSig !== expected) {
+      console.error('[DOKU] signature mismatch', {
+        received: receivedSig,
+        expected,
+        stringToSign,
+      })
       throw new Error('Signature DOKU tidak valid')
     }
 
@@ -123,8 +128,10 @@ export class DokuProvider implements PaymentProvider {
     if (!orderId) throw new Error('invoice_number tidak ditemukan di notifikasi DOKU')
 
     const transactionStatus = ((payload?.transaction?.status as string) || '').toUpperCase()
+    const mapped = this.mapStatus(transactionStatus)
+    console.log('[DOKU] notification parsed', { orderId, transactionStatus, mapped })
 
-    return { orderId, status: this.mapStatus(transactionStatus) }
+    return { orderId, status: mapped }
   }
 
   private mapStatus(status: string): DonationStatus | null {
@@ -160,10 +167,20 @@ export class DokuProvider implements PaymentProvider {
         },
         cache: 'no-store',
       })
-      if (!res.ok) return null
+      if (!res.ok) {
+        console.error('[DOKU] checkStatus failed', {
+          url: `${this.baseUrl}${target}`,
+          httpStatus: res.status,
+          body: (await res.text()).slice(0, 300),
+        })
+        return null
+      }
       const data = await res.json()
-      return { status: (data?.transaction?.status as string) || '' }
-    } catch {
+      const status = (data?.transaction?.status as string) || ''
+      console.log('[DOKU] checkStatus', { invoiceNumber, status })
+      return { status }
+    } catch (e) {
+      console.error('[DOKU] checkStatus error', invoiceNumber, e instanceof Error ? e.message : e)
       return null
     }
   }
