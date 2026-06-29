@@ -19,8 +19,11 @@ import ChevronLeftRoundedIcon from "@mui/icons-material/ChevronLeftRounded";
 import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded";
 import PhotoCameraRoundedIcon from "@mui/icons-material/PhotoCameraRounded";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
+import RotateLeftRoundedIcon from "@mui/icons-material/RotateLeftRounded";
+import RotateRightRoundedIcon from "@mui/icons-material/RotateRightRounded";
 import AutoStoriesOutlinedIcon from "@mui/icons-material/AutoStoriesOutlined";
 import { uploadFile } from "@/actions/upload";
+import { rotateImageFile } from "@/lib/rotateImage";
 
 // ----------------------------------------------------------------------
 
@@ -286,6 +289,30 @@ export default function StoryBuilder({
 		setData((prev) => ({ ...prev, [key]: value }));
 	};
 
+	// Last image File uploaded per photo key — kept so manual rotate can re-process it.
+	const lastPhotoFiles = React.useRef<Record<string, File>>({});
+
+	const uploadPhoto = async (key: string, file: File) => {
+		setUploading((prev) => ({ ...prev, [key]: true }));
+		try {
+			const formData = new FormData();
+			formData.append("file", file);
+			const res = await uploadFile(formData);
+
+			if (res.success && res.url) {
+				lastPhotoFiles.current[key] = file;
+				handleChange(key, res.url);
+			} else {
+				alert("Gagal mengupload foto");
+			}
+		} catch (err) {
+			console.error(err);
+			alert("Terjadi kesalahan saat upload");
+		} finally {
+			setUploading((prev) => ({ ...prev, [key]: false }));
+		}
+	};
+
 	const handlePhotoUpload = async (
 		key: string,
 		e: React.ChangeEvent<HTMLInputElement>,
@@ -299,24 +326,14 @@ export default function StoryBuilder({
 			return;
 		}
 
-		setUploading((prev) => ({ ...prev, [key]: true }));
+		await uploadPhoto(key, file);
+	};
 
-		try {
-			const formData = new FormData();
-			formData.append("file", file);
-			const res = await uploadFile(formData);
-
-			if (res.success && res.url) {
-				handleChange(key, res.url);
-			} else {
-				alert("Gagal mengupload foto");
-			}
-		} catch (err) {
-			console.error(err);
-			alert("Terjadi kesalahan saat upload");
-		} finally {
-			setUploading((prev) => ({ ...prev, [key]: false }));
-		}
+	const handleRotatePhoto = async (key: string, deg: number) => {
+		const current = lastPhotoFiles.current[key];
+		if (!current || uploading[key]) return;
+		const rotated = await rotateImageFile(current, deg);
+		await uploadPhoto(key, rotated);
 	};
 
 	const handleNext = () => {
@@ -484,6 +501,45 @@ export default function StoryBuilder({
 									>
 										<CloseRoundedIcon fontSize="small" />
 									</IconButton>
+
+									{lastPhotoFiles.current[currentStep.photoKey] && (
+										<Box
+											sx={{
+												position: "absolute",
+												bottom: 8,
+												right: 8,
+												display: "flex",
+												gap: 0.5,
+											}}
+										>
+											<IconButton
+												size="small"
+												disabled={uploading[currentStep.photoKey]}
+												title="Putar kiri"
+												sx={{
+													bgcolor: "rgba(0,0,0,0.5)",
+													color: "white",
+													"&:hover": { bgcolor: "rgba(0,0,0,0.7)" },
+												}}
+												onClick={() => handleRotatePhoto(currentStep.photoKey!, -90)}
+											>
+												<RotateLeftRoundedIcon fontSize="small" />
+											</IconButton>
+											<IconButton
+												size="small"
+												disabled={uploading[currentStep.photoKey]}
+												title="Putar kanan"
+												sx={{
+													bgcolor: "rgba(0,0,0,0.5)",
+													color: "white",
+													"&:hover": { bgcolor: "rgba(0,0,0,0.7)" },
+												}}
+												onClick={() => handleRotatePhoto(currentStep.photoKey!, 90)}
+											>
+												<RotateRightRoundedIcon fontSize="small" />
+											</IconButton>
+										</Box>
+									)}
 								</Box>
 							) : (
 								<Button

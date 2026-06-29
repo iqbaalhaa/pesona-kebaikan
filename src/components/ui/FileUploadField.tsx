@@ -1,8 +1,9 @@
 "use client";
 
 import * as React from "react";
-import { Camera, X, Loader2, CheckCircle, AlertCircle } from "lucide-react";
+import { Camera, X, Loader2, CheckCircle, AlertCircle, RotateCcw, RotateCw } from "lucide-react";
 import { uploadFile } from "@/actions/upload";
+import { rotateImageFile } from "@/lib/rotateImage";
 
 const MAX_FILE_MB = 3;
 const MAX_FILE_BYTES = MAX_FILE_MB * 1024 * 1024;
@@ -31,7 +32,10 @@ export default function FileUploadField({
 	const [state, setState] = React.useState<UploadState>(value ? "success" : "idle");
 	const [error, setError] = React.useState("");
 	const [previewUrl, setPreviewUrl] = React.useState(value || "");
+	const [rotating, setRotating] = React.useState(false);
 	const inputRef = React.useRef<HTMLInputElement>(null);
+	// Last image File actually uploaded — kept so manual rotate can re-process it.
+	const lastFileRef = React.useRef<File | null>(null);
 
 	React.useEffect(() => {
 		if (value) {
@@ -40,27 +44,15 @@ export default function FileUploadField({
 		}
 	}, [value]);
 
-	const handleFile = async (file: File) => {
-		setError("");
-
-		if (file.size > MAX_FILE_BYTES) {
-			setError(`Ukuran file maksimal ${MAX_FILE_MB}MB (file: ${(file.size / 1024 / 1024).toFixed(1)}MB)`);
-			setState("error");
-			return;
-		}
-
-		if (preview && file.type.startsWith("image/")) {
-			setPreviewUrl(URL.createObjectURL(file));
-		}
-
+	const uploadFileToServer = async (file: File) => {
 		setState("uploading");
-
 		try {
 			const fd = new FormData();
 			fd.append("file", file);
 			const res = await uploadFile(fd);
 
 			if (res.success && res.url) {
+				lastFileRef.current = file.type.startsWith("image/") ? file : null;
 				setState("success");
 				setPreviewUrl(res.url);
 				onUploaded(res.url);
@@ -76,10 +68,40 @@ export default function FileUploadField({
 		}
 	};
 
+	const handleFile = async (file: File) => {
+		setError("");
+
+		if (file.size > MAX_FILE_BYTES) {
+			setError(`Ukuran file maksimal ${MAX_FILE_MB}MB (file: ${(file.size / 1024 / 1024).toFixed(1)}MB)`);
+			setState("error");
+			return;
+		}
+
+		if (preview && file.type.startsWith("image/")) {
+			setPreviewUrl(URL.createObjectURL(file));
+		}
+
+		await uploadFileToServer(file);
+	};
+
+	const handleRotate = async (deg: number) => {
+		const current = lastFileRef.current;
+		if (!current || rotating) return;
+		setRotating(true);
+		setError("");
+		try {
+			const rotated = await rotateImageFile(current, deg);
+			await uploadFileToServer(rotated);
+		} finally {
+			setRotating(false);
+		}
+	};
+
 	const handleClear = () => {
 		setState("idle");
 		setPreviewUrl("");
 		setError("");
+		lastFileRef.current = null;
 		onClear?.();
 		if (inputRef.current) inputRef.current.value = "";
 	};
@@ -101,11 +123,36 @@ export default function FileUploadField({
 						className="h-[140px] w-full object-cover"
 					/>
 					<button
+						type="button"
 						onClick={handleClear}
 						className="absolute right-2 top-2 grid h-7 w-7 place-items-center rounded-full bg-black/60 text-white transition-colors hover:bg-black/80"
 					>
 						<X size={14} />
 					</button>
+
+					{/* Manual rotate controls (only for freshly uploaded image) */}
+					{lastFileRef.current && (
+						<div className="absolute bottom-2 right-2 flex gap-1">
+							<button
+								type="button"
+								disabled={rotating}
+								onClick={() => handleRotate(-90)}
+								title="Putar kiri"
+								className="grid h-7 w-7 place-items-center rounded-full bg-black/60 text-white transition-colors hover:bg-black/80 disabled:opacity-50"
+							>
+								{rotating ? <Loader2 size={14} className="animate-spin" /> : <RotateCcw size={14} />}
+							</button>
+							<button
+								type="button"
+								disabled={rotating}
+								onClick={() => handleRotate(90)}
+								title="Putar kanan"
+								className="grid h-7 w-7 place-items-center rounded-full bg-black/60 text-white transition-colors hover:bg-black/80 disabled:opacity-50"
+							>
+								{rotating ? <Loader2 size={14} className="animate-spin" /> : <RotateCw size={14} />}
+							</button>
+						</div>
+					)}
 				</div>
 			)}
 
