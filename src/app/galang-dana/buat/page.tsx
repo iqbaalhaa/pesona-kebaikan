@@ -1755,6 +1755,7 @@ function BuatGalangDanaPageContent() {
 
 									<FileUploadField
 										label="Upload Cover/Thumbnail Galang Dana *"
+										note="Disarankan ukuran 664 x 357 piksel."
 										accept="image/*"
 										value={coverPreview}
 										onUploaded={(url) => {
@@ -2315,6 +2316,7 @@ function BuatGalangDanaPageContent() {
 
 									<FileUploadField
 										label="Upload Cover/Thumbnail Galang Dana *"
+										note="Disarankan ukuran 664 x 357 piksel."
 										accept="image/*"
 										value={coverPreviewOther}
 										onUploaded={(url) => {

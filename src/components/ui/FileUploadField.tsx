@@ -14,6 +14,7 @@ interface FileUploadFieldProps {
 	onUploaded: (url: string) => void;
 	onClear?: () => void;
 	preview?: boolean;
+	note?: string;
 }
 
 type UploadState = "idle" | "uploading" | "success" | "error";
@@ -25,6 +26,7 @@ export default function FileUploadField({
 	onUploaded,
 	onClear,
 	preview = true,
+	note,
 }: FileUploadFieldProps) {
 	const [state, setState] = React.useState<UploadState>(value ? "success" : "idle");
 	const [error, setError] = React.useState("");
@@ -85,6 +87,10 @@ export default function FileUploadField({
 	return (
 		<div>
 			<p className="mb-1 text-sm font-semibold text-foreground">{label}</p>
+
+			{note && (
+				<p className="mb-2 text-xs text-foreground/60">{note}</p>
+			)}
 
 			{/* Preview */}
 			{previewUrl && preview && (

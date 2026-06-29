@@ -367,7 +367,7 @@ export default function AdminCampaignDetailPage(props: {
 						key: "cover",
 						title: "Foto Sampul",
 						required: false,
-						help: "Foto utama yang tampil di campaign.",
+						help: "Foto utama yang tampil di campaign. Disarankan ukuran 664 x 357 piksel.",
 						uploaded: !!c.thumbnail,
 						previewUrl: c.thumbnail,
 					},
