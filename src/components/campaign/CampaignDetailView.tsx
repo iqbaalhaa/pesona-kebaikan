@@ -143,34 +143,51 @@ export default function CampaignDetailView({
 	const donationAmountParam = searchParams.get("donation_amount");
 	const donationMethodParam = searchParams.get("donation_method");
 	React.useEffect(() => {
+		if (donationSuccessParam !== "true") return;
+
+		const cleanUrl = `/donasi/${data.slug || data.id}`;
+
+		// Replace URL so the ?donation_success params disappear, then push an extra
+		// same-origin entry. The DOKU payment page is the previous history entry
+		// (cross-origin); without this trap, pressing Back returns to DOKU. The
+		// extra entry absorbs the first Back press and redirects to the campaign
+		// list instead.
+		window.history.replaceState(null, "", cleanUrl);
+		window.history.pushState(null, "", cleanUrl);
+
+		const onPop = () => {
+			window.removeEventListener("popstate", onPop);
+			router.replace("/galang-dana");
+		};
+		window.addEventListener("popstate", onPop);
+
 		const checkStatus = async () => {
-			if (donationSuccessParam === "true") {
-				// Replace URL synchronously so back button skips the ?donation_success params
-				window.history.replaceState(null, '', `/donasi/${data.slug || data.id}`);
+			setDonationSuccessOpen(true);
+			setDonationStatus(donationStatusParam === "paid" ? "paid" : "pending");
 
-				setDonationSuccessOpen(true);
-				setDonationStatus(donationStatusParam === "paid" ? "paid" : "pending");
+			const amountNum = donationAmountParam
+				? Number(donationAmountParam)
+				: NaN;
+			setDonationSummary({
+				amount: isFinite(amountNum) ? amountNum : undefined,
+				method: donationMethodParam || undefined,
+			});
 
-				const amountNum = donationAmountParam
-					? Number(donationAmountParam)
-					: NaN;
-				setDonationSummary({
-					amount: isFinite(amountNum) ? amountNum : undefined,
-					method: donationMethodParam || undefined,
-				});
-
-				// Check payment status actively (useful for localhost/when webhook is delayed)
-				try {
-					const res = await checkPendingDonations(data.id);
-					if (res.success && res.updated && res.updated > 0) {
-						router.refresh();
-					}
-				} catch (e) {
-					console.error("Failed to check donation status", e);
+			// Check payment status actively (useful for localhost/when webhook is delayed)
+			try {
+				const res = await checkPendingDonations(data.id);
+				if (res.success && res.updated && res.updated > 0) {
+					router.refresh();
 				}
+			} catch (e) {
+				console.error("Failed to check donation status", e);
 			}
 		};
 		checkStatus();
+
+		return () => {
+			window.removeEventListener("popstate", onPop);
+		};
 	}, [
 		donationSuccessParam,
 		donationStatusParam,
