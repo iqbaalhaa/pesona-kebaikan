@@ -30,8 +30,7 @@ async function loadCoverDataUri(url?: string): Promise<string | null> {
 		const res = await fetch(url);
 		if (!res.ok) return null;
 		const input = Buffer.from(await res.arrayBuffer());
-		const sharpModule = await import("sharp");
-		const sharp = sharpModule.default || sharpModule;
+		const sharp = (await import("sharp")).default;
 		const png = await sharp(input)
 			.rotate()
 			.resize(size.width, size.height, { fit: "cover" })
