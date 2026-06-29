@@ -57,6 +57,7 @@ export default function FileUploadField({
 	const [cropName, setCropName] = React.useState("cover.jpg");
 	const [crop, setCrop] = React.useState({ x: 0, y: 0 });
 	const [zoom, setZoom] = React.useState(1);
+	const [rotation, setRotation] = React.useState(0);
 	const [croppedAreaPixels, setCroppedAreaPixels] = React.useState<Area | null>(null);
 	const [cropping, setCropping] = React.useState(false);
 
@@ -69,6 +70,7 @@ export default function FileUploadField({
 		setCropSrc(null);
 		setCrop({ x: 0, y: 0 });
 		setZoom(1);
+		setRotation(0);
 		setCroppedAreaPixels(null);
 		if (inputRef.current) inputRef.current.value = "";
 	};
@@ -77,7 +79,7 @@ export default function FileUploadField({
 		if (!cropSrc || !croppedAreaPixels) return;
 		setCropping(true);
 		try {
-			const dataUrl = await getCroppedImg(cropSrc, croppedAreaPixels);
+			const dataUrl = await getCroppedImg(cropSrc, croppedAreaPixels, rotation);
 			if (!dataUrl) {
 				setError("Gagal memproses crop");
 				return;
@@ -136,6 +138,7 @@ export default function FileUploadField({
 			setCropName(file.name.replace(/\.[^.]+$/, "") + ".jpg");
 			setCrop({ x: 0, y: 0 });
 			setZoom(1);
+			setRotation(0);
 			setCropSrc(URL.createObjectURL(file));
 			return;
 		}
@@ -302,9 +305,11 @@ export default function FileUploadField({
 								image={cropSrc}
 								crop={crop}
 								zoom={zoom}
+								rotation={rotation}
 								aspect={cropAspect}
 								onCropChange={setCrop}
 								onZoomChange={setZoom}
+								onRotationChange={setRotation}
 								onCropComplete={onCropComplete}
 							/>
 						</div>
@@ -320,6 +325,22 @@ export default function FileUploadField({
 								onChange={(e) => setZoom(Number(e.target.value))}
 								className="flex-1 accent-primary"
 							/>
+							<button
+								type="button"
+								onClick={() => setRotation((r) => (r - 90 + 360) % 360)}
+								title="Putar kiri"
+								className="grid h-8 w-8 place-items-center rounded-full border border-gray-200 text-foreground/70 hover:bg-gray-100"
+							>
+								<RotateCcw size={16} />
+							</button>
+							<button
+								type="button"
+								onClick={() => setRotation((r) => (r + 90) % 360)}
+								title="Putar kanan"
+								className="grid h-8 w-8 place-items-center rounded-full border border-gray-200 text-foreground/70 hover:bg-gray-100"
+							>
+								<RotateCw size={16} />
+							</button>
 						</div>
 
 						<div className="flex justify-end gap-2 border-t border-gray-100 px-4 py-3">
