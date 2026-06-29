@@ -2,7 +2,6 @@ import { ImageResponse } from "next/og";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { getCampaignBySlug } from "@/actions/campaign";
-import { idr } from "@/lib/currency";
 
 // Branded OG card rendered as PNG so WhatsApp/Facebook always show a preview.
 // Stored covers are .webp (not renderable by WhatsApp), so we re-encode the
@@ -51,17 +50,6 @@ export default async function Image({
 	const res = await getCampaignBySlug(slug);
 	const data = res.success ? res.data : null;
 
-	const rawFundraiserTitle = (data as any)?.fundraiserTitle;
-	const title =
-		typeof rawFundraiserTitle === "string" && rawFundraiserTitle.trim()
-			? rawFundraiserTitle
-			: data?.title || "Pesona Kebaikan";
-
-	const target = Number(data?.target) || 0;
-	const collected = Number(data?.collected) || 0;
-	const percent = target > 0 ? Math.min(100, Math.round((collected / target) * 100)) : 0;
-	const daysLeft = Number(data?.daysLeft) || 0;
-
 	const coverUrl =
 		data?.thumbnail ||
 		(Array.isArray(data?.images) && data?.images.length ? data!.images[0] : undefined);
@@ -103,20 +91,6 @@ export default async function Image({
 					/>
 				)}
 
-				{/* Bottom gradient for legibility */}
-				<div
-					style={{
-						position: "absolute",
-						left: 0,
-						right: 0,
-						bottom: 0,
-						height: 360,
-						background:
-							"linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.85) 100%)",
-						display: "flex",
-					}}
-				/>
-
 				{/* Top brand row */}
 				<div
 					style={{
@@ -141,67 +115,6 @@ export default async function Image({
 						}}
 					>
 						Pesona Kebaikan
-					</div>
-				</div>
-
-				{/* Bottom content */}
-				<div
-					style={{
-						position: "absolute",
-						left: 48,
-						right: 48,
-						bottom: 48,
-						display: "flex",
-						flexDirection: "column",
-						gap: 20,
-					}}
-				>
-					<div
-						style={{
-							color: "#ffffff",
-							fontSize: 52,
-							fontWeight: 800,
-							lineHeight: 1.1,
-							display: "flex",
-						}}
-					>
-						{title.length > 90 ? `${title.slice(0, 87)}...` : title}
-					</div>
-
-					{/* Progress bar */}
-					<div
-						style={{
-							width: "100%",
-							height: 16,
-							borderRadius: 999,
-							backgroundColor: "rgba(255,255,255,0.3)",
-							display: "flex",
-						}}
-					>
-						<div
-							style={{
-								width: `${percent}%`,
-								height: "100%",
-								borderRadius: 999,
-								backgroundColor: BRAND,
-								display: "flex",
-							}}
-						/>
-					</div>
-
-					<div
-						style={{
-							display: "flex",
-							justifyContent: "space-between",
-							color: "#ffffff",
-							fontSize: 30,
-							fontWeight: 600,
-						}}
-					>
-						<div style={{ display: "flex" }}>Terkumpul {idr(collected)}</div>
-						<div style={{ display: "flex" }}>
-							{daysLeft > 0 ? `${daysLeft} hari lagi` : "Donasi sekarang"}
-						</div>
 					</div>
 				</div>
 			</div>

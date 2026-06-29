@@ -41,14 +41,6 @@ export const metadata: Metadata = {
 		description: siteDescription,
 		url: "/",
 		siteName,
-		images: [
-			{
-				url: "/defaultimg.webp",
-				width: 1200,
-				height: 630,
-				alt: siteName,
-			},
-		],
 		locale: "id_ID",
 		type: "website",
 	},
@@ -56,7 +48,6 @@ export const metadata: Metadata = {
 		card: "summary_large_image",
 		title: `${siteName} – Platform Donasi dan Galang Dana`,
 		description: siteDescription,
-		images: ["/defaultimg.webp"],
 	},
 	robots: {
 		index: true,
