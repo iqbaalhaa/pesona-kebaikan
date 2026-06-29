@@ -47,7 +47,7 @@ export default function SimpleBottomNavigation() {
 	return (
 		<div
 			ref={ref}
-			className="fixed bottom-0 left-1/2 z-[1100] w-full max-w-[480px] -translate-x-1/2 overflow-hidden bg-white pb-[env(safe-area-inset-bottom)]"
+			className="fixed bottom-0 left-1/2 z-[1100] w-full max-w-[480px] -translate-x-1/2 bg-white pb-[env(safe-area-inset-bottom)]"
 		>
 			<nav aria-label="Navigasi utama" className="mx-auto flex max-w-[480px] items-end justify-around px-2 py-3">
 				{menus.map((menu) => {
@@ -64,8 +64,8 @@ export default function SimpleBottomNavigation() {
 								onClick={() => router.push(menu.path)}
 								className="flex flex-1 cursor-pointer flex-col items-center gap-1.5"
 							>
-								<span className="-mt-7 grid h-14 w-14 place-items-center rounded-full bg-primary text-white shadow-[0_8px_20px_var(--color-primary-shadow)] ring-4 ring-white transition-transform duration-150 active:scale-95">
-									<Icon size={26} />
+								<span className="-mt-10 grid h-11 w-11 place-items-center rounded-full bg-primary text-white shadow-[0_8px_20px_var(--color-primary-shadow)] ring-4 ring-white transition-transform duration-150 active:scale-95">
+									<Icon size={20} />
 								</span>
 								<span
 									className={`whitespace-nowrap text-[11px] leading-none ${active ? "font-bold text-primary" : "text-foreground/60"}`}
@@ -90,7 +90,7 @@ export default function SimpleBottomNavigation() {
 							].join(" ")}
 						>
 							<Icon
-								size={28}
+								size={22}
 								className={`transition-transform duration-150 ${active ? "scale-105 drop-shadow-[0_10px_18px_var(--color-primary-shadow)]" : ""}`}
 							/>
 							<span

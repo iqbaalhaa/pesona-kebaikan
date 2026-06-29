@@ -269,7 +269,7 @@ export default function PrayersSection({
 							sx={{
 								minWidth: 240,
 								maxWidth: 240,
-								borderRadius: 0,
+								borderRadius: 2,
 								bgcolor: "rgba(255,255,255,0.96)",
 								border: "1px solid rgba(148,163,184,0.16)",
 								boxShadow: "0 18px 40px rgba(15,23,42,0.06)",

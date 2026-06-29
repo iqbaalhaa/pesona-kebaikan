@@ -49,7 +49,7 @@ export default function SimpleAppBar({ variant = "solid" }: SimpleAppBarProps) {
 				showCompact
 					? "bg-[var(--brand)]"
 					: isOverlay
-						? "bg-white/10 backdrop-blur-md"
+						? "bg-transparent"
 						: "bg-[var(--surface)] border-b border-divider",
 			].join(" ")}
 		>
@@ -65,6 +65,7 @@ export default function SimpleAppBar({ variant = "solid" }: SimpleAppBarProps) {
 						height={0}
 						sizes="100vw"
 						priority
+						className={isOverlay && !showCompact ? "[filter:brightness(0)_invert(1)]" : ""}
 						style={{ width: "auto", height: "32px", objectFit: "contain", display: "block" }}
 						onError={() => setLogoSrc("/defaultimg.webp")}
 						unoptimized

@@ -37,9 +37,9 @@ function ScrollCard({ item, priority = false }: { item: Campaign; priority?: boo
 			aria-label={`Donasi: ${item.title}`}
 			onClick={() => router.push(`/donasi/${item.slug || item.id}`)}
 			onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); router.push(`/donasi/${item.slug || item.id}`); } }}
-			className="w-[240px] min-w-[240px] shrink-0 cursor-pointer snap-start overflow-hidden bg-white transition-transform duration-200 hover:-translate-y-1"
+			className="w-[240px] min-w-[240px] shrink-0 cursor-pointer snap-start overflow-hidden rounded-xl border border-divider bg-white transition-transform duration-200 hover:-translate-y-1"
 		>
-			<div className="relative h-35 overflow-hidden bg-slate-100">
+			<div className="relative h-35 overflow-hidden rounded-t-xl bg-slate-100">
 				<Image
 					src={imgSrc}
 					alt={item.title}

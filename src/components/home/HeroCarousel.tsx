@@ -47,7 +47,7 @@ export default function HeroCarousel({ items = [] }: { items?: CarouselItem[] })
 				const Content = (
 					<>
 						<SlideImage src={s.image} alt={s.title || "Banner kampanye donasi"} priority={i === 0} />
-						<div className="absolute inset-0 bg-gradient-to-b from-black/92 via-black/75 to-transparent to-58% from-0% via-24%" />
+						<div className="absolute inset-0 bg-gradient-to-b from-[var(--brand)]/80 via-[var(--brand)]/25 to-transparent from-0% via-14% to-38%" />
 					</>
 				);
 				return (

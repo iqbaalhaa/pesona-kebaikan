@@ -36,7 +36,7 @@ const items = [
 
 export default function ExploreSection() {
 	return (
-		<div className="mt-7 px-4">
+		<div className="mt-7 px-4 pb-8">
 			<div className="mb-3 flex items-center gap-1.5">
 				<div className="h-6 w-1 rounded bg-primary" />
 				<h3 className="text-[15px] font-black tracking-tight text-foreground">
