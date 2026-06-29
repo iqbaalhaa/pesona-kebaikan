@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import SettingsForm from "./SettingsForm";
 import EmailSettingsForm from "./EmailSettingsForm";
 import TestWhatsappForm from "./TestWhatsappForm";
+import OgSettingsForm from "./OgSettingsForm";
 
 export default async function SettingsPage() {
 	const session = await auth();
@@ -39,6 +40,22 @@ export default async function SettingsPage() {
         <p>Jika Anda tidak merasa meminta kode ini, silakan abaikan email ini.</p>
       </div>
   `.trim();
+
+	// Fetch OG (social preview) Settings
+	const ogKeys = await getNotifyKeys([
+		"og_headline_1",
+		"og_headline_2",
+		"og_subtext",
+	]);
+	const getOg = (key: string) => ogKeys.find((k) => k.key === key)?.value;
+
+	const ogSettings = {
+		og_headline_1: getOg("og_headline_1") ?? "Berbagi Kebaikan,",
+		og_headline_2: getOg("og_headline_2") ?? "Menguatkan Sesama",
+		og_subtext:
+			getOg("og_subtext") ??
+			"Platform donasi & galang dana online — transparan dan terpercaya.",
+	};
 
 	const emailSettings = {
 		email_sender:
@@ -98,6 +115,16 @@ export default async function SettingsPage() {
 				</p>
 
 				<EmailSettingsForm initialSettings={emailSettings} />
+			</div>
+
+			<div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
+				<h2 className="text-lg font-semibold mb-4">Preview Sosial Media (OG)</h2>
+				<p className="text-sm text-gray-500 mb-6">
+					Atur headline & subtext pada kartu preview saat link beranda dibagikan
+					ke WhatsApp, Facebook, atau X.
+				</p>
+
+				<OgSettingsForm initialSettings={ogSettings} />
 			</div>
 		</div>
 	);

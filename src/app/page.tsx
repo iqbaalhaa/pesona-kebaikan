@@ -1,120 +1,16 @@
-import HeroCarousel, { CarouselItem } from "@/components/home/HeroCarousel";
 import Box from "@mui/material/Box";
-import QuickMenu from "@/components/home/QuickMenu";
-import UrgentSection from "@/components/home/UrgentSection";
-import CategoryChips from "@/components/home/CategoryChips";
-import PopularSection from "@/components/home/PopularSection";
-import FeaturedSection from "@/components/home/FeaturedSection";
-import PrayerSection from "@/components/home/PrayerSection";
-import BannerSection, { BannerItem } from "@/components/home/BannerSection";
+import HomeFeed from "@/components/home/HomeFeed";
 import ExploreSection from "@/components/home/ExploreSection";
 import MiniFooter from "@/components/home/MiniFooter";
-import QuickDonate from "@/components/home/QuickDonate";
-import {
-	getPopularCampaigns,
-	getUrgentCampaigns,
-	getLatestDonations,
-	getAllActiveCampaigns,
-	getFeaturedCampaigns,
-} from "@/actions/campaign-public";
-import type { Campaign } from "@/types";
-import { prisma } from "@/lib/prisma";
-import type { Category } from "@/types";
 
-export default async function Home() {
-	const [
-		urgentRes,
-		popularRes,
-		featuredRes,
-		donationRes,
-		allCampaignsRes,
-		carouselRes,
-		featuredTitleRes,
-		bannerRes,
-	] = await Promise.all([
-		getUrgentCampaigns(10),
-		getPopularCampaigns(10),
-		getFeaturedCampaigns(10),
-		getLatestDonations(10),
-		getAllActiveCampaigns(100),
-		prisma.carousel.findMany({
-			where: { isActive: true },
-			orderBy: { order: "asc" },
-			include: {
-				campaign: {
-					select: {
-						id: true,
-						title: true,
-						slug: true,
-						media: {
-							where: { isThumbnail: true },
-							take: 1,
-						},
-					},
-				},
-			},
-		}),
-		prisma.notifyKey.findUnique({ where: { key: "home_featured_title" } }),
-		prisma.banner.findMany({
-			where: { isActive: true },
-			orderBy: { order: "asc" },
-		}),
-	]);
+// Static shell. All volatile data is fetched client-side via /api/home inside
+// HomeFeed, so this page no longer blocks render on the database.
+export const dynamic = "force-static";
 
-	const urgentCampaigns: Campaign[] = Array.isArray(urgentRes.data)
-		? urgentRes.data
-		: [];
-	const popularCampaigns: Campaign[] = Array.isArray(popularRes.data)
-		? popularRes.data
-		: [];
-	const featuredCampaigns: Campaign[] = Array.isArray(featuredRes.data)
-		? featuredRes.data
-		: [];
-	const latestDonations = "data" in donationRes ? donationRes.data : [];
-	const allCampaigns: Campaign[] = Array.isArray(allCampaignsRes.data)
-		? allCampaignsRes.data
-		: [];
-
-	const heroItems: CarouselItem[] = carouselRes.map((c) => {
-		let image = c.image;
-		let link = c.link;
-
-		if (c.campaign) {
-			if (!image) image = c.campaign.media[0]?.url;
-			if (!link) link = `/donasi/${c.campaign.slug || c.campaign.id}`;
-		}
-
-		return {
-			id: c.id,
-			image: image || "/defaultimg.webp",
-			link: link || undefined,
-			title: c.title || c.campaign?.title || undefined,
-		};
-	});
-
-	const bannerItems: BannerItem[] = bannerRes.map((b) => ({
-		id: b.id,
-		image: b.image,
-		title: b.title || undefined,
-		link: b.link || undefined,
-	}));
-
-	const featuredTitle =
-		(featuredTitleRes as any)?.value?.trim() || "Pilihan Pesona Kebaikan";
-
+export default function Home() {
 	return (
 		<Box sx={{ pb: 2 }}>
-			<div className="lg:grid lg:grid-cols-[1.5fr_1fr] lg:items-stretch lg:gap-6 lg:px-6 lg:pt-20">
-				<HeroCarousel items={heroItems} />
-				<QuickDonate />
-			</div>
-			<QuickMenu />
-			<FeaturedSection campaigns={featuredCampaigns} title={featuredTitle} />
-			<UrgentSection campaigns={urgentCampaigns} />
-			<CategoryChips campaigns={allCampaigns} />
-			<PopularSection campaigns={popularCampaigns} />
-			<PrayerSection prayers={latestDonations} />
-			<BannerSection items={bannerItems} />
+			<HomeFeed />
 			<ExploreSection />
 			<MiniFooter />
 		</Box>

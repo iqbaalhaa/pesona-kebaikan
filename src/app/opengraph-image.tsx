@@ -1,11 +1,13 @@
 import { ImageResponse } from "next/og";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
+import { prisma } from "@/lib/prisma";
 
 // Branded site-wide OG card (homepage + all pages without their own image).
 // Rendered as PNG so WhatsApp/Facebook always show a preview.
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 export const alt = "Pesona Kebaikan – Platform Donasi dan Galang Dana";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
@@ -13,12 +15,31 @@ export const contentType = "image/png";
 const BRAND = "#0ba976";
 const BRAND_DARK = "#059669";
 
-// Headline & subtext configurable via env (falls back to defaults).
-const HEADLINE_LINE1 = process.env.NEXT_PUBLIC_OG_HEADLINE_1 || "Berbagi Kebaikan,";
-const HEADLINE_LINE2 = process.env.NEXT_PUBLIC_OG_HEADLINE_2 || "Menguatkan Sesama";
-const SUBTEXT =
-	process.env.NEXT_PUBLIC_OG_SUBTEXT ||
+// Headline & subtext defaults (overridable from /admin/settings, then env).
+const DEFAULT_HEADLINE1 = "Berbagi Kebaikan,";
+const DEFAULT_HEADLINE2 = "Menguatkan Sesama";
+const DEFAULT_SUBTEXT =
 	"Platform donasi & galang dana online — transparan dan terpercaya.";
+
+// Resolve copy: DB setting (admin) → env → default.
+async function loadCopy() {
+	let db: Record<string, string> = {};
+	try {
+		const rows = await prisma.notifyKey.findMany({
+			where: { key: { in: ["og_headline_1", "og_headline_2", "og_subtext"] } },
+		});
+		db = Object.fromEntries(rows.map((r) => [r.key, r.value]));
+	} catch {
+		// DB unavailable at render — fall back to env/defaults.
+	}
+	const pick = (dbVal: string | undefined, env: string | undefined, def: string) =>
+		(dbVal ?? env ?? def);
+	return {
+		line1: pick(db.og_headline_1, process.env.NEXT_PUBLIC_OG_HEADLINE_1, DEFAULT_HEADLINE1),
+		line2: pick(db.og_headline_2, process.env.NEXT_PUBLIC_OG_HEADLINE_2, DEFAULT_HEADLINE2),
+		subtext: pick(db.og_subtext, process.env.NEXT_PUBLIC_OG_SUBTEXT, DEFAULT_SUBTEXT),
+	};
+}
 
 async function loadLogoDataUri(): Promise<string | null> {
 	try {
@@ -30,7 +51,8 @@ async function loadLogoDataUri(): Promise<string | null> {
 }
 
 export default async function Image() {
-	const logo = await loadLogoDataUri();
+	const [logo, copy] = await Promise.all([loadLogoDataUri(), loadCopy()]);
+	const { line1: HEADLINE_LINE1, line2: HEADLINE_LINE2, subtext: SUBTEXT } = copy;
 
 	return new ImageResponse(
 		(
