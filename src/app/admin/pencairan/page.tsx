@@ -250,9 +250,9 @@ export default function PencairanPage() {
 	};
 
 	const handleApproveClick = async (row: WithdrawalRow) => {
-		if (process.env.NEXT_PUBLIC_DISBURSEMENT_BYPASS_OTP === "true") {
+		if (process.env.NEXT_PUBLIC_DISBURSEMENT_BYPASS_OTP !== "false") {
 			setConfirmDialog({
-				open: true, title: "Dev Mode", message: "OTP Bypass aktif. Lanjutkan?", confirmColor: "warning",
+				open: true, title: "Konfirmasi Pencairan", message: "Setujui pencairan ini?", confirmColor: "warning",
 				onConfirm: async () => {
 					try {
 						const res = await updateWithdrawalStatus(row.id, "APPROVED", undefined, "BYPASSED", undefined, adminPhone);

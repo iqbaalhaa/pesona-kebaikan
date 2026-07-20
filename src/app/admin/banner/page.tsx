@@ -66,6 +66,8 @@ export default function AdminBannerPage() {
 	const [image, setImage] = useState("");
 	const [isActive, setIsActive] = useState(true);
 	const [imageFile, setImageFile] = useState<File | null>(null);
+	// ponytail: blob: preview kept out of `image` so it can never be saved to DB
+	const [preview, setPreview] = useState("");
 
 	useEffect(() => {
 		fetchBanners();
@@ -92,6 +94,7 @@ export default function AdminBannerPage() {
 			setIsActive(true);
 		}
 		setImageFile(null);
+		setPreview("");
 		setOpen(true);
 	};
 
@@ -109,9 +112,11 @@ export default function AdminBannerPage() {
 				const formData = new FormData();
 				formData.append("file", imageFile);
 				const uploadRes = await uploadImage(formData);
-				if (uploadRes.success && uploadRes.url) {
-					finalImageUrl = uploadRes.url;
+				if (!uploadRes.success || !uploadRes.url) {
+					setSnackbar({ open: true, message: uploadRes.error || "Upload gambar gagal", severity: "error" });
+					return;
 				}
+				finalImageUrl = uploadRes.url;
 			}
 
 			if (!finalImageUrl) {
@@ -268,15 +273,15 @@ export default function AdminBannerPage() {
 									onChange={(e) => {
 										if (e.target.files?.[0]) {
 											setImageFile(e.target.files[0]);
-											setImage(URL.createObjectURL(e.target.files[0]));
+											setPreview(URL.createObjectURL(e.target.files[0]));
 										}
 									}}
 								/>
 							</Button>
-							{image && (
+							{(preview || image) && (
 								<Box mt={2}>
 									<img
-										src={image}
+										src={preview || image}
 										alt="Preview"
 										style={{ width: "100%", height: 180, objectFit: "cover", borderRadius: 8 }}
 									/>

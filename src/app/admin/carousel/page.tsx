@@ -105,6 +105,8 @@ export default function AdminCarouselPage() {
 		useState<CampaignOption | null>(null);
 	const [campaignOptions, setCampaignOptions] = useState<CampaignOption[]>([]);
 	const [imageFile, setImageFile] = useState<File | null>(null);
+	// ponytail: blob: preview kept out of `image` so it can never be saved to DB
+	const [preview, setPreview] = useState("");
 
 	useEffect(() => {
 		fetchCarousels();
@@ -154,6 +156,7 @@ export default function AdminCarouselPage() {
 			setSelectedCampaign(null);
 		}
 		setImageFile(null);
+		setPreview("");
 		setOpen(true);
 	};
 
@@ -171,9 +174,11 @@ export default function AdminCarouselPage() {
 				const formData = new FormData();
 				formData.append("file", imageFile);
 				const uploadRes = await uploadImage(formData);
-				if (uploadRes.success && uploadRes.url) {
-					finalImageUrl = uploadRes.url;
+				if (!uploadRes.success || !uploadRes.url) {
+					showSnackbar(uploadRes.error || "Upload gambar gagal", "error");
+					return;
 				}
+				finalImageUrl = uploadRes.url;
 			}
 
 			const payload = {
@@ -404,15 +409,15 @@ export default function AdminCarouselPage() {
 											onChange={(e) => {
 												if (e.target.files?.[0]) {
 													setImageFile(e.target.files[0]);
-													setImage(URL.createObjectURL(e.target.files[0]));
+													setPreview(URL.createObjectURL(e.target.files[0]));
 												}
 											}}
 										/>
 									</Button>
-									{(image || imageFile) && (
+									{(preview || image) && (
 										<Box mt={2}>
 											<img
-												src={image}
+												src={preview || image}
 												alt="Preview"
 												style={{
 													width: "100%",

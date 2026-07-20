@@ -12,8 +12,10 @@ const MIDTRANS_PAYOUTS_REVIEW_MESSAGE =
   process.env.MIDTRANS_PAYOUTS_REVIEW_MESSAGE ||
   "Integrasi Midtrans Payouts belum aktif atau masih dalam proses review.";
 
+// ponytail: gateway WA belum siap — OTP pencairan dimatikan by default.
+// Set NEXT_PUBLIC_DISBURSEMENT_BYPASS_OTP=false untuk mengaktifkan lagi.
 const DISBURSEMENT_BYPASS_OTP =
-  process.env.NEXT_PUBLIC_DISBURSEMENT_BYPASS_OTP === "true";
+  process.env.NEXT_PUBLIC_DISBURSEMENT_BYPASS_OTP !== "false";
 const DISBURSEMENT_BYPASS_STATUS_UPDATE =
   process.env.NEXT_PUBLIC_DISBURSEMENT_BYPASS_STATUS_UPDATE === "true";
 

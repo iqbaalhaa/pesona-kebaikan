@@ -88,7 +88,7 @@ export default function OtpVerificationDialog({
 		setLoading(true);
 		setError("");
 
-		if (process.env.NEXT_PUBLIC_BYPASS_OTP === "true") {
+		if (process.env.NEXT_PUBLIC_BYPASS_OTP !== "false") {
 			setStep("verify");
 			setOtp(["0", "0", "0", "0", "0", "0"]);
 			setSnackbar({
