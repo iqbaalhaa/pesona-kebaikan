@@ -24,6 +24,8 @@ export const requestPasswordReset = async (email: string) => {
 		);
 
 		if (!result.ok) {
+			// Clean up the token so user can retry cleanly
+			await prisma.passwordResetToken.deleteMany({ where: { email } });
 			return { error: "Gagal mengirim email. Silakan coba lagi." };
 		}
 

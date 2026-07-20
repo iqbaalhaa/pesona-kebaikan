@@ -13,6 +13,8 @@ const getMailConfig = async () => {
 						"email_app_password",
 						"email_verification_subject",
 						"email_verification_content",
+						"email_reset_subject",
+						"email_reset_content",
 					],
 				},
 			},
@@ -30,6 +32,10 @@ const getMailConfig = async () => {
 				getVal("email_verification_subject") ||
 				"Kode Verifikasi Email - Pesona Kebaikan",
 			content: getVal("email_verification_content"),
+			resetSubject:
+				getVal("email_reset_subject") ||
+				"Reset Password - Pesona Kebaikan",
+			resetContent: getVal("email_reset_content"),
 		};
 	} catch {
 		// Fallback if DB fails
@@ -41,6 +47,8 @@ const getMailConfig = async () => {
 			password: process.env.EMAIL_SERVER_PASSWORD,
 			subject: "Kode Verifikasi Email - Pesona Kebaikan",
 			content: undefined,
+			resetSubject: "Reset Password - Pesona Kebaikan",
+			resetContent: undefined,
 		};
 	}
 };
@@ -411,8 +419,11 @@ export const sendPasswordResetEmail = async (email: string, token: string) => {
 			}
 		}
 
-		const resetLink = `${process.env.NEXT_PUBLIC_APP_URL}/auth/new-password?token=${token}`;
-		const htmlContent = `
+		const appUrl = (process.env.NEXT_PUBLIC_APP_URL || process.env.AUTH_URL || "").replace(/\/$/, "");
+		const resetLink = `${appUrl}/auth/new-password?token=${token}`;
+		const htmlContent = config.resetContent
+			? config.resetContent.replace("{{link}}", resetLink).replace("{{token}}", token)
+			: `
       <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
         <h2>Reset Password</h2>
         <p>Anda menerima email ini karena kami menerima permintaan reset password untuk akun Anda.</p>
@@ -428,7 +439,7 @@ export const sendPasswordResetEmail = async (email: string, token: string) => {
 		const message: Mail.Options = {
 			from: config.sender,
 			to: email,
-			subject: "Reset Password - Pesona Kebaikan",
+			subject: config.resetSubject,
 			envelope: {
 				from: config.sender.match(/<(.+)>/)?.[1] || config.sender,
 				to: [email],
