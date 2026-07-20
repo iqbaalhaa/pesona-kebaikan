@@ -42,7 +42,7 @@ export default function HeroCarousel({ items = [] }: { items?: CarouselItem[] })
 	}, [displaySlides.length]);
 
 	return (
-		<div role="region" aria-roledescription="carousel" aria-label="Banner kampanye" className="relative z-0 aspect-[4/5] w-full overflow-hidden bg-[#0b1220] md:rounded-b lg:aspect-[16/11] lg:rounded-2xl">
+		<div role="region" aria-roledescription="carousel" aria-label="Banner kampanye" className="relative z-0 aspect-[664/357] w-full overflow-hidden bg-[#0b1220] md:rounded-b lg:rounded-2xl">
 			{displaySlides.map((s, i) => {
 				const Content = (
 					<>
@@ -63,7 +63,7 @@ export default function HeroCarousel({ items = [] }: { items?: CarouselItem[] })
 				);
 			})}
 			{displaySlides[active]?.title && (
-				<div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center px-4 pt-16 text-center">
+				<div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center px-4 text-center">
 					<div className="max-w-[320px]">
 						<h1 className="text-[22px] font-black leading-[1.15] text-white">
 							{displaySlides[active].title}
