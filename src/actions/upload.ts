@@ -30,6 +30,10 @@ export async function uploadCoverFile(formData: FormData) {
 	return uploadFile(formData, { width: 664, height: 357, fit: "cover" });
 }
 
+export async function uploadBannerFile(formData: FormData) {
+	return uploadFile(formData, { width: 1228, height: 714, fit: "inside" });
+}
+
 export async function uploadFile(
 	formData: FormData,
 	imageOptions?: { width: number; height: number; fit: "inside" | "cover" },

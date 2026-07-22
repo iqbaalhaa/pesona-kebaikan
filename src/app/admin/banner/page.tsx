@@ -32,7 +32,7 @@ import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import ImageIcon from "@mui/icons-material/Image";
-import { uploadImage } from "@/actions/upload";
+import { uploadBannerFile } from "@/actions/upload";
 
 interface Banner {
 	id: string;
@@ -108,7 +108,7 @@ export default function AdminBannerPage() {
 			if (imageFile) {
 				const formData = new FormData();
 				formData.append("file", imageFile);
-				const uploadRes = await uploadImage(formData);
+				const uploadRes = await uploadBannerFile(formData);
 				if (uploadRes.success && uploadRes.url) {
 					finalImageUrl = uploadRes.url;
 				}
@@ -257,7 +257,7 @@ export default function AdminBannerPage() {
 						/>
 						<Box>
 							<Typography variant="caption" display="block" mb={1}>
-								Upload Gambar Banner (rasio 2:1 disarankan)
+								Upload Gambar Banner (maks 1228 × 714 px, gambar tidak akan dipotong)
 							</Typography>
 							<Button component="label" variant="outlined" startIcon={<ImageIcon />} fullWidth>
 								Pilih Gambar

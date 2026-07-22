@@ -33,7 +33,7 @@ import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import ImageIcon from "@mui/icons-material/Image";
-import { uploadImage } from "@/actions/upload";
+import { uploadBannerFile } from "@/actions/upload";
 import { useRouter } from "next/navigation";
 
 interface Carousel {
@@ -170,7 +170,7 @@ export default function AdminCarouselPage() {
 			if (imageFile) {
 				const formData = new FormData();
 				formData.append("file", imageFile);
-				const uploadRes = await uploadImage(formData);
+				const uploadRes = await uploadBannerFile(formData);
 				if (uploadRes.success && uploadRes.url) {
 					finalImageUrl = uploadRes.url;
 				}
