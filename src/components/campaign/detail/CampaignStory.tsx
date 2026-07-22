@@ -27,15 +27,21 @@ export default function CampaignStory({
 						lineHeight: 1.8,
 						fontSize: 15,
 						maxHeight: showFullStory ? "none" : 300,
-						overflow: "hidden",
+						overflowX: "clip",
+						overflowY: showFullStory ? "visible" : "hidden",
 						"& p": { mb: 2 },
 						"& ul": { mb: 2, pl: 2 },
 						"& li": { mb: 0.5 },
 						"& img": {
 							maxWidth: "100%",
 							height: "auto",
-							borderRadius: 2,
+							borderRadius: "12px",
 							display: "block",
+						},
+						"& figure, & table, & div[style], & p > img": {
+							maxWidth: "100%",
+							width: "auto",
+							overflowX: "clip",
 						},
 					}}
 					dangerouslySetInnerHTML={{ __html: data.description }}

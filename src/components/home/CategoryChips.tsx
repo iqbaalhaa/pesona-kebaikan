@@ -69,32 +69,25 @@ function CampaignRowCard({ item }: { item: Campaign }) {
 	return (
 		<div
 			onClick={() => router.push(`/donasi/${item.slug || item.id}`)}
-			className="w-[240px] min-w-[240px] shrink-0 cursor-pointer select-none snap-start overflow-hidden transition-transform active:scale-[0.99]"
+			className="flex cursor-pointer select-none gap-3 overflow-hidden rounded-xl bg-white active:scale-[0.99] transition-transform"
 		>
-			<div className="relative h-[120px] overflow-hidden bg-slate-100">
+			<div className="relative h-[100px] w-[140px] min-w-[140px] overflow-hidden bg-slate-100">
 				<Image
 					src={imgSrc}
 					alt={item.title}
 					fill
 					unoptimized
-					sizes="200px"
+					sizes="140px"
 					style={{ objectFit: "cover" }}
 					onError={() => setImgSrc("/defaultimg.webp")}
 				/>
-				<div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/55 to-transparent to-70%" />
-				<span className="absolute left-2.5 top-2.5">
-					<CategoryPill label={item.category || "Lainnya"} variant="overlay" />
-				</span>
-				<span className="absolute bottom-2.5 left-2.5 rounded-full bg-foreground/72 px-1 py-px text-[10px] font-black text-white backdrop-blur-lg">
-					{item.daysLeft} hari
-				</span>
 			</div>
 
-			<div className="bg-white p-[5px]">
-				<p className="line-clamp-2 min-h-[34px] text-[13px] font-black leading-tight text-foreground">
+			<div className="flex min-w-0 flex-1 flex-col justify-center py-2 pr-3">
+				<p className="line-clamp-2 text-[13px] font-black leading-tight text-foreground">
 					{item.title}
 				</p>
-				<div className="mt-[3px] flex items-center gap-[3px]">
+				<div className="mt-1 flex items-center gap-1">
 					<span className="text-[11px] text-foreground/60">{item.organizer}</span>
 					{item.organizerVerifiedAt && (
 						<span className="rounded bg-primary/14 px-[3px] py-px text-[9px] font-black text-primary">
@@ -103,16 +96,17 @@ function CampaignRowCard({ item }: { item: Campaign }) {
 					)}
 				</div>
 				<div className="mt-1.5">
-					<div className="mb-0.5 flex items-center justify-between">
-						<span className="text-[10px] font-bold text-foreground/50">Terkumpul</span>
-						<span className="text-[10px] font-black text-primary">{pct}%</span>
-					</div>
 					<div className="h-1.5 overflow-hidden rounded-full bg-foreground/8">
 						<div className="h-full rounded-full bg-primary transition-all duration-300" style={{ width: `${Math.min(100, Math.max(0, pct))}%` }} />
 					</div>
-					<p className="mt-0.5 text-[11px] font-black text-foreground">
-						Rp {rupiah(item.collected)}
-					</p>
+					<div className="mt-1 flex items-center justify-between">
+						<p className="text-[11px] font-black text-foreground">
+							Rp {rupiah(item.collected)}
+						</p>
+						<span className="text-[10px] font-bold text-foreground/50">
+							{item.daysLeft} hari lagi
+						</span>
+					</div>
 				</div>
 			</div>
 		</div>
@@ -127,7 +121,7 @@ export default function CategoryChips({
 	categories?: Category[];
 }) {
 	const router = useRouter();
-	const [activeId, setActiveId] = React.useState<string>("bencana");
+	const [activeId, setActiveId] = React.useState<string>("medis");
 
 	const categoriesList = React.useMemo<Category[]>(() => {
 		if (categories && categories.length > 0) {
@@ -190,11 +184,22 @@ export default function CategoryChips({
 
 			<div className="mt-3">
 				{filtered.length > 0 ? (
-					<div className="no-scrollbar flex snap-x snap-mandatory gap-1.5 overflow-x-auto">
-						{filtered.map((item) => (
-							<CampaignRowCard key={item.id} item={item} />
-						))}
-					</div>
+					<>
+						<div className="flex flex-col gap-2">
+							{filtered.slice(0, 4).map((item) => (
+								<CampaignRowCard key={item.id} item={item} />
+							))}
+						</div>
+						<button
+							onClick={() => router.push("/donasi")}
+							className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-xl border border-foreground/10 py-2.5 text-[13px] font-black text-foreground/60 transition-colors hover:bg-foreground/4 active:scale-[0.99]"
+						>
+							Lihat semua
+							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5">
+								<polyline points="9 18 15 12 9 6" />
+							</svg>
+						</button>
+					</>
 				) : (
 					<p className="py-8 text-center text-sm text-slate-500">
 						Belum ada penggalangan dana di kategori ini
