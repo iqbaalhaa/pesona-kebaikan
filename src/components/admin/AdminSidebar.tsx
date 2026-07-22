@@ -41,7 +41,7 @@ const menus: { title: string; items: MenuItem[] }[] = [
 			{ label: "Dashboard", href: "/admin", icon: <DashboardIcon fontSize="small" /> },
 			{ label: "Carousel", href: "/admin/carousel", icon: <VrpanoIcon fontSize="small" /> },
 			{ label: "Banner", href: "/admin/banner", icon: <ViewCarouselIcon fontSize="small" /> },
-			{ label: "Campaign Pilihan", href: "/admin/campaign-pilihan", icon: <StarOutlineIcon fontSize="small" /> },
+			{ label: "Campaign Unggulan", href: "/admin/campaign-pilihan", icon: <StarOutlineIcon fontSize="small" /> },
 		],
 	},
 	{

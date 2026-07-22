@@ -115,13 +115,19 @@ export async function getLatestDonations(limit: number = 10) {
 
 export async function getUrgentCampaigns(limit: number = 10) {
 	try {
+		const now = new Date();
+		const in14Days = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
 		const campaigns = await prisma.campaign.findMany({
 			where: {
 				status: "ACTIVE",
-				end: { gte: new Date() },
+				end: { gte: now },
 				slug: { not: QUICK_DONATION_SLUG },
+				OR: [
+					{ isEmergency: true },
+					{ end: { lte: in14Days } },
+				],
 			},
-			orderBy: { end: "asc" },
+			orderBy: [{ isEmergency: "desc" }, { end: "asc" }],
 			take: limit,
 			include: {
 				category: true,

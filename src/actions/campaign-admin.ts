@@ -710,3 +710,21 @@ export async function requestWithdrawal(data: {
 		return { success: false, error: "Failed to request withdrawal" };
 	}
 }
+
+export async function setEmergencyStatus(campaignId: string, isEmergency: boolean) {
+	try {
+		const session = await auth();
+		if (session?.user?.role !== "ADMIN") return { success: false, error: "Unauthorized" };
+
+		await prisma.campaign.update({
+			where: { id: campaignId },
+			data: { isEmergency },
+		});
+
+		revalidatePath("/admin/campaign-mendesak");
+		return { success: true };
+	} catch (error) {
+		console.error("Set emergency status error:", error);
+		return { success: false, error: "Gagal mengubah status mendesak" };
+	}
+}

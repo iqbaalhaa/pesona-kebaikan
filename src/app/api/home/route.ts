@@ -20,6 +20,7 @@ export async function GET() {
 			allCampaignsRes,
 			carousel,
 			featuredTitleRow,
+			visibilityKeys,
 			banners,
 		] = await Promise.all([
 			getUrgentCampaigns(10),
@@ -42,6 +43,7 @@ export async function GET() {
 				},
 			}),
 			prisma.notifyKey.findUnique({ where: { key: "home_featured_title" } }),
+			prisma.notifyKey.findMany({ where: { key: { in: ["home_show_pilihan", "home_show_mendesak"] } } }),
 			prisma.banner.findMany({
 				where: { isActive: true },
 				orderBy: { order: "asc" },
@@ -73,6 +75,10 @@ export async function GET() {
 		const featuredTitle =
 			(featuredTitleRow as any)?.value?.trim() || "Pilihan Pesona Kebaikan";
 
+		const getVis = (key: string) => visibilityKeys.find((k) => k.key === key)?.value;
+		const showPilihan = getVis("home_show_pilihan") !== "false";
+		const showMendesak = getVis("home_show_mendesak") !== "false";
+
 		return NextResponse.json(
 			{
 				urgent: Array.isArray(urgentRes.data) ? urgentRes.data : [],
@@ -85,6 +91,8 @@ export async function GET() {
 				heroItems,
 				bannerItems,
 				featuredTitle,
+				showPilihan,
+				showMendesak,
 			},
 			{
 				headers: {

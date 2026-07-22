@@ -5,12 +5,18 @@ import SettingsForm from "./SettingsForm";
 import EmailSettingsForm from "./EmailSettingsForm";
 import TestWhatsappForm from "./TestWhatsappForm";
 import OgSettingsForm from "./OgSettingsForm";
+import HomeVisibilityForm from "./HomeVisibilityForm";
 
 export default async function SettingsPage() {
 	const session = await auth();
 	if (session?.user?.role !== "ADMIN") {
 		redirect("/auth/login");
 	}
+
+	const visibilityKeys = await getNotifyKeys(["home_show_pilihan", "home_show_mendesak"]);
+	const getVis = (key: string) => visibilityKeys.find((k) => k.key === key)?.value;
+	const showPilihan = getVis("home_show_pilihan") !== "false";
+	const showMendesak = getVis("home_show_mendesak") !== "false";
 
 	const applicationIdKey =
 		(await getNotifyKey("whatsapp_application_id")) ||
@@ -73,6 +79,14 @@ export default async function SettingsPage() {
 	return (
 		<div className="space-y-6">
 			<h1 className="text-2xl font-bold text-gray-800">Pengaturan Sistem</h1>
+
+			<div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
+				<h2 className="text-lg font-semibold mb-1">Tampilan Beranda</h2>
+				<p className="text-sm text-gray-500 mb-5">
+					Pilih section mana yang ditampilkan di halaman beranda pengguna.
+				</p>
+				<HomeVisibilityForm showPilihan={showPilihan} showMendesak={showMendesak} />
+			</div>
 
 			<div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
 				<h2 className="text-lg font-semibold mb-4">Notifikasi WhatsApp</h2>

@@ -26,6 +26,8 @@ type HomeData = {
 	heroItems: CarouselItem[];
 	bannerItems: BannerItem[];
 	featuredTitle: string;
+	showPilihan: boolean;
+	showMendesak: boolean;
 };
 
 const EMPTY: HomeData = {
@@ -37,6 +39,8 @@ const EMPTY: HomeData = {
 	heroItems: [],
 	bannerItems: [],
 	featuredTitle: "Pilihan Pesona Kebaikan",
+	showPilihan: true,
+	showMendesak: true,
 };
 
 function SectionSkeleton() {
@@ -87,11 +91,15 @@ export default function HomeFeed() {
 				</>
 			) : (
 				<>
-					<FeaturedSection
-						campaigns={data.featured}
-						title={data.featuredTitle}
-					/>
-					<UrgentSection campaigns={data.urgent} />
+					{data.showPilihan && (
+						<FeaturedSection
+							campaigns={data.featured}
+							title={data.featuredTitle}
+						/>
+					)}
+					{data.showMendesak && (
+						<UrgentSection campaigns={data.urgent} />
+					)}
 					<CategoryChips campaigns={data.allCampaigns} />
 					<PopularSection campaigns={data.popular} />
 					<PrayerSection prayers={data.latestDonations} />
