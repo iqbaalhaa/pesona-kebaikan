@@ -74,6 +74,7 @@ export default function DonationForm({
 	}, [session]);
 	const [message, setMessage] = React.useState("");
 	const [isAnonymous, setIsAnonymous] = React.useState(false);
+	const [allowContact, setAllowContact] = React.useState(true);
 	const [loading, setLoading] = React.useState(false);
 	const [error, setError] = React.useState("");
 	const [fieldErrors, setFieldErrors] = React.useState<{
@@ -129,6 +130,7 @@ export default function DonationForm({
 				donorPhone,
 				message,
 				isAnonymous,
+				allowContact,
 				paymentMethod: "EWALLET" as any,
 			});
 
@@ -362,6 +364,16 @@ export default function DonationForm({
 						/>
 					}
 					label={<Typography sx={{ fontSize: 13 }}>Sembunyikan nama saya (Hamba Allah)</Typography>}
+				/>
+				<FormControlLabel
+					control={
+						<Switch
+							size="small"
+							checked={allowContact}
+							onChange={(e) => setAllowContact(e.target.checked)}
+						/>
+					}
+					label={<Typography sx={{ fontSize: 13 }}>Bersedia dihubungi via WhatsApp untuk kabar terbaru</Typography>}
 				/>
 			</Box>
 

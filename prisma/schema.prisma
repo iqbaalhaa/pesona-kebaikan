@@ -450,6 +450,7 @@ model Donation {
   donorPhone    String?
   message       String?       @db.Text
   isAnonymous   Boolean       @default(false)
+  allowContact  Boolean       @default(true)
   amount        Decimal       @db.Decimal(19, 2)
   fee           Decimal       @default(0) @db.Decimal(19, 2)
   paymentMethod PaymentMethod

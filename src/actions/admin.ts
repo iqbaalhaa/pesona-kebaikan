@@ -113,6 +113,7 @@ export async function getAdminTransactions() {
 				donorEmail: d.user?.email || "-", // Keep for backward compat or display logic
 				message: d.message || "-",
 				isAnonymous: d.isAnonymous,
+				allowContact: d.allowContact,
 				amount: Number(d.amount),
 				method: method,
 				status: status,
@@ -188,6 +189,7 @@ export async function getCampaignTransactions(campaignId: string) {
 				donorEmail: d.user?.email || "-",
 				message: d.message || "-",
 				isAnonymous: d.isAnonymous,
+				allowContact: d.allowContact,
 				amount: Number(d.amount),
 				method: method,
 				status: status,

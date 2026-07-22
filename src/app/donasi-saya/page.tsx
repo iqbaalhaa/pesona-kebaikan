@@ -38,7 +38,6 @@ import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import QrCodeIcon from "@mui/icons-material/QrCode";
 import CreditCardIcon from "@mui/icons-material/CreditCard";
 import { useRouter } from "next/navigation";
-import Script from "next/script";
 import { createDonation } from "@/actions/donation";
 import { getQuickDonationCampaignId } from "@/actions/campaign-public";
 
@@ -278,7 +277,6 @@ export default function MyDonationPage() {
 			setSubmitError("Nomor HP wajib diisi");
 			return;
 		}
-		// Identitas akan otomatis diambil dari session jika tersedia
 		setSubmitLoading(true);
 		setSubmitError("");
 		try {
@@ -289,84 +287,25 @@ export default function MyDonationPage() {
 				donorPhone,
 				message,
 				isAnonymous,
-				paymentMethod: "EWALLET", // Default for Snap
+				paymentMethod: "EWALLET",
 			});
 			if (res.success) {
 				const donationId = (res as any).data?.id;
-
-				if ((window as any).snap?.show) {
-					(window as any).snap.show();
-				}
-
-				// Get Snap Token
-				const r = await fetch("/api/midtrans/snap-token", {
+				const r = await fetch("/api/payment/checkout", {
 					method: "POST",
 					headers: { "Content-Type": "application/json" },
 					body: JSON.stringify({ donationId }),
 				});
 				const j = await r.json();
-
-				if (j.success && j.token && (window as any).snap) {
-					const isProd =
-						process.env.NEXT_PUBLIC_MIDTRANS_IS_PRODUCTION === "true";
-
-					const amountNumber = Number(finalAmount);
-					const amountParam = isFinite(amountNumber)
-						? amountNumber.toString()
-						: "";
-					const methodLabel = "E-Wallet";
-
-					(window as any).snap.pay(j.token, {
-						language: "id",
-						...(isProd ? { uiMode: "qr" } : {}),
-						onSuccess: () => {
-							setReOpen(false);
-							if (reCampaignId === quickCampaignId) {
-								router.push("/");
-							} else {
-								const qs = new URLSearchParams({
-									donation_success: "true",
-									donation_status: "paid",
-									donation_amount: amountParam,
-									donation_method: methodLabel,
-								});
-								router.push(`/donasi/${reCampaignId}?${qs.toString()}`);
-							}
-						},
-						onPending: () => {
-							setReOpen(false);
-							if (reCampaignId === quickCampaignId) {
-								router.push("/");
-							} else {
-								const qs = new URLSearchParams({
-									donation_success: "true",
-									donation_status: "pending",
-									donation_amount: amountParam,
-									donation_method: methodLabel,
-								});
-								router.push(`/donasi/${reCampaignId}?${qs.toString()}`);
-							}
-						},
-						onError: () => {
-							setSubmitError("Pembayaran gagal");
-						},
-						onClose: () => {
-							setSubmitError("Pembayaran belum selesai");
-						},
-					});
+				if (j.success && j.redirect_url) {
+					window.location.href = j.redirect_url;
 				} else {
-					if ((window as any).snap?.hide) {
-						(window as any).snap.hide();
-					}
 					setSubmitError(j.error || "Gagal memulai pembayaran");
 				}
 			} else {
 				setSubmitError(res.error || "Gagal membuat donasi");
 			}
 		} catch (err) {
-			if ((window as any).snap?.hide) {
-				(window as any).snap.hide();
-			}
 			setSubmitError("Terjadi kesalahan sistem");
 		} finally {
 			setSubmitLoading(false);
@@ -511,15 +450,6 @@ export default function MyDonationPage() {
 
 	return (
 		<Box sx={{ pb: 12 }}>
-			<Script
-				src={
-					process.env.NEXT_PUBLIC_MIDTRANS_IS_PRODUCTION === "true"
-						? "https://app.midtrans.com/snap/snap.js"
-						: "https://app.sandbox.midtrans.com/snap/snap.js"
-				}
-				data-client-key={process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY}
-				strategy="lazyOnload"
-			/>
 			<Box
 				sx={{
 					pt: 2,

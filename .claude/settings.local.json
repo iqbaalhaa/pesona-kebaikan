@@ -5,7 +5,8 @@
       "Bash(pnpm install *)",
       "Bash(npx prisma *)",
       "PowerShell(Get-Process | Where-Object { $_.Name -match \"node\" } | Select-Object Id, Name, Path)",
-      "PowerShell(Stop-Process -Name \"node\" -Force)"
+      "PowerShell(Stop-Process -Name \"node\" -Force)",
+      "Bash(Remove-Item \"e:\\\\wamp64\\\\www\\\\pesona-kebaikan\\\\.env.local\" -Force)"
     ]
   }
 }

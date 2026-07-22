@@ -20,6 +20,7 @@ export type CreateDonationInput = {
 	donorPhone: string;
 	message?: string;
 	isAnonymous?: boolean;
+	allowContact?: boolean;
 	paymentMethod: "EWALLET" | "VIRTUAL_ACCOUNT" | "TRANSFER" | "CARD";
 };
 
@@ -106,6 +107,7 @@ export async function createDonation(
 				donorPhone: input.donorPhone,
 				message: input.message,
 				isAnonymous: input.isAnonymous || false,
+				allowContact: input.allowContact !== false,
 				paymentMethod: input.paymentMethod,
 				status: "PENDING",
 				userId: userId, // Link to user if logged in

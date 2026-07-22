@@ -53,6 +53,7 @@ type TxRow = {
 	donorEmail: string;
 	message: string;
 	isAnonymous: boolean;
+	allowContact: boolean;
 	amount: number;
 	method: PayMethod;
 	status: TxStatus;
@@ -520,6 +521,11 @@ export default function AdminTransaksiPage() {
 										label="Anonim"
 										value={selected.isAnonymous ? "Ya" : "Tidak"}
 									/>
+									<InfoRow
+										label="Bersedia dihubungi WA"
+										value={selected.allowContact ? "Ya" : "Tidak"}
+										highlight={selected.allowContact}
+									/>
 								</Stack>
 
 								{selected.account && (
@@ -664,7 +670,7 @@ function TxRowCard({ row, onClick }: { row: TxRow; onClick?: () => void }) {
 	);
 }
 
-function InfoRow({ label, value }: { label: string; value: string }) {
+function InfoRow({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
 	return (
 		<Stack
 			direction="row"
@@ -675,7 +681,7 @@ function InfoRow({ label, value }: { label: string; value: string }) {
 			<Typography sx={{ fontSize: 13, color: "text.secondary" }}>
 				{label}
 			</Typography>
-			<Typography sx={{ fontSize: 13, fontWeight: 900, textAlign: "right" }}>
+			<Typography sx={{ fontSize: 13, fontWeight: 900, textAlign: "right", color: highlight ? "#16a34a" : "inherit" }}>
 				{value}
 			</Typography>
 		</Stack>

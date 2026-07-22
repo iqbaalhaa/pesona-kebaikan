@@ -101,7 +101,8 @@ export default function WithdrawalList({
 			!withdrawalForm.amount ||
 			!withdrawalForm.bankName ||
 			!withdrawalForm.bankAccount ||
-			!withdrawalForm.accountHolder
+			!withdrawalForm.accountHolder ||
+			!withdrawalForm.notes.trim()
 		) {
 			setWithdrawalError("Mohon lengkapi semua data wajib.");
 			return;
@@ -650,10 +651,11 @@ export default function WithdrawalList({
 							}
 						/>
 						<TextField
-							label="Catatan keperluan (opsional)"
+							label="Catatan keperluan *"
 							fullWidth
 							multiline
 							rows={3}
+							required
 							placeholder="Contoh: Pencairan tahap 1 untuk biaya rumah sakit."
 							value={withdrawalForm.notes}
 							onChange={(e) =>
