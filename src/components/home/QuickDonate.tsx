@@ -392,10 +392,10 @@ export default function QuickDonate() {
 			)}
 			<Box
 				sx={{
-					borderRadius: "20px",
+					borderRadius: "0 0 20px 20px",
 					bgcolor: "#fff",
 					boxShadow: "0 4px 24px rgba(0,0,0,0.08)",
-					mx: 2,
+					mx: 0,
 					p: 2,
 					position: "relative",
 					overflow: "hidden",

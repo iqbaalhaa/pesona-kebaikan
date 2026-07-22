@@ -9,6 +9,7 @@ export interface CarouselItem {
 	image: string;
 	link?: string;
 	title?: string;
+	duration?: number;
 }
 
 const defaultSlides: CarouselItem[] = [
@@ -37,12 +38,13 @@ export default function HeroCarousel({ items = [] }: { items?: CarouselItem[] })
 	const displaySlides = items.length > 0 ? items : defaultSlides;
 
 	React.useEffect(() => {
-		const t = setInterval(() => setActive((p) => (p + 1) % displaySlides.length), 4500);
-		return () => clearInterval(t);
-	}, [displaySlides.length]);
+		const duration = displaySlides[active]?.duration ?? 4500;
+		const t = setTimeout(() => setActive((p) => (p + 1) % displaySlides.length), duration);
+		return () => clearTimeout(t);
+	}, [active, displaySlides]);
 
 	return (
-		<div role="region" aria-roledescription="carousel" aria-label="Banner kampanye" className="relative z-0 aspect-[1228/714] w-full overflow-hidden bg-[#0b1220] md:rounded-b lg:rounded-2xl">
+		<div role="region" aria-roledescription="carousel" aria-label="Banner kampanye" className="relative z-0 aspect-[1228/714] w-full overflow-hidden bg-[#0b1220] rounded-t-2xl">
 			{displaySlides.map((s, i) => {
 				const Content = (
 					<>
@@ -62,18 +64,6 @@ export default function HeroCarousel({ items = [] }: { items?: CarouselItem[] })
 					</div>
 				);
 			})}
-			{displaySlides[active]?.title && (
-				<div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center px-4 pt-16 text-center">
-					<div className="max-w-[320px]">
-						<h1 className="text-[22px] font-black leading-[1.15] text-white">
-							{displaySlides[active].title}
-						</h1>
-						<p className="mt-1 text-[13px] text-white/85">
-							Donasi cepat, transparan, dan terasa dampaknya.
-						</p>
-					</div>
-				</div>
-			)}
 			{displaySlides.length > 1 && (
 				<>
 					<button

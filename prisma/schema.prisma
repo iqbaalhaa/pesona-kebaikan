@@ -416,6 +416,7 @@ model Carousel {
   link        String?
   isActive    Boolean  @default(true)
   order       Int      @default(0)
+  duration    Int      @default(4500)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 

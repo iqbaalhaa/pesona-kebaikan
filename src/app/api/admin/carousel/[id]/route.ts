@@ -24,7 +24,7 @@ export async function PUT(
 	const params = await props.params;
 	try {
 		const body = await request.json();
-		const { title, image, link, campaignId, isActive, order } = body;
+		const { title, image, link, campaignId, isActive, order, duration } = body;
 
 		const carousel = await prisma.carousel.update({
 			where: { id: params.id },
@@ -35,6 +35,7 @@ export async function PUT(
 				campaignId: campaignId || null,
 				isActive,
 				order,
+				...(duration !== undefined && { duration: Number(duration) }),
 			},
 		});
 
