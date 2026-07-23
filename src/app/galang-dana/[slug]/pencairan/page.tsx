@@ -5,10 +5,8 @@ import WithdrawalList from "./client";
 
 export default async function PencairanPage({
 	params,
-	searchParams,
 }: {
 	params: Promise<{ slug: string }>;
-	searchParams: Promise<{ tab?: string }>;
 }) {
 	const session = await auth();
 	if (!session?.user?.id) {
@@ -16,8 +14,6 @@ export default async function PencairanPage({
 	}
 
 	const { slug } = await params;
-	const { tab } = await searchParams;
-	const initialTab = tab === "1" ? 1 : 0;
 
 	const campaign = await prisma.campaign.findFirst({
 		where: {
@@ -37,10 +33,6 @@ export default async function PencairanPage({
 			},
 			withdrawals: {
 				orderBy: { createdAt: "desc" },
-			},
-			updates: {
-				orderBy: { createdAt: "desc" },
-				include: { media: true },
 			},
 		},
 	});
@@ -80,23 +72,15 @@ export default async function PencairanPage({
 		foundationFeeAmount,
 	};
 
-	// Convert Decimal to number for Client Component
 	const withdrawals = campaign.withdrawals.map((w) => ({
 		...w,
 		amount: Number(w.amount),
-	}));
-
-	const updates = campaign.updates.map((u) => ({
-		...u,
-		amount: u.amount ? Number(u.amount) : null,
 	}));
 
 	return (
 		<WithdrawalList
 			campaign={campaignData}
 			withdrawals={withdrawals}
-			updates={updates}
-			initialTab={initialTab}
 		/>
 	);
 }

@@ -318,7 +318,7 @@ export default async function CampaignDetailPage({
 						</Typography>
 
 						<LinkButton
-							href={`/galang-dana/${campaign.slug || campaign.id}/pencairan?tab=1`}
+							href={`/galang-dana/${campaign.slug || campaign.id}/pencairan`}
 							variant="outlined"
 							size="small"
 							startIcon={<AccountBalanceWalletRoundedIcon />}
@@ -399,7 +399,7 @@ export default async function CampaignDetailPage({
 				</Typography>
 				<Stack spacing={1.5} sx={{ mb: 4 }}>
 					<LinkButton
-						href={`/galang-dana/${campaign.slug || campaign.id}/pencairan?tab=0`}
+						href={`/galang-dana/${campaign.slug || campaign.id}/kabar`}
 						variant="contained"
 						fullWidth
 						startIcon={<AddPhotoAlternateRoundedIcon />}
