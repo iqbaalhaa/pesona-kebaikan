@@ -52,7 +52,7 @@ function mapCampaignsToTypes(campaigns: CampaignWithRelations[]) {
 			organizerVerifiedAs: (c.createdBy as any).verifiedAs || null,
 			categorySlug: slugKey || undefined,
 			category: c.category.name,
-			cover: c.media.find((m) => m.isThumbnail)?.url || c.media[0]?.url || "",
+			cover: c.media.find((m) => m.isThumbnail)?.url || "",
 			target: Number(c.target),
 			collected,
 			donors: validDonations.length,

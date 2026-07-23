@@ -45,6 +45,7 @@ import {
 	getCampaignById,
 	updateCampaign,
 } from "@/actions/campaign";
+import { uploadCoverFile } from "@/actions/upload";
 import { CATEGORY_TITLE } from "@/lib/constants";
 import { MEDICAL_SLUG } from "@/lib/categoryUtils";
 import { format } from "date-fns";
@@ -733,6 +734,7 @@ function BuatGalangDanaPageContent() {
 	const [coverNameOther, setCoverNameOther] = React.useState("");
 	const [coverFileOther, setCoverFileOther] = React.useState<File | null>(null);
 	const [coverPreviewOther, setCoverPreviewOther] = React.useState<string>("");
+	const [docPendukungUrl, setDocPendukungUrl] = React.useState("");
 
 	const [storyOther, setStoryOther] = React.useState("");
 	const [storyStructureOther, setStoryStructureOther] =
@@ -1029,6 +1031,7 @@ function BuatGalangDanaPageContent() {
 							socHandle,
 							beneficiaries,
 							agree: { agreeA, agreeB },
+							...(docPendukungUrl ? { docs: { pendukung: docPendukungUrl } } : {}),
 						};
 				formData.append("metadata", JSON.stringify(metadata));
 
@@ -1813,6 +1816,7 @@ function BuatGalangDanaPageContent() {
 										accept="image/*"
 										cropAspect={664 / 357}
 										aspectRatio="664/357"
+										uploadAction={uploadCoverFile}
 										value={coverPreview}
 										onUploaded={(url) => {
 											setCoverPreview(url);
@@ -2336,6 +2340,7 @@ function BuatGalangDanaPageContent() {
 										accept="image/*"
 										cropAspect={664 / 357}
 										aspectRatio="664/357"
+										uploadAction={uploadCoverFile}
 										value={coverPreviewOther}
 										onUploaded={(url) => {
 											setCoverPreviewOther(url);
@@ -2346,6 +2351,15 @@ function BuatGalangDanaPageContent() {
 											setCoverFileOther(null);
 											setCoverNameOther("");
 										}}
+									/>
+
+									<FileUploadField
+										label="Dokumen Pendukung (opsional)"
+										note="Surat izin, proposal, foto kondisi, KTP, dll. Hanya bisa dilihat admin."
+										accept="image/*,.pdf"
+										value={docPendukungUrl}
+										onUploaded={(url) => setDocPendukungUrl(url)}
+										onClear={() => setDocPendukungUrl("")}
 									/>
 								</Stack>
 							</Box>

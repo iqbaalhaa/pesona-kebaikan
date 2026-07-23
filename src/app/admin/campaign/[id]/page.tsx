@@ -58,7 +58,7 @@ import {
 	updateCampaignStatus,
 	updateCampaignFee,
 	addCampaignMedia,
-	updateCampaignMedicalDocs,
+	uploadCampaignDocument,
 } from "@/actions/campaign-admin";
 import { getCampaignTransactions } from "@/actions/admin";
 import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
@@ -223,7 +223,7 @@ export default function AdminCampaignDetailPage(props: {
 					.replace(/\s+/g, " ")
 					.trim();
 
-				const meta = (c as any).metadata || {};
+				const campaignMeta = (c as any).metadata || {};
 				const type: CampaignType =
 					c.type === "sakit" || c.category === "Bantuan Medis & Kesehatan"
 						? "sakit"
@@ -232,87 +232,87 @@ export default function AdminCampaignDetailPage(props: {
 				const sakitMeta =
 					type === "sakit"
 						? {
-								who: meta.who || "",
-								whoOther: meta.whoOther || "",
+								who: campaignMeta.who || "",
+								whoOther: campaignMeta.whoOther || "",
 								whoLabel:
-									meta.who === "self"
+									campaignMeta.who === "self"
 										? "Saya sendiri"
-										: meta.who === "kk"
+										: campaignMeta.who === "kk"
 											? "Keluarga satu KK"
-											: meta.who === "beda_kk"
+											: campaignMeta.who === "beda_kk"
 												? "Keluarga inti berbeda KK"
-												: meta.who === "other"
-													? meta.whoOther || "Lainnya"
+												: campaignMeta.who === "other"
+													? campaignMeta.whoOther || "Lainnya"
 													: "-",
-								bank: meta.bank || "",
+								bank: campaignMeta.bank || "",
 								bankLabel:
-									meta.bank === "pasien"
+									campaignMeta.bank === "pasien"
 										? "Pasien langsung"
-										: meta.bank === "kk"
+										: campaignMeta.bank === "kk"
 											? "Keluarga satu KK"
-											: meta.bank === "beda_kk"
+											: campaignMeta.bank === "beda_kk"
 												? "Keluarga inti berbeda KK"
-												: meta.bank === "rs"
+												: campaignMeta.bank === "rs"
 													? "Rumah sakit"
-													: meta.bank === "yayasan"
+													: campaignMeta.bank === "yayasan"
 														? "Rekening Pesona Kebaikan"
 														: "-",
-								patientName: meta.patientName || "-",
-								patientAge: meta.patientAge || "-",
-								patientGender: meta.patientGender || "",
+								patientName: campaignMeta.patientName || "-",
+								patientAge: campaignMeta.patientAge || "-",
+								patientGender: campaignMeta.patientGender || "",
 								patientGenderLabel:
-									meta.patientGender === "L"
+									campaignMeta.patientGender === "L"
 										? "Laki-laki"
-										: meta.patientGender === "P"
+										: campaignMeta.patientGender === "P"
 											? "Perempuan"
 											: "-",
-								patientCity: meta.patientCity || "-",
-								inpatient: meta.inpatient || "",
+								patientCity: campaignMeta.patientCity || "-",
+								inpatient: campaignMeta.inpatient || "",
 								inpatientLabel:
-									meta.inpatient === "ya"
+									campaignMeta.inpatient === "ya"
 										? "Sedang rawat inap"
-										: meta.inpatient === "tidak"
+										: campaignMeta.inpatient === "tidak"
 											? "Tidak rawat inap"
 											: "-",
-								treatment: meta.treatment || "-",
-								hospital: meta.hospital || "-",
-								bpjs: meta.bpjs || "",
+								treatment: campaignMeta.treatment || "-",
+								hospital: campaignMeta.hospital || "-",
+								bpjs: campaignMeta.bpjs || "",
 								bpjsLabel:
-									meta.bpjs === "ya"
+									campaignMeta.bpjs === "ya"
 										? "Terdaftar BPJS"
-										: meta.bpjs === "tidak"
+										: campaignMeta.bpjs === "tidak"
 											? "Tidak BPJS"
 											: "-",
-								prevCost: meta.prevCost || "",
+								prevCost: campaignMeta.prevCost || "",
 								prevCostLabel:
-									meta.prevCost === "mandiri"
+									campaignMeta.prevCost === "mandiri"
 										? "Biaya mandiri/pribadi"
-										: meta.prevCost === "asuransi"
+										: campaignMeta.prevCost === "asuransi"
 											? "Asuransi/BPJS"
 											: "-",
-								usage: meta.usage || "-",
-								cta: meta.cta || "-",
+								usage: campaignMeta.usage || "-",
+								cta: campaignMeta.cta || "-",
 							}
 						: null;
 
 				const lainnyaMeta =
 					type === "lainnya"
 						? {
-								purposeKey: meta.purposeKey || "-",
-								ktpName: meta.ktpName || "-",
-								receiverName: meta.receiverName || "-",
-								goal: meta.goal || "-",
-								location: meta.location || "-",
-								usageOther: meta.usageOther || "-",
-								ctaOther: meta.ctaOther || "-",
-								job: meta.job || "-",
-								workplace: meta.workplace || "-",
-								soc: meta.soc || "-",
-								socHandle: meta.socHandle || "-",
+								purposeKey: campaignMeta.purposeKey || "-",
+								ktpName: campaignMeta.ktpName || "-",
+								receiverName: campaignMeta.receiverName || "-",
+								goal: campaignMeta.goal || "-",
+								location: campaignMeta.location || "-",
+								usageOther: campaignMeta.usageOther || "-",
+								ctaOther: campaignMeta.ctaOther || "-",
+								job: campaignMeta.job || "-",
+								workplace: campaignMeta.workplace || "-",
+								soc: campaignMeta.soc || "-",
+								socHandle: campaignMeta.socHandle || "-",
 								beneficiaries:
-									typeof meta.beneficiaries === "number"
-										? String(meta.beneficiaries)
-										: meta.beneficiaries || "-",
+									typeof campaignMeta.beneficiaries === "number"
+										? String(campaignMeta.beneficiaries)
+										: campaignMeta.beneficiaries || "-",
 							}
 						: null;
 
@@ -352,7 +352,7 @@ export default function AdminCampaignDetailPage(props: {
 						((c as any).metadata && (c as any).metadata.restartInfo) || null,
 					daysLeft: daysLeft > 0 ? daysLeft : 0,
 					foundationFee: (c as any).foundationFee ?? 0,
-					shortInvite: (type === "sakit" ? meta.cta : meta.ctaOther) || "",
+					shortInvite: (type === "sakit" ? campaignMeta.cta : campaignMeta.ctaOther) || "",
 					story: c.description,
 					meta: {
 						sakit: sakitMeta,
@@ -362,6 +362,10 @@ export default function AdminCampaignDetailPage(props: {
 				setData(mappedData);
 				setFeeValue(String((c as any).foundationFee ?? 0));
 
+				const medicalDocs = (campaignMeta as any).medicalDocs || {};
+				const privateDocs = (campaignMeta as any).docs || {};
+
+				const ktpUrl: string = privateDocs.ktp || "";
 				const base: DocItem[] = [
 					{
 						key: "cover",
@@ -376,44 +380,46 @@ export default function AdminCampaignDetailPage(props: {
 						title: "Identitas / KTP Penggalang",
 						required: false,
 						help: "KTP pemilik akun/penggalang.",
-						uploaded: false, // Need to check if KTP is in media
+						uploaded: !!ktpUrl,
+						previewUrl: ktpUrl || undefined,
+						filename: ktpUrl ? ktpUrl.split("/").pop() : undefined,
 					},
 				];
 
 				if (mappedData.type === "sakit") {
-					const meta = (c as any).metadata || {};
-					const medicalDocs = (meta as any).medicalDocs || {};
+					// Baca dari docs (baru) atau medicalDocs (lama) untuk backward compat
+					const resumeUrl: string = privateDocs.resume_medis || medicalDocs.resume_medis || "";
+					const suratUrl: string = privateDocs.surat_rs || medicalDocs.surat_rs || "";
 					base.push(
 						{
 							key: "resume_medis",
 							title: "Surat / Resume Medis",
 							required: false,
 							help: "Dokumen diagnosis/riwayat medis.",
-							uploaded: !!medicalDocs.resume_medis,
-							filename: medicalDocs.resume_medis
-								? String(medicalDocs.resume_medis).split("/").pop()
-								: undefined,
-							previewUrl: medicalDocs.resume_medis || undefined,
+							uploaded: !!resumeUrl,
+							filename: resumeUrl ? resumeUrl.split("/").pop() : undefined,
+							previewUrl: resumeUrl || undefined,
 						},
 						{
 							key: "surat_rs",
 							title: "Dokumen Rumah Sakit",
 							required: false,
 							help: "Surat rujukan, rincian biaya, dll (opsional).",
-							uploaded: !!medicalDocs.surat_rs,
-							filename: medicalDocs.surat_rs
-								? String(medicalDocs.surat_rs).split("/").pop()
-								: undefined,
-							previewUrl: medicalDocs.surat_rs || undefined,
+							uploaded: !!suratUrl,
+							filename: suratUrl ? suratUrl.split("/").pop() : undefined,
+							previewUrl: suratUrl || undefined,
 						},
 					);
 				} else {
+					const pendukungUrl: string = privateDocs.pendukung || "";
 					base.push({
 						key: "pendukung",
 						title: "Dokumen Pendukung",
 						required: false,
 						help: "Surat izin, proposal, foto kondisi, dll.",
-						uploaded: false,
+						uploaded: !!pendukungUrl,
+						previewUrl: pendukungUrl || undefined,
+						filename: pendukungUrl ? pendukungUrl.split("/").pop() : undefined,
 					});
 				}
 				setDocs(base);
@@ -626,35 +632,35 @@ export default function AdminCampaignDetailPage(props: {
 
 		const formData = new FormData();
 		formData.append("file", file);
-		if (key === "cover") {
-			formData.append("isThumbnail", "true");
-		}
 
 		try {
-			const res = await addCampaignMedia(id, formData);
+			let res: { success: boolean; url?: string; error?: string };
+
+			if (key === "cover") {
+				// Cover → masuk ke CampaignMedia dengan isThumbnail: true
+				formData.append("isThumbnail", "true");
+				const r = await addCampaignMedia(id, formData);
+				res = { success: r.success, url: (r as any).url, error: r.error };
+			} else {
+				// Dokumen private → disimpan di metadata, TIDAK di CampaignMedia
+				const r = await uploadCampaignDocument(id, key, formData);
+				res = r;
+			}
 
 			if (res.success) {
-				if (key === "resume_medis" || key === "surat_rs") {
-					const finalUrl = (res as any).url || (res.data as any)?.url;
-					if (finalUrl) {
-						setDocs((prev) =>
-							prev.map((d) =>
-								d.key === key
-									? {
-											...d,
-											previewUrl: finalUrl,
-											filename: finalUrl.split("/").pop() || file.name,
-										}
-									: d,
-							),
-						);
-						await updateCampaignMedicalDocs(
-							id,
-							key === "resume_medis"
-								? { resume_medis: finalUrl }
-								: { surat_rs: finalUrl },
-						);
-					}
+				const finalUrl = res.url;
+				if (finalUrl) {
+					setDocs((prev) =>
+						prev.map((d) =>
+							d.key === key
+								? {
+										...d,
+										previewUrl: finalUrl,
+										filename: finalUrl.split("/").pop() || file.name,
+									}
+								: d,
+						),
+					);
 				}
 
 				pushAudit({
@@ -704,12 +710,9 @@ export default function AdminCampaignDetailPage(props: {
 					: d,
 			),
 		);
-		if (key === "resume_medis" || key === "surat_rs") {
-			await updateCampaignMedicalDocs(
-				id,
-				key === "resume_medis" ? { resume_medis: null } : { surat_rs: null },
-			);
-		}
+		// Hapus referensi URL dari metadata melalui uploadCampaignDocument dengan file kosong tidak didukung.
+		// Saat ini hanya clear dari UI; untuk hapus permanen perlu action terpisah.
+		// (Tidak ada delete dari S3 — URL masih valid tapi tidak lagi direferensikan.)
 
 		pushAudit({
 			title: "Dokumen dihapus",

@@ -193,7 +193,7 @@ export async function getActiveFundraisers(limit = 50) {
 					daysLeft: daysLeft > 0 ? daysLeft : 0,
 					status: "active",
 					updatedAt: fr.createdAt.toISOString(),
-					thumbnail: c.media[0]?.url || "",
+					thumbnail: c.media.find((m) => m.isThumbnail)?.url || "",
 					verifiedAt: fr.createdBy?.verifiedAt || null,
 					campaignTitle: c.title,
 				};
@@ -261,9 +261,7 @@ export async function getFundraiserCampaign(slug: string) {
 		const fundraiserDonors = fundraiserDonations.length;
 
 		const thumbnail =
-			campaign.media.find((m) => m.isThumbnail)?.url ||
-			campaign.media[0]?.url ||
-			"";
+			campaign.media.find((m) => m.isThumbnail)?.url || "";
 		const daysLeft = campaign.end
 			? Math.ceil(
 					(new Date(campaign.end).getTime() - new Date().getTime()) /

@@ -597,6 +597,63 @@ export async function updateCampaignMedicalDocs(
 	}
 }
 
+// Upload dokumen private (KTP, pendukung, dll.) — disimpan di metadata, bukan CampaignMedia.
+// Hanya admin yang bisa memanggil aksi ini.
+export async function uploadCampaignDocument(
+	campaignId: string,
+	docKey: string,
+	formData: FormData,
+) {
+	const session = await auth();
+	if ((session?.user as any)?.role !== "ADMIN") {
+		return { success: false, error: "Unauthorized" };
+	}
+
+	try {
+		const file = formData.get("file") as File;
+		if (!file) return { success: false, error: "No file provided" };
+
+		const uploadFormData = new FormData();
+		uploadFormData.append("file", file);
+		const uploadRes = await uploadFile(uploadFormData);
+
+		if (!uploadRes.success || !uploadRes.url) {
+			return { success: false, error: "Gagal upload file" };
+		}
+
+		const url = uploadRes.url;
+
+		const campaign = await prisma.campaign.findUnique({
+			where: { id: campaignId },
+			select: { metadata: true },
+		});
+		const rawMeta = campaign?.metadata;
+		const metadata: any = { ...(typeof rawMeta === "object" && rawMeta !== null ? rawMeta : {}) };
+		const docs: any = { ...(typeof metadata.docs === "object" && metadata.docs !== null ? metadata.docs : {}) };
+		docs[docKey] = url;
+		metadata.docs = docs;
+
+		// Backward compat: juga update medicalDocs untuk kunci lama
+		if (docKey === "resume_medis" || docKey === "surat_rs") {
+			const medicalDocs: any = { ...(typeof metadata.medicalDocs === "object" && metadata.medicalDocs !== null ? metadata.medicalDocs : {}) };
+			medicalDocs[docKey] = url;
+			metadata.medicalDocs = medicalDocs;
+		}
+
+		await prisma.campaign.update({
+			where: { id: campaignId },
+			data: { metadata },
+		});
+
+		revalidatePath(`/admin/campaign/${campaignId}`);
+
+		return { success: true, url };
+	} catch (error) {
+		console.error("Upload campaign document error:", error);
+		return { success: false, error: "Gagal upload dokumen" };
+	}
+}
+
 export async function createCampaignUpdate(data: {
 	campaignId: string;
 	title: string;

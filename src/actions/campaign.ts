@@ -432,7 +432,7 @@ export async function getCampaigns(
 			}
 
 			const thumbnail =
-				c.media.find((m) => m.isThumbnail)?.url || c.media[0]?.url || "";
+				c.media.find((m) => m.isThumbnail)?.url || "";
 
 			const slugKey =
 				c.category.slug ||
@@ -487,7 +487,7 @@ export async function getCampaigns(
 			}
 
 			const thumbnail =
-				c.media.find((m: any) => m.isThumbnail)?.url || c.media[0]?.url || "";
+				c.media.find((m: any) => m.isThumbnail)?.url || "";
 
 			const slugKey =
 				c.category.slug ||
@@ -644,9 +644,7 @@ export async function getCampaignById(id: string) {
 		const donors = donationStats._count;
 
 		const thumbnail =
-			campaign.media.find((m) => m.isThumbnail)?.url ||
-			campaign.media[0]?.url ||
-			"";
+			campaign.media.find((m) => m.isThumbnail)?.url || "";
 		let daysLeft = 0;
 		if (campaign.end) {
 			if (campaign.status === "PENDING" && campaign.start) {

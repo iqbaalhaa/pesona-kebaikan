@@ -4,6 +4,8 @@ import * as React from "react";
 import { Camera, X, Loader2, CheckCircle, AlertCircle, RotateCcw, RotateCw, Crop as CropIcon } from "lucide-react";
 import Cropper, { type Area } from "react-easy-crop";
 import { uploadFile } from "@/actions/upload";
+
+type UploadAction = (fd: FormData) => Promise<{ success: boolean; url?: string; error?: string }>;
 import { rotateImageFile } from "@/lib/rotateImage";
 import getCroppedImg from "@/lib/cropImage";
 
@@ -24,6 +26,8 @@ interface FileUploadFieldProps {
 	/** When set (e.g. 664/357), opens a crop dialog before upload so the user
 	 *  controls which part of an off-ratio image is kept. */
 	cropAspect?: number;
+	/** Override the server action used to upload. Defaults to uploadFile. */
+	uploadAction?: UploadAction;
 }
 
 async function dataUrlToFile(dataUrl: string, name: string): Promise<File> {
@@ -43,6 +47,7 @@ export default function FileUploadField({
 	note,
 	aspectRatio,
 	cropAspect,
+	uploadAction = uploadFile,
 }: FileUploadFieldProps) {
 	const [state, setState] = React.useState<UploadState>(value ? "success" : "idle");
 	const [error, setError] = React.useState("");
@@ -105,7 +110,7 @@ export default function FileUploadField({
 		try {
 			const fd = new FormData();
 			fd.append("file", file);
-			const res = await uploadFile(fd);
+			const res = await uploadAction(fd);
 
 			if (res.success && res.url) {
 				lastFileRef.current = file.type.startsWith("image/") ? file : null;
