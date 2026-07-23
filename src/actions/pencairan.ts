@@ -98,6 +98,11 @@ export async function getWithdrawals() {
     bankName: w.bankName,
     bankAccount: w.bankAccount,
     accountHolder: w.accountHolder,
+    notes: w.notes,
+    rejectionReason: w.rejectionReason,
+    transferAmount: w.transferAmount ? Number(w.transferAmount) : null,
+    senderBank: w.senderBank,
+    senderAccount: w.senderAccount,
     createdAt: w.createdAt.toISOString(),
     campaignTitle: w.campaign.title,
     campaignSlug: w.campaign.slug,
@@ -136,7 +141,12 @@ export async function updateWithdrawalStatus(
   proofUrl?: string,
   otp?: string,
   rejectReason?: string,
-  adminPhone?: string
+  adminPhone?: string,
+  transferDetails?: {
+    transferAmount?: number;
+    senderBank?: string;
+    senderAccount?: string;
+  }
 ) {
   // 0. Verify OTP (Application Level Security)
   // We require OTP for ALL approvals, regardless of Midtrans/Manual mode
@@ -153,7 +163,13 @@ export async function updateWithdrawalStatus(
       const session = await auth();
       // Use provided adminPhone or fallback to session or default
       const phoneToVerify =
-        adminPhone || session?.user?.phone || "085382055598";
+        adminPhone || (session?.user as any)?.phone;
+      if (!phoneToVerify) {
+        return {
+          success: false,
+          error: "Nomor WA admin belum dikonfigurasi. Silakan atur nomor WA di menu pengaturan.",
+        };
+      }
 
       const verifyRes = await verifyOtp(phoneToVerify, otp);
       if (!verifyRes.success) {
@@ -252,14 +268,24 @@ export async function updateWithdrawalStatus(
 
     revalidatePath("/admin/pencairan");
     return { success: true, payoutMode: "IRIS" as const };
+  } else if (status === "REJECTED") {
+    await prisma.withdrawal.update({
+      where: { id },
+      data: {
+        status,
+        rejectionReason: rejectReason || null,
+      },
+    });
   } else {
-    // Normal update for other statuses
+    // COMPLETED
     await prisma.withdrawal.update({
       where: { id },
       data: {
         status,
         proofUrl,
-        notes: status === "REJECTED" ? rejectReason : undefined,
+        transferAmount: transferDetails?.transferAmount ?? undefined,
+        senderBank: transferDetails?.senderBank || undefined,
+        senderAccount: transferDetails?.senderAccount || undefined,
       },
     });
   }

@@ -676,6 +676,16 @@ export async function requestWithdrawal(data: {
 	try {
 		const campaign = await prisma.campaign.findUnique({
 			where: { id: data.campaignId },
+			include: {
+				donations: {
+					where: { status: { in: ["PAID", "paid", "SETTLED", "COMPLETED", "ACTIVE"] } },
+					select: { amount: true, fee: true },
+				},
+				withdrawals: {
+					where: { status: { in: ["PENDING", "APPROVED", "COMPLETED"] } },
+					select: { amount: true },
+				},
+			},
 		});
 
 		if (!campaign) {
@@ -687,6 +697,16 @@ export async function requestWithdrawal(data: {
 			session.user.role !== "ADMIN"
 		) {
 			return { success: false, error: "Forbidden" };
+		}
+
+		const collected = campaign.donations.reduce((acc, d) => acc + Number(d.amount), 0);
+		const totalFees = campaign.donations.reduce((acc, d) => acc + (Number((d as any).fee) || 0), 0);
+		const foundationFee = Math.round(collected * (Number((campaign as any).foundationFee || 0) / 100));
+		const withdrawn = campaign.withdrawals.reduce((acc, w) => acc + Number(w.amount), 0);
+		const available = Math.max(0, collected - totalFees - foundationFee - withdrawn);
+
+		if (data.amount > available) {
+			return { success: false, error: "Jumlah melebihi saldo tersedia" };
 		}
 
 		await prisma.withdrawal.create({

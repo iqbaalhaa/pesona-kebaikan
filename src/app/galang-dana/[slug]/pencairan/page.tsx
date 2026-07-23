@@ -75,6 +75,7 @@ export default async function PencairanPage({
 	const withdrawals = campaign.withdrawals.map((w) => ({
 		...w,
 		amount: Number(w.amount),
+		transferAmount: w.transferAmount ? Number(w.transferAmount) : null,
 	}));
 
 	return (

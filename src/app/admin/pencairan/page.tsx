@@ -214,7 +214,7 @@ export default function PencairanPage() {
 	const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 	const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
 	const selectedCampaignData = campaigns.find(c => c.id === selectedCampaign);
-	const adminPhone = localAdminPhone || "085382055598";
+	const adminPhone = localAdminPhone || "";
 
 	const handleCreate = async () => {
 		if (!selectedCampaign || !amount || !bankName || !bankAccount || !accountHolder) return;
@@ -517,7 +517,7 @@ export default function PencairanPage() {
 						onClick={async () => {
 							if (!selectedWithdrawalForRejection) return;
 							try {
-								const res = await updateWithdrawalStatus(selectedWithdrawalForRejection.id, "REJECTED", undefined, undefined);
+								const res = await updateWithdrawalStatus(selectedWithdrawalForRejection.id, "REJECTED", undefined, undefined, rejectReason);
 								if (!res?.success) { showSnack(res?.error || "Gagal", "error"); return; }
 								setRejectDialogOpen(false);
 								setSelectedWithdrawalForRejection(null);
@@ -576,12 +576,50 @@ export default function PencairanPage() {
 									{detailRow.status === "PENDING" && (() => { const d = daysAgo(detailRow.createdAt); return d >= 1 ? ` (${d} hari yang lalu)` : ""; })()}
 								</Typography>
 
+								{detailRow.notes && (
+									<Paper variant="outlined" sx={{ p: 2, borderRadius: 2, bgcolor: "grey.50" }}>
+										<Typography sx={{ fontSize: 11, color: "text.secondary", mb: 0.5 }}>Catatan dari Fundraiser</Typography>
+										<Typography sx={{ fontSize: 13 }}>{detailRow.notes}</Typography>
+									</Paper>
+								)}
+
+								{detailRow.status === "REJECTED" && detailRow.rejectionReason && (
+									<Paper variant="outlined" sx={{ p: 2, borderRadius: 2, bgcolor: "#fff5f5", borderColor: "#fecaca" }}>
+										<Typography sx={{ fontSize: 11, color: "error.main", mb: 0.5, fontWeight: 700 }}>Alasan Penolakan</Typography>
+										<Typography sx={{ fontSize: 13, color: "error.dark" }}>{detailRow.rejectionReason}</Typography>
+									</Paper>
+								)}
+
+								{detailRow.status === "COMPLETED" && detailRow.transferAmount && (
+									<Paper variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
+										<Typography sx={{ fontSize: 11, color: "text.secondary", mb: 1, fontWeight: 700 }}>Detail Transfer</Typography>
+										<Stack spacing={0.5}>
+											<Stack direction="row" justifyContent="space-between">
+												<Typography sx={{ fontSize: 12, color: "text.secondary" }}>Nominal ditransfer</Typography>
+												<Typography sx={{ fontSize: 12, fontWeight: 700 }}>{idr(detailRow.transferAmount)}</Typography>
+											</Stack>
+											{detailRow.senderBank && (
+												<Stack direction="row" justifyContent="space-between">
+													<Typography sx={{ fontSize: 12, color: "text.secondary" }}>Bank pengirim</Typography>
+													<Typography sx={{ fontSize: 12, fontWeight: 700 }}>{detailRow.senderBank}</Typography>
+												</Stack>
+											)}
+											{detailRow.senderAccount && (
+												<Stack direction="row" justifyContent="space-between">
+													<Typography sx={{ fontSize: 12, color: "text.secondary" }}>No. rek pengirim</Typography>
+													<Typography sx={{ fontSize: 12, fontWeight: 700, fontFamily: "monospace" }}>{detailRow.senderAccount}</Typography>
+												</Stack>
+											)}
+										</Stack>
+									</Paper>
+								)}
+
 								{detailRow.referenceNo && (
 									<Typography sx={{ fontSize: 12, fontFamily: "monospace", color: "text.secondary" }}>Ref: {detailRow.referenceNo}</Typography>
 								)}
 
-								{/* Approval form — only for PENDING */}
-								{detailRow.status === "PENDING" && (
+								{/* Approval form — for PENDING and APPROVED */}
+								{(detailRow.status === "PENDING" || detailRow.status === "APPROVED") && (
 									<>
 										<Divider />
 										<Typography sx={{ fontSize: 14, fontWeight: 800 }}>Proses Pencairan</Typography>
@@ -634,11 +672,13 @@ export default function PencairanPage() {
 							</Stack>
 						</DialogContent>
 						<DialogActions sx={{ p: 2 }}>
-							{detailRow.status === "PENDING" && (
+							{(detailRow.status === "PENDING" || detailRow.status === "APPROVED") && (
 								<>
-									<Button color="error" onClick={() => { setDetailRow(null); handleUpdateStatus(detailRow.id, "REJECTED"); }}>
-										Tolak
-									</Button>
+									{detailRow.status === "PENDING" && (
+										<Button color="error" onClick={() => { setDetailRow(null); handleUpdateStatus(detailRow.id, "REJECTED"); }}>
+											Tolak
+										</Button>
+									)}
 									<Button variant="contained" color="success" disabled={approvalSubmitting}
 										onClick={async () => {
 											setApprovalSubmitting(true);
@@ -647,6 +687,14 @@ export default function PencairanPage() {
 													detailRow.id,
 													"COMPLETED",
 													approvalForm.proofUrl || undefined,
+													undefined,
+													undefined,
+													undefined,
+													{
+														transferAmount: approvalForm.transferAmount ? Number(approvalForm.transferAmount.replace(/\./g, "")) : undefined,
+														senderBank: approvalForm.senderBank || undefined,
+														senderAccount: approvalForm.senderAccount || undefined,
+													},
 												);
 												if (!res?.success) {
 													showSnack(res?.error || "Gagal", "error");

@@ -275,9 +275,18 @@ export default function WithdrawalList({
 												<Typography
 													variant="caption"
 													display="block"
-													sx={{ mt: 0.5, fontStyle: "italic" }}
+													sx={{ mt: 0.5, fontStyle: "italic", color: "text.secondary" }}
 												>
 													Catatan: {w.notes}
+												</Typography>
+											)}
+											{w.status === "REJECTED" && w.rejectionReason && (
+												<Typography
+													variant="caption"
+													display="block"
+													sx={{ mt: 0.5, color: "error.main", fontWeight: 600 }}
+												>
+													Alasan penolakan: {w.rejectionReason}
 												</Typography>
 											)}
 										</Box>

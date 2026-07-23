@@ -6,7 +6,15 @@
       "Bash(npx prisma *)",
       "PowerShell(Get-Process | Where-Object { $_.Name -match \"node\" } | Select-Object Id, Name, Path)",
       "PowerShell(Stop-Process -Name \"node\" -Force)",
-      "Bash(Remove-Item \"e:\\\\wamp64\\\\www\\\\pesona-kebaikan\\\\.env.local\" -Force)"
+      "Bash(Remove-Item \"e:\\\\wamp64\\\\www\\\\pesona-kebaikan\\\\.env.local\" -Force)",
+      "PowerShell(Stop-Process -Name \"node\" -Force -ErrorAction SilentlyContinue)",
+      "Skill(deep-research)",
+      "Skill(deep-research:*)",
+      "WebSearch",
+      "WebFetch(domain:docs.doku.com)",
+      "WebFetch(domain:developers.doku.com)",
+      "WebFetch(domain:dashboard.doku.com)",
+      "WebFetch(domain:www.doku.com)"
     ]
   }
 }

@@ -21,6 +21,11 @@ export type WithdrawalRow = {
 	bankName: string;
 	bankAccount: string;
 	accountHolder: string;
+	notes?: string | null;
+	rejectionReason?: string | null;
+	transferAmount?: number | null;
+	senderBank?: string | null;
+	senderAccount?: string | null;
 	createdAt: string;
 	campaignTitle: string;
 	campaignId: string;
