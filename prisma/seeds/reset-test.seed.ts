@@ -71,7 +71,7 @@ async function main() {
 
   const admin = await prisma.user.upsert({
     where: { email: ADMIN_EMAIL },
-    update: { role: "ADMIN", name: "Super Admin" },
+    update: { role: "ADMIN", name: "Super Admin", password },
     create: {
       email: ADMIN_EMAIL,
       name: "Super Admin",
@@ -83,7 +83,7 @@ async function main() {
   // ── Iqbal (pemilik campaign) ──
   const iqbal = await prisma.user.upsert({
     where: { email: IQBAL_EMAIL },
-    update: { name: "Iqbal Hanafi", role: "USER" },
+    update: { name: "Iqbal Hanafi", role: "USER", password },
     create: {
       email: IQBAL_EMAIL,
       name: "Iqbal Hanafi",
