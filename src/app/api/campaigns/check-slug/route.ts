@@ -5,9 +5,8 @@ const slugify = (value: string) =>
 	(value || "")
 		.toLowerCase()
 		.trim()
-		.replace(/[^\w\s-]/g, "")
-		.replace(/[\s_-]+/g, "-")
-		.replace(/^-+|-+$/g, "");
+		.replace(/[^\w\s]/g, "")
+		.replace(/[\s_]+/g, "");
 
 export async function GET(req: Request) {
 	const { searchParams } = new URL(req.url);

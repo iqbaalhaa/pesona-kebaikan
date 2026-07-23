@@ -22,9 +22,8 @@ export async function createCampaign(formData: FormData) {
 			(value || "")
 				.toLowerCase()
 				.trim()
-				.replace(/[^\w\s-]/g, "")
-				.replace(/[\s_-]+/g, "-")
-				.replace(/^-+|-+$/g, "");
+				.replace(/[^\w\s]/g, "")
+				.replace(/[\s_]+/g, "");
 
 		const status = (formData.get("status") as CampaignStatus) || "PENDING";
 

@@ -121,10 +121,8 @@ function makeSlug(value: string) {
 	return value
 		.toLowerCase()
 		.trim()
-		.replace(/[^a-z0-9\s-]/g, "")
-		.replace(/\s+/g, "-")
-		.replace(/-+/g, "-")
-		.replace(/^-+|-+$/g, "")
+		.replace(/[^a-z0-9\s]/g, "")
+		.replace(/\s+/g, "")
 		.slice(0, 60);
 }
 
@@ -495,6 +493,7 @@ function BuatGalangDanaPageContent() {
 	const [slugChecking, setSlugChecking] = React.useState(false);
 	const [slugAvailable, setSlugAvailable] = React.useState(false);
 	const [slugTouched, setSlugTouched] = React.useState(false);
+	const slugDebounceRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 	const [coverName, setCoverName] = React.useState<string>("");
 	const [coverFile, setCoverFile] = React.useState<File | null>(null);
 	const [coverPreview, setCoverPreview] = React.useState<string>("");
@@ -555,6 +554,40 @@ function BuatGalangDanaPageContent() {
 			console.error("Failed to save draft story", e);
 		}
 	}, [story, storyStructure, isEdit, storyLoaded]);
+
+	// Debounced slug check — sakit flow
+	React.useEffect(() => {
+		if (slugDebounceRef.current) clearTimeout(slugDebounceRef.current);
+		if (!slug) {
+			setSlugError("");
+			setSlugAvailable(false);
+			setSlugChecking(false);
+			return;
+		}
+		setSlugChecking(true);
+		slugDebounceRef.current = setTimeout(async () => {
+			try {
+				const params = new URLSearchParams({ slug });
+				if (isEdit && draftId) params.set("excludeId", draftId);
+				const res = await fetch(`/api/campaigns/check-slug?${params.toString()}`);
+				if (!res.ok) return;
+				const data = (await res.json()) as { available: boolean };
+				if (!data.available) {
+					setSlugError("Link ini sudah digunakan, coba link lain");
+					setSlugAvailable(false);
+				} else {
+					setSlugError("");
+					setSlugAvailable(true);
+				}
+			} catch {
+			} finally {
+				setSlugChecking(false);
+			}
+		}, 700);
+		return () => {
+			if (slugDebounceRef.current) clearTimeout(slugDebounceRef.current);
+		};
+	}, [slug, isEdit, draftId]); // eslint-disable-line react-hooks/exhaustive-deps
 
 	const [cta, setCta] = React.useState("");
 	const ctaLeft = 160 - cta.length;
@@ -696,6 +729,7 @@ function BuatGalangDanaPageContent() {
 	const [slugOtherChecking, setSlugOtherChecking] = React.useState(false);
 	const [slugOtherAvailable, setSlugOtherAvailable] = React.useState(false);
 	const [slugOtherTouched, setSlugOtherTouched] = React.useState(false);
+	const slugOtherDebounceRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 	const [coverNameOther, setCoverNameOther] = React.useState("");
 	const [coverFileOther, setCoverFileOther] = React.useState<File | null>(null);
 	const [coverPreviewOther, setCoverPreviewOther] = React.useState<string>("");
@@ -744,6 +778,40 @@ function BuatGalangDanaPageContent() {
 			console.error("Failed to save draft story other", e);
 		}
 	}, [storyOther, storyStructureOther, isEdit, storyOtherLoaded]);
+
+	// Debounced slug check — lainnya flow
+	React.useEffect(() => {
+		if (slugOtherDebounceRef.current) clearTimeout(slugOtherDebounceRef.current);
+		if (!slugOther) {
+			setSlugOtherError("");
+			setSlugOtherAvailable(false);
+			setSlugOtherChecking(false);
+			return;
+		}
+		setSlugOtherChecking(true);
+		slugOtherDebounceRef.current = setTimeout(async () => {
+			try {
+				const params = new URLSearchParams({ slug: slugOther });
+				if (isEdit && draftId) params.set("excludeId", draftId);
+				const res = await fetch(`/api/campaigns/check-slug?${params.toString()}`);
+				if (!res.ok) return;
+				const data = (await res.json()) as { available: boolean };
+				if (!data.available) {
+					setSlugOtherError("Link ini sudah digunakan, coba link lain");
+					setSlugOtherAvailable(false);
+				} else {
+					setSlugOtherError("");
+					setSlugOtherAvailable(true);
+				}
+			} catch {
+			} finally {
+				setSlugOtherChecking(false);
+			}
+		}, 700);
+		return () => {
+			if (slugOtherDebounceRef.current) clearTimeout(slugOtherDebounceRef.current);
+		};
+	}, [slugOther, isEdit, draftId]); // eslint-disable-line react-hooks/exhaustive-deps
 
 	const [ctaOther, setCtaOther] = React.useState("");
 	const ctaOtherLeft = 160 - ctaOther.length;
@@ -1713,52 +1781,18 @@ function BuatGalangDanaPageContent() {
 												setSlugAvailable(false);
 												setSlug(makeSlug(e.target.value));
 											}}
-											onBlur={async () => {
-												if (!slug) {
-													setSlugError("");
-													setSlugAvailable(false);
-													return;
-												}
-												setSlugChecking(true);
-												setSlugError("");
-												try {
-													const params = new URLSearchParams();
-													params.set("slug", slug);
-													if (isEdit && draftId) {
-														params.set("excludeId", draftId);
-													}
-													const res = await fetch(
-														`/api/campaigns/check-slug?${params.toString()}`,
-													);
-													if (!res.ok) {
-														return;
-													}
-													const data = (await res.json()) as {
-														available: boolean;
-													};
-													if (!data.available) {
-														setSlugError(
-															"URL publik sudah digunakan campaign lain",
-														);
-														setSlugAvailable(false);
-													} else {
-														setSlugAvailable(true);
-													}
-												} catch (e) {
-												} finally {
-													setSlugChecking(false);
-												}
-											}}
 											error={slugError || undefined}
 											helperText={
-												!slugError
-													? (slugChecking
-														? "Memeriksa ketersediaan URL..."
-														: "contoh: bantudolawan...")
-													: undefined
+												slugError
+													? undefined
+													: slugChecking
+														? "Memeriksa ketersediaan..."
+														: slug && slugAvailable
+															? undefined
+															: "Contoh: bantuoperasiibusiti"
 											}
 											maxLength={60}
-											placeholder="contoh: bantudolawan..."
+											placeholder="Contoh: bantuoperasiibusiti"
 										/>
 										{!slugError && !slugChecking && slug && slugAvailable && (
 											<Typography
@@ -2267,49 +2301,18 @@ function BuatGalangDanaPageContent() {
 												setSlugOtherAvailable(false);
 												setSlugOther(makeSlug(e.target.value));
 											}}
-											onBlur={async () => {
-												if (!slugOther) {
-													setSlugOtherError("");
-													setSlugOtherAvailable(false);
-													return;
-												}
-												setSlugOtherChecking(true);
-												setSlugOtherError("");
-												try {
-													const params = new URLSearchParams();
-													params.set("slug", slugOther);
-													const res = await fetch(
-														`/api/campaigns/check-slug?${params.toString()}`,
-													);
-													if (!res.ok) {
-														return;
-													}
-													const data = (await res.json()) as {
-														available: boolean;
-													};
-													if (!data.available) {
-														setSlugOtherError(
-															"URL publik sudah digunakan campaign lain",
-														);
-														setSlugOtherAvailable(false);
-													} else {
-														setSlugOtherAvailable(true);
-													}
-												} catch (e) {
-												} finally {
-													setSlugOtherChecking(false);
-												}
-											}}
 											error={slugOtherError || undefined}
 											helperText={
-												!slugOtherError
-													? (slugOtherChecking
-														? "Memeriksa ketersediaan URL..."
-														: "contoh: bantu-renovasi...")
-													: undefined
+												slugOtherError
+													? undefined
+													: slugOtherChecking
+														? "Memeriksa ketersediaan..."
+														: slugOther && slugOtherAvailable
+															? undefined
+															: "Contoh: banturenovasimasjid"
 											}
 											maxLength={60}
-											placeholder="contoh: bantu-renovasi..."
+											placeholder="Contoh: banturenovasimasjid"
 										/>
 										{!slugOtherError &&
 											!slugOtherChecking &&

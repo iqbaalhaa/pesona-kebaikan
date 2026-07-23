@@ -15,9 +15,8 @@ function slugify(v: string) {
 	return v
 		.toLowerCase()
 		.trim()
-		.replace(/[^\w\s-]/g, "")
-		.replace(/\s+/g, "-")
-		.replace(/-+/g, "-");
+		.replace(/[^\w\s]/g, "")
+		.replace(/[\s_]+/g, "");
 }
 
 export async function createFundraiser(
