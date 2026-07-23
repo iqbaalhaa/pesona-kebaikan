@@ -20,7 +20,12 @@ import {
 	Snackbar,
 	Alert,
 	Chip,
-	ButtonBase,
+	TextField,
+	InputAdornment,
+	Select,
+	FormControl,
+	InputLabel,
+	MenuItem,
 } from "@mui/material";
 
 import { Input, Textarea } from "@/components/ui/Input";
@@ -344,7 +349,22 @@ function BuatGalangDanaPageContent() {
 					setJob(m.job || "");
 					setWorkplace(m.workplace || "");
 					setSoc(m.soc || "");
-					setSocHandle(m.socHandle || "");
+					{
+						const SOC_PREFIXES: Record<string, string> = {
+							instagram: "instagram.com/",
+							facebook: "facebook.com/",
+							twitter: "x.com/",
+							linkedin: "linkedin.com/in/",
+						};
+						let handle = m.socHandle || "";
+						const pfx = m.soc ? SOC_PREFIXES[m.soc] : "";
+						if (pfx) {
+							for (const v of [`https://www.${pfx}`, `https://${pfx}`, `http://www.${pfx}`, `http://${pfx}`, `www.${pfx}`, pfx]) {
+								if (handle.toLowerCase().startsWith(v.toLowerCase())) { handle = handle.slice(v.length); break; }
+							}
+						}
+						setSocHandle(handle.replace(/^@/, ""));
+					}
 					setBeneficiaries(m.beneficiaries || "");
 
 					if (m.agree) {
@@ -1939,62 +1959,53 @@ function BuatGalangDanaPageContent() {
 											dapat ditemukan
 										</Typography>
 
-										<Box
-											sx={{
-												display: "grid",
-												gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-												gap: 1,
-											}}
-										>
-											{(
-												[
-													{ key: "facebook", label: "Facebook" },
-													{ key: "instagram", label: "Instagram" },
-													{ key: "twitter", label: "Twitter" },
-													{ key: "linkedin", label: "LinkedIn" },
-												] as Array<{
-													key:
-														| "facebook"
-														| "instagram"
-														| "twitter"
-														| "linkedin";
-													label: string;
-												}>
-											).map((x) => {
-												const active = soc === x.key;
-												return (
-													<ButtonBase
-														key={x.key}
-														onClick={() => setSoc(x.key)}
-														sx={{
-															borderRadius: 2,
-															border: "1px solid",
-															borderColor: active ? "primary.main" : "divider",
-															p: 1,
-															justifyContent: "flex-start",
-															gap: 1,
-														}}
-													>
-														<Radio checked={active} size="small" />
-														<Typography
-															sx={{ fontWeight: 600, fontSize: 13.5 }}
-														>
-															{x.label}
-														</Typography>
-													</ButtonBase>
-												);
-											})}
-										</Box>
+										<Stack spacing={1.5}>
+											<FormControl fullWidth size="small">
+												<InputLabel>Pilih platform</InputLabel>
+												<Select
+													value={soc}
+													label="Pilih platform"
+													onChange={(e) => {
+														setSoc(e.target.value as typeof soc);
+														setSocHandle("");
+													}}
+													sx={{ borderRadius: 2 }}
+												>
+													<MenuItem value="instagram">Instagram</MenuItem>
+													<MenuItem value="facebook">Facebook</MenuItem>
+													<MenuItem value="twitter">Twitter / X</MenuItem>
+													<MenuItem value="linkedin">LinkedIn</MenuItem>
+												</Select>
+											</FormControl>
 
-										{soc ? (
-											<div className="mt-2">
-												<Input
+											{soc ? (
+												<TextField
+													fullWidth
+													size="small"
+													placeholder="username"
 													value={socHandle}
-													onChange={(e) => setSocHandle(e.target.value)}
-													placeholder={`Link/username ${soc}`}
+													onChange={(e) => {
+														const v = e.target.value.trim();
+														setSocHandle(v.startsWith("@") ? v.slice(1) : v);
+													}}
+													InputProps={{
+														startAdornment: (
+															<InputAdornment position="start">
+																<Typography sx={{ fontSize: 13, color: "text.secondary", whiteSpace: "nowrap" }}>
+																	{({
+																		instagram: "instagram.com/",
+																		facebook: "facebook.com/",
+																		twitter: "x.com/",
+																		linkedin: "linkedin.com/in/",
+																	} as Record<string, string>)[soc]}
+																</Typography>
+															</InputAdornment>
+														),
+													}}
+													sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2 } }}
 												/>
-											</div>
-										) : null}
+											) : null}
+										</Stack>
 									</Box>
 								</Stack>
 							</Box>

@@ -14,7 +14,8 @@
       "WebFetch(domain:docs.doku.com)",
       "WebFetch(domain:developers.doku.com)",
       "WebFetch(domain:dashboard.doku.com)",
-      "WebFetch(domain:www.doku.com)"
+      "WebFetch(domain:www.doku.com)",
+      "Bash(node -e ' *)"
     ]
   }
 }
