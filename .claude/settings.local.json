@@ -32,7 +32,9 @@
       "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" \"http://localhost:3000/donasi/bantuan-banjir-bandang-cianjur/payment\")",
       "Bash(xxd)",
       "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" \"http://localhost:3000/galang-dana/buat\")",
-      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" \"http://localhost:3000/admin/users\")"
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" \"http://localhost:3000/admin/users\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" \"http://localhost:3000/galang-dana/buat?draft=cmrysg6hq0003wd9s473a31pl&type=sakit\")",
+      "Bash(npx eslint *)"
     ]
   }
 }

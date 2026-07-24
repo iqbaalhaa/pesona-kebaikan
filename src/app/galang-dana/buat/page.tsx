@@ -303,27 +303,44 @@ function BuatGalangDanaPageContent() {
 					} else {
 						// Auto-navigate to last incomplete step
 						let nextStep = 0;
-						// Step 0: Tujuan
-						if ((m.who || "other") && c.phone && (m.bank || "pasien"))
+						// Step 0: Tujuan (must match the step's own canNext: canOpenConfirm)
+						if (
+							(m.who === "other" ? !!m.whoOther : !!m.who) &&
+							(c.phone || "").trim().length >= 8
+						)
 							nextStep = 1;
-						// Step 1: Detail
+						// Step 1: Detail (must match the step's own canNext)
 						if (
 							nextStep === 1 &&
 							m.patientName &&
 							m.patientAge &&
+							m.patientGender &&
 							m.patientCity
 						)
 							nextStep = 2;
-						// Step 2: Riwayat
-						if (nextStep === 2 && m.inpatient && m.treatment && m.prevCost)
+						// Step 2: Riwayat (must match the step's own canNext: treatment length + hospital)
+						if (
+							nextStep === 2 &&
+							m.inpatient &&
+							(m.inpatient === "ya" ? !!m.hospital : true) &&
+							(m.treatment || "").trim().length >= 55 &&
+							m.prevCost
+						)
 							nextStep = 3;
-						// Step 3: Target
-						if (nextStep === 3 && c.target && Number(c.target) > 0)
+						// Step 3: Target (must match the step's own canNext: usage length >= 55)
+						if (
+							nextStep === 3 &&
+							c.target &&
+							Number(c.target) > 0 &&
+							(m.usage || "").trim().length >= 55
+						)
 							nextStep = 4;
-						// Step 4: Judul
-						if (nextStep === 4 && c.title) nextStep = 5;
-						// Step 5: Cerita
-						if (nextStep === 5 && c.description) nextStep = 6;
+						// Step 4: Judul (must match the step's own canNext: title + slug + cover)
+						if (nextStep === 4 && c.title && c.slug && c.thumbnail)
+							nextStep = 5;
+						// Step 5: Cerita (must match the step's own canNext: textLen >= 30)
+						if (nextStep === 5 && textLen(c.description || "") >= 30)
+							nextStep = 6;
 
 						setStep(nextStep);
 					}
@@ -390,21 +407,41 @@ function BuatGalangDanaPageContent() {
 					} else {
 						// Auto-navigate to last incomplete step
 						let nextStep = 0;
-						// Step 0: Tujuan
-						if ((m.purposeKey || "program") && m.ktpName && c.phone)
-							nextStep = 1;
-						// Step 1: Data Diri
-						if (nextStep === 1 && m.job && m.workplace) nextStep = 2;
-						// Step 2: Penerima
-						if (nextStep === 2 && m.receiverName && m.goal && m.location)
+						// Step 0: Tujuan (must match the step's own canNext: purposeKey only)
+						if (!!m.purposeKey) nextStep = 1;
+						// Step 1: Data Diri (must match the step's own canNext)
+						if (
+							nextStep === 1 &&
+							(m.ktpName || "").trim().length >= 3 &&
+							(c.phone || "").trim().length >= 8 &&
+							m.job &&
+							m.workplace &&
+							m.soc &&
+							m.socHandle
+						)
+							nextStep = 2;
+						// Step 2: Penerima (must match the step's own canNext: length thresholds)
+						if (
+							nextStep === 2 &&
+							(m.receiverName || "").trim().length >= 3 &&
+							(m.goal || "").trim().length >= 10 &&
+							(m.location || "").trim().length >= 8
+						)
 							nextStep = 3;
-						// Step 3: Target
-						if (nextStep === 3 && c.target && Number(c.target) > 0)
+						// Step 3: Target (must match the step's own canNext: usage length >= 55)
+						if (
+							nextStep === 3 &&
+							c.target &&
+							Number(c.target) > 0 &&
+							(m.usageOther || "").trim().length >= 55
+						)
 							nextStep = 4;
-						// Step 4: Judul
-						if (nextStep === 4 && c.title) nextStep = 5;
-						// Step 5: Cerita
-						if (nextStep === 5 && c.description) nextStep = 6;
+						// Step 4: Judul (must match the step's own canNext: title + slug + cover)
+						if (nextStep === 4 && c.title && c.slug && c.thumbnail)
+							nextStep = 5;
+						// Step 5: Cerita (must match the step's own canNext: textLen >= 30)
+						if (nextStep === 5 && textLen(c.description || "") >= 30)
+							nextStep = 6;
 
 						setStep(nextStep);
 					}
@@ -418,10 +455,6 @@ function BuatGalangDanaPageContent() {
 		}
 		load();
 	}, [draftId, sp, router]);
-
-	if (status === "loading") {
-		return <Box sx={{ p: 4, textAlign: "center" }}>Loading session...</Box>;
-	}
 
 	const stepsContainerRef = React.useRef<HTMLDivElement>(null);
 
@@ -1201,6 +1234,10 @@ function BuatGalangDanaPageContent() {
 		: isSakit
 			? "Bantuan Medis & Kesehatan"
 			: (CATEGORY_TITLE[category] ?? "Galang Dana");
+
+	if (status === "loading") {
+		return <Box sx={{ p: 4, textAlign: "center" }}>Loading session...</Box>;
+	}
 
 	return (
 		<Box
