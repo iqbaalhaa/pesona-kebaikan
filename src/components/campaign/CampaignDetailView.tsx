@@ -147,19 +147,18 @@ export default function CampaignDetailView({
 
 		const cleanUrl = `/donasi/${data.slug || data.id}`;
 
-		// Replace URL so the ?donation_success params disappear, then push an extra
-		// same-origin entry. The DOKU payment page is the previous history entry
-		// (cross-origin); without this trap, pressing Back returns to DOKU. The
-		// extra entry absorbs the first Back press and redirects to the campaign
-		// list instead.
-		window.history.replaceState(null, "", cleanUrl);
-		window.history.pushState(null, "", cleanUrl);
-
-		const onPop = () => {
-			window.removeEventListener("popstate", onPop);
-			router.replace("/galang-dana");
-		};
-		window.addEventListener("popstate", onPop);
+		// The payment gateway page is the previous history entry (cross-origin);
+		// pressing Back should skip it rather than return to a dead session. Replace
+		// the current (donation_success) entry with the campaign list, then push the
+		// clean donation URL on top of that — so the visible page is cleanUrl, and a
+		// Back press lands on the campaign list instead of the gateway page.
+		//
+		// This must go through router.replace/push (not raw window.history), because
+		// Next's App Router also listens for popstate and drives its own soft
+		// navigation for any same-origin entry — a manual popstate listener trying to
+		// override that races it and can leave the user stuck bouncing on this page.
+		router.replace("/galang-dana", { scroll: false });
+		router.push(cleanUrl, { scroll: false });
 
 		const checkStatus = async () => {
 			setDonationSuccessOpen(true);
@@ -184,10 +183,6 @@ export default function CampaignDetailView({
 			}
 		};
 		checkStatus();
-
-		return () => {
-			window.removeEventListener("popstate", onPop);
-		};
 	}, [
 		donationSuccessParam,
 		donationStatusParam,
@@ -578,7 +573,20 @@ export default function CampaignDetailView({
 								<Typography variant="h6" sx={{ fontWeight: 700 }}>
 									Pencairan Dana
 								</Typography>
-								<NavigateNextIcon sx={{ color: "#94a3b8" }} />
+								<Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+									<Chip
+										label={withdrawalCount}
+										size="small"
+										sx={{
+											bgcolor: "#e0f2fe",
+											color: "#0284c7",
+											fontWeight: 700,
+											height: 24,
+											borderRadius: 1.5,
+										}}
+									/>
+									<NavigateNextIcon sx={{ color: "#94a3b8" }} />
+								</Box>
 							</Box>
 						)}
 

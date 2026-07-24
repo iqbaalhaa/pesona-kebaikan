@@ -153,11 +153,20 @@ export default function QuickDonate() {
 
 	// Show success state when redirected back from DOKU payment
 	React.useEffect(() => {
-		if (searchParams?.get("donation_success") === "true") {
-			setSuccess(true);
-			setOpen(false);
-		}
-	}, [searchParams]);
+		if (searchParams?.get("donation_success") !== "true") return;
+
+		setSuccess(true);
+		setOpen(false);
+
+		// The payment gateway page is the previous history entry (cross-origin);
+		// pressing Back should skip it rather than return to a dead session. Replace
+		// the current (donation_success) entry with /galang-dana, then push the clean
+		// home URL on top — so the visible page is "/", and a Back press lands on
+		// /galang-dana instead of the gateway page. Must go through router.replace/push
+		// (not raw window.history) so it doesn't race with Next's own popstate handling.
+		router.replace("/galang-dana", { scroll: false });
+		router.push("/", { scroll: false });
+	}, [searchParams, router]);
 
 	const finalAmount = React.useMemo(() => {
 		const clean = custom.replace(/[^\d]/g, "");

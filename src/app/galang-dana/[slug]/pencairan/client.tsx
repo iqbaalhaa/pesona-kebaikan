@@ -160,21 +160,21 @@ export default function WithdrawalList({
 					}}
 				>
 					<CardContent sx={{ p: 3 }}>
-						<Stack
-							direction={{ xs: "column", sm: "row" }}
-							justifyContent="space-between"
-							alignItems={{ xs: "start", sm: "center" }}
-							spacing={2}
-						>
+						<Stack spacing={2}>
 							<Box>
 								<Typography variant="body2" sx={{ opacity: 0.9, mb: 0.5 }}>
 									Saldo Tersedia
 								</Typography>
-								<Typography variant="h4" fontWeight={800}>
+								<Typography
+									variant="h4"
+									fontWeight={800}
+									sx={{ wordBreak: "break-word" }}
+								>
 									{idr(available)}
 								</Typography>
 							</Box>
 							<Button
+								fullWidth
 								variant="contained"
 								color="inherit"
 								startIcon={<AddRoundedIcon />}
@@ -184,6 +184,9 @@ export default function WithdrawalList({
 									bgcolor: "white",
 									"&:hover": { bgcolor: "grey.100" },
 									fontWeight: 700,
+									borderRadius: 999,
+									py: 1,
+									boxShadow: "none",
 								}}
 							>
 								Ajukan Pencairan
@@ -209,6 +212,21 @@ export default function WithdrawalList({
 								bgcolor: "grey.50",
 							}}
 						>
+							<Box
+								sx={{
+									width: 48,
+									height: 48,
+									mx: "auto",
+									mb: 1.5,
+									borderRadius: 999,
+									bgcolor: "rgba(15,118,110,0.08)",
+									color: "primary.main",
+									display: "grid",
+									placeItems: "center",
+								}}
+							>
+								<AccountBalanceWalletRoundedIcon fontSize="small" />
+							</Box>
 							<Typography color="text.secondary">
 								Belum ada riwayat pencairan dana.
 							</Typography>

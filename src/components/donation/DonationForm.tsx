@@ -214,7 +214,14 @@ export default function DonationForm({
 	};
 
 	return (
-		<Container maxWidth="sm" sx={{ py: 2, pb: 10, position: "relative" }}>
+		<Container
+			maxWidth="sm"
+			sx={{
+				py: 2,
+				pb: "calc(9rem + env(safe-area-inset-bottom))",
+				position: "relative",
+			}}
+		>
 			{PAYMENT_PROVIDER === 'midtrans' && (
 				<Script
 					src={

@@ -17,7 +17,19 @@
       "WebFetch(domain:www.doku.com)",
       "Bash(node -e ' *)",
       "PowerShell(cd \"e:\\\\wamp64\\\\www\\\\pesona-kebaikan\"; npx tsc --noEmit --skipLibCheck 2>&1 | Out-String | Select-String \"blog|BlogCard|BlogList\" -AllMatches | ForEach-Object { $_.Line })",
-      "Bash(npx tsc *)"
+      "Bash(npx tsc *)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:3000/api/home)",
+      "Bash(curl -s http://localhost:3000/api/home)",
+      "Bash(netstat -ano)",
+      "Bash(npx tsx *)",
+      "PowerShell(Start-Service -Name \"postgresql-x64-18\")",
+      "PowerShell(Get-Service -Name \"postgresql-x64-18\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" \"http://localhost:3000/galang-dana\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" \"http://localhost:3000/donasi/bantuan-banjir-bandang-cianjur\")",
+      "Bash(xargs grep -lE \"snap|midtrans|router\\\\.\\(push|replace\\)\")",
+      "Bash(curl -s -o /dev/null -w \"detail:%{http_code}\\\\n\" \"http://localhost:3000/donasi/bantuan-banjir-bandang-cianjur\")",
+      "Bash(curl -s -o /dev/null -w \"home:%{http_code}\\\\n\" \"http://localhost:3000/\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" \"http://localhost:3000/donasi/bantuan-banjir-bandang-cianjur/payment\")"
     ]
   }
 }
