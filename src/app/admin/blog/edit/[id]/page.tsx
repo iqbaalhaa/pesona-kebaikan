@@ -59,6 +59,9 @@ export default function EditBlogPage() {
 	const [categories, setCategories] = React.useState<
 		{ id: string; name: string }[]
 	>([]);
+	const [addingCategory, setAddingCategory] = React.useState(false);
+	const [newCategoryName, setNewCategoryName] = React.useState("");
+	const [savingCategory, setSavingCategory] = React.useState(false);
 
 	/* ---------- fetch data ---------- */
 	React.useEffect(() => {
@@ -116,6 +119,37 @@ export default function EditBlogPage() {
 			}
 		} finally {
 			setUploading(false);
+		}
+	};
+
+	/* ---------- kategori baru ---------- */
+	const handleAddCategory = async () => {
+		const name = newCategoryName.trim();
+		if (!name || savingCategory) return;
+
+		setSavingCategory(true);
+		try {
+			const res = await fetch("/api/admin/blog-categories", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ name }),
+			});
+			const data = await res.json();
+			if (!res.ok) throw new Error(data.error || "Gagal membuat kategori");
+
+			setCategories((prev) =>
+				prev.some((c) => c.id === data.id)
+					? prev
+					: [...prev, data].sort((a, b) => a.name.localeCompare(b.name)),
+			);
+			setForm((f) => ({ ...f, categoryId: data.id }));
+			setNewCategoryName("");
+			setAddingCategory(false);
+			setToast({ open: true, msg: `Kategori "${data.name}" siap dipakai`, severity: "success" });
+		} catch (e: any) {
+			setToast({ open: true, msg: e.message, severity: "error" });
+		} finally {
+			setSavingCategory(false);
 		}
 	};
 
@@ -360,6 +394,70 @@ export default function EditBlogPage() {
 								))}
 							</Stack>
 						</RadioGroup>
+
+						{addingCategory ? (
+							<Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 2 }}>
+								<TextField
+									size="small"
+									autoFocus
+									placeholder="Nama kategori baru"
+									value={newCategoryName}
+									onChange={(e) => setNewCategoryName(e.target.value)}
+									onKeyDown={(e) => {
+										if (e.key === "Enter") {
+											e.preventDefault();
+											handleAddCategory();
+										}
+										if (e.key === "Escape") {
+											setAddingCategory(false);
+											setNewCategoryName("");
+										}
+									}}
+									sx={{ "& .MuiOutlinedInput-root": { borderRadius: 999 }, width: 200 }}
+								/>
+								<Button
+									size="small"
+									variant="contained"
+									onClick={handleAddCategory}
+									disabled={!newCategoryName.trim() || savingCategory}
+									sx={{ borderRadius: 999, textTransform: "none", fontWeight: 800, boxShadow: "none" }}
+								>
+									{savingCategory ? <CircularProgress size={16} color="inherit" /> : "Tambah"}
+								</Button>
+								<Button
+									size="small"
+									onClick={() => {
+										setAddingCategory(false);
+										setNewCategoryName("");
+									}}
+									sx={{ textTransform: "none", color: "text.secondary" }}
+								>
+									Batal
+								</Button>
+							</Stack>
+						) : (
+							<Box
+								onClick={() => setAddingCategory(true)}
+								sx={{
+									mt: 2,
+									display: "inline-flex",
+									alignItems: "center",
+									gap: 0.75,
+									px: 2,
+									py: 1,
+									borderRadius: 999,
+									border: "1px dashed rgba(15,23,42,.25)",
+									color: "text.secondary",
+									cursor: "pointer",
+									userSelect: "none",
+									"&:hover": { borderColor: "primary.main", color: "primary.main" },
+								}}
+							>
+								<Typography variant="body2" fontWeight={700}>
+									+ Kategori Baru
+								</Typography>
+							</Box>
+						)}
 					</Paper>
 
 					{/* 3. CONTENT */}

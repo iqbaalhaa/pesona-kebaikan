@@ -92,6 +92,8 @@ export default function LoginPage() {
 
 			if (result?.role === "ADMIN") {
 				router.push("/admin");
+			} else if (result?.role === "BLOGGER") {
+				router.push("/admin/blog");
 			} else {
 				router.push("/profil");
 			}

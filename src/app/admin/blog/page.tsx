@@ -333,13 +333,69 @@ export default function AdminBlogPage() {
 
 			{/* ===== CONTENT ===== */}
 			{loading ? (
-				<Stack alignItems="center" mt={6}>
+				<Stack alignItems="center" mt={6} spacing={1.5}>
 					<CircularProgress />
+					<Typography sx={{ fontSize: 13, color: "text.secondary" }}>
+						Memuat artikel…
+					</Typography>
 				</Stack>
 			) : items.length === 0 ? (
-				<Stack alignItems="center" mt={6}>
-					<Typography color="text.secondary">Belum ada blog 😴</Typography>
-				</Stack>
+				<Paper
+					elevation={0}
+					sx={{
+						mt: 2,
+						py: 6,
+						px: 3,
+						borderRadius: 3,
+						border: "1px dashed rgba(15,23,42,.15)",
+						textAlign: "center",
+					}}
+				>
+					<Stack alignItems="center" spacing={1.5}>
+						<Box
+							sx={{
+								width: 56,
+								height: 56,
+								borderRadius: "50%",
+								display: "grid",
+								placeItems: "center",
+								bgcolor: "rgba(11,169,118,.10)",
+								color: "#0ba976",
+							}}
+						>
+							<AddRoundedIcon fontSize="medium" />
+						</Box>
+						<Typography sx={{ fontWeight: 800, fontSize: 15 }}>
+							{q || categoryId !== "all"
+								? "Tidak ada artikel yang cocok"
+								: "Belum ada artikel"}
+						</Typography>
+						<Typography sx={{ fontSize: 13, color: "text.secondary", maxWidth: 340 }}>
+							{q || categoryId !== "all"
+								? "Coba ubah kata kunci pencarian atau kategori filter."
+								: "Mulai bagikan cerita, edukasi, atau kabar terbaru untuk pembaca dengan menulis artikel pertama."}
+						</Typography>
+						{!q && categoryId === "all" && (
+							<Button
+								component={Link}
+								href="/admin/blog/create"
+								variant="contained"
+								startIcon={<AddRoundedIcon />}
+								sx={{
+									mt: 1,
+									borderRadius: 999,
+									fontWeight: 900,
+									textTransform: "none",
+									px: 2.5,
+									bgcolor: "#0ba976",
+									"&:hover": { bgcolor: "#089166" },
+								}}
+							>
+								Tulis Artikel Pertama
+							</Button>
+						)}
+					</Stack>
+				</Paper>
 			) : (
 				<Box
 					sx={{
