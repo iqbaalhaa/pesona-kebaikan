@@ -21,6 +21,11 @@ export async function getUsers(
 	page: number = 1,
 	limit: number = 10,
 ) {
+	const session = await auth();
+	if (session?.user?.role !== "ADMIN") {
+		throw new Error("Unauthorized");
+	}
+
 	const where: Record<string, unknown> = {};
 
 	if (query) {
@@ -113,6 +118,11 @@ export async function getAllUserIds(
 	role?: string,
 	status?: string,
 ) {
+	const session = await auth();
+	if (session?.user?.role !== "ADMIN") {
+		return { success: false, error: "Unauthorized" };
+	}
+
 	const where: Record<string, unknown> = {};
 
 	if (query) {
@@ -169,6 +179,11 @@ type CreateUserInput = {
 };
 
 export async function createUser(data: CreateUserInput) {
+	const session = await auth();
+	if (session?.user?.role !== "ADMIN") {
+		return { success: false, error: "Unauthorized" };
+	}
+
 	try {
 		const hashedPassword = await bcrypt.hash(data.password, 10);
 		const isAdmin = data.role === "ADMIN";
@@ -207,6 +222,11 @@ type UpdateUserInput = {
 };
 
 export async function updateUser(id: string, data: UpdateUserInput) {
+	const session = await auth();
+	if (session?.user?.role !== "ADMIN") {
+		return { success: false, error: "Unauthorized" };
+	}
+
 	try {
 		const normalizedPhone = normalizePhone(data.phone);
 
@@ -245,6 +265,11 @@ export async function updateUser(id: string, data: UpdateUserInput) {
 }
 
 export async function resetPassword(userId: string, newPassword: string) {
+	const session = await auth();
+	if (session?.user?.role !== "ADMIN") {
+		return { success: false, error: "Unauthorized" };
+	}
+
 	try {
 		const hashedPassword = await bcrypt.hash(newPassword, 10);
 
@@ -302,6 +327,11 @@ export async function updateCurrentUserPhone(phone: string) {
 }
 
 export async function deleteUser(id: string) {
+	const session = await auth();
+	if (session?.user?.role !== "ADMIN") {
+		return { success: false, error: "Unauthorized" };
+	}
+
 	try {
 		await prisma.user.delete({
 			where: { id },
@@ -316,6 +346,11 @@ export async function deleteUser(id: string) {
 }
 
 export async function verifyUser(id: string) {
+	const session = await auth();
+	if (session?.user?.role !== "ADMIN") {
+		return { success: false, error: "Unauthorized" };
+	}
+
 	try {
 		// 1. Check if user exists and email is verified
 		const user = await prisma.user.findUnique({
@@ -358,6 +393,11 @@ export async function verifyUser(id: string) {
 }
 
 export async function unverifyUser(id: string) {
+	const session = await auth();
+	if (session?.user?.role !== "ADMIN") {
+		return { success: false, error: "Unauthorized" };
+	}
+
 	try {
 		await prisma.user.update({
 			where: { id },
@@ -376,6 +416,11 @@ export async function unverifyUser(id: string) {
 }
 
 export async function rejectUserVerification(id: string) {
+	const session = await auth();
+	if (session?.user?.role !== "ADMIN") {
+		return { success: false, error: "Unauthorized" };
+	}
+
 	try {
 		// 1. Delete pending verification requests
 		await prisma.verificationRequest.deleteMany({
@@ -409,6 +454,11 @@ export async function rejectUserVerification(id: string) {
 }
 
 export async function bulkUnverifyUsers(ids: string[]) {
+	const session = await auth();
+	if (session?.user?.role !== "ADMIN") {
+		return { success: false, error: "Unauthorized" };
+	}
+
 	try {
 		const result = await prisma.user.updateMany({
 			where: {
@@ -429,6 +479,11 @@ export async function bulkUnverifyUsers(ids: string[]) {
 }
 
 export async function bulkVerifyUsers(ids: string[]) {
+	const session = await auth();
+	if (session?.user?.role !== "ADMIN") {
+		return { success: false, error: "Unauthorized" };
+	}
+
 	try {
 		// Determine eligible users first
 		const eligibleUsers = await prisma.user.findMany({
@@ -474,6 +529,16 @@ export async function bulkVerifyUsers(ids: string[]) {
 }
 
 export async function bulkDeleteUsers(ids: string[]) {
+	const session = await auth();
+	if (session?.user?.role !== "ADMIN") {
+		return {
+			success: false,
+			count: 0,
+			failedCount: ids.length,
+			error: "Unauthorized",
+		};
+	}
+
 	let successCount = 0;
 	let failedCount = 0;
 
@@ -518,6 +583,16 @@ export async function bulkDeleteUsers(ids: string[]) {
 }
 
 export async function getUserStats() {
+	const session = await auth();
+	if (session?.user?.role !== "ADMIN") {
+		return {
+			totalUsers: 0,
+			activeUsers: 0,
+			newUsersLast30Days: 0,
+			growthRate: 0,
+		};
+	}
+
 	try {
 		const now = new Date();
 		const thirtyDaysAgo = subDays(now, 30);

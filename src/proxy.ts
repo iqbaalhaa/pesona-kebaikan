@@ -37,6 +37,13 @@ export default auth((req) => {
 		if (!isLoggedIn) {
 			return buildLoginRedirect();
 		}
+		// BLOGGER only manages blog content — keep them out of every other admin section.
+		if (userRole === "BLOGGER") {
+			if (!nextUrl.pathname.startsWith("/admin/blog")) {
+				return NextResponse.redirect(new URL("/admin/blog", nextUrl));
+			}
+			return NextResponse.next();
+		}
 		if (userRole !== "ADMIN") {
 			return NextResponse.redirect(new URL("/profil", nextUrl));
 		}

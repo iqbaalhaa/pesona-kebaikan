@@ -41,6 +41,7 @@ import TrendingUpRoundedIcon from "@mui/icons-material/TrendingUpRounded";
 import TrendingDownRoundedIcon from "@mui/icons-material/TrendingDownRounded";
 import PersonOutlineRoundedIcon from "@mui/icons-material/PersonOutlineRounded";
 import AdminPanelSettingsRoundedIcon from "@mui/icons-material/AdminPanelSettingsRounded";
+import ArticleRoundedIcon from "@mui/icons-material/ArticleRounded";
 import {
 	ChangeEvent,
 	FormEvent,
@@ -454,6 +455,7 @@ export default function UsersClient({
 										.charAt(0)
 										.toUpperCase();
 									const isAdminRole = user.role === "ADMIN";
+									const isBloggerRole = user.role === "BLOGGER";
 									return (
 										<TableRow
 											key={user.id}
@@ -471,7 +473,9 @@ export default function UsersClient({
 															fontWeight: 700,
 															bgcolor: isAdminRole
 																? "warning.light"
-																: "primary.light",
+																: isBloggerRole
+																	? "info.light"
+																	: "primary.light",
 														}}
 													>
 														{initial}
@@ -492,11 +496,19 @@ export default function UsersClient({
 													icon={
 														isAdminRole ? (
 															<AdminPanelSettingsRoundedIcon fontSize="small" />
+														) : isBloggerRole ? (
+															<ArticleRoundedIcon fontSize="small" />
 														) : undefined
 													}
 													label={user.role}
-													color={isAdminRole ? "warning" : "default"}
-													variant={isAdminRole ? "filled" : "outlined"}
+													color={
+														isAdminRole
+															? "warning"
+															: isBloggerRole
+																? "info"
+																: "default"
+													}
+													variant={isAdminRole || isBloggerRole ? "filled" : "outlined"}
 													sx={{ fontWeight: 700, fontSize: 11 }}
 												/>
 											</TableCell>
@@ -613,6 +625,7 @@ export default function UsersClient({
 							fullWidth
 						>
 							<SelectMenuItem value="USER">USER</SelectMenuItem>
+							<SelectMenuItem value="BLOGGER">BLOGGER</SelectMenuItem>
 							<SelectMenuItem value="ADMIN">ADMIN</SelectMenuItem>
 						</StyledTextField>
 					</DialogContent>
@@ -665,6 +678,7 @@ export default function UsersClient({
 							fullWidth
 						>
 							<SelectMenuItem value="USER">USER</SelectMenuItem>
+							<SelectMenuItem value="BLOGGER">BLOGGER</SelectMenuItem>
 							<SelectMenuItem value="ADMIN">ADMIN</SelectMenuItem>
 						</StyledTextField>
 					</DialogContent>

@@ -4,6 +4,7 @@ import React from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
+import { useSession } from "next-auth/react";
 import Drawer from "@mui/material/Drawer";
 
 // Icons
@@ -101,6 +102,11 @@ export default function AdminSidebar({
 	onClose: () => void;
 }) {
 	const pathname = usePathname();
+	const { data: session } = useSession();
+	const role = session?.user?.role;
+	// BLOGGER only manages blog content — hide every other admin section.
+	const visibleMenus =
+		role === "BLOGGER" ? menus.filter((section) => section.title === "Konten") : menus;
 
 	const [reviewCount, setReviewCount] = React.useState<number | null>(null);
 	const [activeCampaignCount, setActiveCampaignCount] = React.useState<
@@ -171,7 +177,7 @@ export default function AdminSidebar({
 			<div className="flex-1 overflow-y-auto px-4 pb-4">
 				<div className="mb-2 h-px bg-slate-200/70" />
 
-				{menus.map((section) => (
+				{visibleMenus.map((section) => (
 					<div key={section.title} className="mb-3 last:mb-0">
 						<div className="px-1 text-[11px] font-bold uppercase tracking-wider text-slate-500">
 							{section.title}

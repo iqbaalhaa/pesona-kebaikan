@@ -34,7 +34,14 @@
       "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" \"http://localhost:3000/galang-dana/buat\")",
       "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" \"http://localhost:3000/admin/users\")",
       "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" \"http://localhost:3000/galang-dana/buat?draft=cmrysg6hq0003wd9s473a31pl&type=sakit\")",
-      "Bash(npx eslint *)"
+      "Bash(npx eslint *)",
+      "Bash(ls -la \"/c/Users/HP/.claude/projects/e--ProjectDepati-pesona-kebaikan/memory/\")",
+      "Read(//c/Users/HP/.claude/projects/e--ProjectDepati-pesona-kebaikan/memory//**)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" --max-time 25 \"http://localhost:3000/admin\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" --max-time 90 \"http://localhost:3000/admin\")",
+      "Bash(tail -n 80 /tmp/devserver.log 2>&1)",
+      "Read(//tmp/**)",
+      "Bash(tail -n 30 /tmp/devserver.log 2>&1)"
     ]
   }
 }
