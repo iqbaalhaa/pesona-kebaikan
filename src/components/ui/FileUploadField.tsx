@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Camera, X, Loader2, CheckCircle, AlertCircle, RotateCcw, RotateCw, Crop as CropIcon } from "lucide-react";
+import { Camera, X, Loader2, CheckCircle, AlertCircle, RotateCcw, RotateCw, Crop as CropIcon, Eye, FileText, ExternalLink } from "lucide-react";
 import Cropper, { type Area } from "react-easy-crop";
 import { uploadFile } from "@/actions/upload";
 
@@ -11,6 +11,10 @@ import getCroppedImg from "@/lib/cropImage";
 
 const MAX_FILE_MB = 3;
 const MAX_FILE_BYTES = MAX_FILE_MB * 1024 * 1024;
+
+function looksLikeImageUrl(url: string) {
+	return /\.(png|jpe?g|gif|webp|avif|bmp|svg)(\?.*)?$/i.test(url);
+}
 
 interface FileUploadFieldProps {
 	label: string;
@@ -52,6 +56,8 @@ export default function FileUploadField({
 	const [state, setState] = React.useState<UploadState>(value ? "success" : "idle");
 	const [error, setError] = React.useState("");
 	const [previewUrl, setPreviewUrl] = React.useState(value || "");
+	const [isImageFile, setIsImageFile] = React.useState(() => (value ? looksLikeImageUrl(value) : true));
+	const [lightboxOpen, setLightboxOpen] = React.useState(false);
 	const [rotating, setRotating] = React.useState(false);
 	const inputRef = React.useRef<HTMLInputElement>(null);
 	// Last image File actually uploaded — kept so manual rotate can re-process it.
@@ -102,6 +108,7 @@ export default function FileUploadField({
 		if (value) {
 			setPreviewUrl(value);
 			setState("success");
+			setIsImageFile(looksLikeImageUrl(value));
 		}
 	}, [value]);
 
@@ -131,6 +138,7 @@ export default function FileUploadField({
 
 	const handleFile = async (file: File) => {
 		setError("");
+		setIsImageFile(file.type.startsWith("image/"));
 
 		if (file.size > MAX_FILE_BYTES) {
 			setError(`Ukuran file maksimal ${MAX_FILE_MB}MB (file: ${(file.size / 1024 / 1024).toFixed(1)}MB)`);
@@ -172,6 +180,7 @@ export default function FileUploadField({
 		setState("idle");
 		setPreviewUrl("");
 		setError("");
+		setLightboxOpen(false);
 		lastFileRef.current = null;
 		onClear?.();
 		if (inputRef.current) inputRef.current.value = "";
@@ -185,14 +194,58 @@ export default function FileUploadField({
 				<p className="mb-2 text-xs text-foreground/60">{note}</p>
 			)}
 
-			{/* Preview */}
-			{previewUrl && preview && (
+			{/* Compact thumbnail preview (documents / non-cover uploads) */}
+			{previewUrl && preview && !aspectRatio && (
+				<div className="relative mb-2 flex items-center gap-3 rounded-xl border border-foreground/10 bg-white p-2 pr-3">
+					<button
+						type="button"
+						onClick={() => setLightboxOpen(true)}
+						className="group relative h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-foreground/5"
+						title="Lihat lebih besar"
+					>
+						{isImageFile ? (
+							<img src={previewUrl} alt="Preview" className="h-full w-full object-cover" />
+						) : (
+							<div className="grid h-full w-full place-items-center text-foreground/40">
+								<FileText size={22} />
+							</div>
+						)}
+						<span className="absolute inset-0 grid place-items-center bg-black/0 text-white opacity-0 transition-opacity group-hover:bg-black/40 group-hover:opacity-100">
+							<Eye size={18} />
+						</span>
+					</button>
+					<div className="min-w-0 flex-1">
+						<div className="flex items-center gap-1.5 text-sm font-medium text-green-700">
+							<CheckCircle size={15} className="shrink-0" />
+							<span>File berhasil diupload</span>
+						</div>
+						<button
+							type="button"
+							onClick={() => setLightboxOpen(true)}
+							className="mt-0.5 inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
+						>
+							<Eye size={13} /> Lihat lebih besar
+						</button>
+					</div>
+					<button
+						type="button"
+						onClick={handleClear}
+						title="Hapus file"
+						className="grid h-7 w-7 shrink-0 place-items-center rounded-full text-foreground/40 hover:bg-foreground/5 hover:text-foreground/70"
+					>
+						<X size={16} />
+					</button>
+				</div>
+			)}
+
+			{/* Large preview (cover images with a fixed crop ratio) */}
+			{previewUrl && preview && aspectRatio && (
 				<div className="relative mb-2 overflow-hidden rounded-xl">
 					<img
 						src={previewUrl}
 						alt="Preview"
-						className={aspectRatio ? "w-full object-cover" : "h-[140px] w-full object-cover"}
-						style={aspectRatio ? { aspectRatio } : undefined}
+						className="w-full object-cover"
+						style={{ aspectRatio }}
 					/>
 					<button
 						type="button"
@@ -368,6 +421,49 @@ export default function FileUploadField({
 							</button>
 						</div>
 					</div>
+				</div>
+			)}
+
+			{/* Lightbox: view uploaded file at full size */}
+			{lightboxOpen && previewUrl && (
+				<div
+					className="fixed inset-0 z-[1400] flex items-center justify-center bg-black/80 p-4"
+					onClick={() => setLightboxOpen(false)}
+				>
+					<button
+						type="button"
+						onClick={() => setLightboxOpen(false)}
+						className="absolute right-4 top-4 grid h-9 w-9 place-items-center rounded-full bg-white/10 text-white hover:bg-white/20"
+					>
+						<X size={20} />
+					</button>
+					{isImageFile ? (
+						<img
+							src={previewUrl}
+							alt="Preview besar"
+							className="max-h-full max-w-full rounded-lg object-contain"
+							onClick={(e) => e.stopPropagation()}
+						/>
+					) : (
+						<div
+							className="flex w-full max-w-sm flex-col items-center gap-3 rounded-2xl bg-white p-6 text-center"
+							onClick={(e) => e.stopPropagation()}
+						>
+							<FileText size={40} className="text-foreground/40" />
+							<p className="text-sm text-foreground/70">
+								Berkas PDF tidak dapat ditampilkan langsung di sini.
+							</p>
+							<a
+								href={previewUrl}
+								target="_blank"
+								rel="noopener noreferrer"
+								className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary/90"
+							>
+								<ExternalLink size={16} />
+								Buka di tab baru
+							</a>
+						</div>
+					)}
 				</div>
 			)}
 		</div>

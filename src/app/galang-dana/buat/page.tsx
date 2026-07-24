@@ -841,9 +841,7 @@ function BuatGalangDanaPageContent() {
 					!!inpatient &&
 					(inpatient === "ya" ? !!hospital : true) &&
 					treatment.trim().length >= 55 &&
-					!!prevCost &&
-					!!medicalResumeUrl &&
-					!!medicalExamUrl
+					!!prevCost
 				);
 			if (stepKey === "target")
 				return (
@@ -905,8 +903,6 @@ function BuatGalangDanaPageContent() {
 		hospital,
 		treatment,
 		prevCost,
-		medicalResumeUrl,
-		medicalExamUrl,
 		target,
 		duration,
 		customStart,
@@ -1553,14 +1549,15 @@ function BuatGalangDanaPageContent() {
 								<Box sx={{ mt: 2 }}>
 									<Typography sx={{ fontWeight: 600, fontSize: 14, mb: 0.75 }}>
 										Unggah dokumen medis pendukung{" "}
-										<span style={{ color: "red" }}>*</span>
+										<span style={{ fontWeight: 400, color: "#94a3b8" }}>(Opsional)</span>
 									</Typography>
 									<Typography
 										sx={{ fontSize: 12.5, color: "text.secondary", mb: 1 }}
 									>
 										Surat keterangan medis dengan diagnosis/penyakit dan hasil
 										pemeriksaan (lab, rontgen, dsb.) sangat membantu proses
-										verifikasi. (Maksimal ukuran file 3MB)
+										verifikasi. Jika belum ada hasil pemeriksaan, boleh dilewati
+										dulu. (Maksimal ukuran file 3MB)
 									</Typography>
 
 									<div className="flex flex-col gap-2">
@@ -1568,7 +1565,6 @@ function BuatGalangDanaPageContent() {
 											label="Surat keterangan medis / diagnosis"
 											accept="image/*,.pdf"
 											value={medicalResumeUrl}
-											preview={false}
 											onUploaded={(url) => {
 												setMedicalResumeUrl(url);
 												setMedicalResumeFile(null);
@@ -1582,7 +1578,6 @@ function BuatGalangDanaPageContent() {
 											label="Hasil pemeriksaan (lab, rontgen, dsb.)"
 											accept="image/*,.pdf"
 											value={medicalExamUrl}
-											preview={false}
 											onUploaded={(url) => {
 												setMedicalExamUrl(url);
 												setMedicalExamFile(null);

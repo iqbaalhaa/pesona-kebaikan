@@ -29,7 +29,10 @@
       "Bash(xargs grep -lE \"snap|midtrans|router\\\\.\\(push|replace\\)\")",
       "Bash(curl -s -o /dev/null -w \"detail:%{http_code}\\\\n\" \"http://localhost:3000/donasi/bantuan-banjir-bandang-cianjur\")",
       "Bash(curl -s -o /dev/null -w \"home:%{http_code}\\\\n\" \"http://localhost:3000/\")",
-      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" \"http://localhost:3000/donasi/bantuan-banjir-bandang-cianjur/payment\")"
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" \"http://localhost:3000/donasi/bantuan-banjir-bandang-cianjur/payment\")",
+      "Bash(xxd)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" \"http://localhost:3000/galang-dana/buat\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" \"http://localhost:3000/admin/users\")"
     ]
   }
 }

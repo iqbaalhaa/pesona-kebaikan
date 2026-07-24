@@ -75,6 +75,7 @@ export default async function AdminUserDetailPage({
 		campaigns: user.campaigns.map((c) => ({
 			...c,
 			target: c.target.toString(),
+			foundationFee: c.foundationFee.toString(),
 			start: c.start.toISOString(),
 			end: c.end?.toISOString() || null,
 			createdAt: c.createdAt.toISOString(),
