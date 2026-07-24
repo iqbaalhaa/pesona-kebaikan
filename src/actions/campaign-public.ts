@@ -64,6 +64,7 @@ function mapCampaignsToTypes(campaigns: CampaignWithRelations[]) {
 				: undefined,
 			slug: c.slug || c.id,
 			isEmergency: c.isEmergency,
+			isUnlimited: !c.end,
 		};
 	});
 }
@@ -120,11 +121,10 @@ export async function getUrgentCampaigns(limit: number = 10) {
 		const campaigns = await prisma.campaign.findMany({
 			where: {
 				status: "ACTIVE",
-				end: { gte: now },
 				slug: { not: QUICK_DONATION_SLUG },
-				OR: [
-					{ isEmergency: true },
-					{ end: { lte: in14Days } },
+				AND: [
+					{ OR: [{ end: null }, { end: { gte: now } }] },
+					{ OR: [{ isEmergency: true }, { end: { lte: in14Days } }] },
 				],
 			},
 			orderBy: [{ isEmergency: "desc" }, { end: "asc" }],
@@ -152,7 +152,7 @@ export async function getPopularCampaigns(limit: number = 10) {
 		const campaigns = await prisma.campaign.findMany({
 			where: {
 				status: "ACTIVE",
-				end: { gte: new Date() },
+				OR: [{ end: null }, { end: { gte: new Date() } }],
 				slug: { not: QUICK_DONATION_SLUG },
 			},
 			orderBy: { createdAt: "desc" },
@@ -192,7 +192,7 @@ export async function getFeaturedCampaigns(limit: number = 10) {
 		const campaigns = await prisma.campaign.findMany({
 			where: {
 				status: "ACTIVE",
-				end: { gte: new Date() },
+				OR: [{ end: null }, { end: { gte: new Date() } }],
 				slug: { not: QUICK_DONATION_SLUG },
 			},
 			orderBy: { createdAt: "desc" },
@@ -252,7 +252,7 @@ export async function getAllActiveCampaigns(limit: number = 50) {
 		const campaigns = await prisma.campaign.findMany({
 			where: {
 				status: "ACTIVE",
-				end: { gte: new Date() },
+				OR: [{ end: null }, { end: { gte: new Date() } }],
 				slug: { not: QUICK_DONATION_SLUG },
 			},
 			orderBy: { createdAt: "desc" },

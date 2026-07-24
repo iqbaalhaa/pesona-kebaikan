@@ -351,6 +351,7 @@ export default function AdminCampaignDetailPage(props: {
 					restartInfo:
 						((c as any).metadata && (c as any).metadata.restartInfo) || null,
 					daysLeft: daysLeft > 0 ? daysLeft : 0,
+					isUnlimited: !c.end,
 					foundationFee: (c as any).foundationFee ?? 0,
 					shortInvite: (type === "sakit" ? campaignMeta.cta : campaignMeta.ctaOther) || "",
 					story: c.description,
@@ -1252,7 +1253,12 @@ export default function AdminCampaignDetailPage(props: {
 							sx={{ mt: 1, height: 6, borderRadius: 4, bgcolor: alpha(theme.palette.primary.main, 0.1), "& .MuiLinearProgress-bar": { borderRadius: 4 } }}
 						/>
 						<Typography sx={{ mt: 0.75, fontSize: 12, color: "text.secondary" }}>
-							{data.donors} donatur · {data.category} · {data.daysLeft > 0 ? `${data.daysLeft} hari lagi` : "Berakhir"}
+							{data.donors} donatur · {data.category} ·{" "}
+							{data.isUnlimited
+								? "Tidak terbatas"
+								: data.daysLeft > 0
+									? `${data.daysLeft} hari lagi`
+									: "Berakhir"}
 						</Typography>
 					</Paper>
 
@@ -1530,7 +1536,10 @@ export default function AdminCampaignDetailPage(props: {
 								<InfoRow k="Tipe" v={typeMeta.label} />
 								<InfoRow k="Kategori" v={data.category} />
 								<InfoRow k="Status" v={statusMeta.label} />
-								{data.status === "active" && data.daysLeft > 0 && (
+								{data.status === "active" && data.isUnlimited && (
+									<InfoRow k="Sisa Hari" v="Tidak terbatas (hentikan manual)" />
+								)}
+								{data.status === "active" && !data.isUnlimited && data.daysLeft > 0 && (
 									<InfoRow
 										k="Sisa Hari"
 										v={

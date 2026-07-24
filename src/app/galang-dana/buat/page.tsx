@@ -482,7 +482,7 @@ function BuatGalangDanaPageContent() {
 
 	const [target, setTarget] = React.useState("");
 	const [duration, setDuration] = React.useState<
-		"30" | "60" | "120" | "custom" | ""
+		"30" | "60" | "120" | "custom" | "unlimited" | ""
 	>("");
 	const [customStart, setCustomStart] = React.useState("");
 	const [customEnd, setCustomEnd] = React.useState("");
@@ -718,7 +718,7 @@ function BuatGalangDanaPageContent() {
 
 	const [targetOther, setTargetOther] = React.useState("");
 	const [durationOther, setDurationOther] = React.useState<
-		"30" | "60" | "120" | "custom" | ""
+		"30" | "60" | "120" | "custom" | "unlimited" | ""
 	>("");
 	const [customStartOther, setCustomStartOther] = React.useState("");
 	const [customEndOther, setCustomEndOther] = React.useState("");
@@ -1622,6 +1622,7 @@ function BuatGalangDanaPageContent() {
 												| "60"
 												| "120"
 												| "custom"
+												| "unlimited"
 												| "";
 											setDuration(val);
 											if (val === "custom" && !customStart) {
@@ -1635,6 +1636,11 @@ function BuatGalangDanaPageContent() {
 												{ v: "60", t: "60 hari" },
 												{ v: "120", t: "120 hari" },
 												{ v: "custom", t: "pilih tanggal" },
+												{
+													v: "unlimited",
+													t: "Tidak terbatas",
+													d: "Berlangsung terus sampai admin menghentikan",
+												},
 											].map((x) => (
 												<Paper
 													key={x.v}
@@ -1653,6 +1659,19 @@ function BuatGalangDanaPageContent() {
 															},
 														}}
 													/>
+													{x.d && (
+														<Typography
+															sx={{
+																px: 1.5,
+																pb: 1,
+																mt: -0.5,
+																fontSize: 11.5,
+																color: "text.secondary",
+															}}
+														>
+															{x.d}
+														</Typography>
+													)}
 													{x.v === "custom" && duration === "custom" && (
 														<Box sx={{ px: 1.5, pb: 1.5, pt: 0 }}>
 															<DateRangePickerInput
@@ -2146,6 +2165,7 @@ function BuatGalangDanaPageContent() {
 												| "60"
 												| "120"
 												| "custom"
+												| "unlimited"
 												| "";
 											setDurationOther(val);
 											if (val === "custom" && !customStartOther) {
@@ -2159,6 +2179,11 @@ function BuatGalangDanaPageContent() {
 												{ v: "60", t: "60 hari" },
 												{ v: "120", t: "120 hari" },
 												{ v: "custom", t: "pilih tanggal" },
+												{
+													v: "unlimited",
+													t: "Tidak terbatas",
+													d: "Berlangsung terus sampai admin menghentikan",
+												},
 											].map((x) => (
 												<Paper
 													key={x.v}
@@ -2177,6 +2202,19 @@ function BuatGalangDanaPageContent() {
 															},
 														}}
 													/>
+													{x.d && (
+														<Typography
+															sx={{
+																px: 1.5,
+																pb: 1,
+																mt: -0.5,
+																fontSize: 11.5,
+																color: "text.secondary",
+															}}
+														>
+															{x.d}
+														</Typography>
+													)}
 													{x.v === "custom" && durationOther === "custom" && (
 														<Box sx={{ px: 1.5, pb: 1.5, pt: 0 }}>
 															<DateRangePickerInput

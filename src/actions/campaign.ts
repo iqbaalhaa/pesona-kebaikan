@@ -189,11 +189,14 @@ export async function createCampaign(formData: FormData) {
 		const target = parseFloat(targetStr.replace(/[^\d]/g, "")) || 0;
 
 		const start = new Date();
-		const end = new Date();
-		if (duration && duration !== "custom") {
-			end.setDate(end.getDate() + parseInt(duration));
-		} else {
-			end.setDate(end.getDate() + 30);
+		let end: Date | null = null;
+		if (duration !== "unlimited") {
+			end = new Date();
+			if (duration && duration !== "custom") {
+				end.setDate(end.getDate() + parseInt(duration));
+			} else {
+				end.setDate(end.getDate() + 30);
+			}
 		}
 
 		const campaign = await prisma.campaign.create({
@@ -278,9 +281,10 @@ export async function getCampaigns(
 		where.NOT = {
 			slug: QUICK_DONATION_SLUG,
 		};
-		// Only apply end-date filter for public listings, not for owner's own campaigns
+		// Only apply end-date filter for public listings, not for owner's own campaigns.
+		// A null end means an unlimited-duration campaign — always keep those.
 		if (!userId) {
-			where.end = { gte: new Date() };
+			where.AND = [{ OR: [{ end: null }, { end: { gte: new Date() } }] }];
 		}
 	}
 
@@ -460,6 +464,7 @@ export async function getCampaigns(
 				verifiedAt: c.verifiedAt ? new Date(c.verifiedAt).toISOString() : null,
 				verifiedAs: (c.createdBy as any).verifiedAs || null,
 				isEmergency: c.isEmergency,
+				isUnlimited: !c.end,
 				thumbnail,
 				metadata: c.metadata,
 				description: c.story,

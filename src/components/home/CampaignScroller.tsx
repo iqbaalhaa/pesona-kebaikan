@@ -28,6 +28,7 @@ function ScrollCard({ item, priority = false }: { item: Campaign; priority?: boo
 	const router = useRouter();
 	const [imgSrc, setImgSrc] = React.useState(item.cover || "/defaultimg.webp");
 	const isQuickDonate = item.slug === "donasi-cepat";
+	const isUnlimited = isQuickDonate || item.isUnlimited;
 	const pct = item.target ? Math.max(0, Math.min(100, Math.round((item.collected / item.target) * 100))) : 0;
 
 	return (
@@ -59,7 +60,7 @@ function ScrollCard({ item, priority = false }: { item: Campaign; priority?: boo
 					</span>
 				)}
 				<span className="absolute bottom-2 left-2 rounded-full bg-black/60 px-2 py-0.5 text-[10px] font-bold text-white backdrop-blur-md">
-					{isQuickDonate ? "∞" : `${item.daysLeft} hari lagi`}
+					{isUnlimited ? "∞" : `${item.daysLeft} hari lagi`}
 				</span>
 			</div>
 

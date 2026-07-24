@@ -60,14 +60,19 @@ export async function updateCampaignStatus(
 		// When approving PENDING → ACTIVE, reset start/end from today using original duration
 		if (status === "ACTIVE" && prev?.status === "PENDING" && prev.slug !== QUICK_DONATION_SLUG) {
 			const now = new Date();
-			const dayMs = 24 * 60 * 60 * 1000;
-			let durationDays = 30;
-			if (prev.start && prev.end) {
-				const diff = new Date(prev.end).getTime() - new Date(prev.start).getTime();
-				durationDays = Math.max(1, Math.ceil(diff / dayMs));
-			}
 			updateData.start = now;
-			updateData.end = new Date(now.getTime() + durationDays * dayMs);
+			if (prev.end === null) {
+				// Unlimited-duration campaign — keep it unlimited, just reset the start date.
+				updateData.end = null;
+			} else {
+				const dayMs = 24 * 60 * 60 * 1000;
+				let durationDays = 30;
+				if (prev.start && prev.end) {
+					const diff = new Date(prev.end).getTime() - new Date(prev.start).getTime();
+					durationDays = Math.max(1, Math.ceil(diff / dayMs));
+				}
+				updateData.end = new Date(now.getTime() + durationDays * dayMs);
+			}
 		}
 
 		if (
@@ -75,38 +80,43 @@ export async function updateCampaignStatus(
 			prev?.status === "COMPLETED" &&
 			prev.slug !== QUICK_DONATION_SLUG
 		) {
-			const now = new Date();
-			const dayMs = 24 * 60 * 60 * 1000;
-			const extensionDays = 30;
-			const newEnd = new Date(now.getTime() + extensionDays * dayMs);
+			if (prev.end === null) {
+				// Was an unlimited-duration campaign (manually stopped) — restarting keeps it unlimited.
+				updateData.end = null;
+			} else {
+				const now = new Date();
+				const dayMs = 24 * 60 * 60 * 1000;
+				const extensionDays = 30;
+				const newEnd = new Date(now.getTime() + extensionDays * dayMs);
 
-			updateData.end = newEnd;
+				updateData.end = newEnd;
 
-			const prevMeta = (prev as any).metadata || {};
-			const existingRestartInfo = (prevMeta as any).restartInfo || {};
+				const prevMeta = (prev as any).metadata || {};
+				const existingRestartInfo = (prevMeta as any).restartInfo || {};
 
-			let initialDurationDays = existingRestartInfo.initialDurationDays || 0;
+				let initialDurationDays = existingRestartInfo.initialDurationDays || 0;
 
-			if (!initialDurationDays && prev.start && prev.end) {
-				const diffMs =
-					new Date(prev.end).getTime() - new Date(prev.start).getTime();
-				initialDurationDays = Math.max(1, Math.ceil(diffMs / dayMs));
+				if (!initialDurationDays && prev.start && prev.end) {
+					const diffMs =
+						new Date(prev.end).getTime() - new Date(prev.start).getTime();
+					initialDurationDays = Math.max(1, Math.ceil(diffMs / dayMs));
+				}
+
+				if (!initialDurationDays) {
+					initialDurationDays = extensionDays;
+				}
+
+				const restartInfo = {
+					initialDurationDays,
+					restartCount: (existingRestartInfo.restartCount || 0) + 1,
+					extensionDays,
+				};
+
+				updateData.metadata = {
+					...(prevMeta || {}),
+					restartInfo,
+				} as any;
 			}
-
-			if (!initialDurationDays) {
-				initialDurationDays = extensionDays;
-			}
-
-			const restartInfo = {
-				initialDurationDays,
-				restartCount: (existingRestartInfo.restartCount || 0) + 1,
-				extensionDays,
-			};
-
-			updateData.metadata = {
-				...(prevMeta || {}),
-				restartInfo,
-			} as any;
 		}
 
 		await prisma.campaign.update({

@@ -104,7 +104,7 @@ function CampaignRowCard({ item }: { item: Campaign }) {
 							Rp {rupiah(item.collected)}
 						</p>
 						<span className="text-[10px] font-bold text-foreground/50">
-							{item.daysLeft} hari lagi
+							{item.isUnlimited ? "Tanpa batas" : `${item.daysLeft} hari lagi`}
 						</span>
 					</div>
 				</div>

@@ -27,6 +27,7 @@ export default function CampaignHeader({
 }: CampaignHeaderProps) {
 	const isMedis = data.category === "Bantuan Medis & Kesehatan";
 	const isQuickDonate = data.slug === "donasi-cepat";
+	const isUnlimited = isQuickDonate || !data.end;
 
 	return (
 		<Box>
@@ -86,10 +87,10 @@ export default function CampaignHeader({
 						<Typography
 							sx={{ fontSize: 14, fontWeight: 700, color: "#0f172a" }}
 						>
-							{isQuickDonate ? "∞" : data.daysLeft}
+							{isUnlimited ? "∞" : data.daysLeft}
 						</Typography>
 						<Typography sx={{ fontSize: 12, color: "#64748b" }}>
-							{isQuickDonate ? "Tanpa Batas" : "hari lagi"}
+							{isUnlimited ? "Tanpa Batas" : "hari lagi"}
 						</Typography>
 					</Box>
 				</Box>
