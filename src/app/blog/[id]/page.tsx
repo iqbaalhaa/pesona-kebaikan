@@ -41,7 +41,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 		(hasHeroImage ? blog.heroImage : null) ||
 		contentImage ||
 		blog.gallery.find((m) => m.type === "image")?.url ||
-		"/defaultimg.webp";
+		null;
 
 	return {
 		title: `${blog.title} | Pesona Kebaikan`,
@@ -52,13 +52,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 			type: "article",
 			url: postUrl,
 			siteName: "Pesona Kebaikan",
-			images: [{ url: cover, width: 1200, height: 630, alt: blog.title }],
+			...(cover ? { images: [{ url: cover, width: 1200, height: 630, alt: blog.title }] } : {}),
 		},
 		twitter: {
 			card: "summary_large_image",
 			title: blog.title,
 			description,
-			images: [cover],
+			...(cover ? { images: [cover] } : {}),
 		},
 		alternates: { canonical: postUrl },
 	};
@@ -105,7 +105,7 @@ export default async function BlogDetailPage({ params }: Props) {
 		(hasHeroImage ? blog.heroImage : null) ||
 		contentImage ||
 		blog.gallery.find((m) => m.type === "image")?.url ||
-		"/defaultimg.webp";
+		null;
 
 	const video = blog.gallery.find((m) => m.type === "video")?.url;
 
@@ -124,7 +124,7 @@ export default async function BlogDetailPage({ params }: Props) {
 		"@type": "BlogPosting",
 		headline: blog.title,
 		description,
-		image: cover,
+		...(cover ? { image: cover } : {}),
 		datePublished: new Date(blog.createdAt).toISOString(),
 		dateModified: new Date(blog.updatedAt || blog.createdAt).toISOString(),
 		author: { "@type": "Organization", name: "Pesona Kebaikan" },
@@ -193,13 +193,15 @@ export default async function BlogDetailPage({ params }: Props) {
 				</h1>
 			</div>
 
-			<div className="mt-2 overflow-hidden rounded-2xl border border-foreground/8">
-				<img
-					src={cover}
-					alt={blog.title}
-					className="h-[220px] w-full object-cover md:h-[420px]"
-				/>
-			</div>
+			{cover && (
+				<div className="mt-2 overflow-hidden rounded-2xl border border-foreground/8">
+					<img
+						src={cover}
+						alt={blog.title}
+						className="h-[220px] w-full object-cover md:h-[420px]"
+					/>
+				</div>
+			)}
 
 			<div className="mt-4">
 				<div
@@ -273,18 +275,22 @@ export default async function BlogDetailPage({ params }: Props) {
 					<h3 className="mb-3 text-[15px] font-black text-foreground">Artikel Terkait</h3>
 					<div className="flex flex-col gap-3">
 						{relatedBlogs.map((rb: any) => {
-							const rbCover = rb.heroImage || rb.gallery?.[0]?.url || "/defaultimg.webp";
+							const rbCover = rb.heroImage || rb.gallery?.[0]?.url || null;
 							return (
 								<Link
 									key={rb.id}
 									href={`/blog/${rb.id}`}
 									className="flex gap-3 rounded-xl border border-slate-100 bg-white p-2.5 transition-colors hover:border-primary/30"
 								>
-									<img
-										src={rbCover}
-										alt={rb.title}
-										className="h-16 w-16 shrink-0 rounded-lg object-cover"
-									/>
+									{rbCover ? (
+										<img
+											src={rbCover}
+											alt={rb.title}
+											className="h-16 w-16 shrink-0 rounded-lg object-cover"
+										/>
+									) : (
+										<div className="h-16 w-16 shrink-0 rounded-lg bg-foreground/6" />
+									)}
 									<div className="min-w-0 flex-1">
 										<p className="text-[13px] font-bold leading-tight text-slate-800 line-clamp-2">
 											{rb.title}

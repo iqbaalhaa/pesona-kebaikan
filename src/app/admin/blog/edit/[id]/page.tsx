@@ -23,6 +23,7 @@ import {
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import ImageIcon from "@mui/icons-material/Image";
 import ArticleIcon from "@mui/icons-material/Article";
+import { uploadImage } from "@/actions/upload";
 
 const RichTextEditor = dynamic(
 	() => import("@/components/admin/RichTextEditor"),
@@ -44,6 +45,8 @@ export default function EditBlogPage() {
 
 	const [preview, setPreview] = React.useState<string | null>(null);
 	const [drag, setDrag] = React.useState(false);
+	const [uploading, setUploading] = React.useState(false);
+	const fileInputRef = React.useRef<HTMLInputElement>(null);
 	const [toast, setToast] = React.useState<{
 		open: boolean;
 		msg: string;
@@ -97,20 +100,37 @@ export default function EditBlogPage() {
 		fetchBlog();
 	}, [id]);
 
+	/* ---------- upload helper ---------- */
+	const processFile = async (file: File) => {
+		if (!file.type.startsWith("image/")) return;
+		setUploading(true);
+		try {
+			const fd = new FormData();
+			fd.append("file", file);
+			const res = await uploadImage(fd);
+			if (res.success && res.url) {
+				setForm((f) => ({ ...f, heroImage: res.url! }));
+				setPreview(res.url!);
+			} else {
+				setToast({ open: true, msg: res.error || "Gagal upload gambar", severity: "error" });
+			}
+		} finally {
+			setUploading(false);
+		}
+	};
+
 	/* ---------- drag & drop ---------- */
 	const handleDrop = (e: React.DragEvent) => {
 		e.preventDefault();
 		setDrag(false);
-
 		const file = e.dataTransfer.files?.[0];
-		if (!file) return;
+		if (file) processFile(file);
+	};
 
-		const reader = new FileReader();
-		reader.onload = (ev) => setPreview(ev.target?.result as string);
-		reader.readAsDataURL(file);
-
-		// TODO: Implement real file upload
-		setForm((f) => ({ ...f, heroImage: `uploads/blog/${file.name}` }));
+	const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+		const file = e.target.files?.[0];
+		if (file) await processFile(file);
+		e.target.value = "";
 	};
 
 	/* ---------- submit ---------- */
@@ -205,13 +225,18 @@ export default function EditBlogPage() {
 							/>
 
 							{/* IMAGE UPLOAD AREA */}
+							<input
+								ref={fileInputRef}
+								type="file"
+								accept="image/*"
+								style={{ display: "none" }}
+								onChange={handleFileSelect}
+							/>
 							<Box
-								onDragOver={(e) => {
-									e.preventDefault();
-									setDrag(true);
-								}}
+								onDragOver={(e) => { e.preventDefault(); setDrag(true); }}
 								onDragLeave={() => setDrag(false)}
 								onDrop={handleDrop}
+								onClick={() => !uploading && fileInputRef.current?.click()}
 								sx={{
 									border: "2px dashed",
 									borderColor: drag ? "primary.main" : "rgba(15,23,42,.15)",
@@ -220,7 +245,7 @@ export default function EditBlogPage() {
 									bgcolor: drag ? "rgba(59,130,246,.04)" : "transparent",
 									textAlign: "center",
 									transition: "all 0.2s",
-									cursor: "pointer",
+									cursor: uploading ? "wait" : "pointer",
 									position: "relative",
 									overflow: "hidden",
 									minHeight: 200,
@@ -231,29 +256,28 @@ export default function EditBlogPage() {
 								}}
 							>
 								{preview ? (
-									<img
-										src={preview}
-										alt="Preview"
-										style={{
-											position: "absolute",
-											inset: 0,
-											width: "100%",
-											height: "100%",
-											objectFit: "cover",
-										}}
-									/>
+									<>
+										<img
+											src={preview}
+											alt="Preview"
+											style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
+										/>
+										{uploading && (
+											<Box sx={{ position: "absolute", inset: 0, bgcolor: "rgba(0,0,0,.4)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+												<CircularProgress sx={{ color: "white" }} size={32} />
+											</Box>
+										)}
+									</>
+								) : uploading ? (
+									<CircularProgress size={36} />
 								) : (
 									<>
-										<ImageIcon
-											sx={{ fontSize: 48, color: "rgba(15,23,42,.2)" }}
-										/>
-										<Typography
-											sx={{ mt: 1, fontWeight: 600, color: "text.secondary" }}
-										>
-											Drag & Drop gambar di sini
+										<ImageIcon sx={{ fontSize: 48, color: "rgba(15,23,42,.2)" }} />
+										<Typography sx={{ mt: 1, fontWeight: 600, color: "text.secondary" }}>
+											Klik atau drag & drop gambar di sini
 										</Typography>
 										<Typography variant="caption" color="text.disabled">
-											atau paste URL gambar (sementara)
+											JPG, PNG, WebP
 										</Typography>
 									</>
 								)}
@@ -261,14 +285,15 @@ export default function EditBlogPage() {
 
 							{/* URL INPUT FALLBACK */}
 							<TextField
-								label="URL Gambar Header"
+								label="URL Gambar Header (opsional)"
 								fullWidth
 								size="small"
 								value={form.heroImage}
 								onChange={(e) => {
 									setForm({ ...form, heroImage: e.target.value });
-									setPreview(e.target.value);
+									setPreview(e.target.value || null);
 								}}
+								helperText="Atau tempel URL gambar langsung"
 							/>
 						</Stack>
 					</Paper>

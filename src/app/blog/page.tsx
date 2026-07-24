@@ -57,7 +57,7 @@ export default async function BlogPage({
 			(hasHeroImage ? blog.heroImage : null) ||
 			contentImage ||
 			blog.gallery?.find((m) => m.type === "image")?.url ||
-			"/defaultimg.webp";
+			null;
 
 		const plainTextContent = blog.content.replace(/<[^>]*>?/gm, "");
 		const excerpt =

@@ -160,11 +160,18 @@ export function MiniStat({ label, value, avatar }: { label: string; value: strin
 	);
 }
 
-export function VerifyItem({ label, checked, onChange, hint }: { label: string; checked: boolean; onChange: (v: boolean) => void; hint?: string }) {
+export function VerifyItem({ label, checked, onChange, hint, readOnly }: { label: string; checked: boolean; onChange: (v: boolean) => void; hint?: string; readOnly?: boolean }) {
 	return (
 		<Box sx={{ display: "flex", alignItems: "flex-start", gap: 1, py: 0.25 }}>
 			<FormControlLabel
-				control={<Checkbox checked={checked} onChange={(e) => onChange(e.target.checked)} />}
+				control={
+					<Checkbox
+						checked={checked}
+						onChange={readOnly ? undefined : (e) => onChange(e.target.checked)}
+						disabled={readOnly}
+						sx={readOnly ? { pointerEvents: "none" } : undefined}
+					/>
+				}
 				label={
 					<Box>
 						<Typography sx={{ fontSize: 13, fontWeight: 900 }}>{label}</Typography>

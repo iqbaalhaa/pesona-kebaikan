@@ -11,7 +11,7 @@ type BlogPost = {
 	id: string;
 	title: string;
 	excerpt: string;
-	cover: string;
+	cover: string | null;
 	date: string;
 	tag: string;
 };
@@ -113,11 +113,15 @@ export default function BlogListClient({
 					posts.map((post) => (
 						<Link key={post.id} href={`/blog/${post.id}`} className="block h-full">
 							<div className="flex h-full flex-col gap-2 rounded-xl border border-foreground/8 bg-white p-2 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary hover:shadow-md sm:flex-row lg:flex-col">
-								<img
-									src={post.cover}
-									alt={post.title}
-									className="h-[200px] w-full shrink-0 rounded-lg bg-foreground/4 object-cover sm:h-[160px] sm:w-[200px] lg:h-[180px] lg:w-full"
-								/>
+								{post.cover ? (
+									<img
+										src={post.cover}
+										alt={post.title}
+										className="h-[200px] w-full shrink-0 rounded-lg bg-foreground/4 object-cover sm:h-[160px] sm:w-[200px] lg:h-[180px] lg:w-full"
+									/>
+								) : (
+									<div className="h-[200px] w-full shrink-0 rounded-lg bg-foreground/6 sm:h-[160px] sm:w-[200px] lg:h-[180px] lg:w-full" />
+								)}
 								<div className="flex flex-1 flex-col justify-center">
 									<div className="mb-1.5 flex items-center gap-1">
 										<CategoryPill

@@ -360,7 +360,11 @@ export default function AdminCampaignDetailPage(props: {
 					},
 				};
 				setData(mappedData);
-				setFeeValue(String((c as any).foundationFee ?? 0));
+				const loadedFee = Number((c as any).foundationFee ?? 0);
+				setFeeValue(String(loadedFee));
+				if (loadedFee > 0) {
+					setCheck((prev) => ({ ...prev, feeOk: true }));
+				}
 
 				const medicalDocs = (campaignMeta as any).medicalDocs || {};
 				const privateDocs = (campaignMeta as any).docs || {};
@@ -882,6 +886,7 @@ export default function AdminCampaignDetailPage(props: {
 					foundationFee: parsedFee,
 					updatedAt: "Hari ini",
 				}));
+				setCheck((c) => ({ ...c, feeOk: true }));
 				pushAudit({
 					title: "Fee yayasan diupdate",
 					meta: `Fee yayasan: ${parsedFee}%`,
@@ -1269,7 +1274,7 @@ export default function AdminCampaignDetailPage(props: {
 							</Stack>
 							<Divider sx={{ my: 1.25 }} />
 							<Stack spacing={0.5}>
-								<VerifyItem label="Fee Yayasan sudah diatur" checked={check.feeOk} onChange={(v) => setCheck((c) => ({ ...c, feeOk: v }))} hint={`Fee saat ini: ${feeValue}%`} />
+								<VerifyItem label="Fee Yayasan sudah diatur" checked={check.feeOk} onChange={() => {}} readOnly hint={check.feeOk ? `Fee: ${feeValue}% (sudah disimpan)` : "Simpan fee terlebih dahulu di bagian atas"} />
 								<VerifyItem label="Identitas/KTP valid" checked={check.identityOk} onChange={(v) => setCheck((c) => ({ ...c, identityOk: v }))} hint="Pastikan KTP jelas dan sesuai." />
 								<VerifyItem label="Foto sampul sesuai" checked={check.coverOk} onChange={(v) => setCheck((c) => ({ ...c, coverOk: v }))} hint="Tidak mengandung konten sensitif." />
 								<VerifyItem label="Cerita memadai" checked={check.storyOk} onChange={(v) => setCheck((c) => ({ ...c, storyOk: v }))} hint="Kronologi & penggunaan dana jelas." />
@@ -1280,7 +1285,7 @@ export default function AdminCampaignDetailPage(props: {
 							<Divider sx={{ my: 1.25 }} />
 							<TextField size="small" label="Catatan / Alasan penolakan (opsional)" value={rejectReason} onChange={(e) => setRejectReason(e.target.value)} fullWidth multiline minRows={2} sx={fieldSx(theme)} />
 							<Stack direction="row" spacing={1} sx={{ mt: 1.25 }}>
-								<Button variant="contained" fullWidth startIcon={<ThumbUpAltRoundedIcon />} onClick={() => setConfirmApprove(true)} sx={{ borderRadius: 999, fontWeight: 900, boxShadow: "none" }}>
+								<Button variant="contained" fullWidth startIcon={<ThumbUpAltRoundedIcon />} onClick={() => setConfirmApprove(true)} disabled={!check.feeOk} sx={{ borderRadius: 999, fontWeight: 900, boxShadow: "none" }}>
 									Approve
 								</Button>
 								<Button variant="outlined" fullWidth color="error" startIcon={<ThumbDownAltRoundedIcon />} onClick={() => setConfirmReject(true)} sx={{ borderRadius: 999, fontWeight: 900 }}>
@@ -1878,8 +1883,9 @@ export default function AdminCampaignDetailPage(props: {
 								<VerifyItem
 									label="Fee Yayasan sudah diatur"
 									checked={check.feeOk}
-									onChange={(v) => setCheck((c) => ({ ...c, feeOk: v }))}
-									hint={`Fee saat ini: ${feeValue}%`}
+									onChange={() => {}}
+									readOnly
+									hint={check.feeOk ? `Fee: ${feeValue}% (sudah disimpan)` : "Simpan fee terlebih dahulu di bagian atas"}
 								/>
 								<VerifyItem
 									label="Identitas/KTP valid"
@@ -1941,6 +1947,7 @@ export default function AdminCampaignDetailPage(props: {
 									variant="contained"
 									startIcon={<ThumbUpAltRoundedIcon />}
 									onClick={() => setConfirmApprove(true)}
+									disabled={!check.feeOk}
 									sx={{ borderRadius: 999, fontWeight: 900, boxShadow: "none" }}
 								>
 									Approve (Aktifkan)

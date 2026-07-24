@@ -15,7 +15,9 @@
       "WebFetch(domain:developers.doku.com)",
       "WebFetch(domain:dashboard.doku.com)",
       "WebFetch(domain:www.doku.com)",
-      "Bash(node -e ' *)"
+      "Bash(node -e ' *)",
+      "PowerShell(cd \"e:\\\\wamp64\\\\www\\\\pesona-kebaikan\"; npx tsc --noEmit --skipLibCheck 2>&1 | Out-String | Select-String \"blog|BlogCard|BlogList\" -AllMatches | ForEach-Object { $_.Line })",
+      "Bash(npx tsc *)"
     ]
   }
 }

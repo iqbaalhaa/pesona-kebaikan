@@ -72,15 +72,18 @@ export default function BlogCard({
     >
       {/* ===== IMAGE ===== */}
       <div className="relative h-36 w-full overflow-hidden bg-slate-100">
-        <img
-          src={data.image || "/defaultimg.webp"}
-          alt={data.title}
-          className="h-full w-full object-cover"
-          loading="lazy"
-          onError={(e) => {
-            (e.currentTarget as HTMLImageElement).src = "/defaultimg.webp";
-          }}
-        />
+        {data.image ? (
+          <img
+            src={data.image}
+            alt={data.title}
+            className="h-full w-full object-cover"
+            loading="lazy"
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center bg-slate-100">
+            <ArticleIcon sx={{ fontSize: 40, color: "rgba(15,23,42,.18)" }} />
+          </div>
+        )}
 
         {/* category badge */}
         <div className="absolute left-2 top-2">
