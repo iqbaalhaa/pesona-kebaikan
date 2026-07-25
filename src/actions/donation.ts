@@ -3,11 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
-import {
-	checkMidtransStatus,
-	mapMidtransToInternal,
-} from "@/lib/midtrans-status";
-import { DokuProvider } from "@/lib/payment/providers/doku-provider";
+import { DokuProvider, mapDokuStatus } from "@/lib/payment/providers/doku-provider";
 import { calculatePaymentFee } from "@/lib/fee-calculator";
 import { createNotification } from "@/actions/notification";
 import { NotificationType } from "@prisma/client";
@@ -190,29 +186,12 @@ export async function checkPendingDonations(campaignId?: string) {
 
 		let updatedCount = 0;
 
-		const paymentProvider = (process.env.PAYMENT_PROVIDER || 'midtrans').toLowerCase();
-		const dokuProvider = paymentProvider === 'doku' ? new DokuProvider() : null;
+		const dokuProvider = new DokuProvider();
 
 		await Promise.all(
 			pendingDonations.map(async (d) => {
-				let newStatus: string | null = null;
-
-				if (dokuProvider) {
-					const dokuData = await dokuProvider.checkStatus(d.id);
-					if (dokuData?.status) {
-						const s = dokuData.status.toUpperCase();
-						if (s === 'SUCCESS') newStatus = 'PAID';
-						else if (s === 'FAILED' || s === 'EXPIRED') newStatus = 'FAILED';
-					}
-				} else {
-					const midtransData = await checkMidtransStatus(d.id);
-					if (midtransData?.transaction_status) {
-						newStatus = mapMidtransToInternal(
-							midtransData.transaction_status,
-							midtransData.fraud_status,
-						);
-					}
-				}
+				const dokuData = await dokuProvider.checkStatus(d.id);
+				const newStatus = dokuData?.status ? mapDokuStatus(dokuData.status) : null;
 
 				if (newStatus && newStatus !== "PENDING" && newStatus !== d.status) {
 					await prisma.donation.update({

@@ -3,10 +3,9 @@
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { revalidatePath } from "next/cache";
-import {
-	checkMidtransStatus,
-	mapMidtransToInternal,
-} from "@/lib/midtrans-status";
+import { DokuProvider, mapDokuStatus } from "@/lib/payment/providers/doku-provider";
+
+const dokuProvider = new DokuProvider();
 
 function mapTxStatus(raw: string) {
 	const s = (raw || "").toUpperCase();
@@ -55,14 +54,11 @@ export async function getAdminTransactions() {
 		if (pendingDonations.length > 0) {
 			const updates = await Promise.all(
 				pendingDonations.map(async (d) => {
-					const midtransData = await checkMidtransStatus(d.id);
-					if (midtransData && midtransData.transaction_status) {
-						const newStatus = mapMidtransToInternal(
-							midtransData.transaction_status,
-							midtransData.fraud_status,
-						);
+					const dokuData = await dokuProvider.checkStatus(d.id);
+					if (dokuData && dokuData.status) {
+						const newStatus = mapDokuStatus(dokuData.status);
 
-						if (newStatus !== "PENDING" && newStatus !== d.status) {
+						if (newStatus && newStatus !== "PENDING" && newStatus !== d.status) {
 							// Update DB
 							await prisma.donation.update({
 								where: { id: d.id },

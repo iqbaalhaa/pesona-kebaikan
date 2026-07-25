@@ -1,4 +1,4 @@
-export type PaymentProviderName = 'midtrans' | 'doku'
+export type PaymentProviderName = 'doku'
 
 export interface CheckoutItem {
   id: string

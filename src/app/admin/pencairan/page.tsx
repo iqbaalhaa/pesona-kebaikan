@@ -112,7 +112,6 @@ function statusChip(status: WithdrawalStatus) {
 export default function PencairanPage() {
 	const theme = useTheme();
 	const { data: session, update: updateSession } = useSession();
-	const payoutsEnabled = process.env.NEXT_PUBLIC_MIDTRANS_PAYOUTS_ENABLED === "true";
 
 	const [withdrawals, setWithdrawals] = React.useState<WithdrawalRow[]>([]);
 	const [campaigns, setCampaigns] = React.useState<CampaignFund[]>([]);
@@ -258,7 +257,7 @@ export default function PencairanPage() {
 						const res = await updateWithdrawalStatus(row.id, "APPROVED", undefined, "BYPASSED", undefined, adminPhone);
 						if (!res?.success) { showSnack(res?.error || "Gagal", "error"); return; }
 						fetchData();
-						showSnack(res.payoutMode === "IRIS" ? "Disetujui (Midtrans Iris)" : "Disetujui (manual)");
+						showSnack(res.payoutMode === "DOKU" ? "Disetujui (DOKU Payout)" : "Disetujui (manual)");
 					} catch { showSnack("Gagal", "error"); }
 					setConfirmDialog(prev => ({ ...prev, open: false }));
 				},
@@ -275,7 +274,7 @@ export default function PencairanPage() {
 			const res = await updateWithdrawalStatus(selectedWithdrawalForApproval.id, "APPROVED", undefined, otp, undefined, adminPhone);
 			if (!res?.success) { showSnack(res?.error || "Gagal", "error"); return; }
 			fetchData();
-			showSnack(res.payoutMode === "IRIS" ? "Disetujui (Midtrans Iris)" : "Disetujui (manual)");
+			showSnack(res.payoutMode === "DOKU" ? "Disetujui (DOKU Payout)" : "Disetujui (manual)");
 		} catch { showSnack("Gagal", "error"); }
 		finally { setSelectedWithdrawalForApproval(null); }
 	};

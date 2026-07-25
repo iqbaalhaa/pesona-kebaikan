@@ -14,6 +14,17 @@ const CHECKOUT_TARGET = '/checkout/v1/payment'
 const NOTIFICATION_PATH = '/api/doku/notification'
 const INQUIRY_TARGET = '/orders/v1/status'
 
+/** Shared with reconcile jobs (src/actions/admin.ts, src/actions/donation.ts) that poll DOKU directly for stale PENDING donations. */
+export function mapDokuStatus(status: string): DonationStatus | null {
+  switch (status) {
+    case 'SUCCESS': return 'PAID'
+    case 'PENDING': return 'PENDING'
+    case 'FAILED':
+    case 'EXPIRED': return 'FAILED'
+    default: return null
+  }
+}
+
 export class DokuProvider implements PaymentProvider {
   readonly name: PaymentProviderName = 'doku'
 
@@ -135,13 +146,7 @@ export class DokuProvider implements PaymentProvider {
   }
 
   private mapStatus(status: string): DonationStatus | null {
-    switch (status) {
-      case 'SUCCESS': return 'PAID'
-      case 'PENDING': return 'PENDING'
-      case 'FAILED':
-      case 'EXPIRED': return 'FAILED'
-      default: return null
-    }
+    return mapDokuStatus(status)
   }
 
   async checkStatus(invoiceNumber: string): Promise<{ status: string } | null> {

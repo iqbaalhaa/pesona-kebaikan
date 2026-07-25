@@ -4,7 +4,6 @@ import * as React from "react";
 import { createPortal } from "react-dom";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
-import Script from "next/script";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
@@ -18,7 +17,6 @@ import { getQuickDonationCampaignId } from "@/actions/campaign-public";
 
 const PRIMARY = "#0ba976";
 const MIN_DONATION = Number(process.env.NEXT_PUBLIC_MIN_DONATION ?? 1);
-const PAYMENT_PROVIDER = process.env.NEXT_PUBLIC_PAYMENT_PROVIDER || 'midtrans';
 
 const amountPresets = [10000, 25000, 50000, 75000, 100000];
 
@@ -121,7 +119,7 @@ export default function QuickDonate() {
 		};
 	}, [mounted, open]);
 
-	// Fix body scroll issue after Midtrans Snap success and auto-close success message
+	// Fix body scroll issue after payment success and auto-close success message
 	React.useEffect(() => {
 		let timeoutId: NodeJS.Timeout;
 
@@ -231,69 +229,24 @@ export default function QuickDonate() {
 			if (res.success) {
 				const donationId = (res as any).data?.id;
 				setCurrentDonationId(donationId);
-				const slug = "donasi-cepat"; // Fixed slug for quick donation
 
-				if ((window as any).snap?.show) {
-					(window as any).snap.show();
-				}
 				const r = await fetch("/api/payment/checkout", {
 					method: "POST",
 					headers: { "Content-Type": "application/json" },
 					body: JSON.stringify({ donationId }),
 				});
 				const j = await r.json();
-				if (j.success) {
-					if (j.provider === "midtrans" && j.token && (window as any).snap) {
-						const isProd = process.env.NEXT_PUBLIC_MIDTRANS_IS_PRODUCTION === "true";
-						(window as any).snap.pay(j.token, {
-							language: "id",
-							...(isProd ? { uiMode: "qr" } : {}),
-							onSuccess: () => {
-								setSuccess(true);
-								setOpen(false);
-								setCurrentDonationId(undefined);
-							},
-							onPending: () => {
-								setOpen(false);
-							},
-							onError: () => {
-								setError("Transaksi gagal");
-								setSuccess(false);
-								if (currentDonationId) cancelPendingDonation(currentDonationId);
-								setCurrentDonationId(undefined);
-							},
-							onClose: () => {
-								setError("Transaksi gagal");
-								setSuccess(false);
-								if (currentDonationId) cancelPendingDonation(currentDonationId);
-								setCurrentDonationId(undefined);
-							},
-						});
-					} else if (j.redirect_url) {
-						window.location.href = j.redirect_url;
-					} else {
-						if ((window as any).snap?.hide) (window as any).snap.hide();
-						setError(j.error || "Gagal memulai pembayaran");
-						if (currentDonationId) await cancelPendingDonation(currentDonationId);
-						setCurrentDonationId(undefined);
-					}
+				if (j.success && j.redirect_url) {
+					window.location.href = j.redirect_url;
 				} else {
-					if ((window as any).snap?.hide) {
-						(window as any).snap.hide();
-					}
 					setError(j.error || "Gagal memulai pembayaran");
-					if (currentDonationId) {
-						await cancelPendingDonation(currentDonationId);
-					}
+					if (currentDonationId) await cancelPendingDonation(currentDonationId);
 					setCurrentDonationId(undefined);
 				}
 			} else {
 				setError(res.error || "Gagal membuat donasi");
 			}
 		} catch (err) {
-			if ((window as any).snap?.hide) {
-				(window as any).snap.hide();
-			}
 			setError("Terjadi kesalahan sistem");
 			if (currentDonationId) {
 				await cancelPendingDonation(currentDonationId);
@@ -388,17 +341,6 @@ export default function QuickDonate() {
 				"@media (min-width:1024px)": { mt: 0 },
 			}}
 		>
-			{PAYMENT_PROVIDER === 'midtrans' && (
-				<Script
-					src={
-						process.env.NEXT_PUBLIC_MIDTRANS_IS_PRODUCTION === "true"
-							? "https://app.midtrans.com/snap/snap.js"
-							: "https://app.sandbox.midtrans.com/snap/snap.js"
-					}
-					data-client-key={process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY || ""}
-					strategy="afterInteractive"
-				/>
-			)}
 			<Box
 				sx={{
 					borderRadius: "0 0 20px 20px",

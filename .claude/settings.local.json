@@ -41,7 +41,10 @@
       "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" --max-time 90 \"http://localhost:3000/admin\")",
       "Bash(tail -n 80 /tmp/devserver.log 2>&1)",
       "Read(//tmp/**)",
-      "Bash(tail -n 30 /tmp/devserver.log 2>&1)"
+      "Bash(tail -n 30 /tmp/devserver.log 2>&1)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" --max-time 20 \"http://localhost:3000/admin/pencairan\")",
+      "Bash(sleep 8; tail -n 20 /tmp/devserver.log 2>&1)",
+      "Bash(curl -s -o /dev/null -w \"checkout \\(tanpa body valid\\): %{http_code}\\\\n\" --max-time 15 -X POST \"http://localhost:3000/api/payment/checkout\" -H \"Content-Type: application/json\" -d '{}')"
     ]
   }
 }

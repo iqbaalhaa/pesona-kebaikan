@@ -5,10 +5,9 @@ services:
       dockerfile: Dockerfile
       args:
         DATABASE_URL: "postgresql://vpsdepati:Vpsdepati.123!@db-host:5432/pesonakebaikan?schema=public"
-        NEXT_PUBLIC_MIDTRANS_CLIENT_KEY: Mid-client-GwHI6mxfn6YYfQEF
-        MIDTRANS_SERVER_KEY: Mid-server-J3eNBWCHo6Ps_J9V9O6lOpK3
-        MIDTRANS_IS_PRODUCTION: true # gunakan true saat production
-        NEXT_PUBLIC_MIDTRANS_IS_PRODUCTION: true # sinkron dengan setting di atas
+        DOKU_CLIENT_ID: ${DOKU_CLIENT_ID}
+        DOKU_SECRET_KEY: ${DOKU_SECRET_KEY}
+        DOKU_IS_PRODUCTION: ${DOKU_IS_PRODUCTION:-true}
         NEXT_PUBLIC_MIN_DONATION: 10
     container_name: pesonakebaikan-app
     ports:

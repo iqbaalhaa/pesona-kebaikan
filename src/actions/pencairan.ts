@@ -2,15 +2,23 @@
 
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
-import { createPayout, approvePayout } from "@/lib/midtrans-iris";
+import {
+  createPayout as createDokuPayout,
+  approvePayout as approveDokuPayout,
+} from "@/lib/doku-payout";
 import { auth } from "@/auth";
 import { verifyOtp } from "@/actions/otp";
 
-const MIDTRANS_PAYOUTS_ENABLED =
-  process.env.MIDTRANS_PAYOUTS_ENABLED === "true";
-const MIDTRANS_PAYOUTS_REVIEW_MESSAGE =
-  process.env.MIDTRANS_PAYOUTS_REVIEW_MESSAGE ||
-  "Integrasi Midtrans Payouts belum aktif atau masih dalam proses review.";
+const DOKU_PAYOUTS_ENABLED = process.env.DOKU_PAYOUTS_ENABLED === "true";
+const PAYOUTS_REVIEW_MESSAGE =
+  process.env.PAYOUTS_REVIEW_MESSAGE ||
+  "Integrasi payout otomatis belum aktif atau masih dalam proses review.";
+
+type PayoutProvider = "DOKU" | null;
+
+function getActivePayoutProvider(): PayoutProvider {
+  return DOKU_PAYOUTS_ENABLED ? "DOKU" : null;
+}
 
 const DISBURSEMENT_BYPASS_OTP =
   process.env.NEXT_PUBLIC_DISBURSEMENT_BYPASS_OTP === "true";
@@ -69,10 +77,11 @@ export async function getCampaignsWithFunds() {
 }
 
 export async function getPayoutsCapability() {
-  const available = MIDTRANS_PAYOUTS_ENABLED;
+  const provider = getActivePayoutProvider();
   return {
-    available,
-    message: available ? "" : MIDTRANS_PAYOUTS_REVIEW_MESSAGE,
+    available: !!provider,
+    provider,
+    message: provider ? "" : PAYOUTS_REVIEW_MESSAGE,
   };
 }
 
@@ -149,7 +158,7 @@ export async function updateWithdrawalStatus(
   }
 ) {
   // 0. Verify OTP (Application Level Security)
-  // We require OTP for ALL approvals, regardless of Midtrans/Manual mode
+  // We require OTP for ALL approvals, regardless of DOKU/Manual mode
   if (status === "APPROVED") {
     // Bypass OTP check if configured
     if (!DISBURSEMENT_BYPASS_OTP) {
@@ -181,9 +190,10 @@ export async function updateWithdrawalStatus(
     }
   }
 
-  // If approving, trigger Midtrans Iris Payout
+  // If approving, trigger the active payout provider (DOKU)
   if (status === "APPROVED") {
-    if (!MIDTRANS_PAYOUTS_ENABLED || DISBURSEMENT_BYPASS_STATUS_UPDATE) {
+    const provider = getActivePayoutProvider();
+    if (!provider || DISBURSEMENT_BYPASS_STATUS_UPDATE) {
       await prisma.withdrawal.update({
         where: { id },
         data: {
@@ -234,7 +244,7 @@ export async function updateWithdrawalStatus(
         ],
       };
 
-      const createRes = (await createPayout(payoutPayload)) as {
+      const createRes = (await createDokuPayout(payoutPayload)) as {
         payouts?: { reference_no?: string }[];
       };
       const referenceNo = createRes.payouts?.[0]?.reference_no;
@@ -242,12 +252,12 @@ export async function updateWithdrawalStatus(
       if (!referenceNo) {
         return {
           success: false,
-          error: "Gagal mendapatkan reference_no dari Midtrans Iris",
+          error: "Gagal mendapatkan reference_no dari DOKU Payout",
         };
       }
 
-      // 2. Approve Payout
-      await approvePayout([referenceNo], otp || "BYPASSED");
+      // 2. Approve Payout (no-op for DOKU — transfer already executed in step 1)
+      await approveDokuPayout([referenceNo], otp || "BYPASSED");
 
       // 3. Update DB
       await prisma.withdrawal.update({
@@ -259,15 +269,15 @@ export async function updateWithdrawalStatus(
         },
       });
     } catch (error: any) {
-      console.error("Midtrans Payout Error:", error);
+      console.error("DOKU Payout Error:", error);
       return {
         success: false,
-        error: error.message || "Gagal memproses pencairan ke Midtrans Iris",
+        error: error.message || "Gagal memproses pencairan ke DOKU Payout",
       };
     }
 
     revalidatePath("/admin/pencairan");
-    return { success: true, payoutMode: "IRIS" as const };
+    return { success: true, payoutMode: "DOKU" as const };
   } else if (status === "REJECTED") {
     await prisma.withdrawal.update({
       where: { id },

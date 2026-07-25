@@ -40,9 +40,9 @@ Key variables needed in `.env.local`:
 |---|---|
 | `DATABASE_URL` | PostgreSQL connection string |
 | `AUTH_SECRET` | NextAuth JWT signing secret |
-| `PAYMENT_PROVIDER` | `midtrans` or `doku` (selects payment provider) |
-| `MIDTRANS_SERVER_KEY` / `DOKU_SECRET_KEY` | Payment credentials |
-| `NEXT_PUBLIC_MIDTRANS_CLIENT_KEY` | Public Midtrans key |
+| `PAYMENT_PROVIDER` | `doku` (only payment provider) |
+| `DOKU_CLIENT_ID` / `DOKU_SECRET_KEY` | DOKU checkout credentials |
+| `DOKU_PAYOUTS_ENABLED` / `DOKU_PAYOUT_*` | DOKU Payout (Kirim DOKU) — separate credentials, used for automated withdrawal disbursement |
 | `S3_ENDPOINT`, `S3_BUCKET_NAME`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY` | Object storage |
 | `S3_ROOT_DIR` | Upload prefix directory (e.g. `uploads`) |
 | `EMAIL_SERVER_HOST/PORT/USER/PASSWORD` | SMTP for transactional email |
@@ -67,8 +67,8 @@ This is a Next.js 16 App Router project. Pages are either server components (def
 ### Server Actions vs API Routes
 
 Prefer **server actions** (`src/actions/*.ts`) for all user-triggered mutations. API routes (`src/app/api/`) are used for:
-- Payment webhooks (Midtrans: `/api/midtrans/notification`, DOKU: `/api/doku/notification`)
-- Snap-token generation (`/api/midtrans/snap-token`, `/api/payment/checkout`)
+- Payment webhooks (DOKU: `/api/doku/notification`)
+- Checkout initiation (`/api/payment/checkout`)
 - Third-party integrations where POST from external services is needed
 
 Server action return shape is always `{ success: boolean; error?: string; data?: T }`.
@@ -90,7 +90,9 @@ NextAuth v5 (beta) with JWT strategy. Auth is exported from `src/lib/auth.ts` (h
 
 ### Payment System
 
-`src/lib/payment/` has a pluggable provider abstraction. `getPaymentProvider()` returns either `MidtransProvider` or `DokuProvider` based on `PAYMENT_PROVIDER` env var. Both implement the `PaymentProvider` interface (`src/lib/payment/types.ts`). Webhook handlers parse the provider-specific notification and call shared donation settlement logic.
+`src/lib/payment/` has a pluggable provider abstraction (currently only `DokuProvider`, implementing the `PaymentProvider` interface in `src/lib/payment/types.ts`) so a second provider could be added again later without touching call sites. `getPaymentProvider()` always returns `DokuProvider`. The webhook handler parses DOKU's notification and calls shared donation settlement logic.
+
+Withdrawal disbursement (`src/actions/pencairan.ts`) is a separate concern from checkout — it optionally calls DOKU Payout (`src/lib/doku-payout.ts`, env-gated by `DOKU_PAYOUTS_ENABLED`) when approving a withdrawal; falls back to manual admin-recorded transfers otherwise.
 
 ### Image Uploads
 
