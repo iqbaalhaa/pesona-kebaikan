@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Avatar from "@mui/material/Avatar";
+import Box from "@mui/material/Box";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import ListItemIcon from "@mui/material/ListItemIcon";
@@ -13,9 +14,8 @@ import Typography from "@mui/material/Typography";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import NotificationsNoneIcon from "@mui/icons-material/NotificationsNone";
-import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
-import PersonIcon from "@mui/icons-material/Person";
 import LogoutIcon from "@mui/icons-material/Logout";
+import PersonOutlineIcon from "@mui/icons-material/PersonOutline";
 import SettingsIcon from "@mui/icons-material/Settings";
 import MenuIcon from "@mui/icons-material/Menu";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
@@ -43,6 +43,10 @@ export default function AdminHeader({
 	};
 
 	const breadcrumbs = getBreadcrumbs();
+
+	const displayName = session?.user?.name || session?.user?.email || "Admin";
+	const avatarInitial = displayName.charAt(0).toUpperCase();
+	const isAdmin = session?.user?.role === "ADMIN";
 
 	const [anchorElProfile, setAnchorElProfile] = useState<null | HTMLElement>(
 		null,
@@ -291,7 +295,7 @@ export default function AdminHeader({
 						aria-haspopup="true"
 						aria-expanded={openProfile ? "true" : undefined}
 					>
-						<Avatar sx={{ width: 32, height: 32 }}>M</Avatar>
+						<Avatar sx={{ width: 32, height: 32 }}>{avatarInitial}</Avatar>
 					</IconButton>
 				</Tooltip>
 				<Menu
@@ -307,12 +311,7 @@ export default function AdminHeader({
 								overflow: "visible",
 								filter: "drop-shadow(0px 2px 8px rgba(0,0,0,0.32))",
 								mt: 1.5,
-								"& .MuiAvatar-root": {
-									width: 32,
-									height: 32,
-									ml: -0.5,
-									mr: 1,
-								},
+								minWidth: 220,
 								"&::before": {
 									content: '""',
 									display: "block",
@@ -331,25 +330,31 @@ export default function AdminHeader({
 					transformOrigin={{ horizontal: "right", vertical: "top" }}
 					anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
 				>
-					<MenuItem onClick={handleProfileClose}>
-						<Avatar /> Profil
-					</MenuItem>
-					<MenuItem onClick={handleProfileClose}>
-						<Avatar /> Akun saya
-					</MenuItem>
+					<Box sx={{ px: 2, py: 1 }}>
+						<Typography sx={{ fontWeight: 700, fontSize: 14 }} noWrap>
+							{displayName}
+						</Typography>
+						{session?.user?.email && (
+							<Typography sx={{ fontSize: 12, color: "text.secondary" }} noWrap>
+								{session.user.email}
+							</Typography>
+						)}
+					</Box>
 					<Divider />
-					<MenuItem onClick={handleProfileClose}>
+					<MenuItem component={Link} href="/profil/akun" onClick={handleProfileClose}>
 						<ListItemIcon>
-							<PersonIcon fontSize="small" />
+							<PersonOutlineIcon fontSize="small" />
 						</ListItemIcon>
-						Tambah akun lain
+						Profil (ganti nama, foto, dll)
 					</MenuItem>
-					<MenuItem onClick={handleProfileClose}>
-						<ListItemIcon>
-							<SettingsIcon fontSize="small" />
-						</ListItemIcon>
-						Pengaturan
-					</MenuItem>
+					{isAdmin && (
+						<MenuItem component={Link} href="/admin/settings" onClick={handleProfileClose}>
+							<ListItemIcon>
+								<SettingsIcon fontSize="small" />
+							</ListItemIcon>
+							Pengaturan
+						</MenuItem>
+					)}
 					<MenuItem
 						onClick={() => {
 							handleProfileClose();

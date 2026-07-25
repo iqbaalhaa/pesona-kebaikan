@@ -129,7 +129,10 @@ export default function AdminSidebar({
 		return () => {
 			active = false;
 		};
-	}, []);
+		// Refetch on every admin route change — the sidebar stays mounted across
+		// navigation (Next.js layout persistence), so without this the badge goes
+		// stale after approving/rejecting a campaign until a hard refresh.
+	}, [pathname]);
 
 	React.useEffect(() => {
 		let active = true;
@@ -147,7 +150,7 @@ export default function AdminSidebar({
 		return () => {
 			active = false;
 		};
-	}, []);
+	}, [pathname]);
 
 	const SidebarContent = (
 		<div className="h-full flex flex-col">
