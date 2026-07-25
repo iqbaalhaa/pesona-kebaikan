@@ -29,6 +29,13 @@ import {
 	useTheme,
 	alpha,
 	Breadcrumbs,
+	Dialog,
+	DialogTitle,
+	DialogContent,
+	DialogActions,
+	MenuItem as SelectMenuItem,
+	Snackbar,
+	Alert,
 } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import {
@@ -49,10 +56,16 @@ import {
 	History as HistoryIcon,
 	AccountCircle as AccountCircleIcon,
 	CreditCard as CreditCardIcon,
+	Edit as EditIcon,
 } from "@mui/icons-material";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { id as idLocale } from "date-fns/locale";
+import { StyledTextField } from "@/components/ui/StyledTextField";
+import PermissionChecklist from "@/components/admin/PermissionChecklist";
+import { updateUser } from "@/actions/user";
+import type { Role, AdminPermission } from "@prisma/client";
 
 interface AdminUserDetailClientProps {
 	user: {
@@ -61,6 +74,7 @@ interface AdminUserDetailClientProps {
 		email: string;
 		phone: string | null;
 		role: string;
+		permissions?: AdminPermission[];
 		image: string | null;
 		createdAt: string;
 		emailVerified: string | null;
@@ -127,10 +141,49 @@ export default function AdminUserDetailClient({
 	user,
 }: AdminUserDetailClientProps) {
 	const theme = useTheme();
+	const router = useRouter();
 	const [tabValue, setTabValue] = useState(0);
+
+	const [roleDialogOpen, setRoleDialogOpen] = useState(false);
+	const [editRole, setEditRole] = useState<Role>(user.role as Role);
+	const [editPermissions, setEditPermissions] = useState<AdminPermission[]>(
+		user.permissions || [],
+	);
+	const [savingRole, setSavingRole] = useState(false);
+	const [snackbar, setSnackbar] = useState<{
+		open: boolean;
+		message: string;
+		severity: "success" | "error";
+	}>({ open: false, message: "", severity: "success" });
 
 	const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
 		setTabValue(newValue);
+	};
+
+	const handleOpenRoleDialog = () => {
+		setEditRole(user.role as Role);
+		setEditPermissions(user.permissions || []);
+		setRoleDialogOpen(true);
+	};
+
+	const handleSaveRole = async () => {
+		setSavingRole(true);
+		const res = await updateUser(user.id, {
+			role: editRole,
+			permissions: editPermissions,
+		});
+		setSavingRole(false);
+		if (res.success) {
+			setRoleDialogOpen(false);
+			setSnackbar({ open: true, message: "Role berhasil diperbarui", severity: "success" });
+			router.refresh();
+		} else {
+			setSnackbar({
+				open: true,
+				message: res.error || "Gagal memperbarui role",
+				severity: "error",
+			});
+		}
 	};
 
 	const formatCurrency = (amount: string) => {
@@ -230,11 +283,18 @@ export default function AdminUserDetailClient({
 								</Typography>
 								<Stack direction="row" spacing={1} alignItems="center" mt={0.5}>
 									<Chip
-										label={user.role}
+										label={
+											user.role === "STAFF" && user.permissions && user.permissions.length > 0
+												? `STAFF (${user.permissions.length})`
+												: user.role
+										}
 										size="small"
 										color={user.role === "ADMIN" ? "error" : "default"}
 										sx={{ fontWeight: 600, borderRadius: 1 }}
 									/>
+									<IconButton size="small" onClick={handleOpenRoleDialog}>
+										<EditIcon sx={{ fontSize: 16 }} />
+									</IconButton>
 									<Typography variant="body2" color="text.secondary">
 										ID: {user.id}
 									</Typography>
@@ -827,6 +887,54 @@ export default function AdminUserDetailClient({
 					</Grid>
 				</Grid>
 			</Container>
+
+			<Dialog
+				open={roleDialogOpen}
+				onClose={() => setRoleDialogOpen(false)}
+				fullWidth
+				maxWidth="xs"
+			>
+				<DialogTitle>Edit Role Pengguna</DialogTitle>
+				<DialogContent className="flex flex-col gap-4 pt-2">
+					<StyledTextField
+						select
+						label="Role"
+						value={editRole}
+						onChange={(e) => setEditRole(e.target.value as Role)}
+						fullWidth
+					>
+						<SelectMenuItem value="USER">USER (Donatur)</SelectMenuItem>
+						<SelectMenuItem value="STAFF">STAFF (izin custom)</SelectMenuItem>
+						<SelectMenuItem value="ADMIN">ADMIN (akses penuh)</SelectMenuItem>
+					</StyledTextField>
+					{editRole === "STAFF" && (
+						<PermissionChecklist value={editPermissions} onChange={setEditPermissions} />
+					)}
+				</DialogContent>
+				<DialogActions>
+					<Button onClick={() => setRoleDialogOpen(false)} disabled={savingRole}>
+						Batal
+					</Button>
+					<Button variant="contained" onClick={handleSaveRole} disabled={savingRole}>
+						Simpan
+					</Button>
+				</DialogActions>
+			</Dialog>
+
+			<Snackbar
+				open={snackbar.open}
+				autoHideDuration={4000}
+				onClose={() => setSnackbar((p) => ({ ...p, open: false }))}
+				anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+			>
+				<Alert
+					onClose={() => setSnackbar((p) => ({ ...p, open: false }))}
+					severity={snackbar.severity}
+					sx={{ width: "100%" }}
+				>
+					{snackbar.message}
+				</Alert>
+			</Snackbar>
 		</Box>
 	);
 }

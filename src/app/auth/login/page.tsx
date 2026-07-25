@@ -27,6 +27,7 @@ import {
 	VisibilityOutlined,
 } from "@mui/icons-material";
 import { loginAction } from "./action";
+import { defaultAdminPathFor } from "@/lib/admin-access";
 
 export default function LoginPage() {
 	const router = useRouter();
@@ -90,13 +91,9 @@ export default function LoginPage() {
 				return;
 			}
 
-			if (result?.role === "ADMIN") {
-				router.push("/admin");
-			} else if (result?.role === "BLOGGER") {
-				router.push("/admin/blog");
-			} else {
-				router.push("/profil");
-			}
+			router.push(
+				defaultAdminPathFor(result?.role as any, result?.permissions as any),
+			);
 		} catch (err) {
 			setError("Terjadi kesalahan saat login");
 			setLoading(false);

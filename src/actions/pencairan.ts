@@ -9,6 +9,20 @@ import {
 import { auth } from "@/auth";
 import { verifyOtp } from "@/actions/otp";
 
+/**
+ * SECURITY: none of the functions in this file had any caller-authorization
+ * check before — anyone (even logged out) could approve/reject a real
+ * withdrawal via direct server-action call. Every exported function below
+ * must go through this guard.
+ */
+async function assertWithdrawalAccess() {
+  const session = await auth();
+  const role = session?.user?.role;
+  const permissions = session?.user?.permissions || [];
+  const allowed = role === "ADMIN" || (role === "STAFF" && permissions.includes("MANAGE_WITHDRAWALS"));
+  return { allowed, session };
+}
+
 const DOKU_PAYOUTS_ENABLED = process.env.DOKU_PAYOUTS_ENABLED === "true";
 const PAYOUTS_REVIEW_MESSAGE =
   process.env.PAYOUTS_REVIEW_MESSAGE ||
@@ -26,6 +40,9 @@ const DISBURSEMENT_BYPASS_STATUS_UPDATE =
   process.env.NEXT_PUBLIC_DISBURSEMENT_BYPASS_STATUS_UPDATE === "true";
 
 export async function getCampaignsWithFunds() {
+  const { allowed } = await assertWithdrawalAccess();
+  if (!allowed) return [];
+
   const campaigns = await prisma.campaign.findMany({
     where: {
       status: "ACTIVE",
@@ -86,6 +103,9 @@ export async function getPayoutsCapability() {
 }
 
 export async function getWithdrawals() {
+  const { allowed } = await assertWithdrawalAccess();
+  if (!allowed) return [];
+
   const withdrawals = await prisma.withdrawal.findMany({
     include: {
       campaign: {
@@ -129,6 +149,9 @@ export async function createWithdrawal(data: {
   accountHolder: string;
   notes?: string;
 }) {
+  const { allowed } = await assertWithdrawalAccess();
+  if (!allowed) throw new Error("Unauthorized");
+
   await prisma.withdrawal.create({
     data: {
       campaignId: data.campaignId,
@@ -157,6 +180,9 @@ export async function updateWithdrawalStatus(
     senderAccount?: string;
   }
 ) {
+  const { allowed, session } = await assertWithdrawalAccess();
+  if (!allowed) return { success: false, error: "Unauthorized" };
+
   // 0. Verify OTP (Application Level Security)
   // We require OTP for ALL approvals, regardless of DOKU/Manual mode
   if (status === "APPROVED") {
@@ -169,7 +195,6 @@ export async function updateWithdrawalStatus(
         };
       }
 
-      const session = await auth();
       // Use provided adminPhone or fallback to session or default
       const phoneToVerify =
         adminPhone || (session?.user as any)?.phone;

@@ -3,7 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import bcrypt from "bcryptjs";
-import { Role, NotificationType } from "@prisma/client";
+import { Role, AdminPermission, NotificationType } from "@prisma/client";
 import { auth } from "@/auth";
 import { createNotification } from "@/actions/notification";
 import { subDays } from "date-fns";
@@ -20,6 +20,7 @@ export async function getUsers(
 	status?: string, // "verified", "unverified", "pending"
 	page: number = 1,
 	limit: number = 10,
+	scope?: "all" | "donor" | "administrator", // donor = role USER; administrator = role != USER
 ) {
 	const session = await auth();
 	if (session?.user?.role !== "ADMIN") {
@@ -34,6 +35,12 @@ export async function getUsers(
 			{ email: { contains: query, mode: "insensitive" } },
 			{ phone: { contains: query, mode: "insensitive" } },
 		];
+	}
+
+	if (scope === "donor") {
+		where.role = "USER";
+	} else if (scope === "administrator") {
+		where.role = { not: "USER" };
 	}
 
 	if (role && role !== "all") {
@@ -85,6 +92,7 @@ export async function getUsers(
 					phone: true,
 					phoneVerified: true,
 					role: true,
+					permissions: true,
 					createdAt: true,
 					image: true,
 					emailVerified: true,
@@ -175,6 +183,7 @@ type CreateUserInput = {
 	email: string;
 	phone?: string;
 	role: Role;
+	permissions?: AdminPermission[];
 	password: string;
 };
 
@@ -195,6 +204,9 @@ export async function createUser(data: CreateUserInput) {
 				email: data.email,
 				phone: normalizedPhone,
 				role: data.role,
+				// Only STAFF actually uses granular permissions — keep them empty
+				// for every other role so nothing lingers if role changes later.
+				permissions: data.role === "STAFF" ? data.permissions || [] : [],
 				password: hashedPassword,
 				emailVerified: isAdmin ? new Date() : null,
 				verifiedAt: isAdmin ? new Date() : null,
@@ -218,6 +230,7 @@ type UpdateUserInput = {
 	email?: string;
 	phone?: string;
 	role?: Role;
+	permissions?: AdminPermission[];
 	password?: string;
 };
 
@@ -236,6 +249,12 @@ export async function updateUser(id: string, data: UpdateUserInput) {
 			phone: normalizedPhone,
 			role: data.role,
 		};
+
+		if (data.role !== undefined) {
+			// Only STAFF actually uses granular permissions — clear them for
+			// every other role so nothing lingers if role changes later.
+			updateData.permissions = data.role === "STAFF" ? data.permissions || [] : [];
+		}
 
 		if (data.role === "ADMIN") {
 			updateData.emailVerified = new Date();

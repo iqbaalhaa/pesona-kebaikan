@@ -1,6 +1,7 @@
 import NextAuth from "next-auth";
 import { authConfig } from "@/lib/auth.config";
 import { NextResponse } from "next/server";
+import { isAdminPathAllowed, defaultAdminPathFor } from "@/lib/admin-access";
 
 const { auth } = NextAuth(authConfig);
 
@@ -8,6 +9,7 @@ export default auth((req) => {
 	const { nextUrl } = req;
 	const isLoggedIn = !!req.auth;
 	const userRole = req.auth?.user?.role;
+	const userPermissions = req.auth?.user?.permissions;
 
 	const buildLoginRedirect = () => {
 		const loginUrl = nextUrl.clone();
@@ -37,15 +39,15 @@ export default auth((req) => {
 		if (!isLoggedIn) {
 			return buildLoginRedirect();
 		}
-		// BLOGGER only manages blog content — keep them out of every other admin section.
-		if (userRole === "BLOGGER") {
-			if (!nextUrl.pathname.startsWith("/admin/blog")) {
-				return NextResponse.redirect(new URL("/admin/blog", nextUrl));
-			}
-			return NextResponse.next();
-		}
-		if (userRole !== "ADMIN") {
+		if (userRole === "USER" || !userRole) {
 			return NextResponse.redirect(new URL("/profil", nextUrl));
+		}
+		// ADMIN gets everything; STAFF is restricted to whatever
+		// src/lib/admin-access.ts says their role+permissions unlock.
+		if (!isAdminPathAllowed(nextUrl.pathname, userRole, userPermissions)) {
+			return NextResponse.redirect(
+				new URL(defaultAdminPathFor(userRole, userPermissions), nextUrl),
+			);
 		}
 		return NextResponse.next();
 	}

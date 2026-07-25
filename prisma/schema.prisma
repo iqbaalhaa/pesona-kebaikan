@@ -10,7 +10,18 @@ datasource db {
 enum Role {
   USER
   ADMIN
-  BLOGGER
+  STAFF
+}
+
+// Granular admin capabilities for the STAFF role. ADMIN implicitly has all of
+// these (checked separately, never stored on ADMIN accounts). Add new values
+// here — plus one entry in src/lib/admin-access.ts — whenever a client asks
+// for a new "can only manage X" admin capability, instead of adding a new
+// single-purpose Role value.
+enum AdminPermission {
+  MANAGE_BLOG
+  MANAGE_WITHDRAWALS
+  APPROVE_CAMPAIGNS
 }
 
 enum VerifiedAs {
@@ -31,6 +42,7 @@ model User {
   emailVerified DateTime?
   image         String?
   role          Role        @default(USER)
+  permissions   AdminPermission[] @default([])
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
   nameChangedAt DateTime?

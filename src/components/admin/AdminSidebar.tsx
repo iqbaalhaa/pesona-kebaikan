@@ -6,6 +6,7 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Drawer from "@mui/material/Drawer";
+import { isAdminPathAllowed } from "@/lib/admin-access";
 
 // Icons
 import DashboardIcon from "@mui/icons-material/Dashboard";
@@ -104,9 +105,18 @@ export default function AdminSidebar({
 	const pathname = usePathname();
 	const { data: session } = useSession();
 	const role = session?.user?.role;
-	// BLOGGER only manages blog content — hide every other admin section.
-	const visibleMenus =
-		role === "BLOGGER" ? menus.filter((section) => section.title === "Konten") : menus;
+	const permissions = session?.user?.permissions;
+	// Restricted role (STAFF) only sees the menu items their
+	// role+permissions unlock — same source of truth proxy.ts uses, so the
+	// sidebar never shows a link that would just redirect away.
+	const visibleMenus = menus
+		.map((section) => ({
+			...section,
+			items: section.items.filter((item) =>
+				isAdminPathAllowed(item.href, role, permissions),
+			),
+		}))
+		.filter((section) => section.items.length > 0);
 
 	const [reviewCount, setReviewCount] = React.useState<number | null>(null);
 	const [activeCampaignCount, setActiveCampaignCount] = React.useState<

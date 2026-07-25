@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { hasBlogAccess } from "@/lib/admin-access";
 
 export async function GET() {
   try {
@@ -15,7 +16,7 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   const session = await auth();
-  if (!["ADMIN", "BLOGGER"].includes(session?.user?.role || "")) {
+  if (!hasBlogAccess(session?.user?.role, session?.user?.permissions)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

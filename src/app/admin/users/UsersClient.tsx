@@ -25,6 +25,8 @@ import {
 	TableContainer,
 	TableHead,
 	TableRow,
+	Tabs,
+	Tab,
 	Typography,
 	Alert,
 	Avatar,
@@ -41,7 +43,7 @@ import TrendingUpRoundedIcon from "@mui/icons-material/TrendingUpRounded";
 import TrendingDownRoundedIcon from "@mui/icons-material/TrendingDownRounded";
 import PersonOutlineRoundedIcon from "@mui/icons-material/PersonOutlineRounded";
 import AdminPanelSettingsRoundedIcon from "@mui/icons-material/AdminPanelSettingsRounded";
-import ArticleRoundedIcon from "@mui/icons-material/ArticleRounded";
+import BadgeRoundedIcon from "@mui/icons-material/BadgeRounded";
 import {
 	ChangeEvent,
 	FormEvent,
@@ -53,8 +55,9 @@ import {
 import { useRouter } from "next/navigation";
 import type { UserStats } from "@/actions/user";
 import { getUsers, createUser, updateUser, deleteUser } from "@/actions/user";
-import type { Role } from "@prisma/client";
+import type { Role, AdminPermission } from "@prisma/client";
 import { formatDate } from "@/lib/date";
+import PermissionChecklist from "@/components/admin/PermissionChecklist";
 
 function Surface({
 	children,
@@ -143,6 +146,7 @@ type UserRow = {
 	name: string | null;
 	email: string;
 	role: string;
+	permissions?: AdminPermission[];
 	createdAt: string | Date;
 };
 
@@ -163,6 +167,9 @@ export default function UsersClient({
 	const [page, setPage] = useState(1);
 	const [rowsPerPage] = useState(10);
 	const [searchQuery, setSearchQuery] = useState("");
+	// Donatur/pemilik campaign vs. pengguna lingkup administrator — default "donor"
+	// supaya pengguna biasa (mayoritas) yang muncul duluan, bukan admin/staff.
+	const [scope, setScope] = useState<"donor" | "administrator">("donor");
 	const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 	const [selectedUser, setSelectedUser] = useState<UserRow | null>(null);
 	const [isAddUserDialogOpen, setAddUserDialogOpen] = useState(false);
@@ -174,12 +181,14 @@ export default function UsersClient({
 		email: "",
 		password: "",
 		role: "USER" as Role,
+		permissions: [] as AdminPermission[],
 	});
 	const [editUser, setEditUser] = useState({
 		id: "",
 		name: "",
 		email: "",
 		role: "USER" as Role,
+		permissions: [] as AdminPermission[],
 	});
 
 	const [snackbar, setSnackbar] = useState<{
@@ -205,10 +214,10 @@ export default function UsersClient({
 		setSnackbar((prev) => ({ ...prev, open: false }));
 	};
 
-	const loadUsers = async (page: number, query: string) => {
+	const loadUsers = async (page: number, query: string, currentScope: typeof scope) => {
 		setTableLoading(true);
 		try {
-			const data = await getUsers(query, "all", "all", page, rowsPerPage);
+			const data = await getUsers(query, "all", "all", page, rowsPerPage, currentScope);
 			setUsers(data.users as UserRow[]);
 			setTotal(data.total);
 		} catch {
@@ -220,15 +229,20 @@ export default function UsersClient({
 
 	useEffect(() => {
 		const t = setTimeout(() => {
-			loadUsers(page, searchQuery);
+			loadUsers(page, searchQuery, scope);
 		}, 300);
 		return () => clearTimeout(t);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [page, searchQuery]);
+	}, [page, searchQuery, scope]);
 
 	const handleSearchChange = (event: ChangeEvent<HTMLInputElement>) => {
 		setPage(1);
 		setSearchQuery(event.target.value);
+	};
+
+	const handleScopeChange = (_event: React.SyntheticEvent, value: "donor" | "administrator") => {
+		setScope(value);
+		setPage(1);
 	};
 
 	const handlePageChange = (_event: ChangeEvent<unknown>, value: number) => {
@@ -249,7 +263,15 @@ export default function UsersClient({
 	};
 
 	const handleAddUserDialogOpen = () => {
-		setNewUser({ name: "", email: "", password: "", role: "USER" as Role });
+		// Default role follows the active tab: donor tab -> plain USER,
+		// administrator tab -> STAFF (the safest non-full-admin starting point).
+		setNewUser({
+			name: "",
+			email: "",
+			password: "",
+			role: (scope === "administrator" ? "STAFF" : "USER") as Role,
+			permissions: [],
+		});
 		setAddUserDialogOpen(true);
 	};
 
@@ -263,6 +285,7 @@ export default function UsersClient({
 			name: user.name ?? "",
 			email: user.email,
 			role: (user.role as Role) ?? ("USER" as Role),
+			permissions: user.permissions || [],
 		});
 		setEditUserDialogOpen(true);
 		handleMenuClose();
@@ -290,11 +313,12 @@ export default function UsersClient({
 				email: newUser.email,
 				password: newUser.password,
 				role: newUser.role,
+				permissions: newUser.permissions,
 			});
 			if (res.success) {
 				showSnackbar("Pengguna berhasil ditambahkan", "success");
 				handleAddUserDialogClose();
-				await loadUsers(page, searchQuery);
+				await loadUsers(page, searchQuery, scope);
 				router.refresh();
 			} else {
 				showSnackbar(res.error || "Gagal menambahkan pengguna", "error");
@@ -309,11 +333,12 @@ export default function UsersClient({
 				name: editUser.name,
 				email: editUser.email,
 				role: editUser.role,
+				permissions: editUser.permissions,
 			});
 			if (res.success) {
 				showSnackbar("Pengguna berhasil diperbarui", "success");
 				handleEditUserDialogClose();
-				await loadUsers(page, searchQuery);
+				await loadUsers(page, searchQuery, scope);
 				router.refresh();
 			} else {
 				showSnackbar(res.error || "Gagal memperbarui pengguna", "error");
@@ -329,7 +354,7 @@ export default function UsersClient({
 			if (res.success) {
 				showSnackbar("Pengguna berhasil dihapus", "success");
 				handleDeleteDialogClose();
-				await loadUsers(page, searchQuery);
+				await loadUsers(page, searchQuery, scope);
 				router.refresh();
 			} else {
 				showSnackbar(res.error || "Gagal menghapus pengguna", "error");
@@ -384,6 +409,15 @@ export default function UsersClient({
 				</Grid>
 			</Grid>
 
+			<Tabs
+				value={scope}
+				onChange={handleScopeChange}
+				sx={{ mb: 2, minHeight: 40, "& .MuiTab-root": { minHeight: 40, textTransform: "none", fontWeight: 700 } }}
+			>
+				<Tab label="Donatur & Pemilik Campaign" value="donor" />
+				<Tab label="Administrator" value="administrator" />
+			</Tabs>
+
 			<Stack
 				direction={{ xs: "column", sm: "row" }}
 				justifyContent="space-between"
@@ -413,7 +447,7 @@ export default function UsersClient({
 					onClick={handleAddUserDialogOpen}
 					sx={{ borderRadius: 999, fontWeight: 700, boxShadow: "none", px: 2.5 }}
 				>
-					Tambah Pengguna
+					{scope === "administrator" ? "Tambah Administrator" : "Tambah Pengguna"}
 				</Button>
 			</Stack>
 
@@ -455,7 +489,7 @@ export default function UsersClient({
 										.charAt(0)
 										.toUpperCase();
 									const isAdminRole = user.role === "ADMIN";
-									const isBloggerRole = user.role === "BLOGGER";
+									const isStaffRole = user.role === "STAFF";
 									return (
 										<TableRow
 											key={user.id}
@@ -473,8 +507,8 @@ export default function UsersClient({
 															fontWeight: 700,
 															bgcolor: isAdminRole
 																? "warning.light"
-																: isBloggerRole
-																	? "info.light"
+																: isStaffRole
+																	? "secondary.light"
 																	: "primary.light",
 														}}
 													>
@@ -496,19 +530,21 @@ export default function UsersClient({
 													icon={
 														isAdminRole ? (
 															<AdminPanelSettingsRoundedIcon fontSize="small" />
-														) : isBloggerRole ? (
-															<ArticleRoundedIcon fontSize="small" />
+														) : isStaffRole ? (
+															<BadgeRoundedIcon fontSize="small" />
 														) : undefined
 													}
-													label={user.role}
+													label={
+														isStaffRole && user.permissions && user.permissions.length > 0 ? ("STAFF (" + user.permissions.length + ")") : user.role
+													}
 													color={
 														isAdminRole
 															? "warning"
-															: isBloggerRole
-																? "info"
+															: isStaffRole
+																? "secondary"
 																: "default"
 													}
-													variant={isAdminRole || isBloggerRole ? "filled" : "outlined"}
+													variant={isAdminRole || isStaffRole ? "filled" : "outlined"}
 													sx={{ fontWeight: 700, fontSize: 11 }}
 												/>
 											</TableCell>
@@ -624,10 +660,16 @@ export default function UsersClient({
 							}
 							fullWidth
 						>
-							<SelectMenuItem value="USER">USER</SelectMenuItem>
-							<SelectMenuItem value="BLOGGER">BLOGGER</SelectMenuItem>
-							<SelectMenuItem value="ADMIN">ADMIN</SelectMenuItem>
+							<SelectMenuItem value="USER">USER (Donatur)</SelectMenuItem>
+							<SelectMenuItem value="STAFF">STAFF (izin custom)</SelectMenuItem>
+							<SelectMenuItem value="ADMIN">ADMIN (akses penuh)</SelectMenuItem>
 						</StyledTextField>
+						{newUser.role === "STAFF" && (
+							<PermissionChecklist
+								value={newUser.permissions}
+								onChange={(next) => setNewUser((p) => ({ ...p, permissions: next }))}
+							/>
+						)}
 					</DialogContent>
 					<DialogActions>
 						<Button onClick={handleAddUserDialogClose}>Batal</Button>
@@ -677,10 +719,16 @@ export default function UsersClient({
 							}
 							fullWidth
 						>
-							<SelectMenuItem value="USER">USER</SelectMenuItem>
-							<SelectMenuItem value="BLOGGER">BLOGGER</SelectMenuItem>
-							<SelectMenuItem value="ADMIN">ADMIN</SelectMenuItem>
+							<SelectMenuItem value="USER">USER (Donatur)</SelectMenuItem>
+							<SelectMenuItem value="STAFF">STAFF (izin custom)</SelectMenuItem>
+							<SelectMenuItem value="ADMIN">ADMIN (akses penuh)</SelectMenuItem>
 						</StyledTextField>
+						{editUser.role === "STAFF" && (
+							<PermissionChecklist
+								value={editUser.permissions}
+								onChange={(next) => setEditUser((p) => ({ ...p, permissions: next }))}
+							/>
+						)}
 					</DialogContent>
 					<DialogActions>
 						<Button onClick={handleEditUserDialogClose}>Batal</Button>

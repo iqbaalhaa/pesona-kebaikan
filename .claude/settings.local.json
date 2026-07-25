@@ -49,7 +49,23 @@
       "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" --max-time 20 \"http://localhost:3000/admin\")",
       "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" --max-time 20 \"http://localhost:3000/admin/blog\")",
       "Bash(curl -s -o /dev/null -w \"profil/akun: %{http_code}\\\\n\" --max-time 20 \"http://localhost:3000/profil/akun\")",
-      "Bash(curl -s -o /dev/null -w \"admin/blog: %{http_code}\\\\n\" --max-time 20 \"http://localhost:3000/admin/blog\")"
+      "Bash(curl -s -o /dev/null -w \"admin/blog: %{http_code}\\\\n\" --max-time 20 \"http://localhost:3000/admin/blog\")",
+      "Bash(grep -n \"Add User Dialog\\\\|Edit User Dialog\\\\|select$\\\\|label=\\\\\"Role\\\\\"\" \"e:\\\\ProjectDepati\\\\pesona-kebaikan\\\\src\\\\app\\\\admin\\\\users\\\\UsersClient.tsx\")",
+      "Bash(pnpm dev *)",
+      "Bash(curl -s -o /dev/null -w \"admin/users: %{http_code}\\\\n\" http://localhost:3000/admin/users)",
+      "Bash(curl -s -o /dev/null -w \"admin/pencairan: %{http_code}\\\\n\" http://localhost:3000/admin/pencairan)",
+      "Bash(curl -s -o /dev/null -w \"admin/campaign/verifikasi: %{http_code}\\\\n\" http://localhost:3000/admin/campaign/verifikasi)",
+      "Bash(curl -s -o /dev/null -w \"admin \\(dashboard\\): %{http_code}\\\\n\" http://localhost:3000/admin)",
+      "Bash(grep -qE \"Ready in|Compiling proxy \\\\.\\\\.\\\\.$\" \"C:\\\\Users\\\\HP\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\e--ProjectDepati-pesona-kebaikan\\\\fd8420e7-277b-4283-8c33-2241182f9ab8\\\\tasks\\\\b2n63msw0.output\")",
+      "Bash(curl -s -D - -o /dev/null http://localhost:3000/admin/users)",
+      "Bash(powershell -Command \"Stop-Process -Name node -Force -ErrorAction SilentlyContinue\")",
+      "Bash(node \"C:\\\\Users\\\\HP\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\e--ProjectDepati-pesona-kebaikan\\\\fd8420e7-277b-4283-8c33-2241182f9ab8\\\\scratchpad\\\\fix-users-client.js\")",
+      "Bash(node \"C:\\\\Users\\\\HP\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\e--ProjectDepati-pesona-kebaikan\\\\fd8420e7-277b-4283-8c33-2241182f9ab8\\\\scratchpad\\\\fix-users-client2.js\")",
+      "Bash(curl -s -o /dev/null -w \"admin/blog: %{http_code}\\\\n\" http://localhost:3000/admin/blog)",
+      "Bash(curl -s -o /dev/null -w \"auth/login: %{http_code}\\\\n\" http://localhost:3000/auth/login)",
+      "Bash(curl -s -o /dev/null -w \"api/admin/blogs: %{http_code}\\\\n\" http://localhost:3000/api/admin/blogs)",
+      "Bash(Out-Null)",
+      "Bash(curl -s -o /dev/null -w \"admin/users/[id]: %{http_code}\\\\n\" http://localhost:3000/admin/users/cmrz80lbm0000wddkh7jmpe8u)"
     ]
   }
 }

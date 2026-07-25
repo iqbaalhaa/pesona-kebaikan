@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { blogService } from "@/services/blogService";
+import { hasBlogAccess } from "@/lib/admin-access";
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await auth();
-  if (!["ADMIN", "BLOGGER"].includes(session?.user?.role || "")) {
+  if (!hasBlogAccess(session?.user?.role, session?.user?.permissions)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -29,7 +30,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await auth();
-  if (!["ADMIN", "BLOGGER"].includes(session?.user?.role || "")) {
+  if (!hasBlogAccess(session?.user?.role, session?.user?.permissions)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -49,7 +50,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await auth();
-  if (!["ADMIN", "BLOGGER"].includes(session?.user?.role || "")) {
+  if (!hasBlogAccess(session?.user?.role, session?.user?.permissions)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

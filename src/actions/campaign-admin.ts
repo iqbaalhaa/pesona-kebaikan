@@ -1,6 +1,7 @@
 "use server";
 
 import { auth } from "@/auth";
+import type { Session } from "next-auth";
 import { prisma } from "@/lib/prisma";
 import { uploadFile, uploadCoverFile } from "@/actions/upload";
 import { CampaignStatus, Prisma, NotificationType } from "@prisma/client";
@@ -9,6 +10,15 @@ import { createNotification } from "@/actions/notification";
 
 const QUICK_DONATION_SLUG = "donasi-cepat";
 
+function hasCampaignApprovalAccess(session: Session | null | undefined) {
+	const role = session?.user?.role;
+	const permissions = session?.user?.permissions || [];
+	return (
+		role === "ADMIN" ||
+		(role === "STAFF" && permissions.includes("APPROVE_CAMPAIGNS"))
+	);
+}
+
 export async function updateCampaignStatus(
 	campaignId: string,
 	status: "ACTIVE" | "REJECTED" | "COMPLETED" | "PAUSED",
@@ -16,7 +26,7 @@ export async function updateCampaignStatus(
 ) {
 	try {
 		const session = await auth();
-		if (!session?.user?.id) {
+		if (!session?.user?.id || !hasCampaignApprovalAccess(session)) {
 			return { success: false, error: "Unauthorized" };
 		}
 
@@ -298,6 +308,11 @@ export async function getCampaignChangeRequests(
 	limit = 20,
 	status: "all" | "PENDING" | "APPROVED" | "REJECTED" = "all",
 ) {
+	const session = await auth();
+	if (!hasCampaignApprovalAccess(session)) {
+		return { requests: [], total: 0, totalPages: 0 };
+	}
+
 	try {
 		const where: any = {};
 		if (status !== "all") {
@@ -347,7 +362,7 @@ export async function resolveCampaignChangeRequest(
 ) {
 	try {
 		const session = await auth();
-		if (!session?.user || session.user.role !== "ADMIN") {
+		if (!session?.user || !hasCampaignApprovalAccess(session)) {
 			return { success: false, error: "Unauthorized" };
 		}
 

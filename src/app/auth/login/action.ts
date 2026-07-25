@@ -19,17 +19,19 @@ export async function loginAction(
 		});
 
 		let role: string | null = null;
+		let permissions: string[] = [];
 		if (email) {
 			try {
 				const user = await prisma.user.findUnique({
 					where: { email },
-					select: { role: true },
+					select: { role: true, permissions: true },
 				});
 				role = user?.role ?? null;
+				permissions = user?.permissions ?? [];
 			} catch (e) {}
 		}
 
-		return { success: true, role };
+		return { success: true, role, permissions };
 	} catch (error) {
 		if (
 			error instanceof InvalidEmailError ||

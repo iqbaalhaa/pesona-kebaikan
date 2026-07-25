@@ -88,6 +88,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 					// Avoid sending image in token to prevent cookie bloat if base64
 					image: user.image?.startsWith("http") ? user.image : null,
 					role: user.role,
+					permissions: user.permissions,
 					phone: user.phone,
 					emailVerified: user.emailVerified,
 					phoneVerified: user.phoneVerified,
@@ -99,6 +100,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 		async jwt({ token, user, trigger }) {
 			if (user) {
 				token.role = user.role as Role;
+				token.permissions = (user as any).permissions;
 				token.id = user.id as string;
 				// Explicitly delete picture from token if it comes from default user object
 				// to ensure we don't carry large base64 strings
@@ -113,6 +115,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 				});
 				if (freshUser) {
 					token.role = freshUser.role;
+					token.permissions = freshUser.permissions;
 				}
 			}
 
@@ -125,6 +128,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 				select: {
 					id: true,
 					role: true,
+					permissions: true,
 					phone: true,
 					emailVerified: true,
 					phoneVerified: true,
@@ -133,6 +137,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 			if (user && session.user) {
 				session.user.id = user.id;
 				session.user.role = user.role as Role;
+				session.user.permissions = user.permissions;
 				session.user.phone = user.phone;
 				session.user.emailVerified = user.emailVerified;
 				session.user.phoneVerified = user.phoneVerified;
