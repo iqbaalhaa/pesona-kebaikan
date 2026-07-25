@@ -62,7 +62,7 @@ This is a Next.js 16 App Router project. Pages are either server components (def
 - `/auth/` — Login, register, OTP, password reset
 - `/api/` — Webhook endpoints and a few REST routes
 
-**Route guard:** Middleware (`src/middleware.ts`) handles role-based access. Admin routes require `role === "ADMIN"`. Auth pages redirect if session already exists.
+**Route guard:** `src/proxy.ts` handles role/permission-based access for `/admin/*` (Next.js 16 renamed the `middleware.ts` convention to `proxy.ts` — do **not** create a `middleware.ts` file, it conflicts fatally with `proxy.ts` if both exist). `ADMIN` gets unrestricted access; `STAFF` is restricted to whatever `src/lib/admin-access.ts` says their granted permissions unlock — see "Authorization: Roles & Permissions" below. Auth pages redirect if session already exists.
 
 ### Server Actions vs API Routes
 
@@ -82,11 +82,26 @@ Key schema relationships:
 - `Campaign.status`: `DRAFT → PENDING → ACTIVE | REJECTED`. When status changes `PENDING → ACTIVE`, `start` and `end` are reset from today (handled in `src/actions/campaign-admin.ts:updateCampaignStatus`).
 - `Fundraiser` is a sub-campaign under a `Campaign`; donations can target either.
 - `Donation.status`: `PENDING → PAID → SETTLED | FAILED | REFUNDED`
-- `User.role`: `USER | ADMIN` — no other roles exist.
+- `User.role`: `USER | ADMIN | STAFF`. `USER` is a regular donor/campaign-owner account. `STAFF` is an admin-scope account with no default access — what it can do is entirely driven by its `permissions: AdminPermission[]` array (see below). There is no `BLOGGER` role — it was retired in favor of `STAFF` + `MANAGE_BLOG` permission.
 
 ### Authentication
 
-NextAuth v5 (beta) with JWT strategy. Auth is exported from `src/lib/auth.ts` (handlers, `auth`, `signIn`, `signOut`). The session callback adds `id` and `role` to the session user object. Always call `const session = await auth()` inside server actions to get the current user — never trust client-passed user IDs.
+NextAuth v5 (beta) with JWT strategy. Auth is exported from `src/lib/auth.ts` (handlers, `auth`, `signIn`, `signOut`). The session callback adds `id`, `role`, and `permissions` to the session user object (and refreshes `permissions` on `trigger === "update"`, so granting/revoking permissions applies without forcing a logout). Always call `const session = await auth()` inside server actions to get the current user — never trust client-passed user IDs.
+
+### Authorization: Roles & Permissions (RBAC)
+
+Two coarse roles (`USER`, `ADMIN`) plus a flexible `STAFF` role for "admin, but only for X". `STAFF` capabilities are granted per-user via the `AdminPermission[]` enum array on `User.permissions` (`prisma/schema.prisma`): `MANAGE_BLOG`, `MANAGE_WITHDRAWALS`, `APPROVE_CAMPAIGNS`.
+
+**`src/lib/admin-access.ts` is the single source of truth** for "which permission unlocks which `/admin/*` routes" (`PERMISSION_ROUTES`) and their display labels (`PERMISSION_LABELS`). It exports pure functions with no framework dependencies, consumed by three different layers so they can never drift apart:
+- `src/proxy.ts` (edge middleware route guard) — `isAdminPathAllowed()` / `defaultAdminPathFor()`
+- `src/components/admin/AdminSidebar.tsx` (client-side menu filtering) — same `isAdminPathAllowed()`, so the sidebar never shows a link that would just redirect away
+- Blog API routes (`src/app/api/admin/blogs*`) — `hasBlogAccess()`
+
+**To add a new granular admin capability** (e.g. "can manage banners"): add one `AdminPermission` enum value in `prisma/schema.prisma`, then one entry in `PERMISSION_ROUTES`/`PERMISSION_LABELS`/`ALL_ADMIN_PERMISSIONS` in `admin-access.ts`. No changes needed in `proxy.ts` or `AdminSidebar.tsx` themselves.
+
+**Server actions must independently re-check authorization** — the route guard only protects page navigation, not direct server-action calls, which are callable regardless of what page rendered the button. Every action touching a restricted area has its own guard function following the same `role === "ADMIN" || (role === "STAFF" && permissions.includes(...))` shape: `assertWithdrawalAccess()` in `src/actions/pencairan.ts`, `hasCampaignApprovalAccess()` in `src/actions/campaign-admin.ts`. Follow this pattern for any new STAFF-permissioned mutation — do not rely solely on the page/route guard.
+
+**Managing roles/permissions in the UI:** `/admin/users` (ADMIN-only) has two tabs — "Donatur & Pemilik Campaign" (`role: USER`) and "Administrator" (`role != USER`) — and the Add/Edit user dialogs show a permission checklist whenever `role === "STAFF"`. The same checklist is available from the user detail page (`/admin/users/[id]`) via the edit icon next to the role chip. The checklist itself is the shared `src/components/admin/PermissionChecklist.tsx` component — reuse it rather than re-implementing the checkbox list.
 
 ### Payment System
 

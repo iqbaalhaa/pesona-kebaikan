@@ -1,5 +1,18 @@
 # Changelog
 
+## [Unreleased] - 2026-07-25
+
+### Added
+- `STAFF` role with granular `AdminPermission[]` (`MANAGE_BLOG`, `MANAGE_WITHDRAWALS`, `APPROVE_CAMPAIGNS`) so admins can grant scoped access instead of full ADMIN rights.
+- Central permission→route mapping (`src/lib/admin-access.ts`), shared by `src/proxy.ts`, `AdminSidebar.tsx`, and blog API routes.
+- `/admin/users` now splits "Donatur & Pemilik Campaign" vs "Administrator" into separate tabs, with a permission checklist in the Add/Edit dialogs for STAFF accounts.
+- Role editing (with permission checklist) from the user detail page (`/admin/users/[id]`).
+- Shared `src/components/admin/PermissionChecklist.tsx` component used by both the users list and user detail page.
+
+### Changed
+- Removed the `BLOGGER` role entirely — existing BLOGGER accounts were migrated to `STAFF` + `MANAGE_BLOG`. Blog-management access is now checked via `hasBlogAccess()`.
+- Added caller-authorization checks to several server actions that previously had none or an incomplete role check: `src/actions/pencairan.ts` (all withdrawal actions), `src/actions/campaign-admin.ts` (`updateCampaignStatus`, `resolveCampaignChangeRequest`, `getCampaignChangeRequests`).
+
 ## [Unreleased] - 2026-02-27
 
 ### Added
