@@ -65,7 +65,8 @@
       "Bash(curl -s -o /dev/null -w \"auth/login: %{http_code}\\\\n\" http://localhost:3000/auth/login)",
       "Bash(curl -s -o /dev/null -w \"api/admin/blogs: %{http_code}\\\\n\" http://localhost:3000/api/admin/blogs)",
       "Bash(Out-Null)",
-      "Bash(curl -s -o /dev/null -w \"admin/users/[id]: %{http_code}\\\\n\" http://localhost:3000/admin/users/cmrz80lbm0000wddkh7jmpe8u)"
+      "Bash(curl -s -o /dev/null -w \"admin/users/[id]: %{http_code}\\\\n\" http://localhost:3000/admin/users/cmrz80lbm0000wddkh7jmpe8u)",
+      "Bash(curl -s -o /dev/null -w \"admin: %{http_code}\\\\n\" http://localhost:3000/admin)"
     ]
   }
 }

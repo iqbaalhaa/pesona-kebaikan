@@ -42,7 +42,6 @@ Key variables needed in `.env.local`:
 | `AUTH_SECRET` | NextAuth JWT signing secret |
 | `PAYMENT_PROVIDER` | `doku` (only payment provider) |
 | `DOKU_CLIENT_ID` / `DOKU_SECRET_KEY` | DOKU checkout credentials |
-| `DOKU_PAYOUTS_ENABLED` / `DOKU_PAYOUT_*` | DOKU Payout (Kirim DOKU) — separate credentials, used for automated withdrawal disbursement |
 | `S3_ENDPOINT`, `S3_BUCKET_NAME`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY` | Object storage |
 | `S3_ROOT_DIR` | Upload prefix directory (e.g. `uploads`) |
 | `EMAIL_SERVER_HOST/PORT/USER/PASSWORD` | SMTP for transactional email |
@@ -107,7 +106,7 @@ Two coarse roles (`USER`, `ADMIN`) plus a flexible `STAFF` role for "admin, but 
 
 `src/lib/payment/` has a pluggable provider abstraction (currently only `DokuProvider`, implementing the `PaymentProvider` interface in `src/lib/payment/types.ts`) so a second provider could be added again later without touching call sites. `getPaymentProvider()` always returns `DokuProvider`. The webhook handler parses DOKU's notification and calls shared donation settlement logic.
 
-Withdrawal disbursement (`src/actions/pencairan.ts`) is a separate concern from checkout — it optionally calls DOKU Payout (`src/lib/doku-payout.ts`, env-gated by `DOKU_PAYOUTS_ENABLED`) when approving a withdrawal; falls back to manual admin-recorded transfers otherwise.
+Withdrawal disbursement (`src/actions/pencairan.ts`) is a separate concern from checkout, and is **manual only** — there is no automated payout provider. An admin transfers funds from Pesona's bank account to the beneficiary's account outside the system, then marks the withdrawal `COMPLETED` and records the transfer details (amount, sender bank/account, optional proof upload) via `updateWithdrawalStatus()`. An earlier DOKU Payout ("Kirim DOKU") automated-disbursement integration was built and then descoped by the client — do not reintroduce it without an explicit new request.
 
 ### Image Uploads
 

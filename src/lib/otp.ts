@@ -116,30 +116,3 @@ export function buildVerificationMessage(otp: string) {
 	]);
 	return `${intro}\n\n${codeLine}\n\n${outro}`;
 }
-
-export function buildWithdrawalMessage(
-	otp: string,
-	amount: string,
-	campaignTitle: string,
-) {
-	const intro = pick([
-		"Konfirmasi pencairan dana.",
-		"Permintaan persetujuan pencairan dana.",
-		"Verifikasi pencairan dana campaign Anda.",
-	]);
-	const body = pick([
-		`Untuk menyetujui pencairan *${amount}* dari campaign "${campaignTitle}", gunakan kode berikut.`,
-		`Setujui pencairan *${amount}* untuk campaign "${campaignTitle}" dengan kode di bawah ini.`,
-		`Pencairan *${amount}* dari "${campaignTitle}" memerlukan kode konfirmasi berikut.`,
-	]);
-	const codeLine = pick([
-		`Kode OTP: *${otp}*`,
-		`Kode konfirmasi: *${otp}*`,
-		`Gunakan kode: *${otp}*`,
-	]);
-	const outro = pick([
-		`Kode berlaku ${OTP_CONFIG.EXPIRY_MIN} menit. Jangan bagikan ke siapa pun.`,
-		`Berlaku ${OTP_CONFIG.EXPIRY_MIN} menit. Rahasiakan kode ini.`,
-	]);
-	return `${intro}\n\n${body}\n\n${codeLine}\n\n${outro}`;
-}

@@ -31,15 +31,12 @@ import {
 	TableRow,
 	IconButton,
 	Tooltip,
-	Menu,
 } from "@mui/material";
 import { alpha, useTheme } from "@mui/material/styles";
 
 import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
 import RefreshRoundedIcon from "@mui/icons-material/RefreshRounded";
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
-import SettingsRoundedIcon from "@mui/icons-material/SettingsRounded";
-import MoreVertIcon from "@mui/icons-material/MoreVert";
 import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
 import HourglassBottomRoundedIcon from "@mui/icons-material/HourglassBottomRounded";
 import ErrorRoundedIcon from "@mui/icons-material/ErrorRounded";
@@ -49,16 +46,12 @@ import {
 	getCampaignsWithFunds,
 	createWithdrawal,
 	updateWithdrawalStatus,
-	getPayoutsCapability,
 } from "@/actions/pencairan";
 
 import {
 	WithdrawalRow,
 	WithdrawalStatus,
 } from "@/components/admin/pencairan/WithdrawalCard";
-import OtpVerificationDialog from "@/components/admin/pencairan/OtpVerificationDialog";
-import AdminPhoneDialog from "@/components/admin/pencairan/AdminPhoneDialog";
-import { useSession } from "next-auth/react";
 import { SUPPORTED_BANKS } from "@/lib/banks";
 import { getBankName } from "@/lib/banks";
 
@@ -111,20 +104,15 @@ function statusChip(status: WithdrawalStatus) {
 
 export default function PencairanPage() {
 	const theme = useTheme();
-	const { data: session, update: updateSession } = useSession();
 
 	const [withdrawals, setWithdrawals] = React.useState<WithdrawalRow[]>([]);
 	const [campaigns, setCampaigns] = React.useState<CampaignFund[]>([]);
-	const [payoutsCapability, setPayoutsCapability] = React.useState<{ available: boolean; message: string } | null>(null);
 	const [loading, setLoading] = React.useState(true);
 	const [query, setQuery] = React.useState("");
 	const [statusFilter, setStatusFilter] = React.useState<StatusFilter>("PENDING");
 	const [page, setPage] = React.useState(1);
 	const [dialogOpen, setDialogOpen] = React.useState(false);
 
-	// OTP
-	const [otpDialogOpen, setOtpDialogOpen] = React.useState(false);
-	const [selectedWithdrawalForApproval, setSelectedWithdrawalForApproval] = React.useState<WithdrawalRow | null>(null);
 	// Reject
 	const [rejectDialogOpen, setRejectDialogOpen] = React.useState(false);
 	const [selectedWithdrawalForRejection, setSelectedWithdrawalForRejection] = React.useState<WithdrawalRow | null>(null);
@@ -152,29 +140,15 @@ export default function PencairanPage() {
 	const [approvalForm, setApprovalForm] = React.useState({ transferAmount: "", senderBank: "", senderAccount: "", proofUrl: "" });
 	const [approvalSubmitting, setApprovalSubmitting] = React.useState(false);
 
-	// Admin phone
-	const [adminPhoneDialogOpen, setAdminPhoneDialogOpen] = React.useState(false);
-	const [localAdminPhone, setLocalAdminPhone] = React.useState("");
-	// More menu
-	const [moreAnchor, setMoreAnchor] = React.useState<null | HTMLElement>(null);
-
-	React.useEffect(() => {
-		if (session?.user) {
-			const phone = (session.user as any)?.phone;
-			if (phone) setLocalAdminPhone(phone);
-		}
-	}, [session]);
-
 	const showSnack = (message: string, severity: "success" | "error" | "info" = "success") =>
 		setSnack({ open: true, message, severity });
 
 	const fetchData = React.useCallback(async () => {
 		setLoading(true);
 		try {
-			const [w, c, cap] = await Promise.all([getWithdrawals(), getCampaignsWithFunds(), getPayoutsCapability()]);
+			const [w, c] = await Promise.all([getWithdrawals(), getCampaignsWithFunds()]);
 			setWithdrawals(w as unknown as WithdrawalRow[]);
 			setCampaigns(c);
-			setPayoutsCapability(cap);
 		} catch (e) { console.error(e); }
 		finally { setLoading(false); }
 	}, []);
@@ -213,7 +187,6 @@ export default function PencairanPage() {
 	const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 	const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
 	const selectedCampaignData = campaigns.find(c => c.id === selectedCampaign);
-	const adminPhone = localAdminPhone || "";
 
 	const handleCreate = async () => {
 		if (!selectedCampaign || !amount || !bankName || !bankAccount || !accountHolder) return;
@@ -248,37 +221,6 @@ export default function PencairanPage() {
 		});
 	};
 
-	const handleApproveClick = async (row: WithdrawalRow) => {
-		if (process.env.NEXT_PUBLIC_DISBURSEMENT_BYPASS_OTP === "true") {
-			setConfirmDialog({
-				open: true, title: "Dev Mode", message: "OTP Bypass aktif. Lanjutkan?", confirmColor: "warning",
-				onConfirm: async () => {
-					try {
-						const res = await updateWithdrawalStatus(row.id, "APPROVED", undefined, "BYPASSED", undefined, adminPhone);
-						if (!res?.success) { showSnack(res?.error || "Gagal", "error"); return; }
-						fetchData();
-						showSnack(res.payoutMode === "DOKU" ? "Disetujui (DOKU Payout)" : "Disetujui (manual)");
-					} catch { showSnack("Gagal", "error"); }
-					setConfirmDialog(prev => ({ ...prev, open: false }));
-				},
-			});
-			return;
-		}
-		setSelectedWithdrawalForApproval(row);
-		setOtpDialogOpen(true);
-	};
-
-	const handleOtpVerified = async (otp: string) => {
-		if (!selectedWithdrawalForApproval) return;
-		try {
-			const res = await updateWithdrawalStatus(selectedWithdrawalForApproval.id, "APPROVED", undefined, otp, undefined, adminPhone);
-			if (!res?.success) { showSnack(res?.error || "Gagal", "error"); return; }
-			fetchData();
-			showSnack(res.payoutMode === "DOKU" ? "Disetujui (DOKU Payout)" : "Disetujui (manual)");
-		} catch { showSnack("Gagal", "error"); }
-		finally { setSelectedWithdrawalForApproval(null); }
-	};
-
 	return (
 		<Box sx={{ p: { xs: 1.5, md: 2 } }}>
 			{/* Header */}
@@ -293,17 +235,11 @@ export default function PencairanPage() {
 					<Button variant="contained" startIcon={<AddRoundedIcon />} onClick={() => setDialogOpen(true)} sx={{ borderRadius: 999, fontWeight: 800, px: 3 }}>
 						Pencairan Manual
 					</Button>
-					<IconButton onClick={(e) => setMoreAnchor(e.currentTarget)}>
-						<MoreVertIcon />
-					</IconButton>
-					<Menu anchorEl={moreAnchor} open={!!moreAnchor} onClose={() => setMoreAnchor(null)}>
-						<MenuItem onClick={() => { setMoreAnchor(null); setAdminPhoneDialogOpen(true); }}>
-							<SettingsRoundedIcon fontSize="small" sx={{ mr: 1 }} /> Atur WA OTP
-						</MenuItem>
-						<MenuItem onClick={() => { setMoreAnchor(null); fetchData(); }}>
-							<RefreshRoundedIcon fontSize="small" sx={{ mr: 1 }} /> Refresh
-						</MenuItem>
-					</Menu>
+					<Tooltip title="Refresh">
+						<IconButton onClick={() => fetchData()}>
+							<RefreshRoundedIcon />
+						</IconButton>
+					</Tooltip>
 				</Stack>
 			</Stack>
 
@@ -516,7 +452,7 @@ export default function PencairanPage() {
 						onClick={async () => {
 							if (!selectedWithdrawalForRejection) return;
 							try {
-								const res = await updateWithdrawalStatus(selectedWithdrawalForRejection.id, "REJECTED", undefined, undefined, rejectReason);
+								const res = await updateWithdrawalStatus(selectedWithdrawalForRejection.id, "REJECTED", undefined, rejectReason);
 								if (!res?.success) { showSnack(res?.error || "Gagal", "error"); return; }
 								setRejectDialogOpen(false);
 								setSelectedWithdrawalForRejection(null);
@@ -687,8 +623,6 @@ export default function PencairanPage() {
 													"COMPLETED",
 													approvalForm.proofUrl || undefined,
 													undefined,
-													undefined,
-													undefined,
 													{
 														transferAmount: approvalForm.transferAmount ? Number(approvalForm.transferAmount.replace(/\./g, "")) : undefined,
 														senderBank: approvalForm.senderBank || undefined,
@@ -718,10 +652,6 @@ export default function PencairanPage() {
 					</>
 				)}
 			</Dialog>
-
-			{/* OTP Dialog */}
-			<OtpVerificationDialog open={otpDialogOpen} onClose={() => setOtpDialogOpen(false)} withdrawal={selectedWithdrawalForApproval} onVerified={handleOtpVerified} adminPhone={adminPhone} />
-			<AdminPhoneDialog open={adminPhoneDialogOpen} onClose={() => setAdminPhoneDialogOpen(false)} currentPhone={localAdminPhone} onSuccess={async (newPhone) => { setLocalAdminPhone(newPhone); await updateSession({ user: { ...session?.user, phone: newPhone } }); showSnack("Nomor WA diperbarui"); }} />
 
 			{/* Confirm Dialog */}
 			<Dialog open={confirmDialog.open} onClose={() => setConfirmDialog(prev => ({ ...prev, open: false }))} maxWidth="xs" fullWidth PaperProps={{ sx: { borderRadius: 3 } }}>

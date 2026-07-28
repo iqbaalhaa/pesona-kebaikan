@@ -6,7 +6,6 @@ import {
 	OTP_CONFIG,
 	assertCanSend,
 	buildVerificationMessage,
-	buildWithdrawalMessage,
 	hashOtp,
 	issueOtp,
 	jitterDelay,
@@ -20,39 +19,6 @@ function friendlyError(error: unknown) {
 			"Layanan WhatsApp sedang bermasalah (504: Gateway timeout). Silakan coba lagi beberapa menit lagi.";
 	}
 	return message;
-}
-
-export async function requestOtp(
-	phone: string,
-	campaignTitle: string,
-	amount: string,
-	_campaignSlug?: string,
-) {
-	try {
-		const normalizedPhone = normalizePhone(phone);
-
-		// #1 cooldown + #2 rate limit
-		await assertCanSend(normalizedPhone);
-
-		const otp = await issueOtp(normalizedPhone);
-
-		// #4 message variation, #3 no links
-		const message = buildWithdrawalMessage(otp, amount, campaignTitle);
-
-		// #5 throttle/jitter
-		await jitterDelay();
-
-		const result = await sendWhatsAppMessage(normalizedPhone, message);
-
-		if (!result.success) {
-			throw new Error(result.error);
-		}
-
-		return { success: true };
-	} catch (error) {
-		console.error("Request OTP Error:", error);
-		return { success: false, error: friendlyError(error) };
-	}
 }
 
 export async function requestVerificationOtp(phone: string) {
