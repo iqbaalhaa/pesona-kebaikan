@@ -10,6 +10,26 @@ function formatPhoneNumber(phone: string) {
 	return cleaned;
 }
 
+/**
+ * WA sending is temporarily disabled system-wide (2026-07) — WhatsApp
+ * Business API policy tightened by Meta, risk of the sender number getting
+ * banned. This is the single chokepoint both the profile phone-verification
+ * OTP flow (src/actions/otp.ts) and the admin test tool (src/actions/test-wa.ts,
+ * /admin/test-wa) go through, so disabling it here blocks every caller at once.
+ * To restore: delete this early return and uncomment the implementation below.
+ */
+export async function sendWhatsAppMessage(to: string, message: string) {
+	return {
+		success: false,
+		error:
+			"Pengiriman WhatsApp sedang dinonaktifkan sementara (kebijakan Meta diperketat, menghindari resiko banned).",
+	};
+}
+
+/*
+Original implementation — restore by uncommenting this and replacing the
+short-circuited sendWhatsAppMessage above with it.
+
 export async function sendWhatsAppMessage(to: string, message: string) {
 	try {
 		const [applicationIdKey, legacyClientIdKey, applicationSecretKey, legacySecretKey] =
@@ -110,3 +130,4 @@ export async function sendWhatsAppMessage(to: string, message: string) {
 		};
 	}
 }
+*/
