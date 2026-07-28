@@ -550,3 +550,100 @@ export const sendPasswordResetEmail = async (email: string, token: string) => {
 		};
 	}
 };
+
+
+export const sendWithdrawalStatusEmail = async (
+	email: string,
+	data: {
+		campaignTitle: string;
+		amountFormatted: string;
+		status: "APPROVED" | "REJECTED" | "COMPLETED";
+		rejectionReason?: string | null;
+	},
+) => {
+	try {
+		const config = await getMailConfig();
+
+		let currentOptions = baseOptions(config);
+		let t = nodemailer.createTransport(currentOptions);
+		try {
+			await t.verify();
+		} catch (e: any) {
+			const msg = e instanceof Error ? e.message : "";
+			if (/Greeting never received|timeout|ETIMEDOUT|ECONNREFUSED/i.test(msg)) {
+				currentOptions = { ...baseOptions(config), port: 465, secure: true };
+				t = nodemailer.createTransport(currentOptions);
+				await t.verify();
+			} else {
+				throw e as unknown;
+			}
+		}
+
+		const statusCopy: Record<typeof data.status, { subject: string; heading: string; body: string }> = {
+			APPROVED: {
+				subject: `Pencairan Disetujui - ${data.campaignTitle}`,
+				heading: "Pencairan Dana Disetujui",
+				body: `Pencairan dana campaign <b>${data.campaignTitle}</b> sejumlah <b>${data.amountFormatted}</b> telah disetujui dan sedang diproses.`,
+			},
+			REJECTED: {
+				subject: `Pencairan Ditolak - ${data.campaignTitle}`,
+				heading: "Pencairan Dana Ditolak",
+				body: `Pencairan dana campaign <b>${data.campaignTitle}</b> sejumlah <b>${data.amountFormatted}</b> ditolak.${
+					data.rejectionReason ? ` Alasan: ${data.rejectionReason}` : ""
+				}`,
+			},
+			COMPLETED: {
+				subject: `Pencairan Selesai - ${data.campaignTitle}`,
+				heading: "Pencairan Dana Selesai",
+				body: `Pencairan dana campaign <b>${data.campaignTitle}</b> sejumlah <b>${data.amountFormatted}</b> telah selesai ditransfer ke rekening tujuan.`,
+			},
+		};
+		const copy = statusCopy[data.status];
+
+		const htmlContent = `
+      <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+        <h2>${copy.heading}</h2>
+        <p>${copy.body}</p>
+        <p style="color: #666; font-size: 13px;">Ini adalah notifikasi otomatis, tidak perlu dibalas.</p>
+      </div>
+      `;
+
+		const message: Mail.Options = {
+			from: config.sender,
+			to: email,
+			subject: copy.subject,
+			envelope: {
+				from: config.sender.match(/<(.+)>/)?.[1] || config.sender,
+				to: [email],
+			},
+			html: htmlContent,
+		};
+
+		try {
+			await t.sendMail(message);
+			return { ok: true };
+		} catch (sendErr: any) {
+			const sendMsg = sendErr instanceof Error ? sendErr.message : "";
+			if (
+				/ETIMEDOUT|ECONNRESET|EHOSTUNREACH|ENOTFOUND|timeout|Greeting never received/i.test(
+					sendMsg,
+				)
+			) {
+				const altOptions: SMTPTransport.Options =
+					currentOptions.port === 465
+						? { ...baseOptions(config), port: 587, secure: false, requireTLS: true }
+						: { ...baseOptions(config), port: 465, secure: true };
+				const tAlt = nodemailer.createTransport(altOptions);
+				await tAlt.verify();
+				await tAlt.sendMail(message);
+				return { ok: true };
+			}
+			return { ok: false, message: sendMsg || "Send email failed" };
+		}
+	} catch (e: any) {
+		return {
+			ok: false,
+			message: e instanceof Error ? e.message : "Send email failed",
+		};
+	}
+};

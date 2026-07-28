@@ -83,6 +83,9 @@ model User {
 
   amiins Amiin[] @relation("UserAmiins")
   fundraiserAmiins FundraiserAmiin[] @relation("UserFundraiserAmiins")
+
+  withdrawalsRequested Withdrawal[] @relation("WithdrawalCreatedBy")
+  withdrawalsProcessed Withdrawal[] @relation("WithdrawalProcessedBy")
 }
 
 model LoginActivity {
@@ -192,8 +195,20 @@ model Withdrawal {
   campaignId String
   campaign   Campaign @relation(fields: [campaignId], references: [id])
 
+  // Audit trail: who requested this withdrawal (the fundraiser via
+  // requestWithdrawal, or the ADMIN who created a manual one via
+  // createWithdrawal) and who last processed it (approve/reject/complete).
+  createdById String?
+  createdBy   User?   @relation("WithdrawalCreatedBy", fields: [createdById], references: [id])
+
+  processedById String?
+  processedBy   User?     @relation("WithdrawalProcessedBy", fields: [processedById], references: [id])
+  processedAt   DateTime?
+
   @@index([campaignId])
   @@index([status])
+  @@index([createdById])
+  @@index([processedById])
 }
 
 model NotifyKey {

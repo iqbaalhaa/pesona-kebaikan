@@ -33,6 +33,7 @@ import {
 	Tooltip,
 } from "@mui/material";
 import { alpha, useTheme } from "@mui/material/styles";
+import { useSession } from "next-auth/react";
 
 import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
 import RefreshRoundedIcon from "@mui/icons-material/RefreshRounded";
@@ -91,6 +92,22 @@ function daysAgo(dateStr: string) {
 	return Math.floor((Date.now() - new Date(dateStr).getTime()) / (1000 * 60 * 60 * 24));
 }
 
+// Loose match: lowercase, strip titles/whitespace — this is a fraud-signal
+// warning for the admin reviewing, not a hard validation (legitimate
+// mismatches exist, e.g. organizational accounts, nicknames).
+function namesLikelyMatch(a: string, b: string) {
+	const normalize = (s: string) =>
+		s
+			.toLowerCase()
+			.replace(/\b(bapak|ibu|bpk|sdr|sdri|cv|pt|yayasan)\b/g, "")
+			.replace(/[^a-z0-9]/g, "")
+			.trim();
+	const na = normalize(a);
+	const nb = normalize(b);
+	if (!na || !nb) return true;
+	return na === nb || na.includes(nb) || nb.includes(na);
+}
+
 function statusChip(status: WithdrawalStatus) {
 	const map: Record<WithdrawalStatus, { label: string; color: "success" | "warning" | "info" | "error" }> = {
 		COMPLETED: { label: "Selesai", color: "success" },
@@ -104,6 +121,11 @@ function statusChip(status: WithdrawalStatus) {
 
 export default function PencairanPage() {
 	const theme = useTheme();
+	const { data: session } = useSession();
+	// Maker-checker: only ADMIN may create manual (admin-initiated)
+	// withdrawals. STAFF with MANAGE_WITHDRAWALS may only process/approve the
+	// queue — enforced server-side too in createWithdrawal().
+	const isAdmin = session?.user?.role === "ADMIN";
 
 	const [withdrawals, setWithdrawals] = React.useState<WithdrawalRow[]>([]);
 	const [campaigns, setCampaigns] = React.useState<CampaignFund[]>([]);
@@ -232,9 +254,11 @@ export default function PencairanPage() {
 					</Typography>
 				</Box>
 				<Stack direction="row" spacing={1}>
-					<Button variant="contained" startIcon={<AddRoundedIcon />} onClick={() => setDialogOpen(true)} sx={{ borderRadius: 999, fontWeight: 800, px: 3 }}>
-						Pencairan Manual
-					</Button>
+					{isAdmin && (
+						<Button variant="contained" startIcon={<AddRoundedIcon />} onClick={() => setDialogOpen(true)} sx={{ borderRadius: 999, fontWeight: 800, px: 3 }}>
+							Pencairan Manual
+						</Button>
+					)}
 					<Tooltip title="Refresh">
 						<IconButton onClick={() => fetchData()}>
 							<RefreshRoundedIcon />
@@ -503,7 +527,25 @@ export default function PencairanPage() {
 									<Typography sx={{ fontSize: 11, color: "text.secondary", mb: 0.5 }}>Rekening Tujuan</Typography>
 									<Typography sx={{ fontSize: 14, fontWeight: 700 }}>{getBankName(detailRow.bankName)} — {detailRow.bankAccount}</Typography>
 									<Typography sx={{ fontSize: 13, color: "text.secondary" }}>a.n {detailRow.accountHolder}</Typography>
+									{detailRow.ownerName && (
+										<Typography sx={{ fontSize: 12, color: "text.secondary", mt: 0.5 }}>
+											Pemilik campaign: {detailRow.ownerName}{detailRow.ownerVerified ? " (terverifikasi)" : " (belum terverifikasi)"}
+										</Typography>
+									)}
 								</Paper>
+
+								{detailRow.ownerName && !namesLikelyMatch(detailRow.accountHolder, detailRow.ownerName) && (
+									<Alert severity="warning" sx={{ borderRadius: 2 }}>
+										Nama rekening tujuan ("{detailRow.accountHolder}") tidak cocok dengan nama pemilik campaign ("{detailRow.ownerName}"). Periksa kembali sebelum memproses — bisa jadi wajar (rekening organisasi), tapi bisa juga indikasi kesalahan/penipuan.
+									</Alert>
+								)}
+
+								{detailRow.status !== "PENDING" && detailRow.processedByName && (
+									<Typography sx={{ fontSize: 12, color: "text.secondary" }}>
+										Diproses oleh: {detailRow.processedByName}
+										{detailRow.processedAt && ` pada ${new Date(detailRow.processedAt).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" })}`}
+									</Typography>
+								)}
 
 								{/* Tanggal */}
 								<Typography sx={{ fontSize: 12, color: "text.secondary" }}>
@@ -577,7 +619,7 @@ export default function PencairanPage() {
 										</Stack>
 
 										<Box>
-											<Typography sx={{ fontSize: 12, fontWeight: 600, mb: 0.5 }}>Bukti transfer (opsional)</Typography>
+											<Typography sx={{ fontSize: 12, fontWeight: 600, mb: 0.5 }}>Bukti transfer (wajib)</Typography>
 											<Button variant="outlined" component="label" size="small" sx={{ borderRadius: 2 }}>
 												{approvalForm.proofUrl ? "Ganti file" : "Upload bukti"}
 												<input type="file" accept="image/*,.pdf" hidden onChange={async (e) => {
@@ -592,7 +634,11 @@ export default function PencairanPage() {
 													} else { showSnack("Gagal upload bukti", "error"); }
 												}} />
 											</Button>
-											{approvalForm.proofUrl && <Typography sx={{ fontSize: 11, color: "success.main", mt: 0.5 }}>✓ Bukti tersimpan</Typography>}
+											{approvalForm.proofUrl ? (
+												<Typography sx={{ fontSize: 11, color: "success.main", mt: 0.5 }}>✓ Bukti tersimpan</Typography>
+											) : (
+												<Typography sx={{ fontSize: 11, color: "warning.main", mt: 0.5 }}>Wajib diunggah sebelum bisa menyelesaikan pencairan</Typography>
+											)}
 										</Box>
 									</>
 								)}
@@ -614,7 +660,7 @@ export default function PencairanPage() {
 											Tolak
 										</Button>
 									)}
-									<Button variant="contained" color="success" disabled={approvalSubmitting}
+									<Button variant="contained" color="success" disabled={approvalSubmitting || !approvalForm.proofUrl}
 										onClick={async () => {
 											setApprovalSubmitting(true);
 											try {

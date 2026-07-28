@@ -18,7 +18,10 @@ function formatPhoneNumber(phone: string) {
  * /admin/test-wa) go through, so disabling it here blocks every caller at once.
  * To restore: delete this early return and uncomment the implementation below.
  */
-export async function sendWhatsAppMessage(to: string, message: string) {
+export async function sendWhatsAppMessage(
+	to: string,
+	message: string,
+): Promise<{ success: boolean; data?: unknown; error?: string }> {
 	return {
 		success: false,
 		error:

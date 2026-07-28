@@ -34,6 +34,10 @@ export type WithdrawalRow = {
 	referenceNo?: string | null;
 	collected?: number;
 	target?: number;
+	ownerName?: string | null;
+	ownerVerified?: boolean;
+	processedByName?: string | null;
+	processedAt?: string | null;
 };
 
 function idr(n: number) {

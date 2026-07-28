@@ -800,6 +800,7 @@ export async function requestWithdrawal(data: {
 				accountHolder: data.accountHolder,
 				notes: data.notes,
 				status: "PENDING",
+				createdById: session.user.id,
 			},
 		});
 
