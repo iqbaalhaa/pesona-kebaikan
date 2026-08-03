@@ -131,34 +131,45 @@ export async function getAdminTransactions() {
 	}
 }
 
-export async function getCampaignTransactions(campaignId: string) {
+export async function getCampaignTransactions(
+	campaignId: string,
+	page = 1,
+	pageSize = 20,
+) {
 	try {
 		const session = await auth();
 		if (!session?.user || session.user.role !== "ADMIN") {
-			// Uncomment this in production to enforce admin access
-			// return { success: false, error: "Unauthorized" };
+			// SECURITY: this used to be a no-op (check ran, but the guard itself
+			// was commented out) — anyone could call this action directly and get
+			// every donor's name/phone/email/message for any campaign.
+			return { success: false, error: "Unauthorized" };
 		}
 
-		const donations = await prisma.donation.findMany({
-			where: { campaignId },
-			include: {
-				campaign: {
-					select: {
-						title: true,
+		const [donations, total] = await Promise.all([
+			prisma.donation.findMany({
+				where: { campaignId },
+				include: {
+					campaign: {
+						select: {
+							title: true,
+						},
+					},
+					user: {
+						select: {
+							name: true,
+							email: true,
+							phone: true,
+						},
 					},
 				},
-				user: {
-					select: {
-						name: true,
-						email: true,
-						phone: true,
-					},
+				orderBy: {
+					createdAt: "desc",
 				},
-			},
-			orderBy: {
-				createdAt: "desc",
-			},
-		});
+				skip: (page - 1) * pageSize,
+				take: pageSize,
+			}),
+			prisma.donation.count({ where: { campaignId } }),
+		]);
 
 		const mappedDonations = donations.map((d) => {
 			let method = "manual";
@@ -200,7 +211,12 @@ export async function getCampaignTransactions(campaignId: string) {
 			};
 		});
 
-		return { success: true, data: mappedDonations };
+		return {
+			success: true,
+			data: mappedDonations,
+			total,
+			totalPages: Math.max(1, Math.ceil(total / pageSize)),
+		};
 	} catch (error) {
 		console.error("Error fetching campaign transactions:", error);
 		return { success: false, error: "Gagal mengambil data transaksi campaign" };

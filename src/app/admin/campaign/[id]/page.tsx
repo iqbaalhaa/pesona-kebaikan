@@ -29,6 +29,13 @@ import {
 	FormControlLabel,
 	InputAdornment,
 	Avatar,
+	Pagination,
+	Table,
+	TableBody,
+	TableCell,
+	TableContainer,
+	TableHead,
+	TableRow,
 } from "@mui/material";
 
 import ArrowBackIosNewRoundedIcon from "@mui/icons-material/ArrowBackIosNewRounded";
@@ -68,7 +75,7 @@ import RichTextEditor from "@/components/admin/RichTextEditor";
 import {
 	idr as _idr, pct as _pct, statusMeta as _statusMeta, methodLabel as _methodLabel,
 	fieldSx as _fieldSx, shellSx as _shellSx,
-	SegTab, InfoRow, MiniStat, VerifyItem, FormBlock, DocRow, TimelineRow, TxRowCard,
+	SegTab, InfoRow, MiniStat, VerifyItem, FormBlock, DocRow, TimelineRow, TxTableRow,
 	type DocItem, type AuditEvent, type TxRow, type TxStatus, type PayMethod,
 	type CampaignStatus as CampaignStatusType, type CampaignType, type DocKey,
 } from "./_components/shared";
@@ -76,6 +83,7 @@ import {
 type CampaignStatus = CampaignStatusType;
 
 const QUICK_DONATION_SLUG = "donasi-cepat";
+const TX_PAGE_SIZE = 20;
 
 const STATUS_META: Record<
 	CampaignStatus,
@@ -142,6 +150,9 @@ export default function AdminCampaignDetailPage(props: {
 	// transactions state
 	const [txRows, setTxRows] = React.useState<TxRow[]>([]);
 	const [txLoading, setTxLoading] = React.useState(false);
+	const [txPage, setTxPage] = React.useState(1);
+	const [txTotalPages, setTxTotalPages] = React.useState(1);
+	const [txTotal, setTxTotal] = React.useState(0);
 
 	const [feeValue, setFeeValue] = React.useState<string>("0");
 	const [feeLoading, setFeeLoading] = React.useState(false);
@@ -170,17 +181,19 @@ export default function AdminCampaignDetailPage(props: {
 	const fetchTransactions = React.useCallback(async () => {
 		setTxLoading(true);
 		try {
-			const res = await getCampaignTransactions(id);
+			const res = await getCampaignTransactions(id, txPage, TX_PAGE_SIZE);
 			if (res.success && res.data) {
-				// @ts-ignore
+				// @ts-expect-error — mapped `method` is widened to `string` in admin.ts, not narrowed to PayMethod
 				setTxRows(res.data);
+				setTxTotalPages(res.totalPages || 1);
+				setTxTotal(res.total || 0);
 			}
 		} catch (e) {
 			console.error(e);
 		} finally {
 			setTxLoading(false);
 		}
-	}, [id]);
+	}, [id, txPage]);
 
 	React.useEffect(() => {
 		if (tab === "transactions") {
@@ -2043,28 +2056,66 @@ export default function AdminCampaignDetailPage(props: {
 								Daftar donasi yang masuk ke campaign ini.
 							</Typography>
 
+							<Typography sx={{ mt: 0.5, fontSize: 11.5, color: "text.secondary", fontStyle: "italic" }}>
+								Klik baris untuk lihat detail donatur.
+							</Typography>
+
 							<Divider sx={{ my: 1.25 }} />
 
-							<Stack spacing={1}>
-								{txLoading ? (
-									<Stack alignItems="center" sx={{ py: 4 }}>
-										<CircularProgress size={24} />
-									</Stack>
-								) : txRows.length === 0 ? (
-									<Typography
-										sx={{
-											fontSize: 13,
-											color: "text.secondary",
-											textAlign: "center",
-											py: 4,
-										}}
-									>
-										Belum ada transaksi.
+							{txLoading ? (
+								<Stack alignItems="center" sx={{ py: 4 }}>
+									<CircularProgress size={24} />
+								</Stack>
+							) : txRows.length === 0 ? (
+								<Typography
+									sx={{
+										fontSize: 13,
+										color: "text.secondary",
+										textAlign: "center",
+										py: 4,
+									}}
+								>
+									Belum ada transaksi.
+								</Typography>
+							) : (
+								<TableContainer sx={{ border: "1px solid", borderColor: "divider", borderRadius: 2 }}>
+									<Table size="small">
+										<TableHead>
+											<TableRow>
+												<TableCell sx={{ fontWeight: 800, fontSize: 12 }}>Donatur</TableCell>
+												<TableCell sx={{ fontWeight: 800, fontSize: 12 }}>Jumlah</TableCell>
+												<TableCell sx={{ fontWeight: 800, fontSize: 12 }}>Tanggal</TableCell>
+												<TableCell sx={{ fontWeight: 800, fontSize: 12 }}>Metode</TableCell>
+												<TableCell sx={{ fontWeight: 800, fontSize: 12 }} align="right">Status</TableCell>
+											</TableRow>
+										</TableHead>
+										<TableBody>
+											{txRows.map((row) => (
+												<TxTableRow key={row.id} row={row} />
+											))}
+										</TableBody>
+									</Table>
+								</TableContainer>
+							)}
+
+							{!txLoading && txRows.length > 0 && (
+								<Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mt: 1.5 }}>
+									<Typography sx={{ fontSize: 11.5, color: "text.secondary" }}>
+										Menampilkan {(txPage - 1) * TX_PAGE_SIZE + 1}–
+										{(txPage - 1) * TX_PAGE_SIZE + txRows.length} dari {txTotal} donasi
 									</Typography>
-								) : (
-									txRows.map((row) => <TxRowCard key={row.id} row={row} />)
-								)}
-							</Stack>
+									{txTotalPages > 1 && (
+										<Pagination
+											count={txTotalPages}
+											page={txPage}
+											onChange={(_, p) => setTxPage(p)}
+											color="primary"
+											shape="rounded"
+											size="small"
+										/>
+									)}
+								</Stack>
+							)}
 						</Box>
 					)}
 				</Paper>

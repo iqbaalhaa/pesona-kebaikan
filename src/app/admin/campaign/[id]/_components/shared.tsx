@@ -15,7 +15,15 @@ import {
 	Avatar,
 	useTheme,
 	alpha,
+	Dialog,
+	DialogTitle,
+	DialogContent,
+	DialogActions,
+	Divider,
+	TableRow,
+	TableCell,
 } from "@mui/material";
+import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import UploadFileRoundedIcon from "@mui/icons-material/UploadFileRounded";
 import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded";
 import VisibilityRoundedIcon from "@mui/icons-material/VisibilityRounded";
@@ -61,6 +69,7 @@ export type TxRow = {
 	donorEmail: string;
 	message: string;
 	isAnonymous: boolean;
+	allowContact: boolean;
 	amount: number;
 	method: PayMethod;
 	status: TxStatus;
@@ -246,21 +255,118 @@ export function TimelineRow({ event }: { event: AuditEvent }) {
 	);
 }
 
-export function TxRowCard({ row }: { row: TxRow }) {
-	const theme = useTheme();
+export function TxTableRow({ row }: { row: TxRow }) {
 	const meta = statusMeta(row.status);
+	const [open, setOpen] = React.useState(false);
 
 	return (
-		<Paper variant="outlined" sx={{ p: 2, borderRadius: 2.5, borderColor: alpha(theme.palette.divider, 1), bgcolor: alpha(theme.palette.background.default, theme.palette.mode === "dark" ? 0.2 : 1) }}>
-			<Stack direction="row" spacing={1.5} alignItems="center">
-				<Box sx={{ width: 36, height: 36, borderRadius: 2, display: "grid", placeItems: "center", bgcolor: alpha(meta.tone === "success" ? "#22c55e" : "#f97316", 0.12), color: meta.tone === "success" ? "#22c55e" : "#f97316" }}>
-					{meta.icon}
-				</Box>
-				<Box sx={{ flex: 1 }}>
-					<Typography sx={{ fontSize: 13, fontWeight: 1000 }}>{idr(row.amount)} • {row.donorName}</Typography>
-					<Typography sx={{ fontSize: 12, color: "text.secondary" }}>{row.createdAt} • {methodLabel(row.method)} • {row.refCode}</Typography>
-				</Box>
-			</Stack>
-		</Paper>
+		<>
+			<TableRow
+				hover
+				onClick={() => setOpen(true)}
+				sx={{ cursor: "pointer" }}
+			>
+				<TableCell>
+					<Typography sx={{ fontSize: 13, fontWeight: 800 }}>
+						{row.donorName}
+						{row.isAnonymous && (
+							<Typography component="span" sx={{ fontSize: 10.5, color: "text.secondary", fontWeight: 700, ml: 0.5 }}>
+								(anonim)
+							</Typography>
+						)}
+					</Typography>
+				</TableCell>
+				<TableCell>
+					<Typography sx={{ fontSize: 13, fontWeight: 800 }}>{idr(row.amount)}</Typography>
+				</TableCell>
+				<TableCell>
+					<Typography sx={{ fontSize: 12.5, color: "text.secondary" }}>{row.createdAt}</Typography>
+				</TableCell>
+				<TableCell>
+					<Typography sx={{ fontSize: 12.5, color: "text.secondary" }}>{methodLabel(row.method)}</Typography>
+				</TableCell>
+				<TableCell align="right">
+					<Chip
+						icon={meta.icon}
+						label={meta.label}
+						size="small"
+						color={meta.tone}
+						sx={{ fontWeight: 800 }}
+					/>
+				</TableCell>
+			</TableRow>
+
+			<Dialog open={open} onClose={() => setOpen(false)} maxWidth="xs" fullWidth>
+				<DialogTitle sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontWeight: 1000, fontSize: 15 }}>
+					Detail Transaksi
+					<IconButton size="small" onClick={() => setOpen(false)}>
+						<CloseRoundedIcon fontSize="small" />
+					</IconButton>
+				</DialogTitle>
+				<DialogContent dividers>
+					<Stack spacing={1.5}>
+						<Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+							<Typography sx={{ fontSize: 20, fontWeight: 1000 }}>{idr(row.amount)}</Typography>
+							<Chip
+								label={meta.label}
+								size="small"
+								color={meta.tone}
+								sx={{ fontWeight: 800 }}
+							/>
+						</Box>
+
+						<Divider />
+
+						<Stack spacing={0.75}>
+							<InfoRow k="Donatur" v={row.donorName} />
+							<InfoRow k="No. HP" v={row.donorPhone && row.donorPhone !== "-" ? row.donorPhone : "-"} />
+							<InfoRow k="Email" v={row.donorEmail && row.donorEmail !== "-" ? row.donorEmail : "-"} />
+							<InfoRow k="Anonim" v={row.isAnonymous ? "Ya (tampil samar di publik)" : "Tidak"} />
+							<InfoRow k="Izin dihubungi" v={row.allowContact ? "Ya" : "Tidak"} />
+						</Stack>
+
+						{row.account && (
+							<>
+								<Divider />
+								<Stack spacing={0.75}>
+									<Typography sx={{ fontSize: 11.5, fontWeight: 800, color: "text.secondary" }}>
+										AKUN TERDAFTAR
+									</Typography>
+									<InfoRow k="Nama Akun" v={row.account.name} />
+									<InfoRow k="Email Akun" v={row.account.email} />
+									<InfoRow k="HP Akun" v={row.account.phone && row.account.phone !== "-" ? row.account.phone : "-"} />
+								</Stack>
+							</>
+						)}
+
+						<Divider />
+
+						<Stack spacing={0.75}>
+							<InfoRow k="Campaign" v={row.campaignTitle} />
+							<InfoRow k="Metode" v={methodLabel(row.method)} />
+							<InfoRow k="Kode Ref" v={row.refCode} />
+							<InfoRow k="Waktu" v={row.createdAt} />
+						</Stack>
+
+						{row.message && row.message !== "-" && (
+							<>
+								<Divider />
+								<Stack spacing={0.5}>
+									<Typography sx={{ fontSize: 11.5, fontWeight: 800, color: "text.secondary" }}>
+										PESAN
+									</Typography>
+									<Typography sx={{ fontSize: 13, fontStyle: "italic" }}>
+										"{row.message}"
+									</Typography>
+								</Stack>
+							</>
+						)}
+					</Stack>
+				</DialogContent>
+				<DialogActions>
+					<Button onClick={() => setOpen(false)}>Tutup</Button>
+				</DialogActions>
+			</Dialog>
+		</>
 	);
 }

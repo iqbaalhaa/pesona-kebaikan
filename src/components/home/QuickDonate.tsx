@@ -30,6 +30,15 @@ function formatIDR(numStr: string) {
 	return n.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 }
 
+function validatePhone(raw: string): string {
+	const d = raw.replace(/\D/g, "");
+	if (!d) return "Nomor HP wajib diisi";
+	if (!/^(0|62|8)/.test(d)) return "Format nomor HP tidak valid (contoh: 08xxxxxxxxxx)";
+	if (d.length < 10) return "Nomor HP minimal 10 digit";
+	if (d.length > 15) return "Nomor HP terlalu panjang";
+	return "";
+}
+
 function CloseIcon() {
 	return (
 		<svg
@@ -85,11 +94,27 @@ export default function QuickDonate() {
 		string | undefined
 	>(undefined);
 
-	// donor identity handled by session
+	// Donor identity — login is optional, only used to prefill these so a
+	// returning donor doesn't have to retype them. Guests fill them in manually.
+	const [donorName, setDonorName] = React.useState("");
+	const [donorPhone, setDonorPhone] = React.useState("");
+	const [fieldErrors, setFieldErrors] = React.useState<{
+		name?: string;
+		phone?: string;
+	}>({});
 	const [message, setMessage] = React.useState<string>("");
 	const [loading, setLoading] = React.useState(false);
 	const [error, setError] = React.useState("");
 	const [success, setSuccess] = React.useState(false);
+
+	React.useEffect(() => {
+		if (session?.user) {
+			if (session.user.name && !donorName) setDonorName(session.user.name);
+			const phone = (session.user as any)?.phone;
+			if (phone && !donorPhone) setDonorPhone(phone);
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [session]);
 
 	// Fetch quick donation campaign ID on mount
 	React.useEffect(() => {
@@ -177,17 +202,11 @@ export default function QuickDonate() {
 
 	const openSheet = () => {
 		if (!isValid) return;
+		setFieldErrors({});
 		setOpen(true);
 	};
 
 	const handleSubmit = async () => {
-		if (status === "unauthenticated") {
-			router.push(
-				"/auth/login?callbackUrl=" + encodeURIComponent("/?quickDonate=1"),
-			);
-			return;
-		}
-
 		if (!campaignId) {
 			setError("Gagal memuat sistem donasi");
 			return;
@@ -198,20 +217,16 @@ export default function QuickDonate() {
 			return;
 		}
 
-		// Get user info from session
-		const userName = session?.user?.name || "Hamba Allah";
-		const userPhone = session?.user?.phone || "";
-
-		// Wajib nomor HP (jika tidak ada di session, mungkin error atau biarkan kosong jika boleh?)
-		// Karena user bilang "verifikasi melalui login", kita asumsikan login user sudah cukup valid.
-		// Namun createDonation butuh donorPhone. Kita coba gunakan phone dari session atau dummy jika kosong.
-		// Jika user belum update profil (phone kosong), kita mungkin perlu prompt atau gunakan dummy.
-		// Untuk simplifikasi sesuai request "hapus semua UI", kita kirim phone dari session.
-		if (!userPhone) {
-			// Optional: setError("Mohon lengkapi nomor HP di profil Anda terlebih dahulu");
-			// return;
-			// Atau gunakan dummy jika diizinkan sistem
+		const errs: { name?: string; phone?: string } = {};
+		if (!donorName.trim()) errs.name = "Nama wajib diisi";
+		const phoneErr = validatePhone(donorPhone);
+		if (phoneErr) errs.phone = phoneErr;
+		if (errs.name || errs.phone) {
+			setFieldErrors(errs);
+			setError("Periksa kembali data yang ditandai merah");
+			return;
 		}
+		setFieldErrors({});
 
 		setLoading(true);
 		setError("");
@@ -219,10 +234,10 @@ export default function QuickDonate() {
 			const res = await createDonation({
 				campaignId: campaignId,
 				amount: Number(finalAmount),
-				donorName: userName,
-				donorPhone: userPhone || "-", // Fallback jika kosong
+				donorName: donorName.trim(),
+				donorPhone,
 				message,
-				isAnonymous: false, // Force not anonymous as requested "verifikasi login"
+				isAnonymous: false,
 				paymentMethod: "EWALLET" as any,
 			});
 
@@ -709,6 +724,127 @@ export default function QuickDonate() {
 										Pembayaran Aman
 									</Typography>
 								</Box>
+							</Box>
+
+							{/* Donor Identity — optional login just prefills these */}
+							<Box sx={{ mb: 2.5 }}>
+								<Typography
+									sx={{
+										fontSize: 12,
+										fontWeight: 800,
+										color: "rgba(15,23,42,.7)",
+										mb: 0.75,
+									}}
+								>
+									Data Diri
+								</Typography>
+								<Box sx={{ display: "grid", gap: 1 }}>
+									<Box>
+										<Box
+											component="input"
+											placeholder="Nama Lengkap"
+											value={donorName}
+											onChange={(e) => {
+												setDonorName(e.target.value);
+												if (fieldErrors.name)
+													setFieldErrors((p) => ({ ...p, name: undefined }));
+											}}
+											sx={{
+												width: "100%",
+												boxSizing: "border-box",
+												borderRadius: "12px",
+												px: 1.4,
+												py: 1.1,
+												fontSize: 13.5,
+												fontWeight: 600,
+												border: fieldErrors.name
+													? "1px solid rgba(239,68,68,.6)"
+													: "1px solid rgba(15,23,42,0.12)",
+												outline: "none",
+												color: "rgba(15,23,42,.85)",
+												bgcolor: "rgba(255,255,255,0.92)",
+											}}
+										/>
+										{fieldErrors.name && (
+											<Typography
+												sx={{
+													fontSize: 11,
+													color: "rgba(239,68,68,.9)",
+													fontWeight: 700,
+													mt: 0.5,
+												}}
+											>
+												{fieldErrors.name}
+											</Typography>
+										)}
+									</Box>
+									<Box>
+										<Box
+											component="input"
+											inputMode="numeric"
+											placeholder="Nomor WhatsApp (contoh: 08xxxxxxxxxx)"
+											value={donorPhone}
+											onChange={(e) => {
+												setDonorPhone(e.target.value);
+												if (fieldErrors.phone)
+													setFieldErrors((p) => ({ ...p, phone: undefined }));
+											}}
+											sx={{
+												width: "100%",
+												boxSizing: "border-box",
+												borderRadius: "12px",
+												px: 1.4,
+												py: 1.1,
+												fontSize: 13.5,
+												fontWeight: 600,
+												border: fieldErrors.phone
+													? "1px solid rgba(239,68,68,.6)"
+													: "1px solid rgba(15,23,42,0.12)",
+												outline: "none",
+												color: "rgba(15,23,42,.85)",
+												bgcolor: "rgba(255,255,255,0.92)",
+											}}
+										/>
+										{fieldErrors.phone && (
+											<Typography
+												sx={{
+													fontSize: 11,
+													color: "rgba(239,68,68,.9)",
+													fontWeight: 700,
+													mt: 0.5,
+												}}
+											>
+												{fieldErrors.phone}
+											</Typography>
+										)}
+									</Box>
+								</Box>
+
+								{status === "unauthenticated" && (
+									<Box
+										component="button"
+										type="button"
+										onClick={() =>
+											router.push(
+												"/auth/login?callbackUrl=" +
+													encodeURIComponent("/?quickDonate=1"),
+											)
+										}
+										sx={{
+											mt: 1,
+											p: 0,
+											border: "none",
+											bgcolor: "transparent",
+											cursor: "pointer",
+											fontSize: 11.5,
+											fontWeight: 700,
+											color: PRIMARY,
+											textAlign: "left",
+										}}
+									>
+										Sudah punya akun? Login untuk isi otomatis
+									</Box>
+								)}
 							</Box>
 
 							{/* Info Text */}
