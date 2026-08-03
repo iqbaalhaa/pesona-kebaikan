@@ -12,7 +12,9 @@ interface CampaignDonorsProps {
 	donorsCount: number;
 	latestDonations: any[];
 	latestPrayers: any[];
+	prayersCount?: number;
 	setOpenDonorsModal: (open: boolean) => void;
+	setOpenPrayersModal: (open: boolean) => void;
 	campaignId?: string;
 	campaignSlug?: string;
 	fundraiserCount?: number;
@@ -24,7 +26,9 @@ export default function CampaignDonors({
 	donorsCount,
 	latestDonations,
 	latestPrayers,
+	prayersCount,
 	setOpenDonorsModal,
+	setOpenPrayersModal,
 	campaignId,
 	campaignSlug,
 	fundraiserCount = 0,
@@ -114,7 +118,7 @@ export default function CampaignDonors({
 			{/* Doa-doa */}
 			<Box sx={{ mb: 1 }}>
 				<Box
-					onClick={() => setOpenDonorsModal(true)}
+					onClick={() => setOpenPrayersModal(true)}
 					sx={{
 						display: "flex",
 						justifyContent: "space-between",
@@ -132,7 +136,7 @@ export default function CampaignDonors({
 					</Typography>
 					<Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
 						<Chip
-							label={latestPrayers.length} // Note: This might need to be total prayers if available, but using length for now based on original code logic which used `prayers.length`
+							label={prayersCount ?? latestPrayers.length}
 							size="small"
 							sx={{
 								bgcolor: "#e0f2fe",

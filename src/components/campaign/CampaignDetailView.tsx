@@ -40,6 +40,7 @@ import CampaignBottomNav from "./detail/CampaignBottomNav";
 import ShareModal from "./detail/modals/ShareModal";
 import FundDetailsModal from "./detail/modals/FundDetailsModal";
 import DonorsModal from "./detail/modals/DonorsModal";
+import PrayersModal from "./detail/modals/PrayersModal";
 import ReportModal from "./detail/modals/ReportModal";
 import MedicalModal from "./detail/modals/MedicalModal";
 import CreateFundraiserDialog from "./detail/modals/CreateFundraiserDialog";
@@ -113,6 +114,7 @@ export default function CampaignDetailView({
 	const [openMedicalModal, setOpenMedicalModal] = React.useState(false);
 	const [openPatientModal, setOpenPatientModal] = React.useState(false);
 	const [openDonorsModal, setOpenDonorsModal] = React.useState(false);
+	const [openPrayersModal, setOpenPrayersModal] = React.useState(false);
 	const [openShareModal, setOpenShareModal] = React.useState(false);
 	const [openFundDetailsModal, setOpenFundDetailsModal] = React.useState(false);
 	const [snackbarOpen, setSnackbarOpen] = React.useState(false);
@@ -594,7 +596,9 @@ export default function CampaignDetailView({
 							donorsCount={data.donors}
 							latestDonations={latestDonations}
 							latestPrayers={latestPrayers}
+							prayersCount={prayers.length}
 							setOpenDonorsModal={setOpenDonorsModal}
+							setOpenPrayersModal={setOpenPrayersModal}
 							campaignId={data.id}
 							campaignSlug={data.slug}
 							fundraiserCount={fundraiserCount}
@@ -680,6 +684,12 @@ export default function CampaignDetailView({
 				onClose={() => setOpenDonorsModal(false)}
 				donorsCount={data.donors}
 				donations={data.donations}
+			/>
+
+			<PrayersModal
+				open={openPrayersModal}
+				onClose={() => setOpenPrayersModal(false)}
+				prayers={prayers}
 			/>
 
 			<PatientModal
