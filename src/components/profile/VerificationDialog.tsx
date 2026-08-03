@@ -24,14 +24,12 @@ import CloseIcon from "@mui/icons-material/Close";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
 import PersonIcon from "@mui/icons-material/Person";
 import BusinessIcon from "@mui/icons-material/Business";
-// WA OTP temporarily disabled — see the commented "Verifikasi WhatsApp" Step
-// further down (WhatsApp Business API ban risk). Uncomment together with it.
-// import WhatsAppIcon from "@mui/icons-material/WhatsApp";
+import WhatsAppIcon from "@mui/icons-material/WhatsApp";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import { requestEmailVerification } from "@/actions/email";
 import { newVerification } from "@/actions/new-verification";
 import {
-	// markPhoneVerified,
+	markPhoneVerified,
 	submitVerificationRequest,
 	updateMyAddress,
 	getVerificationStatus,

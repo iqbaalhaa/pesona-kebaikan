@@ -72,7 +72,9 @@
       "Bash(curl -s -o /dev/null -w \"admin/settings: %{http_code}\\\\n\" http://localhost:3000/admin/settings)",
       "Bash(node \"C:\\\\Users\\\\HP\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\e--ProjectDepati-pesona-kebaikan\\\\fd8420e7-277b-4283-8c33-2241182f9ab8\\\\scratchpad\\\\append-mail.js\")",
       "Bash(curl -s -o /dev/null -w \"galang-dana: %{http_code}\\\\n\" http://localhost:3000/galang-dana)",
-      "Bash(curl -s -o /dev/null -w \"admin/campaign: %{http_code}\\\\n\" http://localhost:3000/admin/campaign)"
+      "Bash(curl -s -o /dev/null -w \"admin/campaign: %{http_code}\\\\n\" http://localhost:3000/admin/campaign)",
+      "Bash(curl -s -o /dev/null -w \"homepage: %{http_code}\\\\n\" http://localhost:3000/)",
+      "Bash(curl -s -o /dev/null -w \"admin/carousel: %{http_code}\\\\n\" http://localhost:3000/admin/carousel)"
     ]
   }
 }

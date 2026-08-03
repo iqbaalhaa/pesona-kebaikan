@@ -80,7 +80,7 @@ export default function HomeFeed() {
 	return (
 		<>
 			<div className="bg-gradient-to-b from-[var(--brand)] via-[var(--brand)]/60 to-transparent pt-16">
-				<HeroCarousel items={data.heroItems} />
+				<HeroCarousel items={data.heroItems} loading={loading} />
 				<QuickDonate />
 			</div>
 			<QuickMenu />

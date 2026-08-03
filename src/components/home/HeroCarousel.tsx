@@ -12,11 +12,6 @@ export interface CarouselItem {
 	duration?: number;
 }
 
-const defaultSlides: CarouselItem[] = [
-	{ id: "def1", image: "/brand/carousel1.webp" },
-	{ id: "def2", image: "/brand/carousel2.webp" },
-];
-
 function SlideImage({ src, alt, priority }: { src: string; alt: string; priority: boolean }) {
 	const [imgSrc, setImgSrc] = React.useState(src);
 	return (
@@ -33,18 +28,32 @@ function SlideImage({ src, alt, priority }: { src: string; alt: string; priority
 	);
 }
 
-export default function HeroCarousel({ items = [] }: { items?: CarouselItem[] }) {
+export default function HeroCarousel({ items = [], loading = false }: { items?: CarouselItem[]; loading?: boolean }) {
 	const [active, setActive] = React.useState(0);
-	const displaySlides = items.length > 0 ? items : defaultSlides;
+	const displaySlides = items;
 
 	React.useEffect(() => {
+		if (displaySlides.length === 0) return;
 		const duration = displaySlides[active]?.duration ?? 4500;
 		const t = setTimeout(() => setActive((p) => (p + 1) % displaySlides.length), duration);
 		return () => clearTimeout(t);
 	}, [active, displaySlides]);
 
+	// Still loading, or the API returned no banners — a solid skeleton (same
+	// exact size as a loaded carousel) instead of ever flashing a placeholder
+	// image while real data is on its way.
+	if (loading || displaySlides.length === 0) {
+		return (
+			<div
+				aria-hidden={!loading}
+				aria-busy={loading}
+				className={`relative z-0 aspect-1228/714 w-full overflow-hidden bg-[#0b1220] rounded-t-2xl ${loading ? "animate-pulse" : ""}`}
+			/>
+		);
+	}
+
 	return (
-		<div role="region" aria-roledescription="carousel" aria-label="Banner kampanye" className="relative z-0 aspect-[1228/714] w-full overflow-hidden bg-[#0b1220] rounded-t-2xl">
+		<div role="region" aria-roledescription="carousel" aria-label="Banner kampanye" className="relative z-0 aspect-1228/714 w-full overflow-hidden bg-[#0b1220] rounded-t-2xl">
 			{displaySlides.map((s, i) => {
 				const Content = (
 					<>
