@@ -135,7 +135,6 @@ export default function AdminCarouselPage() {
 			setSelectedCampaign(null);
 		}
 		setImageFile(null);
-		setPreview("");
 		setOpen(true);
 	};
 
@@ -460,7 +459,8 @@ export default function AdminCarouselPage() {
 											onChange={(e) => {
 												if (e.target.files?.[0]) {
 													setImageFile(e.target.files[0]);
-													setPreview(URL.createObjectURL(e.target.files[0]));
+													// ponytail: reuse `image` as preview src; upload overwrites it on save
+													setImage(URL.createObjectURL(e.target.files[0]));
 												}
 											}}
 										/>
