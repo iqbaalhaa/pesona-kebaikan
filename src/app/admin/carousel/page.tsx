@@ -459,6 +459,7 @@ export default function AdminCarouselPage() {
 											onChange={(e) => {
 												if (e.target.files?.[0]) {
 													setImageFile(e.target.files[0]);
+													// reuse `image` as preview src; upload overwrites it on save
 													setImage(URL.createObjectURL(e.target.files[0]));
 												}
 											}}

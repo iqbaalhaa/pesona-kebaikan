@@ -20,7 +20,7 @@ const items = [
 	},
 	{
 		title: "Donasi Aman",
-		desc: "Mulai dari Rp1, dengan metode pembayaran lengkap",
+		desc: "Dengan metode pembayaran yang mudah dan terpercaya",
 		icon: Heart,
 		href: "/donasi",
 		color: "#f43f5e",
