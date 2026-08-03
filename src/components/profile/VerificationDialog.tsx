@@ -29,7 +29,6 @@ import BusinessIcon from "@mui/icons-material/Business";
 // import WhatsAppIcon from "@mui/icons-material/WhatsApp";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import { requestEmailVerification } from "@/actions/email";
-// import { requestVerificationOtp, verifyOtp } from "@/actions/otp";
 import { newVerification } from "@/actions/new-verification";
 import {
 	// markPhoneVerified,
@@ -74,20 +73,14 @@ export default function VerificationDialog({
 		null,
 	);
 	const [emailDebug, setEmailDebug] = React.useState<unknown>(null);
-	// WA OTP temporarily disabled — see the commented "Verifikasi WhatsApp"
-	// Step further down for why (WhatsApp Business API ban risk).
-	// const [phone, setPhone] = React.useState<string>("");
-	// const [waOtp, setWaOtp] = React.useState<string>("");
-	// const [waLoading, setWaLoading] = React.useState<boolean>(false);
+	const [phone, setPhone] = React.useState<string>("");
+	const [waLoading, setWaLoading] = React.useState<boolean>(false);
 	const [isEmailVerified, setIsEmailVerified] = React.useState<boolean>(false);
 
 	const [emailOtp, setEmailOtp] = React.useState<string>("");
 	const [emailLoading, setEmailLoading] = React.useState<boolean>(false);
 	const [spamDialogOpen, setSpamDialogOpen] = React.useState<boolean>(false);
 
-	// const [waCooldown, setWaCooldown] = React.useState<number>(0);
-	// const [otpPhone, setOtpPhone] = React.useState<string | null>(null);
-	// const [showResend, setShowResend] = React.useState<boolean>(false);
 	const [docNumber, setDocNumber] = React.useState<string>("");
 	const [ktpUrl, setKtpUrl] = React.useState<string | null>(null);
 	const [uploading, setUploading] = React.useState(false);
@@ -186,20 +179,6 @@ export default function VerificationDialog({
 		}
 	}, [activeStep, isEmailVerified]);
 
-	// WA OTP temporarily disabled — see the commented "Verifikasi WhatsApp"
-	// Step below for why. This effect drove its resend cooldown timer.
-	// React.useEffect(() => {
-	// 	let timer: NodeJS.Timeout;
-	// 	if (waCooldown > 0) {
-	// 		timer = setInterval(() => {
-	// 			setWaCooldown((prev) => prev - 1);
-	// 		}, 1000);
-	// 	} else if (waCooldown === 0 && showResend) {
-	// 		// Cooldown finished
-	// 	}
-	// 	return () => clearInterval(timer);
-	// }, [waCooldown, showResend]);
-
 	React.useEffect(() => {
 		if (open) {
 			// Don't reset everything if user accidentally closed it, but maybe reset step if needed?
@@ -247,49 +226,6 @@ export default function VerificationDialog({
 	const handleNext = () => setActiveStep((s) => s + 1);
 	const handleBack = () => setActiveStep((s) => s - 1);
 
-	// WA OTP temporarily disabled — these drove the WA digit-input boxes.
-	// const handleOtpChange = (value: string, index: number) => {
-	// 	// Only allow numbers
-	// 	if (!/^\d*$/.test(value)) return;
-	//
-	// 	const newOtp = waOtp.split("");
-	// 	// Ensure we have 6 chars
-	// 	while (newOtp.length < 6) newOtp.push("");
-	//
-	// 	newOtp[index] = value;
-	// 	const otpString = newOtp.join("").substring(0, 6);
-	// 	setWaOtp(otpString);
-	//
-	// 	// Auto-focus next input
-	// 	if (value && index < 5) {
-	// 		const nextInput = document.getElementById(`otp-input-${index + 1}`);
-	// 		nextInput?.focus();
-	// 	}
-	// };
-	//
-	// const handleKeyDown = (e: React.KeyboardEvent, index: number) => {
-	// 	if (e.key === "Backspace" && !waOtp[index] && index > 0) {
-	// 		const prevInput = document.getElementById(`otp-input-${index - 1}`);
-	// 		prevInput?.focus();
-	// 	}
-	// };
-	//
-	// const handlePaste = (e: React.ClipboardEvent) => {
-	// 	e.preventDefault();
-	// 	const pastedData = e.clipboardData
-	// 		.getData("text")
-	// 		.replace(/\D/g, "")
-	// 		.substring(0, 6);
-	// 	if (pastedData) {
-	// 		setWaOtp(pastedData);
-	// 		// Focus the last filled input or the first empty one
-	// 		const targetIndex = Math.min(pastedData.length, 5);
-	// 		const targetInput = document.getElementById(
-	// 			`otp-input-${targetIndex === 6 ? 5 : targetIndex}`,
-	// 		);
-	// 		targetInput?.focus();
-	// 	}
-	// };
 
 	const handleEmailOtpChange = (value: string, index: number) => {
 		if (!/^\d*$/.test(value)) return;
@@ -495,164 +431,86 @@ export default function VerificationDialog({
 								orientation="vertical"
 								sx={{ p: 3 }}
 							>
-								{/*
-									WA OTP temporarily disabled (2026-07) — WhatsApp Business API
-									policy tightened by Meta, risk of the sender number getting
-									banned. "Verifikasi Email" below is now the first step.
-									Uncomment this Step (and its supporting state/handlers/imports
-									above) to restore phone verification via WhatsApp OTP.
+								<Step>
+									<StepLabel>
+										<Typography sx={{ fontWeight: 700 }}>
+											Verifikasi WhatsApp
+										</Typography>
+									</StepLabel>
+									<StepContent>
+										<Alert
+											icon={<WhatsAppIcon fontSize="inherit" />}
+											severity="success"
+											sx={{
+												mb: 2,
+												borderRadius: 1,
+												bgcolor: "#dcfce7",
+												color: "#166534",
+											}}
+										>
+											Masukkan nomor WhatsApp aktif Anda.
+										</Alert>
+										<Stack spacing={2} sx={{ mb: 3 }}>
+											<Box>
+												<StyledTextField
+													label="Nomor WhatsApp"
+													value={phone}
+													onChange={(e) => setPhone(e.target.value)}
+													fullWidth
+													placeholder="Contoh: 081234567890"
+													disabled={waLoading}
+												/>
+											</Box>
+										</Stack>
 
-									<Step>
-										<StepLabel>
-											<Typography sx={{ fontWeight: 700 }}>
-												Verifikasi WhatsApp
-											</Typography>
-										</StepLabel>
-										<StepContent>
-											<Alert
-												icon={<WhatsAppIcon fontSize="inherit" />}
-												severity="success"
-												sx={{
-													mb: 2,
-													borderRadius: 1,
-													bgcolor: "#dcfce7",
-													color: "#166534",
-												}}
-											>
-												Kami akan mengirimkan kode OTP ke WhatsApp Anda.
-											</Alert>
-											<Stack spacing={2} sx={{ mb: 3 }}>
-												<Box>
-													<Stack direction="row" spacing={1}>
-														<StyledTextField
-															label="Nomor WhatsApp"
-															value={phone}
-															onChange={(e) => setPhone(e.target.value)}
-															fullWidth
-															placeholder="Contoh: 081234567890"
-															disabled={waCooldown > 0}
-														/>
-														<Button
-															variant="contained"
-															sx={{
-																borderRadius: 1.5,
-																textTransform: "none",
-																whiteSpace: "nowrap",
-																minWidth: 100,
-																bgcolor: waCooldown > 0 ? "#e2e8f0" : "#0ba976",
-																color: waCooldown > 0 ? "#94a3b8" : "white",
-																boxShadow: "none",
-																"&:hover": {
-																	bgcolor: waCooldown > 0 ? "#e2e8f0" : "#51b860",
-																	boxShadow: "none",
-																},
-															}}
-															disabled={waLoading || !phone || waCooldown > 0}
-															onClick={async () => {
-																try {
-																	setWaLoading(true);
-																	const res = await requestVerificationOtp(phone);
-																	if (res.success) {
-																		setOtpPhone(phone);
-																		setWaCooldown(60); // 60 seconds cooldown
-																		setShowResend(true);
-																	}
-																	showSnackbar(
-																		res.success
-																			? "OTP berhasil dikirim ke WhatsApp"
-																			: res.error || "Gagal mengirim OTP",
-																		res.success ? "success" : "error",
-																	);
-																} finally {
-																	setWaLoading(false);
-																}
-															}}
-														>
-															{waLoading
-																? "..."
-																: waCooldown > 0
-																	? `${waCooldown}s`
-																	: showResend
-																		? "Kirim Ulang"
-																		: "Kirim Kode"}
-														</Button>
-													</Stack>
-												</Box>
-
-												<Box>
-													<StyledTextField
-														label="Kode OTP WhatsApp"
-														value={waOtp}
-														onChange={(e) => setWaOtp(e.target.value)}
-														fullWidth
-														placeholder="Masukkan 6 digit kode"
-														disabled={waLoading}
-														inputProps={{
-															inputMode: "numeric",
-															autoComplete: "one-time-code",
-															maxLength: 6,
-															"aria-label": "Kode OTP WhatsApp 6 digit",
-														}}
-													/>
-												</Box>
-											</Stack>
-
-											<Box sx={{ mb: 2 }}>
-												<Button
-													variant="contained"
-													onClick={async () => {
-														if (!phone || waOtp.length < 6) {
+										<Box sx={{ mb: 2 }}>
+											<Button
+												variant="contained"
+												onClick={async () => {
+													if (!phone) {
+														showSnackbar(
+															"Nomor WhatsApp wajib diisi",
+															"warning",
+														);
+														return;
+													}
+													try {
+														setWaLoading(true);
+														// ponytail: gateway WA belum siap — nomor langsung
+														// ditandai terverifikasi tanpa OTP. Kembalikan
+														// requestVerificationOtp/verifyOtp saat API ready.
+														const markRes = await markPhoneVerified(phone);
+														if (!markRes.success) {
 															showSnackbar(
-																"Nomor WhatsApp dan 6 digit OTP wajib diisi",
-																"warning",
+																markRes.error ||
+																	"Gagal menyimpan nomor WhatsApp",
+																"error",
 															);
 															return;
 														}
-														try {
-															setWaLoading(true);
-															const phoneForOtp = otpPhone || phone;
-															const res = await verifyOtp(phoneForOtp, waOtp);
-															if (res.success) {
-																const markRes =
-																	await markPhoneVerified(phoneForOtp);
-																if (!markRes.success) {
-																	showSnackbar(
-																		markRes.error ||
-																			"Gagal menandai nomor sebagai terverifikasi",
-																		"error",
-																	);
-																	return;
-																}
-																await update();
-																setActiveStep((s) => s + 1);
-															} else {
-																showSnackbar(
-																	res.error || "Verifikasi OTP gagal",
-																	"error",
-																);
-															}
-														} finally {
-															setWaLoading(false);
-														}
-													}}
-													disabled={waLoading || !phone || waOtp.length < 6}
-													fullWidth
-													sx={{
-														bgcolor: "#0ba976",
-														textTransform: "none",
-														fontWeight: 700,
-														borderRadius: 2,
-														boxShadow: "none",
-														py: 1.5,
-														"&:hover": { bgcolor: "#51b860", boxShadow: "none" },
-													}}
-												>
-													Verifikasi & Lanjut
-												</Button>
-											</Box>
-										</StepContent>
-									</Step>
-								*/}
+														await update();
+														setActiveStep((s) => s + 1);
+													} finally {
+														setWaLoading(false);
+													}
+												}}
+												disabled={waLoading || !phone}
+												fullWidth
+												sx={{
+													bgcolor: "#0ba976",
+													textTransform: "none",
+													fontWeight: 700,
+													borderRadius: 2,
+													boxShadow: "none",
+													py: 1.5,
+													"&:hover": { bgcolor: "#51b860", boxShadow: "none" },
+												}}
+											>
+												Verifikasi & Lanjut
+											</Button>
+										</Box>
+									</StepContent>
+								</Step>
 
 								<Step>
 									<StepLabel>
