@@ -289,7 +289,7 @@ export async function getFundraiserCampaign(slug: string) {
 				}).format(Number(w.amount))} telah dicairkan. ${w.notes || ""}`,
 				date: w.updatedAt,
 				amount: Number(w.amount),
-				images: w.proofUrl ? [w.proofUrl] : [],
+				images: [],
 			})),
 		].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 		return {

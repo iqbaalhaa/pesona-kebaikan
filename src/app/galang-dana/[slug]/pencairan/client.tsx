@@ -307,6 +307,28 @@ export default function WithdrawalList({
 													Alasan penolakan: {w.rejectionReason}
 												</Typography>
 											)}
+											{w.status === "COMPLETED" && w.proofUrl && (
+												<Stack sx={{ mt: 1 }} spacing={0.25}>
+													{w.senderBank && w.senderAccount && (
+														<Typography
+															variant="caption"
+															display="block"
+															color="text.secondary"
+														>
+															Ditransfer dari {getBankName(w.senderBank)} - {w.senderAccount}
+														</Typography>
+													)}
+													<Button
+														size="small"
+														href={w.proofUrl}
+														target="_blank"
+														rel="noopener noreferrer"
+														sx={{ alignSelf: "flex-start", textTransform: "none", px: 0, minWidth: 0 }}
+													>
+														Lihat bukti transfer
+													</Button>
+												</Stack>
+											)}
 										</Box>
 									</Stack>
 								</Paper>

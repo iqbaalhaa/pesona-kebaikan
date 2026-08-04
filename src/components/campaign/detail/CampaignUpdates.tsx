@@ -186,9 +186,15 @@ function UpdateItem({ update, isLast }: { update: any; isLast: boolean }) {
 
 interface CampaignUpdatesProps {
 	updates: any[];
+	emptyTitle?: string;
+	emptyDescription?: string;
 }
 
-export default function CampaignUpdates({ updates }: CampaignUpdatesProps) {
+export default function CampaignUpdates({
+	updates,
+	emptyTitle = "Belum ada kabar terbaru",
+	emptyDescription = "Pemilik campaign belum memposting update apapun.",
+}: CampaignUpdatesProps) {
 	return (
 		<>
 			{updates && updates.length > 0 ? (
@@ -228,10 +234,10 @@ export default function CampaignUpdates({ updates }: CampaignUpdatesProps) {
 						<VolunteerActivismIcon sx={{ color: "#94a3b8", fontSize: 32 }} />
 					</Box>
 					<Typography variant="subtitle1" fontWeight={600} gutterBottom>
-						Belum ada kabar terbaru
+						{emptyTitle}
 					</Typography>
 					<Typography variant="body2" color="text.secondary">
-						Pemilik campaign belum memposting update apapun.
+						{emptyDescription}
 					</Typography>
 				</Box>
 			)}

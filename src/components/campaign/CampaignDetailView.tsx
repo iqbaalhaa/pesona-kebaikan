@@ -225,15 +225,17 @@ export default function CampaignDetailView({
 	const latestDonations = donations.slice(0, 3);
 	const latestPrayers = prayers.slice(0, 3);
 
-	const hasWithdrawals = Array.isArray(data.updates)
-		? data.updates.some((u: any) => u?.type === "withdrawal")
-		: false;
+	const newsUpdates = Array.isArray(data.updates)
+		? data.updates.filter((u: any) => u?.type !== "withdrawal")
+		: [];
 
-	const withdrawalCount = Array.isArray(data.updates)
-		? data.updates.filter((u: any) => u?.type === "withdrawal").length
-		: 0;
+	const withdrawalUpdates = Array.isArray(data.updates)
+		? data.updates.filter((u: any) => u?.type === "withdrawal")
+		: [];
 
-	const updateCount = Array.isArray(data.updates) ? data.updates.length : 0;
+	const hasWithdrawals = withdrawalUpdates.length > 0;
+	const withdrawalCount = withdrawalUpdates.length;
+	const updateCount = newsUpdates.length;
 	const fundraiserCount = Array.isArray(data.fundraisers)
 		? data.fundraisers.length
 		: 0;
@@ -563,7 +565,7 @@ export default function CampaignDetailView({
 						{/* Pencairan Dana */}
 						{hasWithdrawals && (
 							<Box
-								onClick={() => setTabValue(1)}
+								onClick={() => setTabValue(2)}
 								sx={{
 									display: "flex",
 									justifyContent: "space-between",
@@ -627,7 +629,34 @@ export default function CampaignDetailView({
 								Kembali ke Cerita
 							</Button>
 						</Box>
-						<CampaignUpdates updates={data.updates} />
+						<CampaignUpdates updates={newsUpdates} />
+					</CustomTabPanel>
+
+					{/* Tab: Pencairan Dana */}
+					<CustomTabPanel value={tabValue} index={2}>
+						<Box sx={{ mb: 2 }}>
+							<Button
+								startIcon={<ArrowBackIcon />}
+								onClick={() => setTabValue(0)}
+								sx={{
+									textTransform: "none",
+									color: "text.primary",
+									fontWeight: 600,
+									p: 0,
+									"&:hover": {
+										bgcolor: "transparent",
+										textDecoration: "underline",
+									},
+								}}
+							>
+								Kembali ke Cerita
+							</Button>
+						</Box>
+						<CampaignUpdates
+							updates={withdrawalUpdates}
+							emptyTitle="Belum ada pencairan dana"
+							emptyDescription="Pemilik campaign belum mencairkan dana apapun."
+						/>
 					</CustomTabPanel>
 
 					<Box sx={{ mt: 4, mb: 2, textAlign: "center" }}>

@@ -74,7 +74,15 @@
       "Bash(curl -s -o /dev/null -w \"galang-dana: %{http_code}\\\\n\" http://localhost:3000/galang-dana)",
       "Bash(curl -s -o /dev/null -w \"admin/campaign: %{http_code}\\\\n\" http://localhost:3000/admin/campaign)",
       "Bash(curl -s -o /dev/null -w \"homepage: %{http_code}\\\\n\" http://localhost:3000/)",
-      "Bash(curl -s -o /dev/null -w \"admin/carousel: %{http_code}\\\\n\" http://localhost:3000/admin/carousel)"
+      "Bash(curl -s -o /dev/null -w \"admin/carousel: %{http_code}\\\\n\" http://localhost:3000/admin/carousel)",
+      "Bash(curl -s -o /dev/null -w \"donasi listing: %{http_code}\\\\n\" http://localhost:3000/donasi)",
+      "Bash(git diff *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)",
+      "Bash(powershell -Command \"Get-Process node -ErrorAction SilentlyContinue | Select-Object Id, ProcessName\")",
+      "Bash(powershell -Command \"Get-CimInstance Win32_Process -Filter \\\\\"name='node.exe'\\\\\" | Select-Object ProcessId, CommandLine | Format-List\")"
     ]
   }
 }
