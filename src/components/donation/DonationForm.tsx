@@ -265,7 +265,7 @@ export default function DonationForm({
 				<div className="mb-2.5">
 					<Input
 						placeholder="Nama Lengkap"
-						value={donorName}
+						value={isAnonymous ? "#OrangBaik" : donorName}
 						onChange={(e) => {
 							if (!isAnonymous) setDonorName(e.target.value);
 							if (fieldErrors.name) setFieldErrors((p) => ({ ...p, name: undefined }));
@@ -295,17 +295,10 @@ export default function DonationForm({
 						<Switch
 							size="small"
 							checked={isAnonymous}
-							onChange={(e) => {
-								setIsAnonymous(e.target.checked);
-								if (e.target.checked) {
-									setDonorName("Hamba Allah");
-								} else {
-									setDonorName("");
-								}
-							}}
+							onChange={(e) => setIsAnonymous(e.target.checked)}
 						/>
 					}
-					label={<Typography sx={{ fontSize: 13 }}>Sembunyikan nama saya (Hamba Allah)</Typography>}
+					label={<Typography sx={{ fontSize: 13 }}>Sembunyikan nama saya (#OrangBaik)</Typography>}
 				/>
 				<FormControlLabel
 					control={
@@ -315,7 +308,14 @@ export default function DonationForm({
 							onChange={(e) => setAllowContact(e.target.checked)}
 						/>
 					}
-					label={<Typography sx={{ fontSize: 13 }}>Bersedia dihubungi via WhatsApp untuk kabar terbaru</Typography>}
+					label={
+						<Box>
+							<Typography sx={{ fontSize: 13 }}>Terima laporan donasi saya melalui WhatsApp</Typography>
+							<Typography sx={{ fontSize: 11, color: "text.secondary" }}>
+								(Bukti Penyaluran - Dokumen Kegiatan - Update Program)
+							</Typography>
+						</Box>
+					}
 				/>
 			</Box>
 

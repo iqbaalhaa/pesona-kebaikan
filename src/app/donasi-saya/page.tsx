@@ -283,7 +283,7 @@ export default function MyDonationPage() {
 			const res = await createDonation({
 				campaignId: reCampaignId,
 				amount: Number(finalAmount),
-				donorName: isAnonymous ? "Hamba Allah" : donorName || "Tanpa Nama",
+				donorName: isAnonymous ? "#OrangBaik" : donorName || "Tanpa Nama",
 				donorPhone,
 				message,
 				isAnonymous,

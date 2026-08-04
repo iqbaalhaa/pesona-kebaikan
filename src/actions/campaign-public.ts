@@ -88,7 +88,7 @@ export async function getLatestDonations(limit: number = 10) {
 
 		const data = donations.map((d) => ({
 			id: d.id,
-			name: d.isAnonymous ? "Hamba Allah" : d.donorName,
+			name: d.isAnonymous ? "#OrangBaik" : d.donorName,
 			time: (() => {
 				const now = Date.now();
 				const diff = now - new Date(d.createdAt).getTime();

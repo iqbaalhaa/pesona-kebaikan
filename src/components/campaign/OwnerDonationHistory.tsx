@@ -70,8 +70,8 @@ export default function OwnerDonationHistory({
 						<Box sx={{ flex: 1 }}>
 							<Typography variant="body2" fontWeight={700}>
 								{donation.isAnonymous
-									? "Hamba Allah"
-									: donation.donorName || "Hamba Allah"}
+									? "#OrangBaik"
+									: donation.donorName || "#OrangBaik"}
 							</Typography>
 							<Typography variant="caption" color="text.secondary">
 								{new Date(donation.createdAt).toLocaleDateString("id-ID", {

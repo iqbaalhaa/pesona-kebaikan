@@ -748,7 +748,7 @@ export async function getCampaignById(id: string) {
 			images: campaign.media.map((m) => m.url),
 			donations: recentDonations.map((d) => ({
 				id: d.id,
-				name: d.donorName || "Hamba Allah",
+				name: d.donorName || "#OrangBaik",
 				amount: Number(d.amount),
 				date: new Date(d.createdAt).toISOString(),
 				comment: d.message,

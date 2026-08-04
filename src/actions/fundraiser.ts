@@ -328,7 +328,7 @@ export async function getFundraiserCampaign(slug: string) {
 				fundraiserCreatorImage: fr.createdBy?.image || "",
 				fundraiserPrayers: fr.amiins.map((a) => ({
 					id: a.id,
-					name: a.user?.name || "Hamba Allah",
+					name: a.user?.name || "#OrangBaik",
 					date: a.createdAt,
 					comment: "",
 				})),
