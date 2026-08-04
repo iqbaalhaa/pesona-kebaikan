@@ -17,6 +17,44 @@ function mapTxStatus(raw: string) {
 	return "paid";
 }
 
+function mapDonationRow(d: any) {
+	let method = "manual";
+	if (d.paymentMethod === "EWALLET") method = "gopay";
+	else if (d.paymentMethod === "VIRTUAL_ACCOUNT") method = "va_bca";
+	else if (d.paymentMethod === "TRANSFER") method = "manual";
+	else if (d.paymentMethod === "CARD") method = "qris";
+
+	return {
+		id: d.id,
+		createdAt: d.createdAt.toLocaleString("id-ID", {
+			day: "numeric",
+			month: "short",
+			year: "numeric",
+			hour: "2-digit",
+			minute: "2-digit",
+		}),
+		campaignId: d.campaignId,
+		campaignTitle: d.campaign.title,
+		donorName: d.donorName,
+		donorPhone: d.donorPhone || "-",
+		donorEmail: d.user?.email || "-",
+		message: d.message || "-",
+		isAnonymous: d.isAnonymous,
+		allowContact: d.allowContact,
+		amount: Number(d.amount),
+		method,
+		status: mapTxStatus(d.status),
+		refCode: d.id.substring(0, 8).toUpperCase(),
+		account: d.user
+			? {
+					name: d.user.name || "No Name",
+					email: d.user.email,
+					phone: d.user.phone || "-",
+				}
+			: null,
+	};
+}
+
 export async function getAdminTransactions() {
 	try {
 		const session = await auth();
@@ -83,46 +121,7 @@ export async function getAdminTransactions() {
 			}
 		}
 
-		const mappedDonations = donations.map((d) => {
-			let method = "manual";
-			if (d.paymentMethod === "EWALLET")
-				method = "gopay"; // Default mapping
-			else if (d.paymentMethod === "VIRTUAL_ACCOUNT") method = "va_bca";
-			else if (d.paymentMethod === "TRANSFER") method = "manual";
-			else if (d.paymentMethod === "CARD") method = "qris"; // Approx mapping
-
-			const status = mapTxStatus(d.status);
-
-			return {
-				id: d.id,
-				createdAt: d.createdAt.toLocaleString("id-ID", {
-					day: "numeric",
-					month: "short",
-					year: "numeric",
-					hour: "2-digit",
-					minute: "2-digit",
-				}),
-				campaignId: d.campaignId,
-				campaignTitle: d.campaign.title,
-				donorName: d.donorName,
-				donorPhone: d.donorPhone || "-",
-				donorEmail: d.user?.email || "-", // Keep for backward compat or display logic
-				message: d.message || "-",
-				isAnonymous: d.isAnonymous,
-				allowContact: d.allowContact,
-				amount: Number(d.amount),
-				method: method,
-				status: status,
-				refCode: d.id.substring(0, 8).toUpperCase(), // Use first 8 chars of ID as ref
-				account: d.user
-					? {
-							name: d.user.name || "No Name",
-							email: d.user.email,
-							phone: d.user.phone || "-",
-						}
-					: null,
-			};
-		});
+		const mappedDonations = donations.map(mapDonationRow);
 
 		return { success: true, data: mappedDonations };
 	} catch (error) {
@@ -171,45 +170,7 @@ export async function getCampaignTransactions(
 			prisma.donation.count({ where: { campaignId } }),
 		]);
 
-		const mappedDonations = donations.map((d) => {
-			let method = "manual";
-			if (d.paymentMethod === "EWALLET") method = "gopay";
-			else if (d.paymentMethod === "VIRTUAL_ACCOUNT") method = "va_bca";
-			else if (d.paymentMethod === "TRANSFER") method = "manual";
-			else if (d.paymentMethod === "CARD") method = "qris";
-
-			const status = mapTxStatus(d.status);
-
-			return {
-				id: d.id,
-				createdAt: d.createdAt.toLocaleString("id-ID", {
-					day: "numeric",
-					month: "short",
-					year: "numeric",
-					hour: "2-digit",
-					minute: "2-digit",
-				}),
-				campaignId: d.campaignId,
-				campaignTitle: d.campaign.title,
-				donorName: d.donorName,
-				donorPhone: d.donorPhone || "-",
-				donorEmail: d.user?.email || "-",
-				message: d.message || "-",
-				isAnonymous: d.isAnonymous,
-				allowContact: d.allowContact,
-				amount: Number(d.amount),
-				method: method,
-				status: status,
-				refCode: d.id.substring(0, 8).toUpperCase(),
-				account: d.user
-					? {
-							name: d.user.name || "No Name",
-							email: d.user.email,
-							phone: d.user.phone || "-",
-						}
-					: null,
-			};
-		});
+		const mappedDonations = donations.map(mapDonationRow);
 
 		return {
 			success: true,
@@ -220,6 +181,44 @@ export async function getCampaignTransactions(
 	} catch (error) {
 		console.error("Error fetching campaign transactions:", error);
 		return { success: false, error: "Gagal mengambil data transaksi campaign" };
+	}
+}
+
+export async function getCampaignDonorsExport(campaignId: string) {
+	try {
+		const session = await auth();
+		if (!session?.user || session.user.role !== "ADMIN") {
+			return { success: false, error: "Unauthorized" };
+		}
+
+		const donations = await prisma.donation.findMany({
+			where: { campaignId },
+			include: {
+				campaign: {
+					select: {
+						title: true,
+					},
+				},
+				user: {
+					select: {
+						name: true,
+						email: true,
+						phone: true,
+					},
+				},
+			},
+			orderBy: {
+				createdAt: "desc",
+			},
+		});
+
+		return { success: true, data: donations.map(mapDonationRow) };
+	} catch (error) {
+		console.error("Error fetching campaign donors export:", error);
+		return {
+			success: false,
+			error: "Gagal mengambil data donatur untuk export",
+		};
 	}
 }
 

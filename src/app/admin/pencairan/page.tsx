@@ -38,6 +38,7 @@ import { useSession } from "next-auth/react";
 import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
 import RefreshRoundedIcon from "@mui/icons-material/RefreshRounded";
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
+import EditRoundedIcon from "@mui/icons-material/EditRounded";
 import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
 import HourglassBottomRoundedIcon from "@mui/icons-material/HourglassBottomRounded";
 import ErrorRoundedIcon from "@mui/icons-material/ErrorRounded";
@@ -48,19 +49,24 @@ import {
 	createWithdrawal,
 	updateWithdrawalStatus,
 } from "@/actions/pencairan";
+import { updateCampaignTarget } from "@/actions/campaign-admin";
 
 import {
 	WithdrawalRow,
 	WithdrawalStatus,
 } from "@/components/admin/pencairan/WithdrawalCard";
+import DonasiCepatDonorsModal from "@/components/admin/pencairan/DonasiCepatDonorsModal";
 import { SUPPORTED_BANKS } from "@/lib/banks";
 import { getBankName } from "@/lib/banks";
 
 const PAGE_SIZE = 15;
+const QUICK_DONATION_SLUG = "donasi-cepat";
 
 type CampaignFund = {
 	id: string;
+	slug?: string;
 	title: string;
+	target: number;
 	collected: number;
 	withdrawn: number;
 	available: number;
@@ -134,6 +140,7 @@ export default function PencairanPage() {
 	const [statusFilter, setStatusFilter] = React.useState<StatusFilter>("PENDING");
 	const [page, setPage] = React.useState(1);
 	const [dialogOpen, setDialogOpen] = React.useState(false);
+	const [donorsModalOpen, setDonorsModalOpen] = React.useState(false);
 
 	// Reject
 	const [rejectDialogOpen, setRejectDialogOpen] = React.useState(false);
@@ -148,11 +155,17 @@ export default function PencairanPage() {
 
 	// Create form
 	const [selectedCampaign, setSelectedCampaign] = React.useState("");
+	const [manualDialogScope, setManualDialogScope] = React.useState<"regular" | "quick">("regular");
 	const [amount, setAmount] = React.useState("");
 	const [bankName, setBankName] = React.useState("");
 	const [bankAccount, setBankAccount] = React.useState("");
 	const [accountHolder, setAccountHolder] = React.useState("");
 	const [notes, setNotes] = React.useState("");
+
+	// Edit target Donasi Cepat
+	const [editTargetOpen, setEditTargetOpen] = React.useState(false);
+	const [targetValue, setTargetValue] = React.useState("");
+	const [targetSubmitting, setTargetSubmitting] = React.useState(false);
 	const [submitting, setSubmitting] = React.useState(false);
 
 	const [snack, setSnack] = React.useState<{ open: boolean; message: string; severity: "success" | "error" | "info" }>({ open: false, message: "", severity: "success" });
@@ -209,6 +222,7 @@ export default function PencairanPage() {
 	const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 	const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
 	const selectedCampaignData = campaigns.find(c => c.id === selectedCampaign);
+	const donasiCepat = campaigns.find(c => c.slug === QUICK_DONATION_SLUG);
 
 	const handleCreate = async () => {
 		if (!selectedCampaign || !amount || !bankName || !bankAccount || !accountHolder) return;
@@ -255,7 +269,7 @@ export default function PencairanPage() {
 				</Box>
 				<Stack direction="row" spacing={1}>
 					{isAdmin && (
-						<Button variant="contained" startIcon={<AddRoundedIcon />} onClick={() => setDialogOpen(true)} sx={{ borderRadius: 999, fontWeight: 800, px: 3 }}>
+						<Button variant="contained" startIcon={<AddRoundedIcon />} onClick={() => { setManualDialogScope("regular"); setSelectedCampaign(""); setDialogOpen(true); }} sx={{ borderRadius: 999, fontWeight: 800, px: 3 }}>
 							Pencairan Manual
 						</Button>
 					)}
@@ -285,6 +299,54 @@ export default function PencairanPage() {
 				))}
 			</Stack>
 
+
+			{/* Saldo Donasi Cepat — dana internal yayasan, terpisah dari campaign fundraiser */}
+			{donasiCepat && (
+				<Paper variant="outlined" sx={{ p: 2, borderRadius: 3, mb: 2 }}>
+					<Stack direction="row" alignItems="center" justifyContent="space-between" flexWrap="wrap" gap={1.5}>
+						<Box>
+							<Typography sx={{ fontSize: 13, fontWeight: 700, color: "text.secondary" }}>
+								Saldo Donasi Cepat
+							</Typography>
+							<Typography sx={{ fontSize: 22, fontWeight: 1000 }}>{idr(donasiCepat.available)}</Typography>
+							<Typography sx={{ fontSize: 12, color: "text.secondary" }}>
+								Terkumpul {idr(donasiCepat.collected)} • Sudah dicairkan {idr(donasiCepat.withdrawn)}
+							</Typography>
+							<Stack direction="row" alignItems="center" spacing={0.5} sx={{ mt: 0.5 }}>
+								<Typography sx={{ fontSize: 12, color: "text.secondary" }}>
+									Jumlah maksimal donasi: {idr(donasiCepat.target)}
+								</Typography>
+								{isAdmin && (
+									<Tooltip title="Edit jumlah maksimal donasi">
+										<IconButton
+											size="small"
+											onClick={() => { setTargetValue(formatIDR(String(donasiCepat.target))); setEditTargetOpen(true); }}
+										>
+											<EditRoundedIcon sx={{ fontSize: 15 }} />
+										</IconButton>
+									</Tooltip>
+								)}
+							</Stack>
+						</Box>
+						<Stack direction="row" spacing={1}>
+							{isAdmin && (
+								<Button variant="outlined" onClick={() => setDonorsModalOpen(true)} sx={{ borderRadius: 999, fontWeight: 700 }}>
+									Lihat Donatur
+								</Button>
+							)}
+							{isAdmin && (
+								<Button
+									variant="contained"
+									onClick={() => { setManualDialogScope("quick"); setSelectedCampaign(donasiCepat.id); setDialogOpen(true); }}
+									sx={{ borderRadius: 999, fontWeight: 800 }}
+								>
+									Tarik Dana
+								</Button>
+							)}
+						</Stack>
+					</Stack>
+				</Paper>
+			)}
 
 			{/* Filters */}
 			<Stack direction="row" spacing={1} sx={{ mb: 1.5 }}>
@@ -378,23 +440,27 @@ export default function PencairanPage() {
 
 			{/* Create Dialog */}
 			<Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: 3 } }}>
-				<DialogTitle>Pencairan Manual</DialogTitle>
+				<DialogTitle>{manualDialogScope === "quick" ? "Tarik Dana — Donasi Cepat" : "Pencairan Manual"}</DialogTitle>
 				<DialogContent dividers>
 					<Typography variant="caption" sx={{ color: "text.secondary", display: "block", mb: 2 }}>
-						Untuk kasus khusus — pencairan yang diinisiasi admin, bukan dari request fundraiser.
+						{manualDialogScope === "quick"
+							? "Penarikan dana internal yayasan dari Donasi Cepat."
+							: "Untuk kasus khusus — pencairan yang diinisiasi admin, bukan dari request fundraiser."}
 					</Typography>
 					<Stack spacing={3} sx={{ pt: 1 }}>
-						<FormControl fullWidth size="small">
+						<FormControl fullWidth size="small" disabled={manualDialogScope === "quick"}>
 							<InputLabel>Pilih Campaign</InputLabel>
 							<Select value={selectedCampaign} label="Pilih Campaign" onChange={e => setSelectedCampaign(e.target.value)}>
-								{campaigns.map(c => (
-									<MenuItem key={c.id} value={c.id}>
-										<Box sx={{ display: "flex", flexDirection: "column" }}>
-											<Typography variant="body2" fontWeight={600}>{c.title}</Typography>
-											<Typography variant="caption" color="text.secondary">Tersedia: {idr(c.available)}</Typography>
-										</Box>
-									</MenuItem>
-								))}
+								{campaigns
+									.filter(c => manualDialogScope === "quick" ? c.slug === QUICK_DONATION_SLUG : c.slug !== QUICK_DONATION_SLUG)
+									.map(c => (
+										<MenuItem key={c.id} value={c.id}>
+											<Box sx={{ display: "flex", flexDirection: "column" }}>
+												<Typography variant="body2" fontWeight={600}>{c.title}</Typography>
+												<Typography variant="caption" color="text.secondary">Tersedia: {idr(c.available)}</Typography>
+											</Box>
+										</MenuItem>
+									))}
 							</Select>
 						</FormControl>
 
@@ -444,6 +510,46 @@ export default function PencairanPage() {
 					<Button onClick={() => setDialogOpen(false)}>Batal</Button>
 					<Button variant="contained" onClick={handleCreate} disabled={submitting || !selectedCampaign || !amount || !bankName || !bankAccount || !accountHolder || (selectedCampaignData ? Number(amount.replace(/\D/g, "")) > selectedCampaignData.available : false)} sx={{ borderRadius: 999, px: 3 }}>
 						{submitting ? "Memproses..." : "Buat Pencairan"}
+					</Button>
+				</DialogActions>
+			</Dialog>
+
+			{/* Edit Jumlah Maksimal Donasi — Donasi Cepat */}
+			<Dialog open={editTargetOpen} onClose={() => setEditTargetOpen(false)} maxWidth="xs" fullWidth PaperProps={{ sx: { borderRadius: 3 } }}>
+				<DialogTitle>Edit Jumlah Maksimal Donasi</DialogTitle>
+				<DialogContent dividers>
+					<Typography variant="caption" sx={{ color: "text.secondary", display: "block", mb: 2 }}>
+						Batas maksimal dana yang bisa terkumpul di Donasi Cepat.
+					</Typography>
+					<TextField
+						label="Jumlah Maksimal Donasi"
+						fullWidth
+						size="small"
+						value={targetValue}
+						onChange={e => setTargetValue(formatIDR(e.target.value))}
+						InputProps={{ startAdornment: <InputAdornment position="start">Rp</InputAdornment> }}
+					/>
+				</DialogContent>
+				<DialogActions sx={{ p: 2.5 }}>
+					<Button onClick={() => setEditTargetOpen(false)}>Batal</Button>
+					<Button
+						variant="contained"
+						disabled={targetSubmitting || !targetValue || Number(targetValue.replace(/\D/g, "")) <= 0}
+						onClick={async () => {
+							if (!donasiCepat) return;
+							setTargetSubmitting(true);
+							try {
+								const res = await updateCampaignTarget(donasiCepat.id, Number(targetValue.replace(/\D/g, "")));
+								if (!res?.success) { showSnack(res?.error || "Gagal", "error"); return; }
+								setEditTargetOpen(false);
+								fetchData();
+								showSnack("Jumlah maksimal donasi diperbarui");
+							} catch { showSnack("Gagal", "error"); }
+							finally { setTargetSubmitting(false); }
+						}}
+						sx={{ borderRadius: 999, px: 3 }}
+					>
+						{targetSubmitting ? "Menyimpan..." : "Simpan"}
 					</Button>
 				</DialogActions>
 			</Dialog>
@@ -712,6 +818,15 @@ export default function PencairanPage() {
 			<Snackbar open={snack.open} autoHideDuration={5000} onClose={() => setSnack(s => ({ ...s, open: false }))} anchorOrigin={{ vertical: "bottom", horizontal: "center" }}>
 				<Alert onClose={() => setSnack(s => ({ ...s, open: false }))} severity={snack.severity} variant="filled">{snack.message}</Alert>
 			</Snackbar>
+
+			{donasiCepat && (
+				<DonasiCepatDonorsModal
+					open={donorsModalOpen}
+					onClose={() => setDonorsModalOpen(false)}
+					campaignId={donasiCepat.id}
+					campaignTitle={donasiCepat.title}
+				/>
+			)}
 		</Box>
 	);
 }

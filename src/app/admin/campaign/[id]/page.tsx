@@ -67,10 +67,13 @@ import {
 	addCampaignMedia,
 	uploadCampaignDocument,
 } from "@/actions/campaign-admin";
-import { getCampaignTransactions } from "@/actions/admin";
+import { getCampaignTransactions, getCampaignDonorsExport } from "@/actions/admin";
+import { exportDonorsToPDF, exportDonorsToCSV } from "@/lib/export/donationExport";
 import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
 import HourglassBottomRoundedIcon from "@mui/icons-material/HourglassBottomRounded";
 import ErrorRoundedIcon from "@mui/icons-material/ErrorRounded";
+import PictureAsPdfRoundedIcon from "@mui/icons-material/PictureAsPdfRounded";
+import FileDownloadRoundedIcon from "@mui/icons-material/FileDownloadRounded";
 import RichTextEditor from "@/components/admin/RichTextEditor";
 import {
 	idr as _idr, pct as _pct, statusMeta as _statusMeta, methodLabel as _methodLabel,
@@ -153,6 +156,7 @@ export default function AdminCampaignDetailPage(props: {
 	const [txPage, setTxPage] = React.useState(1);
 	const [txTotalPages, setTxTotalPages] = React.useState(1);
 	const [txTotal, setTxTotal] = React.useState(0);
+	const [txExporting, setTxExporting] = React.useState<"pdf" | "csv" | null>(null);
 
 	const [feeValue, setFeeValue] = React.useState<string>("0");
 	const [feeLoading, setFeeLoading] = React.useState(false);
@@ -200,6 +204,25 @@ export default function AdminCampaignDetailPage(props: {
 			fetchTransactions();
 		}
 	}, [tab, fetchTransactions]);
+
+	const handleExportTransactions = async (format: "pdf" | "csv") => {
+		setTxExporting(format);
+		try {
+			const res = await getCampaignDonorsExport(id);
+			if (!res.success || !res.data) {
+				setSnack({ open: true, msg: res.error || "Gagal mengambil data export", type: "error" });
+				return;
+			}
+			const title = data?.title || "campaign";
+			if (format === "pdf") await exportDonorsToPDF(res.data as any, title);
+			else await exportDonorsToCSV(res.data as any, title);
+		} catch (e) {
+			console.error(e);
+			setSnack({ open: true, msg: "Gagal mengekspor data donatur", type: "error" });
+		} finally {
+			setTxExporting(null);
+		}
+	};
 
 	const fetchData = React.useCallback(async () => {
 		setLoading(true);
@@ -2047,18 +2070,45 @@ export default function AdminCampaignDetailPage(props: {
 
 					{tab === "transactions" && (
 						<Box sx={{ p: 1.5 }}>
-							<Typography sx={{ fontWeight: 1000, fontSize: 14 }}>
-								Transaksi
-							</Typography>
-							<Typography
-								sx={{ mt: 0.5, fontSize: 12.5, color: "text.secondary" }}
-							>
-								Daftar donasi yang masuk ke campaign ini.
-							</Typography>
+							<Stack direction="row" alignItems="flex-start" justifyContent="space-between" spacing={1}>
+								<Box>
+									<Typography sx={{ fontWeight: 1000, fontSize: 14 }}>
+										Transaksi
+									</Typography>
+									<Typography
+										sx={{ mt: 0.5, fontSize: 12.5, color: "text.secondary" }}
+									>
+										Daftar donasi yang masuk ke campaign ini.
+									</Typography>
 
-							<Typography sx={{ mt: 0.5, fontSize: 11.5, color: "text.secondary", fontStyle: "italic" }}>
-								Klik baris untuk lihat detail donatur.
-							</Typography>
+									<Typography sx={{ mt: 0.5, fontSize: 11.5, color: "text.secondary", fontStyle: "italic" }}>
+										Klik baris untuk lihat detail donatur.
+									</Typography>
+								</Box>
+
+								<Stack direction="row" spacing={1}>
+									<Button
+										size="small"
+										variant="outlined"
+										startIcon={<PictureAsPdfRoundedIcon fontSize="small" />}
+										disabled={!!txExporting || txTotal === 0}
+										onClick={() => handleExportTransactions("pdf")}
+										sx={{ fontWeight: 700, textTransform: "none", whiteSpace: "nowrap" }}
+									>
+										{txExporting === "pdf" ? "Memproses..." : "PDF"}
+									</Button>
+									<Button
+										size="small"
+										variant="outlined"
+										startIcon={<FileDownloadRoundedIcon fontSize="small" />}
+										disabled={!!txExporting || txTotal === 0}
+										onClick={() => handleExportTransactions("csv")}
+										sx={{ fontWeight: 700, textTransform: "none", whiteSpace: "nowrap" }}
+									>
+										{txExporting === "csv" ? "Memproses..." : "CSV"}
+									</Button>
+								</Stack>
+							</Stack>
 
 							<Divider sx={{ my: 1.25 }} />
 

@@ -222,6 +222,44 @@ export async function updateCampaignFee(
 	}
 }
 
+export async function updateCampaignTarget(campaignId: string, target: number) {
+	try {
+		const session = await auth();
+		if (!session?.user || session.user.role !== "ADMIN") {
+			return { success: false, error: "Unauthorized" };
+		}
+
+		if (!target || target <= 0) {
+			return {
+				success: false,
+				error: "Jumlah maksimal donasi harus lebih dari 0",
+			};
+		}
+
+		const updated = await prisma.campaign.update({
+			where: { id: campaignId },
+			data: { target },
+			select: { slug: true },
+		});
+
+		revalidatePath("/admin/pencairan");
+		revalidatePath("/admin/campaign");
+		revalidatePath(`/admin/campaign/${campaignId}`);
+		if (updated.slug) {
+			revalidatePath(`/galang-dana/${updated.slug}`);
+		}
+		revalidatePath("/");
+
+		return { success: true };
+	} catch (error: any) {
+		console.error("Update campaign target error:", error);
+		return {
+			success: false,
+			error: error.message || "Failed to update campaign target",
+		};
+	}
+}
+
 export async function requestCampaignChange(
 	campaignId: string,
 	extraDays: number | null,

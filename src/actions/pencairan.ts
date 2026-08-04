@@ -73,7 +73,9 @@ export async function getCampaignsWithFunds() {
     );
     return {
       id: c.id,
+      slug: c.slug,
       title: c.title,
+      target: Number(c.target),
       collected,
       withdrawn,
       available: collected - withdrawn,

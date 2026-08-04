@@ -230,6 +230,7 @@ export default function QuickDonate() {
 
 		setLoading(true);
 		setError("");
+		let donationId: string | undefined;
 		try {
 			const res = await createDonation({
 				campaignId: campaignId,
@@ -242,7 +243,7 @@ export default function QuickDonate() {
 			});
 
 			if (res.success) {
-				const donationId = (res as any).data?.id;
+				donationId = (res as any).data?.id;
 				setCurrentDonationId(donationId);
 
 				const r = await fetch("/api/payment/checkout", {
@@ -255,7 +256,7 @@ export default function QuickDonate() {
 					window.location.href = j.redirect_url;
 				} else {
 					setError(j.error || "Gagal memulai pembayaran");
-					if (currentDonationId) await cancelPendingDonation(currentDonationId);
+					if (donationId) await cancelPendingDonation(donationId);
 					setCurrentDonationId(undefined);
 				}
 			} else {
@@ -263,8 +264,8 @@ export default function QuickDonate() {
 			}
 		} catch (err) {
 			setError("Terjadi kesalahan sistem");
-			if (currentDonationId) {
-				await cancelPendingDonation(currentDonationId);
+			if (donationId) {
+				await cancelPendingDonation(donationId);
 			}
 			setCurrentDonationId(undefined);
 		} finally {
@@ -904,7 +905,6 @@ export default function QuickDonate() {
 								fullWidth
 								onClick={() => {
 									setOpen(false);
-									setError("Transaksi gagal");
 									if (currentDonationId) {
 										cancelPendingDonation(currentDonationId);
 										setCurrentDonationId(undefined);
