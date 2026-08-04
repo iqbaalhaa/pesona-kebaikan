@@ -57,13 +57,13 @@ export default function QuickMenu() {
 					const inner = (
 						<button
 							onClick={() => handleActivate(m)}
-							className={`relative flex w-full cursor-pointer flex-col items-center justify-center rounded-2xl border border-divider py-5 text-center transition-all active:scale-[0.98] ${isSoon ? "cursor-not-allowed bg-slate-50" : "bg-white"}`}
+							className={`relative flex w-full cursor-pointer flex-col items-center justify-center rounded-2xl border border-divider py-3 text-center transition-all active:scale-[0.98] ${isSoon ? "cursor-not-allowed bg-slate-50" : "bg-white"}`}
 						>
-							<div className={`grid h-14 w-14 place-items-center rounded-2xl ${isSoon ? "bg-foreground/10" : "bg-primary/10"}`}>
-								<Icon size={26} className={isSoon ? "text-foreground/45" : "text-primary"} />
+							<div className={`grid h-11 w-11 place-items-center rounded-xl ${isSoon ? "bg-foreground/10" : "bg-primary/10"}`}>
+								<Icon size={20} className={isSoon ? "text-foreground/45" : "text-primary"} />
 							</div>
 
-							<span className={`mt-2 text-[12px] font-bold leading-tight ${isSoon ? "text-foreground/50" : "text-foreground"}`}>
+							<span className={`mt-1.5 text-[12px] font-bold leading-tight ${isSoon ? "text-foreground/50" : "text-foreground"}`}>
 								{m.label}
 							</span>
 
