@@ -86,7 +86,7 @@ export default function AboutPage() {
 
 	if (loading) {
 		return (
-			<div className="px-2 pb-6 pt-2.5">
+			<div className="px-4 pb-6 pt-4">
 				<div className="mb-4 h-[200px] animate-pulse rounded-2xl bg-foreground/5" />
 				<div className="mb-2 h-10 w-3/5 animate-pulse rounded bg-foreground/5" />
 				<div className="mb-1 h-5 animate-pulse rounded bg-foreground/5" />
@@ -117,7 +117,7 @@ export default function AboutPage() {
 					style={{ backgroundImage: `url(${aboutData.banner})` }}
 				/>
 			) : (
-				<div className="mx-auto max-w-2xl px-2">
+				<div className="mx-auto max-w-2xl px-4">
 					<div className="mb-4 flex flex-col items-center rounded-2xl bg-gradient-to-br from-primary to-green-600 p-4 text-center text-white">
 						<div className="mb-2 flex h-20 w-20 items-center justify-center rounded-full bg-white/20">
 							<Heart size={40} />
@@ -127,7 +127,7 @@ export default function AboutPage() {
 				</div>
 			)}
 
-			<div className="mx-auto max-w-2xl px-2">
+			<div className="mx-auto max-w-2xl px-4">
 				{content && (
 					<div className="mb-6">
 						<HtmlContent content={content} />

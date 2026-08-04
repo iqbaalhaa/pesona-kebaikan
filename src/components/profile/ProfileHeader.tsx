@@ -37,7 +37,7 @@ export default function ProfileHeader({
 	if (container) {
 		return (
 			<div
-				className={`mx-auto px-2 pb-2 pt-2.5 ${maxWidth ? maxWidthMap[maxWidth] : ""}`}
+				className={`mx-auto px-4 pb-2 pt-4 ${maxWidth ? maxWidthMap[maxWidth] : ""}`}
 			>
 				{content}
 			</div>
