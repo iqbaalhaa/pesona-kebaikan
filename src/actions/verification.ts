@@ -4,10 +4,48 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { VerifiedAs, VerificationStatus } from "@prisma/client";
 import { revalidatePath } from "next/cache";
+import { canonicalPhone } from "@/lib/phone";
 
 function normalizePhone(phone: string): string | null {
 	const digits = phone.replace(/\D/g, "");
 	return digits || null;
+}
+
+// Statuses that count as an actual completed donation — matches the
+// "successful donation" check used elsewhere (e.g. admin.ts's getCampaignTransactions).
+const SUCCESSFUL_DONATION_STATUSES = ["PAID", "paid", "SETTLED", "COMPLETED"];
+
+/**
+ * Claim any guest (userId-less) successful donations that were made with
+ * this same phone number before the donor had an account, so they show up
+ * in the donor's own history. Only ever attaches donations that have no
+ * owner yet — never reassigns a donation already linked to another user.
+ */
+async function claimGuestDonationsByPhone(userId: string, phone: string) {
+	const target = canonicalPhone(phone);
+	if (!target) return 0;
+
+	const candidates = await prisma.donation.findMany({
+		where: {
+			userId: null,
+			status: { in: SUCCESSFUL_DONATION_STATUSES },
+			donorPhone: { not: null },
+		},
+		select: { id: true, donorPhone: true },
+	});
+
+	const matchingIds = candidates
+		.filter((d) => canonicalPhone(d.donorPhone) === target)
+		.map((d) => d.id);
+
+	if (matchingIds.length === 0) return 0;
+
+	await prisma.donation.updateMany({
+		where: { id: { in: matchingIds } },
+		data: { userId },
+	});
+
+	return matchingIds.length;
 }
 
 export async function markPhoneVerified(phone: string) {
@@ -41,8 +79,12 @@ export async function markPhoneVerified(phone: string) {
 			phoneVerified: new Date(),
 		},
 	});
+
+	const claimedCount = await claimGuestDonationsByPhone(session.user.id, normalizedPhone);
+
 	revalidatePath("/profil/akun");
-	return { success: true };
+	revalidatePath("/donasi-saya");
+	return { success: true, claimedCount };
 }
 
 export async function getVerificationStatus() {

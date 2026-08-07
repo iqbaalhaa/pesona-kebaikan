@@ -144,14 +144,17 @@ export default function VerificationDialog({
 
       getVerificationStatus().then((res) => {
         if (res.success && res.data) {
-          const { emailVerified, verificationType: savedType } = res.data;
+          const { emailVerified, phoneVerified, verificationType: savedType } = res.data;
           setIsEmailVerified(!!emailVerified);
           // DB type (from a submitted request) wins over localStorage
           if (savedType) setVerificationType(savedType);
-          // WA verification step is temporarily disabled (see commented Step
-          // below) — "Verifikasi Email" is now step 0, so only email-verified
-          // status can skip ahead.
+          // Step order is 0=WhatsApp, 1=Email, 2=Upload KTP/SK, 3=Alamat,
+          // 4=Selesai — skip ahead past whichever of the first two steps are
+          // already verified, so a returning user doesn't get sent back to a
+          // step they already completed.
           if (emailVerified) {
+            setActiveStep(2);
+          } else if (phoneVerified) {
             setActiveStep(1);
           }
         }
@@ -169,8 +172,8 @@ export default function VerificationDialog({
   }, [verificationType]);
 
   React.useEffect(() => {
-    if (activeStep === 0 && isEmailVerified) {
-      setActiveStep(1);
+    if (activeStep < 2 && isEmailVerified) {
+      setActiveStep(2);
     }
   }, [activeStep, isEmailVerified]);
 
@@ -467,6 +470,12 @@ export default function VerificationDialog({
                               );
                               return;
                             }
+                            if (markRes.claimedCount) {
+                              showSnackbar(
+                                `${markRes.claimedCount} donasi sebelumnya berhasil digabungkan ke akun Anda`,
+                                'success',
+                              );
+                            }
                             await update();
                             setActiveStep((s) => s + 1);
                           } finally {
@@ -552,6 +561,7 @@ export default function VerificationDialog({
                             const res = await newVerification(emailOtp);
                             if (res.success) {
                               showSnackbar(res.success, 'success');
+                              setIsEmailVerified(true);
                               await update(); // Refresh session
                               handleNext();
                             } else {
