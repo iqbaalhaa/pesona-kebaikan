@@ -33,9 +33,11 @@ import {
 	Chip,
 	useTheme,
 	MenuItem as SelectMenuItem,
+	Badge,
+	TextField,
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
-import { Add, MoreVert, Search, Edit, Delete } from "@mui/icons-material";
+import { Add, MoreVert, Search, Edit, Delete, OpenInNew } from "@mui/icons-material";
 import PeopleAltRoundedIcon from "@mui/icons-material/PeopleAltRounded";
 import HowToRegRoundedIcon from "@mui/icons-material/HowToRegRounded";
 import PersonAddAlt1RoundedIcon from "@mui/icons-material/PersonAddAlt1Rounded";
@@ -44,6 +46,9 @@ import TrendingDownRoundedIcon from "@mui/icons-material/TrendingDownRounded";
 import PersonOutlineRoundedIcon from "@mui/icons-material/PersonOutlineRounded";
 import AdminPanelSettingsRoundedIcon from "@mui/icons-material/AdminPanelSettingsRounded";
 import BadgeRoundedIcon from "@mui/icons-material/BadgeRounded";
+import VerifiedUserRoundedIcon from "@mui/icons-material/VerifiedUserRounded";
+import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
+import CancelRoundedIcon from "@mui/icons-material/CancelRounded";
 import {
 	ChangeEvent,
 	FormEvent,
@@ -54,7 +59,15 @@ import {
 } from "react";
 import { useRouter } from "next/navigation";
 import type { UserStats } from "@/actions/user";
-import { getUsers, createUser, updateUser, deleteUser } from "@/actions/user";
+import {
+	getUsers,
+	createUser,
+	updateUser,
+	deleteUser,
+	getPendingVerificationCount,
+	verifyUser,
+	rejectUserVerification,
+} from "@/actions/user";
 import type { Role, AdminPermission } from "@prisma/client";
 import { formatDate } from "@/lib/date";
 import PermissionChecklist from "@/components/admin/PermissionChecklist";
@@ -141,6 +154,19 @@ function StatCard({
 	);
 }
 
+type VerificationRequestRow = {
+	id: string;
+	status: string;
+	type: string;
+	ktpNumber: string | null;
+	ktpPhotoUrl: string | null;
+	selfieUrl: string | null;
+	organizationName: string | null;
+	organizationDocUrl: string | null;
+	notes: string | null;
+	createdAt: string | Date;
+};
+
 type UserRow = {
 	id: string;
 	name: string | null;
@@ -148,18 +174,21 @@ type UserRow = {
 	role: string;
 	permissions?: AdminPermission[];
 	createdAt: string | Date;
+	verificationRequests?: VerificationRequestRow[];
 };
 
 interface UsersClientProps {
 	initialUsers: UserRow[];
 	initialTotal: number;
 	stats: UserStats;
+	initialPendingVerificationCount: number;
 }
 
 export default function UsersClient({
 	initialUsers,
 	initialTotal,
 	stats,
+	initialPendingVerificationCount,
 }: UsersClientProps) {
 	const [users, setUsers] = useState<UserRow[]>(initialUsers);
 	const [total, setTotal] = useState(initialTotal);
@@ -167,9 +196,18 @@ export default function UsersClient({
 	const [page, setPage] = useState(1);
 	const [rowsPerPage] = useState(10);
 	const [searchQuery, setSearchQuery] = useState("");
-	// Donatur/pemilik campaign vs. pengguna lingkup administrator — default "donor"
-	// supaya pengguna biasa (mayoritas) yang muncul duluan, bukan admin/staff.
-	const [scope, setScope] = useState<"donor" | "administrator">("donor");
+	// Donatur/pemilik campaign vs. pengguna lingkup administrator vs. antrian
+	// verifikasi — default "donor" supaya pengguna biasa (mayoritas) yang
+	// muncul duluan, bukan admin/staff.
+	const [scope, setScope] = useState<"donor" | "administrator" | "verification">("donor");
+	const [pendingVerificationCount, setPendingVerificationCount] = useState(
+		initialPendingVerificationCount,
+	);
+	const [reviewUser, setReviewUser] = useState<UserRow | null>(null);
+	const [rejectReason, setRejectReason] = useState("");
+	const [rejectMode, setRejectMode] = useState(false);
+	const [reviewSubmitting, setReviewSubmitting] = useState(false);
+	const [previewDoc, setPreviewDoc] = useState<{ url: string; title: string } | null>(null);
 	const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 	const [selectedUser, setSelectedUser] = useState<UserRow | null>(null);
 	const [isAddUserDialogOpen, setAddUserDialogOpen] = useState(false);
@@ -217,13 +255,24 @@ export default function UsersClient({
 	const loadUsers = async (page: number, query: string, currentScope: typeof scope) => {
 		setTableLoading(true);
 		try {
-			const data = await getUsers(query, "all", "all", page, rowsPerPage, currentScope);
+			const data =
+				currentScope === "verification"
+					? await getUsers(query, "all", "pending", page, rowsPerPage, "all")
+					: await getUsers(query, "all", "all", page, rowsPerPage, currentScope);
 			setUsers(data.users as UserRow[]);
 			setTotal(data.total);
 		} catch {
 			showSnackbar("Gagal memuat pengguna", "error");
 		} finally {
 			setTableLoading(false);
+		}
+	};
+
+	const refreshPendingVerificationCount = async () => {
+		try {
+			setPendingVerificationCount(await getPendingVerificationCount());
+		} catch {
+			// ignore — badge just stays stale until next successful refresh
 		}
 	};
 
@@ -240,9 +289,60 @@ export default function UsersClient({
 		setSearchQuery(event.target.value);
 	};
 
-	const handleScopeChange = (_event: React.SyntheticEvent, value: "donor" | "administrator") => {
+	const handleScopeChange = (
+		_event: React.SyntheticEvent,
+		value: "donor" | "administrator" | "verification",
+	) => {
 		setScope(value);
 		setPage(1);
+	};
+
+	const openReview = (user: UserRow) => {
+		setReviewUser(user);
+		setRejectMode(false);
+		setRejectReason("");
+	};
+
+	const closeReview = () => {
+		setReviewUser(null);
+		setRejectMode(false);
+		setRejectReason("");
+	};
+
+	const handleApprove = async () => {
+		if (!reviewUser) return;
+		setReviewSubmitting(true);
+		try {
+			const res = await verifyUser(reviewUser.id);
+			if (res.success) {
+				showSnackbar("Verifikasi disetujui", "success");
+				closeReview();
+				await loadUsers(page, searchQuery, scope);
+				await refreshPendingVerificationCount();
+			} else {
+				showSnackbar(res.error || "Gagal menyetujui verifikasi", "error");
+			}
+		} finally {
+			setReviewSubmitting(false);
+		}
+	};
+
+	const handleReject = async () => {
+		if (!reviewUser) return;
+		setReviewSubmitting(true);
+		try {
+			const res = await rejectUserVerification(reviewUser.id, rejectReason.trim() || undefined);
+			if (res.success) {
+				showSnackbar("Verifikasi ditolak", "success");
+				closeReview();
+				await loadUsers(page, searchQuery, scope);
+				await refreshPendingVerificationCount();
+			} else {
+				showSnackbar(res.error || "Gagal menolak verifikasi", "error");
+			}
+		} finally {
+			setReviewSubmitting(false);
+		}
 	};
 
 	const handlePageChange = (_event: ChangeEvent<unknown>, value: number) => {
@@ -412,10 +512,30 @@ export default function UsersClient({
 			<Tabs
 				value={scope}
 				onChange={handleScopeChange}
-				sx={{ mb: 2, minHeight: 40, "& .MuiTab-root": { minHeight: 40, textTransform: "none", fontWeight: 700 } }}
+				sx={{
+					mb: 2,
+					minHeight: 40,
+					overflow: "visible",
+					"& .MuiTabs-scroller": { overflow: "visible !important" },
+					"& .MuiTab-root": { minHeight: 40, textTransform: "none", fontWeight: 700, overflow: "visible" },
+				}}
 			>
 				<Tab label="Donatur & Pemilik Campaign" value="donor" />
 				<Tab label="Administrator" value="administrator" />
+				<Tab
+					value="verification"
+					label={
+						<Badge
+							badgeContent={pendingVerificationCount}
+							color="error"
+							sx={{ "& .MuiBadge-badge": { right: -8, top: -2 } }}
+						>
+							<Box component="span" sx={{ pr: pendingVerificationCount > 0 ? 1.25 : 0 }}>
+								Verifikasi
+							</Box>
+						</Badge>
+					}
+				/>
 			</Tabs>
 
 			<Stack
@@ -440,154 +560,239 @@ export default function UsersClient({
 						),
 					}}
 				/>
-				<Button
-					variant="contained"
-					color="primary"
-					startIcon={<Add />}
-					onClick={handleAddUserDialogOpen}
-					sx={{ borderRadius: 999, fontWeight: 700, boxShadow: "none", px: 2.5 }}
-				>
-					{scope === "administrator" ? "Tambah Administrator" : "Tambah Pengguna"}
-				</Button>
+				{scope !== "verification" && (
+					<Button
+						variant="contained"
+						color="primary"
+						startIcon={<Add />}
+						onClick={handleAddUserDialogOpen}
+						sx={{ borderRadius: 999, fontWeight: 700, boxShadow: "none", px: 2.5 }}
+					>
+						{scope === "administrator" ? "Tambah Administrator" : "Tambah Pengguna"}
+					</Button>
+				)}
 			</Stack>
 
 			<Surface sx={{ overflow: "hidden" }}>
 				<Box sx={{ height: 3 }}>
 					{tableLoading && <LinearProgress sx={{ height: 3 }} />}
 				</Box>
-				<TableContainer>
-					<Table>
-						<TableHead>
-							<TableRow sx={{ "& th": { fontWeight: 700, bgcolor: "action.hover" } }}>
-								<TableCell>Nama</TableCell>
-								<TableCell>Email</TableCell>
-								<TableCell>Role</TableCell>
-								<TableCell>Tanggal Bergabung</TableCell>
-								<TableCell align="right">Aksi</TableCell>
-							</TableRow>
-						</TableHead>
-						<TableBody>
-							{users.length === 0 ? (
-								<TableRow>
-									<TableCell colSpan={5} align="center" sx={{ py: 6 }}>
-										<Stack spacing={1} alignItems="center">
-											<PersonOutlineRoundedIcon
-												sx={{ fontSize: 36, color: "text.disabled" }}
-											/>
-											<Typography color="text.secondary">
-												{searchQuery
-													? `Tidak ada pengguna yang cocok dengan "${searchQuery}"`
-													: "Belum ada pengguna"}
-											</Typography>
-										</Stack>
-									</TableCell>
+				{scope === "verification" ? (
+					<TableContainer>
+						<Table>
+							<TableHead>
+								<TableRow sx={{ "& th": { fontWeight: 700, bgcolor: "action.hover" } }}>
+									<TableCell>Nama</TableCell>
+									<TableCell>Email</TableCell>
+									<TableCell>Jenis</TableCell>
+									<TableCell>Diajukan</TableCell>
+									<TableCell align="right">Aksi</TableCell>
 								</TableRow>
-							) : (
-								users.map((user) => {
-									const initial = (user.name || user.email || "?")
-										.trim()
-										.charAt(0)
-										.toUpperCase();
-									const isAdminRole = user.role === "ADMIN";
-									const isStaffRole = user.role === "STAFF";
-									return (
-										<TableRow
-											key={user.id}
-											hover
-											onClick={() => router.push(`/admin/users/${user.id}`)}
-											sx={{ cursor: "pointer" }}
-										>
-											<TableCell>
-												<Stack direction="row" spacing={1.5} alignItems="center">
-													<Avatar
-														sx={{
-															width: 32,
-															height: 32,
-															fontSize: 13,
-															fontWeight: 700,
-															bgcolor: isAdminRole
-																? "warning.light"
+							</TableHead>
+							<TableBody>
+								{users.length === 0 ? (
+									<TableRow>
+										<TableCell colSpan={5} align="center" sx={{ py: 6 }}>
+											<Stack spacing={1} alignItems="center">
+												<VerifiedUserRoundedIcon
+													sx={{ fontSize: 36, color: "text.disabled" }}
+												/>
+												<Typography color="text.secondary">
+													Tidak ada pengajuan verifikasi yang menunggu.
+												</Typography>
+											</Stack>
+										</TableCell>
+									</TableRow>
+								) : (
+									users.map((user) => {
+										const request = user.verificationRequests?.[0];
+										const initial = (user.name || user.email || "?")
+											.trim()
+											.charAt(0)
+											.toUpperCase();
+										return (
+											<TableRow key={user.id} hover>
+												<TableCell>
+													<Stack direction="row" spacing={1.5} alignItems="center">
+														<Avatar sx={{ width: 32, height: 32, fontSize: 13, fontWeight: 700 }}>
+															{initial}
+														</Avatar>
+														<Typography sx={{ fontWeight: 600, fontSize: 14 }}>
+															{user.name || "-"}
+														</Typography>
+													</Stack>
+												</TableCell>
+												<TableCell>
+													<Typography sx={{ fontSize: 14, color: "text.secondary" }}>
+														{user.email}
+													</Typography>
+												</TableCell>
+												<TableCell>
+													<Chip
+														size="small"
+														label={request?.type === "organization" ? "Organisasi" : "Individu"}
+														color={request?.type === "organization" ? "secondary" : "default"}
+														variant="outlined"
+														sx={{ fontWeight: 700, fontSize: 11 }}
+													/>
+												</TableCell>
+												<TableCell>
+													<Typography sx={{ fontSize: 14, color: "text.secondary" }}>
+														{request ? formatDate(request.createdAt) : "-"}
+													</Typography>
+												</TableCell>
+												<TableCell align="right">
+													<Button
+														size="small"
+														variant="outlined"
+														onClick={() => openReview(user)}
+														sx={{ borderRadius: 999, fontWeight: 700, textTransform: "none" }}
+													>
+														Tinjau
+													</Button>
+												</TableCell>
+											</TableRow>
+										);
+									})
+								)}
+							</TableBody>
+						</Table>
+					</TableContainer>
+				) : (
+					<TableContainer>
+						<Table>
+							<TableHead>
+								<TableRow sx={{ "& th": { fontWeight: 700, bgcolor: "action.hover" } }}>
+									<TableCell>Nama</TableCell>
+									<TableCell>Email</TableCell>
+									<TableCell>Role</TableCell>
+									<TableCell>Tanggal Bergabung</TableCell>
+									<TableCell align="right">Aksi</TableCell>
+								</TableRow>
+							</TableHead>
+							<TableBody>
+								{users.length === 0 ? (
+									<TableRow>
+										<TableCell colSpan={5} align="center" sx={{ py: 6 }}>
+											<Stack spacing={1} alignItems="center">
+												<PersonOutlineRoundedIcon
+													sx={{ fontSize: 36, color: "text.disabled" }}
+												/>
+												<Typography color="text.secondary">
+													{searchQuery
+														? `Tidak ada pengguna yang cocok dengan "${searchQuery}"`
+														: "Belum ada pengguna"}
+												</Typography>
+											</Stack>
+										</TableCell>
+									</TableRow>
+								) : (
+									users.map((user) => {
+										const initial = (user.name || user.email || "?")
+											.trim()
+											.charAt(0)
+											.toUpperCase();
+										const isAdminRole = user.role === "ADMIN";
+										const isStaffRole = user.role === "STAFF";
+										return (
+											<TableRow
+												key={user.id}
+												hover
+												onClick={() => router.push(`/admin/users/${user.id}`)}
+												sx={{ cursor: "pointer" }}
+											>
+												<TableCell>
+													<Stack direction="row" spacing={1.5} alignItems="center">
+														<Avatar
+															sx={{
+																width: 32,
+																height: 32,
+																fontSize: 13,
+																fontWeight: 700,
+																bgcolor: isAdminRole
+																	? "warning.light"
+																	: isStaffRole
+																		? "secondary.light"
+																		: "primary.light",
+															}}
+														>
+															{initial}
+														</Avatar>
+														<Typography sx={{ fontWeight: 600, fontSize: 14 }}>
+															{user.name || "-"}
+														</Typography>
+													</Stack>
+												</TableCell>
+												<TableCell>
+													<Typography sx={{ fontSize: 14, color: "text.secondary" }}>
+														{user.email}
+													</Typography>
+												</TableCell>
+												<TableCell>
+													<Chip
+														size="small"
+														icon={
+															isAdminRole ? (
+																<AdminPanelSettingsRoundedIcon fontSize="small" />
+															) : isStaffRole ? (
+																<BadgeRoundedIcon fontSize="small" />
+															) : undefined
+														}
+														label={
+															isStaffRole && user.permissions && user.permissions.length > 0 ? ("STAFF (" + user.permissions.length + ")") : user.role
+														}
+														color={
+															isAdminRole
+																? "warning"
 																: isStaffRole
-																	? "secondary.light"
-																	: "primary.light",
+																	? "secondary"
+																	: "default"
+														}
+														variant={isAdminRole || isStaffRole ? "filled" : "outlined"}
+														sx={{ fontWeight: 700, fontSize: 11 }}
+													/>
+												</TableCell>
+												<TableCell>
+													<Typography sx={{ fontSize: 14, color: "text.secondary" }}>
+														{formatDate(user.createdAt)}
+													</Typography>
+												</TableCell>
+												<TableCell align="right">
+													<IconButton
+														onClick={(event) => {
+															event.stopPropagation();
+															handleMenuClick(event, user);
 														}}
 													>
-														{initial}
-													</Avatar>
-													<Typography sx={{ fontWeight: 600, fontSize: 14 }}>
-														{user.name || "-"}
-													</Typography>
-												</Stack>
-											</TableCell>
-											<TableCell>
-												<Typography sx={{ fontSize: 14, color: "text.secondary" }}>
-													{user.email}
-												</Typography>
-											</TableCell>
-											<TableCell>
-												<Chip
-													size="small"
-													icon={
-														isAdminRole ? (
-															<AdminPanelSettingsRoundedIcon fontSize="small" />
-														) : isStaffRole ? (
-															<BadgeRoundedIcon fontSize="small" />
-														) : undefined
-													}
-													label={
-														isStaffRole && user.permissions && user.permissions.length > 0 ? ("STAFF (" + user.permissions.length + ")") : user.role
-													}
-													color={
-														isAdminRole
-															? "warning"
-															: isStaffRole
-																? "secondary"
-																: "default"
-													}
-													variant={isAdminRole || isStaffRole ? "filled" : "outlined"}
-													sx={{ fontWeight: 700, fontSize: 11 }}
-												/>
-											</TableCell>
-											<TableCell>
-												<Typography sx={{ fontSize: 14, color: "text.secondary" }}>
-													{formatDate(user.createdAt)}
-												</Typography>
-											</TableCell>
-											<TableCell align="right">
-												<IconButton
-													onClick={(event) => {
-														event.stopPropagation();
-														handleMenuClick(event, user);
-													}}
-												>
-													<MoreVert />
-												</IconButton>
-												<Menu
-													anchorEl={anchorEl}
-													open={Boolean(anchorEl) && selectedUser?.id === user.id}
-													onClose={handleMenuClose}
-													onClick={(e) => e.stopPropagation()}
-												>
-													<MenuItem onClick={() => handleEditUserDialogOpen(user)}>
-														<Edit fontSize="small" className="mr-2" />
-														Edit
-													</MenuItem>
-													<MenuItem
-														onClick={() => handleDeleteDialogOpen(user)}
-														sx={{ color: "error.main" }}
+														<MoreVert />
+													</IconButton>
+													<Menu
+														anchorEl={anchorEl}
+														open={Boolean(anchorEl) && selectedUser?.id === user.id}
+														onClose={handleMenuClose}
+														onClick={(e) => e.stopPropagation()}
 													>
-														<Delete fontSize="small" className="mr-2" />
-														Hapus
-													</MenuItem>
-												</Menu>
-											</TableCell>
-										</TableRow>
-									);
-								})
-							)}
-						</TableBody>
-					</Table>
-				</TableContainer>
+														<MenuItem onClick={() => handleEditUserDialogOpen(user)}>
+															<Edit fontSize="small" className="mr-2" />
+															Edit
+														</MenuItem>
+														<MenuItem
+															onClick={() => handleDeleteDialogOpen(user)}
+															sx={{ color: "error.main" }}
+														>
+															<Delete fontSize="small" className="mr-2" />
+															Hapus
+														</MenuItem>
+													</Menu>
+												</TableCell>
+											</TableRow>
+										);
+									})
+								)}
+							</TableBody>
+						</Table>
+					</TableContainer>
+				)}
 			</Surface>
 
 			<Stack
@@ -763,6 +968,197 @@ export default function UsersClient({
 						Hapus
 					</Button>
 				</DialogActions>
+			</Dialog>
+
+			{/* Verification Review Dialog */}
+			<Dialog
+				open={!!reviewUser}
+				onClose={reviewSubmitting ? undefined : closeReview}
+				fullWidth
+				maxWidth="sm"
+				PaperProps={{ sx: { borderRadius: 3 } }}
+			>
+				{reviewUser &&
+					(() => {
+						const request = reviewUser.verificationRequests?.[0];
+						const isOrg = request?.type === "organization";
+						return (
+							<>
+								<DialogTitle>Tinjau Verifikasi</DialogTitle>
+								<DialogContent className="flex flex-col gap-3 pt-2">
+									<Stack spacing={0.5}>
+										<Typography sx={{ fontWeight: 700 }}>{reviewUser.name || "-"}</Typography>
+										<Typography variant="body2" color="text.secondary">
+											{reviewUser.email}
+										</Typography>
+									</Stack>
+									<Chip
+										size="small"
+										label={isOrg ? "Organisasi" : "Individu"}
+										color={isOrg ? "secondary" : "default"}
+										variant="outlined"
+										sx={{ alignSelf: "flex-start", fontWeight: 700 }}
+									/>
+									{request?.ktpNumber && (
+										<Typography variant="body2">
+											{isOrg ? "Nomor SK Kemenkumham" : "Nomor NIK"}:{" "}
+											<strong>{request.ktpNumber}</strong>
+										</Typography>
+									)}
+									<Stack direction="row" spacing={1} flexWrap="wrap">
+										{isOrg ? (
+											request?.organizationDocUrl && (
+												<Button
+													variant="outlined"
+													size="small"
+													startIcon={<OpenInNew />}
+													onClick={() =>
+														setPreviewDoc({ url: request.organizationDocUrl!, title: "Dokumen SK Kemenkumham" })
+													}
+													sx={{ textTransform: "none", borderRadius: 2 }}
+												>
+													Lihat Dokumen SK
+												</Button>
+											)
+										) : (
+											<>
+												{request?.ktpPhotoUrl && (
+													<Button
+														variant="outlined"
+														size="small"
+														startIcon={<OpenInNew />}
+														onClick={() =>
+															setPreviewDoc({ url: request.ktpPhotoUrl!, title: "Foto KTP" })
+														}
+														sx={{ textTransform: "none", borderRadius: 2 }}
+													>
+														Lihat KTP
+													</Button>
+												)}
+												{request?.selfieUrl && (
+													<Button
+														variant="outlined"
+														size="small"
+														startIcon={<OpenInNew />}
+														onClick={() =>
+															setPreviewDoc({ url: request.selfieUrl!, title: "Foto Selfie" })
+														}
+														sx={{ textTransform: "none", borderRadius: 2 }}
+													>
+														Lihat Selfie
+													</Button>
+												)}
+											</>
+										)}
+									</Stack>
+									{!request?.ktpPhotoUrl && !request?.organizationDocUrl && (
+										<Alert severity="warning" sx={{ borderRadius: 2 }}>
+											Tidak ada dokumen yang diupload untuk pengajuan ini.
+										</Alert>
+									)}
+									{rejectMode && (
+										<TextField
+											label="Alasan penolakan (opsional)"
+											multiline
+											rows={3}
+											fullWidth
+											value={rejectReason}
+											onChange={(e) => setRejectReason(e.target.value)}
+											placeholder="Contoh: Foto KTP buram, data tidak sesuai..."
+										/>
+									)}
+								</DialogContent>
+								<DialogActions sx={{ p: 2.5 }}>
+									{rejectMode ? (
+										<>
+											<Button onClick={() => setRejectMode(false)} disabled={reviewSubmitting}>
+												Batal
+											</Button>
+											<Button
+												variant="contained"
+												color="error"
+												startIcon={<CancelRoundedIcon />}
+												onClick={handleReject}
+												disabled={reviewSubmitting}
+												sx={{ borderRadius: 999 }}
+											>
+												{reviewSubmitting ? "Memproses..." : "Tolak Verifikasi"}
+											</Button>
+										</>
+									) : (
+										<>
+											<Button onClick={closeReview} disabled={reviewSubmitting}>
+												Tutup
+											</Button>
+											<Button
+												color="error"
+												onClick={() => setRejectMode(true)}
+												disabled={reviewSubmitting}
+											>
+												Tolak
+											</Button>
+											<Button
+												variant="contained"
+												color="success"
+												startIcon={<CheckCircleRoundedIcon />}
+												onClick={handleApprove}
+												disabled={reviewSubmitting}
+												sx={{ borderRadius: 999 }}
+											>
+												{reviewSubmitting ? "Memproses..." : "Setujui"}
+											</Button>
+										</>
+									)}
+								</DialogActions>
+							</>
+						);
+					})()}
+			</Dialog>
+
+			{/* Document Preview Dialog */}
+			<Dialog
+				open={!!previewDoc}
+				onClose={() => setPreviewDoc(null)}
+				fullWidth
+				maxWidth="sm"
+				PaperProps={{ sx: { borderRadius: 3 } }}
+			>
+				<DialogTitle sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+					{previewDoc?.title}
+					<Button
+						size="small"
+						startIcon={<OpenInNew />}
+						href={previewDoc?.url}
+						target="_blank"
+						sx={{ textTransform: "none" }}
+					>
+						Buka di tab baru
+					</Button>
+				</DialogTitle>
+				<DialogContent
+					sx={{
+						display: "flex",
+						justifyContent: "center",
+						alignItems: "center",
+						bgcolor: "action.hover",
+						p: 2,
+					}}
+				>
+					{previewDoc?.url.toLowerCase().endsWith(".pdf") ? (
+						<Box
+							component="iframe"
+							src={previewDoc.url}
+							sx={{ width: "100%", height: "70vh", border: "none", borderRadius: 1 }}
+						/>
+					) : (
+						<Box
+							component="img"
+							src={previewDoc?.url}
+							alt={previewDoc?.title}
+							sx={{ maxWidth: "100%", maxHeight: "70vh", borderRadius: 1, objectFit: "contain" }}
+						/>
+					)}
+				</DialogContent>
 			</Dialog>
 
 			<Snackbar

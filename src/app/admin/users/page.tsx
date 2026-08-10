@@ -1,20 +1,22 @@
 import React from 'react';
 import UsersClient from './UsersClient';
-import { getUsers, getUserStats } from '@/actions/user';
+import { getUsers, getUserStats, getPendingVerificationCount } from '@/actions/user';
 
 export const dynamic = 'force-dynamic';
 
 export default async function UsersPage() {
-  const [userData, stats] = await Promise.all([
+  const [userData, stats, pendingVerificationCount] = await Promise.all([
     getUsers(),
-    getUserStats()
+    getUserStats(),
+    getPendingVerificationCount(),
   ]);
 
   return (
-    <UsersClient 
-      initialUsers={userData.users} 
-      initialTotal={userData.total} 
-      stats={stats} 
+    <UsersClient
+      initialUsers={userData.users}
+      initialTotal={userData.total}
+      stats={stats}
+      initialPendingVerificationCount={pendingVerificationCount}
     />
   );
 }

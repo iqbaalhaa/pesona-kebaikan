@@ -150,7 +150,10 @@ export async function submitVerificationRequest(
 			userId: user.id,
 			type,
 			status: VerificationStatus.PENDING,
-			ktpNumber: input.ktpNumber,
+			// The schema only has one "document number" column (ktpNumber) —
+			// reused here for the org's SK Kemenkumham number too, since it was
+			// previously being collected from the form and silently dropped.
+			ktpNumber: input.type === "organisasi" ? input.organizationNumber : input.ktpNumber,
 			ktpPhotoUrl: input.ktpPhotoUrl ?? null,
 			organizationDocUrl: input.organizationDocUrl ?? null,
 			notes: input.notes ?? null,

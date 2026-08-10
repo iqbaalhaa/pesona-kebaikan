@@ -122,6 +122,9 @@ export default function AdminSidebar({
 	const [activeCampaignCount, setActiveCampaignCount] = React.useState<
 		number | null
 	>(null);
+	const [userVerificationCount, setUserVerificationCount] = React.useState<
+		number | null
+	>(null);
 
 	React.useEffect(() => {
 		let active = true;
@@ -160,6 +163,26 @@ export default function AdminSidebar({
 		return () => {
 			active = false;
 		};
+	}, [pathname]);
+
+	React.useEffect(() => {
+		let active = true;
+		(async () => {
+			try {
+				const res = await fetch("/api/admin/user-verification-count");
+				if (!res.ok) return;
+				const data = (await res.json()) as { count?: number };
+				if (!active) return;
+				setUserVerificationCount(
+					typeof data.count === "number" && data.count >= 0 ? data.count : 0,
+				);
+			} catch {}
+		})();
+		return () => {
+			active = false;
+		};
+		// Same rationale as reviewCount above — refetch on every admin route
+		// change so the badge doesn't go stale after approving/rejecting.
 	}, [pathname]);
 
 	const SidebarContent = (
@@ -201,6 +224,7 @@ export default function AdminSidebar({
 								const isActive = pathname === m.href;
 								const isCampaignMenu = m.href === "/admin/campaign";
 								const isVerifyMenu = m.href === "/admin/campaign/verifikasi";
+								const isUsersMenu = m.href === "/admin/users";
 								return (
 									<Link
 										key={m.href}
@@ -216,8 +240,8 @@ export default function AdminSidebar({
 											}
                       ${
 												isVerifyMenu
-													? "border border-emerald-500/40 bg-gradient-to-r from-emerald-50/80 via-white to-emerald-50/80"
-													: "border border-transparent"
+													? "bg-gradient-to-r from-emerald-50/80 via-white to-emerald-50/80"
+													: ""
 											}
                     `}
 									>
@@ -278,6 +302,12 @@ export default function AdminSidebar({
 												<span className="mt-1 inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 shadow-sm ring-1 ring-emerald-500/40">
 													<span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
 													<span>{reviewCount} antrian</span>
+												</span>
+											)}
+											{isUsersMenu && userVerificationCount !== null && userVerificationCount > 0 && (
+												<span className="mt-1 inline-flex items-center gap-1.5 rounded-full bg-red-50 px-2 py-0.5 text-[10px] font-semibold text-red-700 shadow-sm ring-1 ring-red-500/40">
+													<span className="h-1.5 w-1.5 rounded-full bg-red-500" />
+													<span>{userVerificationCount} verifikasi</span>
 												</span>
 											)}
 										</span>

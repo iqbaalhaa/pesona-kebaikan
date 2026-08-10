@@ -3,7 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import bcrypt from "bcryptjs";
-import { Role, AdminPermission, NotificationType } from "@prisma/client";
+import { Role, AdminPermission, NotificationType, VerificationStatus } from "@prisma/client";
 import { auth } from "@/auth";
 import { createNotification } from "@/actions/notification";
 import { subDays } from "date-fns";
@@ -100,9 +100,14 @@ export async function getUsers(
 					verifiedAs: true,
 					verificationRequests: {
 						select: {
+							id: true,
 							status: true,
 							ktpNumber: true,
 							ktpPhotoUrl: true,
+							selfieUrl: true,
+							organizationName: true,
+							organizationDocUrl: true,
+							notes: true,
 							type: true,
 							createdAt: true,
 						},
@@ -364,6 +369,20 @@ export async function deleteUser(id: string) {
 	}
 }
 
+export async function getPendingVerificationCount() {
+	const session = await auth();
+	if (session?.user?.role !== "ADMIN") return 0;
+
+	try {
+		return await prisma.verificationRequest.count({
+			where: { status: VerificationStatus.PENDING },
+		});
+	} catch (error) {
+		console.error("Error counting pending verifications:", error);
+		return 0;
+	}
+}
+
 export async function verifyUser(id: string) {
 	const session = await auth();
 	if (session?.user?.role !== "ADMIN") {
@@ -389,13 +408,39 @@ export async function verifyUser(id: string) {
 			};
 		}
 
-		await prisma.user.update({
-			where: { id },
-			data: {
-				verifiedAt: new Date(),
-				verifiedAs: "personal",
-			},
+		// The pending request tells us WHICH type (individu/organisasi) is
+		// actually being approved — verifiedAs must match it, not be assumed.
+		const pendingRequest = await prisma.verificationRequest.findFirst({
+			where: { userId: id, status: VerificationStatus.PENDING },
+			orderBy: { createdAt: "desc" },
+			select: { id: true, type: true },
 		});
+
+		if (!pendingRequest) {
+			return {
+				success: false,
+				error: "Tidak ada pengajuan verifikasi yang menunggu untuk user ini.",
+			};
+		}
+
+		await prisma.$transaction([
+			prisma.user.update({
+				where: { id },
+				data: {
+					verifiedAt: new Date(),
+					verifiedAs: pendingRequest.type,
+				},
+			}),
+			prisma.verificationRequest.update({
+				where: { id: pendingRequest.id },
+				data: {
+					status: VerificationStatus.APPROVED,
+					reviewedById: session.user.id,
+					reviewedAt: new Date(),
+				},
+			}),
+		]);
+
 		await createNotification(
 			id,
 			"Akun Terverifikasi",
@@ -434,21 +479,40 @@ export async function unverifyUser(id: string) {
 	}
 }
 
-export async function rejectUserVerification(id: string) {
+export async function rejectUserVerification(id: string, reason?: string) {
 	const session = await auth();
 	if (session?.user?.role !== "ADMIN") {
 		return { success: false, error: "Unauthorized" };
 	}
 
 	try {
-		// 1. Delete pending verification requests
-		await prisma.verificationRequest.deleteMany({
-			where: {
-				userId: id,
+		const pendingRequest = await prisma.verificationRequest.findFirst({
+			where: { userId: id, status: VerificationStatus.PENDING },
+			orderBy: { createdAt: "desc" },
+			select: { id: true },
+		});
+
+		if (!pendingRequest) {
+			return {
+				success: false,
+				error: "Tidak ada pengajuan verifikasi yang menunggu untuk user ini.",
+			};
+		}
+
+		// Mark REJECTED (keep the submitted docs + a reason) instead of
+		// deleting the request — deleting destroyed the audit trail and
+		// the notes the user needs to see why they were rejected.
+		await prisma.verificationRequest.update({
+			where: { id: pendingRequest.id },
+			data: {
+				status: VerificationStatus.REJECTED,
+				reviewedById: session.user.id,
+				reviewedAt: new Date(),
+				notes: reason || null,
 			},
 		});
 
-		// 2. Ensure user is unverified
+		// Ensure user stays unverified (no-op if they never were).
 		await prisma.user.update({
 			where: { id },
 			data: {
@@ -460,7 +524,9 @@ export async function rejectUserVerification(id: string) {
 		await createNotification(
 			id,
 			"Verifikasi Akun Ditolak",
-			"Maaf, permohonan verifikasi akun Anda ditolak. Silakan periksa kelengkapan data dan ajukan ulang.",
+			reason
+				? `Maaf, permohonan verifikasi akun Anda ditolak. Alasan: ${reason}`
+				: "Maaf, permohonan verifikasi akun Anda ditolak. Silakan periksa kelengkapan data dan ajukan ulang.",
 			NotificationType.KABAR,
 		);
 
@@ -504,43 +570,64 @@ export async function bulkVerifyUsers(ids: string[]) {
 	}
 
 	try {
-		// Determine eligible users first
+		// Determine eligible users first, along with their pending request —
+		// verifiedAs has to match what was actually requested (personal vs
+		// organization), not be assumed, so each user's request type is
+		// looked up individually rather than bulk-set to one value.
 		const eligibleUsers = await prisma.user.findMany({
 			where: {
 				id: { in: ids },
 				emailVerified: { not: null },
 				verifiedAt: null,
+				verificationRequests: { some: { status: VerificationStatus.PENDING } },
 			},
-			select: { id: true },
-		});
-
-		// Only verify users who have verified emails
-		const result = await prisma.user.updateMany({
-			where: {
-				id: { in: eligibleUsers.map((u) => u.id) },
-				emailVerified: { not: null },
-				verifiedAt: null, // Only update those not already verified
-			},
-			data: {
-				verifiedAt: new Date(),
-				verifiedAs: "personal",
+			select: {
+				id: true,
+				verificationRequests: {
+					where: { status: VerificationStatus.PENDING },
+					orderBy: { createdAt: "desc" },
+					take: 1,
+					select: { id: true, type: true },
+				},
 			},
 		});
 
-		// Create notifications for all newly verified users
-		if (eligibleUsers.length > 0) {
-			await prisma.notification.createMany({
-				data: eligibleUsers.map((u) => ({
-					userId: u.id,
-					title: "Akun Terverifikasi",
-					message: "Selamat! Akun Anda telah berhasil diverifikasi.",
-					type: NotificationType.KABAR,
-				})),
-			});
+		if (eligibleUsers.length === 0) {
+			return { success: true, count: 0 };
 		}
 
+		await prisma.$transaction(
+			eligibleUsers.flatMap((u) => {
+				const request = u.verificationRequests[0];
+				if (!request) return [];
+				return [
+					prisma.user.update({
+						where: { id: u.id },
+						data: { verifiedAt: new Date(), verifiedAs: request.type },
+					}),
+					prisma.verificationRequest.update({
+						where: { id: request.id },
+						data: {
+							status: VerificationStatus.APPROVED,
+							reviewedById: session.user!.id,
+							reviewedAt: new Date(),
+						},
+					}),
+				];
+			}),
+		);
+
+		await prisma.notification.createMany({
+			data: eligibleUsers.map((u) => ({
+				userId: u.id,
+				title: "Akun Terverifikasi",
+				message: "Selamat! Akun Anda telah berhasil diverifikasi.",
+				type: NotificationType.KABAR,
+			})),
+		});
+
 		revalidatePath("/admin/users");
-		return { success: true, count: result.count };
+		return { success: true, count: eligibleUsers.length };
 	} catch (error) {
 		console.error("Error bulk verifying users:", error);
 		return { success: false, error: "Failed to bulk verify users" };

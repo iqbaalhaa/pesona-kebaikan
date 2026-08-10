@@ -88,7 +88,8 @@
       "Bash(curl -s -o /dev/null -w \"admin/campaign \\(no session\\): %{http_code}\\\\n\" http://localhost:3000/admin/campaign)",
       "Bash(curl -s -o /dev/null -w \"donasi/donasi-cepat \\(no session, should 404/block\\): %{http_code}\\\\n\" http://localhost:3000/donasi/donasi-cepat)",
       "Bash(curl -s -D - -o /tmp/body.html http://localhost:3000/donasi/donasi-cepat)",
-      "Bash(grep -o \"This page could not be found\\\\|not-found\\\\|Kembali ke Beranda\\\\|Donasi Cepat\\\\|CampaignDetailView\\\\|QuickDonate\" /tmp/body.html | sort -u *)"
+      "Bash(grep -o \"This page could not be found\\\\|not-found\\\\|Kembali ke Beranda\\\\|Donasi Cepat\\\\|CampaignDetailView\\\\|QuickDonate\" /tmp/body.html | sort -u *)",
+      "Bash(git rev-list *)"
     ]
   }
 }
