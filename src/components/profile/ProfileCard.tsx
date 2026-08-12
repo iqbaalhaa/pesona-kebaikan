@@ -16,23 +16,30 @@ export default function ProfileCard({ user }: { user: UserCardData }) {
 	const router = useRouter();
 	const isVerified = Boolean(user?.verifiedAt);
 	const isPending = user?.verificationRequests?.[0]?.status === "PENDING";
+	const isRejected = user?.verificationRequests?.[0]?.status === "REJECTED";
 	const statusLabel = isVerified
 		? `Terverifikasi: ${user?.verifiedAs === "organization" ? "organization" : "personal"}`
 		: isPending
 			? "Menunggu Verifikasi"
-			: "Belum Terverifikasi";
+			: isRejected
+				? "Verifikasi Ditolak"
+				: "Belum Terverifikasi";
 
 	const statusColor = isVerified
 		? "text-primary"
 		: isPending
 			? "text-amber-500"
-			: "text-slate-500";
+			: isRejected
+				? "text-red-600"
+				: "text-slate-500";
 
 	const dotColor = isVerified
 		? "bg-primary"
 		: isPending
 			? "bg-amber-500"
-			: "bg-slate-200";
+			: isRejected
+				? "bg-red-500"
+				: "bg-slate-200";
 
 	return (
 		<div className="relative mb-3 flex items-center gap-2 overflow-hidden rounded-2xl border border-foreground/8 bg-white p-2.5">
@@ -40,10 +47,10 @@ export default function ProfileCard({ user }: { user: UserCardData }) {
 				<img
 					src={user.image}
 					alt={user.name || ""}
-					className="h-[72px] w-[72px] shrink-0 rounded-full border-3 border-white bg-primary object-cover shadow-md"
+					className="h-18 w-18 shrink-0 rounded-full border-3 border-white bg-primary object-cover shadow-md"
 				/>
 			) : (
-				<div className="grid h-[72px] w-[72px] shrink-0 place-items-center rounded-full border-3 border-white bg-primary text-[28px] font-extrabold text-white shadow-md">
+				<div className="grid h-18 w-18 shrink-0 place-items-center rounded-full border-3 border-white bg-primary text-[28px] font-extrabold text-white shadow-md">
 					{user?.name?.[0]?.toUpperCase() || "A"}
 				</div>
 			)}

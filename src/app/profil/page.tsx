@@ -35,7 +35,7 @@ export default function ProfilePage() {
 		image: string | null;
 		verifiedAs: "personal" | "organization" | null;
 		verifiedAt: string | Date | null;
-		verificationRequests?: { status: string }[];
+		verificationRequests?: { status: string; notes?: string | null }[];
 	} | null>(null);
 
 	const loadProfile = React.useCallback(async () => {
@@ -85,9 +85,12 @@ export default function ProfilePage() {
 					<ProfileCard user={myProfile || user} />
 
 					{!myProfile?.verifiedAt &&
-						!myProfile?.verificationRequests?.[0]?.status && (
+						(!myProfile?.verificationRequests?.[0]?.status ||
+							myProfile.verificationRequests[0].status === "REJECTED") && (
 							<VerificationBanner
 								onClick={() => setOpenVerification(true)}
+								rejected={myProfile?.verificationRequests?.[0]?.status === "REJECTED"}
+								reason={myProfile?.verificationRequests?.[0]?.notes}
 							/>
 						)}
 

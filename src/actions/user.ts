@@ -750,7 +750,7 @@ export async function getMyProfile() {
 			verifiedAs: true,
 			verifiedAt: true,
 			verificationRequests: {
-				select: { status: true },
+				select: { status: true, notes: true },
 				orderBy: { createdAt: "desc" },
 				take: 1,
 			},
