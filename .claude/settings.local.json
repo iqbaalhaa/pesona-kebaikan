@@ -89,7 +89,9 @@
       "Bash(curl -s -o /dev/null -w \"donasi/donasi-cepat \\(no session, should 404/block\\): %{http_code}\\\\n\" http://localhost:3000/donasi/donasi-cepat)",
       "Bash(curl -s -D - -o /tmp/body.html http://localhost:3000/donasi/donasi-cepat)",
       "Bash(grep -o \"This page could not be found\\\\|not-found\\\\|Kembali ke Beranda\\\\|Donasi Cepat\\\\|CampaignDetailView\\\\|QuickDonate\" /tmp/body.html | sort -u *)",
-      "Bash(git rev-list *)"
+      "Bash(git rev-list *)",
+      "Bash(cd \"e:/ProjectDepati/pesona-kebaikan\" && npx tsc --noEmit -p tsconfig.json > /tmp/tsc9.txt 2>&1; grep -v midtrans /tmp/tsc9.txt; echo tscdone *)",
+      "Bash(cd \"e:/ProjectDepati/pesona-kebaikan\" && npx tsc --noEmit -p tsconfig.json > /tmp/tsc10.txt 2>&1; grep -v midtrans /tmp/tsc10.txt; echo tscdone *)"
     ]
   }
 }

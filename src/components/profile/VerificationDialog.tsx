@@ -36,6 +36,12 @@ import {
 } from '@/actions/verification';
 import { uploadFile } from '@/actions/upload';
 
+// Masks the outlined-field notch border behind the floating label's own
+// background — a stray/misaligned notch (seen when a field mounts mid-way
+// through the Stepper's Collapse transition) ends up hidden either way,
+// instead of relying on MUI's auto-measured gap always lining up exactly.
+const notchedLabelSx = { bgcolor: 'background.paper', px: 0.6 } as const;
+
 interface Province {
   id: string;
   name: string;
@@ -492,6 +498,7 @@ export default function VerificationDialog({
                           fullWidth
                           placeholder="Contoh: 081234567890"
                           disabled={waLoading}
+                          InputLabelProps={{ shrink: true, sx: notchedLabelSx }}
                         />
                       </Box>
                     </Stack>
@@ -571,6 +578,7 @@ export default function VerificationDialog({
                           maxLength: 6,
                           'aria-label': 'Kode OTP Email 6 digit',
                         }}
+                        InputLabelProps={{ shrink: true, sx: notchedLabelSx }}
                       />
                       <Button
                         variant="outlined"
@@ -657,6 +665,7 @@ export default function VerificationDialog({
                           placeholder="Nama sesuai KTP"
                           value={picName}
                           onChange={(e) => setPicName(e.target.value)}
+                          InputLabelProps={{ shrink: true, sx: notchedLabelSx }}
                         />
                         <StyledTextField
                           label="Nomor HP Penanggung Jawab"
@@ -665,6 +674,7 @@ export default function VerificationDialog({
                           placeholder="Contoh: 081234567890"
                           value={picPhone}
                           onChange={(e) => setPicPhone(e.target.value)}
+                          InputLabelProps={{ shrink: true, sx: notchedLabelSx }}
                         />
                       </Stack>
                     )}
@@ -750,6 +760,7 @@ export default function VerificationDialog({
                       }
                       sx={{ mt: 2 }}
                       InputProps={{ sx: { borderRadius: 1 } }}
+                      InputLabelProps={{ shrink: true, sx: notchedLabelSx }}
                       value={docNumber}
                       onChange={(e) => {
                         const val = e.target.value;
@@ -927,7 +938,12 @@ export default function VerificationDialog({
                         value={selectedProvince}
                         onChange={(_, newValue) => setSelectedProvince(newValue)}
                         renderInput={(params) => (
-                          <TextField {...params} label="Provinsi" size="small" />
+                          <TextField
+                            {...params}
+                            label="Provinsi"
+                            size="small"
+                            InputLabelProps={{ ...params.InputLabelProps, sx: notchedLabelSx }}
+                          />
                         )}
                         noOptionsText="Tidak ada data"
                       />
@@ -939,7 +955,12 @@ export default function VerificationDialog({
                         onChange={(_, newValue) => setSelectedRegency(newValue)}
                         disabled={!selectedProvince}
                         renderInput={(params) => (
-                          <TextField {...params} label="Kabupaten/Kota" size="small" />
+                          <TextField
+                            {...params}
+                            label="Kabupaten/Kota"
+                            size="small"
+                            InputLabelProps={{ ...params.InputLabelProps, sx: notchedLabelSx }}
+                          />
                         )}
                         noOptionsText={
                           selectedProvince ? 'Tidak ada data' : 'Pilih provinsi terlebih dahulu'
