@@ -159,10 +159,12 @@ type VerificationRequestRow = {
 	status: string;
 	type: string;
 	ktpNumber: string | null;
+	ktpName: string | null;
 	ktpPhotoUrl: string | null;
 	selfieUrl: string | null;
 	organizationName: string | null;
 	organizationDocUrl: string | null;
+	picPhone: string | null;
 	notes: string | null;
 	createdAt: string | Date;
 };
@@ -1005,21 +1007,46 @@ export default function UsersClient({
 											<strong>{request.ktpNumber}</strong>
 										</Typography>
 									)}
+									{isOrg && request?.ktpName && (
+										<Typography variant="body2">
+											Penanggung Jawab: <strong>{request.ktpName}</strong>
+										</Typography>
+									)}
+									{isOrg && request?.picPhone && (
+										<Typography variant="body2">
+											No. HP Penanggung Jawab: <strong>{request.picPhone}</strong>
+										</Typography>
+									)}
 									<Stack direction="row" spacing={1} flexWrap="wrap">
 										{isOrg ? (
-											request?.organizationDocUrl && (
-												<Button
-													variant="outlined"
-													size="small"
-													startIcon={<OpenInNew />}
-													onClick={() =>
-														setPreviewDoc({ url: request.organizationDocUrl!, title: "Dokumen SK Kemenkumham" })
-													}
-													sx={{ textTransform: "none", borderRadius: 2 }}
-												>
-													Lihat Dokumen SK
-												</Button>
-											)
+											<>
+												{request?.organizationDocUrl && (
+													<Button
+														variant="outlined"
+														size="small"
+														startIcon={<OpenInNew />}
+														onClick={() =>
+															setPreviewDoc({ url: request.organizationDocUrl!, title: "Dokumen SK Kemenkumham" })
+														}
+														sx={{ textTransform: "none", borderRadius: 2 }}
+													>
+														Lihat Dokumen SK
+													</Button>
+												)}
+												{request?.ktpPhotoUrl && (
+													<Button
+														variant="outlined"
+														size="small"
+														startIcon={<OpenInNew />}
+														onClick={() =>
+															setPreviewDoc({ url: request.ktpPhotoUrl!, title: "KTP Penanggung Jawab" })
+														}
+														sx={{ textTransform: "none", borderRadius: 2 }}
+													>
+														Lihat KTP Penanggung Jawab
+													</Button>
+												)}
+											</>
 										) : (
 											<>
 												{request?.ktpPhotoUrl && (

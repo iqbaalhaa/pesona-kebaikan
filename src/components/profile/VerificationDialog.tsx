@@ -81,6 +81,13 @@ export default function VerificationDialog({
   const [uploading, setUploading] = React.useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
+  // Organisasi only — data penanggung jawab (PIC) yang mengajukan verifikasi.
+  const [picName, setPicName] = React.useState<string>('');
+  const [picPhone, setPicPhone] = React.useState<string>('');
+  const [picKtpUrl, setPicKtpUrl] = React.useState<string | null>(null);
+  const [picKtpUploading, setPicKtpUploading] = React.useState(false);
+  const picFileInputRef = React.useRef<HTMLInputElement>(null);
+
   const [snackbar, setSnackbar] = React.useState<{
     open: boolean;
     message: string;
@@ -130,6 +137,46 @@ export default function VerificationDialog({
         setUploading(false);
       }
     }
+  };
+
+  // Organisasi only — upload KTP penanggung jawab (terpisah dari dokumen SK).
+  const handlePicKtpFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      const isImage = typeof file.type === 'string' && file.type.startsWith('image/');
+      if (isImage && file.size > 3 * 1024 * 1024) {
+        showSnackbar('Ukuran gambar maksimal 3MB', 'error');
+        e.target.value = '';
+        return;
+      }
+
+      setPicKtpUploading(true);
+      const formData = new FormData();
+      formData.append('file', file);
+
+      try {
+        const res = await uploadFile(formData);
+        if (res.success && res.url) {
+          setPicKtpUrl(res.url);
+        } else {
+          showSnackbar('Gagal mengupload file', 'error');
+        }
+      } catch (err) {
+        console.error(err);
+        showSnackbar('Terjadi kesalahan saat upload', 'error');
+      } finally {
+        setPicKtpUploading(false);
+      }
+    }
+  };
+
+  const validatePicPhone = (raw: string): string => {
+    const d = raw.replace(/\D/g, '');
+    if (!d) return 'Nomor HP wajib diisi';
+    if (!/^(0|62|8)/.test(d)) return 'Format nomor HP tidak valid (contoh: 08xxxxxxxxxx)';
+    if (d.length < 10) return 'Nomor HP minimal 10 digit';
+    if (d.length > 15) return 'Nomor HP terlalu panjang';
+    return '';
   };
 
   React.useEffect(() => {
@@ -589,15 +636,39 @@ export default function VerificationDialog({
                 <Step>
                   <StepLabel>
                     <Typography sx={{ fontWeight: 700 }}>
-                      Upload {verificationType === 'individu' ? 'Foto KTP' : 'SK Kemenkumham'}
+                      {verificationType === 'individu'
+                        ? 'Upload Foto KTP'
+                        : 'Data Penanggung Jawab & Dokumen'}
                     </Typography>
                   </StepLabel>
                   <StepContent>
                     <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                       {verificationType === 'individu'
                         ? 'Pastikan foto KTP terlihat jelas dan terbaca.'
-                        : 'Upload dokumen SK Kemenkumham yang sah.'}
+                        : 'Lengkapi data penanggung jawab dan dokumen organisasi.'}
                     </Typography>
+
+                    {verificationType === 'organisasi' && (
+                      <Stack spacing={2} sx={{ mb: 2 }}>
+                        <StyledTextField
+                          label="Nama Penanggung Jawab"
+                          fullWidth
+                          size="small"
+                          placeholder="Nama sesuai KTP"
+                          value={picName}
+                          onChange={(e) => setPicName(e.target.value)}
+                        />
+                        <StyledTextField
+                          label="Nomor HP Penanggung Jawab"
+                          fullWidth
+                          size="small"
+                          placeholder="Contoh: 081234567890"
+                          value={picPhone}
+                          onChange={(e) => setPicPhone(e.target.value)}
+                        />
+                      </Stack>
+                    )}
+
                     <Box
                       onClick={() => fileInputRef.current?.click()}
                       sx={{
@@ -693,6 +764,77 @@ export default function VerificationDialog({
                         }
                       }}
                     />
+
+                    {verificationType === 'organisasi' && (
+                      <Box sx={{ mt: 2 }}>
+                        <Typography variant="body2" sx={{ fontWeight: 600, mb: 1 }}>
+                          Upload KTP Penanggung Jawab
+                        </Typography>
+                        <Box
+                          onClick={() => picFileInputRef.current?.click()}
+                          sx={{
+                            border: '2px dashed #e2e8f0',
+                            borderRadius: 2,
+                            p: 3,
+                            textAlign: 'center',
+                            bgcolor: '#f8fafc',
+                            cursor: 'pointer',
+                            '&:hover': {
+                              borderColor: '#0ba976',
+                              bgcolor: '#f0fdf4',
+                            },
+                            position: 'relative',
+                            overflow: 'hidden',
+                          }}
+                        >
+                          <input
+                            type="file"
+                            hidden
+                            ref={picFileInputRef}
+                            accept="image/*,application/pdf"
+                            onChange={handlePicKtpFileChange}
+                          />
+                          {picKtpUrl ? (
+                            <Box
+                              sx={{
+                                width: '100%',
+                                height: 200,
+                                display: 'flex',
+                                justifyContent: 'center',
+                                alignItems: 'center',
+                                flexDirection: 'column',
+                              }}
+                            >
+                              <img
+                                src={picKtpUrl}
+                                alt="Preview"
+                                style={{
+                                  maxWidth: '100%',
+                                  maxHeight: '180px',
+                                  objectFit: 'contain',
+                                }}
+                              />
+                              <Typography variant="caption" sx={{ mt: 1, color: 'text.secondary' }}>
+                                Klik untuk mengganti
+                              </Typography>
+                            </Box>
+                          ) : (
+                            <>
+                              <UploadFileIcon sx={{ fontSize: 40, color: '#94a3b8', mb: 1 }} />
+                              <Typography sx={{ fontSize: 14, fontWeight: 600, color: '#475569' }}>
+                                {picKtpUploading
+                                  ? 'Sedang mengupload...'
+                                  : 'Klik untuk upload KTP penanggung jawab'}
+                              </Typography>
+                              <Typography sx={{ fontSize: 12, color: '#94a3b8' }}>
+                                Format: JPG (Max 3MB), PDF
+                              </Typography>
+                            </>
+                          )}
+                        </Box>
+                      </Box>
+                    )}
+
                     <Box sx={{ mb: 2, mt: 2 }}>
                       <Button
                         variant="contained"
@@ -720,14 +862,33 @@ export default function VerificationDialog({
                             );
                             return;
                           }
+
+                          if (verificationType === 'organisasi') {
+                            if (!picName.trim()) {
+                              showSnackbar('Nama penanggung jawab wajib diisi', 'warning');
+                              return;
+                            }
+                            const phoneErr = validatePicPhone(picPhone);
+                            if (phoneErr) {
+                              showSnackbar(phoneErr, 'warning');
+                              return;
+                            }
+                            if (!picKtpUrl) {
+                              showSnackbar('Mohon upload KTP penanggung jawab', 'warning');
+                              return;
+                            }
+                          }
+
                           const res = await submitVerificationRequest({
                             type: verificationType === 'organisasi' ? 'organisasi' : 'individu',
                             ktpNumber: verificationType === 'individu' ? docNumber : undefined,
                             organizationNumber:
                               verificationType === 'organisasi' ? docNumber : undefined,
-                            ktpPhotoUrl: verificationType === 'individu' ? ktpUrl : undefined,
+                            ktpPhotoUrl: verificationType === 'individu' ? ktpUrl : picKtpUrl || undefined,
                             organizationDocUrl:
                               verificationType === 'organisasi' ? ktpUrl : undefined,
+                            picName: verificationType === 'organisasi' ? picName.trim() : undefined,
+                            picPhone: verificationType === 'organisasi' ? picPhone : undefined,
                           });
                           if (res.success) {
                             handleNext();

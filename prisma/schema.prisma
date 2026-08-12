@@ -720,6 +720,9 @@ model VerificationRequest {
   selfieUrl          String?
   organizationName   String?
   organizationDocUrl String?
+  // Penanggung jawab organisasi — ktpName/ktpPhotoUrl (di atas) sudah dipakai
+  // ulang untuk nama & foto KTP-nya; picPhone khusus nomor kontaknya.
+  picPhone           String?
   notes              String?            @db.Text
   reviewedById       String?
   reviewedBy         User?              @relation("VerificationReviewedBy", fields: [reviewedById], references: [id])

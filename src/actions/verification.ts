@@ -128,6 +128,9 @@ type SubmitVerificationInput = {
 	ktpPhotoUrl?: string | null;
 	organizationDocUrl?: string | null;
 	notes?: string | null;
+	// Organisasi only — data penanggung jawab (PIC) yang mengajukan.
+	picName?: string;
+	picPhone?: string;
 };
 
 export async function submitVerificationRequest(
@@ -157,6 +160,10 @@ export async function submitVerificationRequest(
 			ktpPhotoUrl: input.ktpPhotoUrl ?? null,
 			organizationDocUrl: input.organizationDocUrl ?? null,
 			notes: input.notes ?? null,
+			// ktpName/ktpPhotoUrl double as "nama & foto KTP penanggung jawab"
+			// when type is organisasi — see SubmitVerificationInput comment above.
+			ktpName: input.type === "organisasi" ? input.picName ?? null : null,
+			picPhone: input.type === "organisasi" ? normalizePhone(input.picPhone || "") : null,
 		},
 	});
 	// No page to revalidate specifically; keep it simple
