@@ -4,7 +4,7 @@ import { auth } from "@/auth";
 import type { Session } from "next-auth";
 import { prisma } from "@/lib/prisma";
 import { uploadFile, uploadCoverFile } from "@/actions/upload";
-import { CampaignStatus, Prisma, NotificationType } from "@prisma/client";
+import { CampaignStatus, Prisma, NotificationType, VerificationStatus } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { createNotification } from "@/actions/notification";
 
@@ -135,11 +135,33 @@ export async function updateCampaignStatus(
 		});
 
 		if (status === "ACTIVE" && prev?.createdById && prev.status !== "ACTIVE") {
+			// If the owner also has a pending KTP/SK verification request, use its
+			// type (personal/organization) instead of assuming personal, and
+			// resolve it below — otherwise it lingers as "needs review" in
+			// /admin/users forever even after the account is already verified.
+			const pendingRequest = await prisma.verificationRequest.findFirst({
+				where: { userId: prev.createdById, status: VerificationStatus.PENDING },
+				orderBy: { createdAt: "desc" },
+				select: { id: true, type: true },
+			});
+
 			// Publishing a campaign auto-verifies its owner (only if not already verified).
 			const verifyRes = await prisma.user.updateMany({
 				where: { id: prev.createdById, verifiedAt: null },
-				data: { verifiedAt: new Date(), verifiedAs: "personal" },
+				data: { verifiedAt: new Date(), verifiedAs: pendingRequest?.type ?? "personal" },
 			});
+
+			if (pendingRequest) {
+				await prisma.verificationRequest.update({
+					where: { id: pendingRequest.id },
+					data: {
+						status: VerificationStatus.APPROVED,
+						reviewedById: session.user.id,
+						reviewedAt: new Date(),
+						notes: "Disetujui otomatis — campaign pemilik telah dipublikasikan.",
+					},
+				});
+			}
 
 			await createNotification(
 				prev.createdById,
@@ -797,6 +819,7 @@ export async function requestWithdrawal(data: {
 		const campaign = await prisma.campaign.findUnique({
 			where: { id: data.campaignId },
 			include: {
+				createdBy: { select: { verifiedAt: true } },
 				donations: {
 					where: { status: { in: ["PAID", "paid", "SETTLED", "COMPLETED", "ACTIVE"] } },
 					select: { amount: true, fee: true },
@@ -817,6 +840,17 @@ export async function requestWithdrawal(data: {
 			session.user.role !== "ADMIN"
 		) {
 			return { success: false, error: "Forbidden" };
+		}
+
+		// Verification can be revoked after the fact (e.g. admin suspects fraud) —
+		// the campaign itself keeps running and accepting donations, but the
+		// owner can't pull funds out until they're verified again.
+		if (!campaign.createdBy.verifiedAt) {
+			return {
+				success: false,
+				error:
+					"Akun pemilik campaign belum/tidak lagi terverifikasi. Verifikasi akun terlebih dahulu untuk bisa mengajukan pencairan dana.",
+			};
 		}
 
 		const collected = campaign.donations.reduce((acc, d) => acc + Number(d.amount), 0);

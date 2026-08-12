@@ -57,6 +57,7 @@ import {
 	AccountCircle as AccountCircleIcon,
 	CreditCard as CreditCardIcon,
 	Edit as EditIcon,
+	RemoveModerator as RemoveModeratorIcon,
 } from "@mui/icons-material";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -64,7 +65,7 @@ import { format } from "date-fns";
 import { id as idLocale } from "date-fns/locale";
 import { StyledTextField } from "@/components/ui/StyledTextField";
 import PermissionChecklist from "@/components/admin/PermissionChecklist";
-import { updateUser } from "@/actions/user";
+import { updateUser, unverifyUser } from "@/actions/user";
 import type { Role, AdminPermission } from "@prisma/client";
 
 interface AdminUserDetailClientProps {
@@ -155,6 +156,28 @@ export default function AdminUserDetailClient({
 		message: string;
 		severity: "success" | "error";
 	}>({ open: false, message: "", severity: "success" });
+
+	const [unverifyDialogOpen, setUnverifyDialogOpen] = useState(false);
+	const [unverifyReason, setUnverifyReason] = useState("");
+	const [unverifySubmitting, setUnverifySubmitting] = useState(false);
+
+	const handleUnverify = async () => {
+		setUnverifySubmitting(true);
+		const res = await unverifyUser(user.id, unverifyReason.trim() || undefined);
+		setUnverifySubmitting(false);
+		if (res.success) {
+			setUnverifyDialogOpen(false);
+			setUnverifyReason("");
+			setSnackbar({ open: true, message: "Verifikasi berhasil dicabut", severity: "success" });
+			router.refresh();
+		} else {
+			setSnackbar({
+				open: true,
+				message: res.error || "Gagal mencabut verifikasi",
+				severity: "error",
+			});
+		}
+	};
 
 	const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
 		setTabValue(newValue);
@@ -303,7 +326,17 @@ export default function AdminUserDetailClient({
 						</Stack>
 
 						<Stack direction="row" spacing={2}>
-							{/* Action Buttons could go here */}
+							{user.verifiedAt && (
+								<Button
+									variant="outlined"
+									color="error"
+									startIcon={<RemoveModeratorIcon />}
+									onClick={() => setUnverifyDialogOpen(true)}
+									sx={{ borderRadius: 999, fontWeight: 700, textTransform: "none" }}
+								>
+									Cabut Verifikasi
+								</Button>
+							)}
 						</Stack>
 					</Box>
 				</Box>
@@ -917,6 +950,43 @@ export default function AdminUserDetailClient({
 					</Button>
 					<Button variant="contained" onClick={handleSaveRole} disabled={savingRole}>
 						Simpan
+					</Button>
+				</DialogActions>
+			</Dialog>
+
+			<Dialog
+				open={unverifyDialogOpen}
+				onClose={() => setUnverifyDialogOpen(false)}
+				fullWidth
+				maxWidth="xs"
+			>
+				<DialogTitle>Cabut Verifikasi</DialogTitle>
+				<DialogContent className="flex flex-col gap-4 pt-2">
+					<Typography variant="body2" color="text.secondary">
+						Status verifikasi <strong>{user.name || user.email}</strong> akan dicabut.
+						Akun kembali berstatus belum terverifikasi.
+					</Typography>
+					<StyledTextField
+						label="Alasan (opsional)"
+						multiline
+						rows={3}
+						fullWidth
+						value={unverifyReason}
+						onChange={(e) => setUnverifyReason(e.target.value)}
+						placeholder="Contoh: Dokumen ternyata tidak valid setelah ditinjau ulang..."
+					/>
+				</DialogContent>
+				<DialogActions>
+					<Button onClick={() => setUnverifyDialogOpen(false)} disabled={unverifySubmitting}>
+						Batal
+					</Button>
+					<Button
+						variant="contained"
+						color="error"
+						onClick={handleUnverify}
+						disabled={unverifySubmitting}
+					>
+						{unverifySubmitting ? "Memproses..." : "Cabut Verifikasi"}
 					</Button>
 				</DialogActions>
 			</Dialog>

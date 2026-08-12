@@ -20,6 +20,7 @@ export default async function PencairanPage({
 			OR: [{ slug }, { id: slug }],
 		},
 		include: {
+			createdBy: { select: { verifiedAt: true } },
 			donations: {
 				where: {
 					status: {
@@ -70,6 +71,7 @@ export default async function PencairanPage({
 		collected,
 		totalFees,
 		foundationFeeAmount,
+		ownerVerified: Boolean(campaign.createdBy.verifiedAt),
 	};
 
 	const withdrawals = campaign.withdrawals.map((w) => ({

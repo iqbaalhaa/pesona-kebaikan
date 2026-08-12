@@ -458,7 +458,7 @@ export async function verifyUser(id: string) {
 	}
 }
 
-export async function unverifyUser(id: string) {
+export async function unverifyUser(id: string, reason?: string) {
 	const session = await auth();
 	if (session?.user?.role !== "ADMIN") {
 		return { success: false, error: "Unauthorized" };
@@ -472,6 +472,15 @@ export async function unverifyUser(id: string) {
 				verifiedAs: null,
 			},
 		});
+
+		await createNotification(
+			id,
+			"Verifikasi Akun Dicabut",
+			reason
+				? `Status verifikasi akun Anda telah dicabut oleh admin. Alasan: ${reason}`
+				: "Status verifikasi akun Anda telah dicabut oleh admin.",
+			NotificationType.KABAR,
+		);
 
 		revalidatePath("/admin/users");
 		return { success: true };

@@ -150,6 +150,13 @@ export default function WithdrawalList({
 			</Stack>
 
 			<Stack spacing={3}>
+				{!campaign.ownerVerified && (
+					<Alert severity="warning" sx={{ borderRadius: 2 }}>
+						Akun Anda belum/tidak lagi terverifikasi. Verifikasi akun terlebih
+						dahulu di halaman Profil untuk bisa mengajukan pencairan dana.
+					</Alert>
+				)}
+
 				{/* Saldo Card */}
 				<Card
 					elevation={0}
@@ -179,6 +186,7 @@ export default function WithdrawalList({
 								color="inherit"
 								startIcon={<AddRoundedIcon />}
 								onClick={() => setOpenWithdrawal(true)}
+								disabled={!campaign.ownerVerified}
 								sx={{
 									color: "primary.main",
 									bgcolor: "white",

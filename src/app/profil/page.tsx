@@ -84,15 +84,23 @@ export default function ProfilePage() {
 				<>
 					<ProfileCard user={myProfile || user} />
 
-					{!myProfile?.verifiedAt &&
-						(!myProfile?.verificationRequests?.[0]?.status ||
-							myProfile.verificationRequests[0].status === "REJECTED") && (
+					{(() => {
+						const latestStatus = myProfile?.verificationRequests?.[0]?.status;
+						// Show the CTA whenever the account isn't verified — the only
+						// state where they should wait instead of (re)apply is an
+						// active PENDING review. This also covers a request that was
+						// APPROVED but later had its verification revoked by an admin
+						// (verifiedAt cleared, request status untouched as history).
+						if (myProfile?.verifiedAt || latestStatus === "PENDING") return null;
+						const isRejected = latestStatus === "REJECTED";
+						return (
 							<VerificationBanner
 								onClick={() => setOpenVerification(true)}
-								rejected={myProfile?.verificationRequests?.[0]?.status === "REJECTED"}
-								reason={myProfile?.verificationRequests?.[0]?.notes}
+								rejected={isRejected}
+								reason={isRejected ? myProfile?.verificationRequests?.[0]?.notes : undefined}
 							/>
-						)}
+						);
+					})()}
 
 					<div className="mb-3">
 						<p className="mb-1 ml-1 text-xs font-extrabold uppercase tracking-wider text-foreground/50">
