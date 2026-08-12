@@ -68,7 +68,7 @@ function KindnessCalendar({ donations, onDateClick }: KindnessCalendarProps) {
 	const currentMonth = currentDate.getMonth();
 	const currentYear = currentDate.getFullYear();
 	const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-	const monthName = currentDate.toLocaleString("id-ID", { month: "long" });
+	const monthName = currentDate.toLocaleString("id-ID", { month: "long", timeZone: "Asia/Jakarta" });
 
 	const handlePrevMonth = () => {
 		setCurrentDate(new Date(currentYear, currentMonth - 1, 1));
@@ -408,6 +408,7 @@ export default function MyDonationPage() {
 			day: "numeric",
 			month: "long",
 			year: "numeric",
+			timeZone: "Asia/Jakarta",
 		});
 	};
 

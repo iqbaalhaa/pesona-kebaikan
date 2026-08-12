@@ -539,6 +539,14 @@ model FundraiserAmiin {
 enum NotificationType {
   KABAR
   PESAN
+  // Admin/staff "action needed" alerts — surfaced only in the admin panel
+  // bell (AdminHeader), never in the public-facing notification popover
+  // (which only renders the KABAR/PESAN tabs). See ADMIN_NOTIFICATION_TYPES
+  // in src/lib/constants.ts.
+  NEW_CAMPAIGN
+  WITHDRAWAL_REQUEST
+  VERIFICATION_REQUEST
+  CAMPAIGN_CHANGE_REQUEST
 }
 
 model Notification {

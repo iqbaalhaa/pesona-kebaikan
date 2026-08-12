@@ -376,11 +376,13 @@ export default function AdminCampaignDetailPage(props: {
 						day: "numeric",
 						month: "long",
 						year: "numeric",
+						timeZone: "Asia/Jakarta",
 					}),
 					updatedAt: new Date(c.updatedAt).toLocaleDateString("id-ID", {
 						day: "numeric",
 						month: "long",
 						year: "numeric",
+						timeZone: "Asia/Jakarta",
 					}),
 					publicUrl: `/donasi/${c.slug || c.id}`,
 					slug: c.slug || null,

@@ -3,10 +3,11 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { uploadFile, uploadCoverFile } from "@/actions/upload";
-import { CampaignStatus, Prisma } from "@prisma/client";
+import { CampaignStatus, NotificationType, Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { CATEGORY_TITLE } from "@/lib/constants";
 import { validateCampaignType } from "@/lib/campaignValidation";
+import { notifyAdmins } from "@/actions/notification";
 
 
 const QUICK_DONATION_SLUG = "donasi-cepat";
@@ -226,6 +227,17 @@ export async function createCampaign(formData: FormData) {
 
 		revalidatePath("/galang-dana");
 		revalidatePath("/admin/campaign");
+
+		// DRAFT is just an autosave, nothing to review yet — only PENDING is an
+		// actual submission waiting on admin/staff approval.
+		if (status === "PENDING") {
+			await notifyAdmins(
+				"Pengajuan Campaign Baru",
+				`Campaign baru "${title}" menunggu verifikasi.`,
+				NotificationType.NEW_CAMPAIGN,
+				{ permission: "APPROVE_CAMPAIGNS" },
+			);
+		}
 
 		return { success: true, campaignId: campaign.id };
 	} catch (error: any) {

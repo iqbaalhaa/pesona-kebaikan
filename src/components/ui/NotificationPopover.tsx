@@ -110,7 +110,7 @@ export default function NotificationPopover({ overlay = false, desktopSolid = fa
 											<p className="text-[11px] text-foreground/40">
 												{item.isBroadcast ? "Untuk semua pengguna" : "Untuk Anda"}
 												{" · "}
-												{new Date(item.createdAt).toLocaleDateString("id-ID", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+												{new Date(item.createdAt).toLocaleDateString("id-ID", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jakarta" })}
 											</p>
 										</div>
 									</button>

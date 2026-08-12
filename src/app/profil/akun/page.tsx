@@ -76,6 +76,7 @@ export default function AccountInfoPage() {
 			const joined = new Date(profile.createdAt).toLocaleDateString("id-ID", {
 				month: "short",
 				year: "numeric",
+				timeZone: "Asia/Jakarta",
 			});
 			const initial = (
 				profile.name?.[0] ||

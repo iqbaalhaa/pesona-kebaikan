@@ -32,6 +32,7 @@ function mapDonationRow(d: any) {
 			year: "numeric",
 			hour: "2-digit",
 			minute: "2-digit",
+			timeZone: "Asia/Jakarta",
 		}),
 		campaignId: d.campaignId,
 		campaignTitle: d.campaign.title,

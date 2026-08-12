@@ -2,16 +2,21 @@
 
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
-import { NotificationType } from "@prisma/client";
+import { AdminPermission, NotificationType } from "@prisma/client";
 
 export async function getNotifications(
 	userId: string,
-	type?: NotificationType,
+	type?: NotificationType | NotificationType[],
 	limit = 20,
 ) {
 	try {
+		const typeFilter = type
+			? Array.isArray(type)
+				? { in: type }
+				: type
+			: undefined;
 		const where: any = { userId };
-		if (type) where.type = type;
+		if (typeFilter) where.type = typeFilter;
 
 		const notifications = await prisma.notification.findMany({
 			where,
@@ -19,14 +24,64 @@ export async function getNotifications(
 			take: limit,
 		});
 
+		// Scoped to the same type filter — otherwise a caller asking only for
+		// admin-alert types would get back an unread count polluted by the
+		// user's regular KABAR/PESAN notifications (and vice versa).
 		const unreadCount = await prisma.notification.count({
-			where: { userId, isRead: false },
+			where: { userId, isRead: false, ...(typeFilter ? { type: typeFilter } : {}) },
 		});
 
 		return { notifications, unreadCount };
 	} catch (error) {
 		console.error("Error fetching notifications:", error);
 		return { notifications: [], unreadCount: 0 };
+	}
+}
+
+/**
+ * Notify admins/staff that something needs their attention (new campaign
+ * submitted, withdrawal requested, verification requested, etc). Recipients:
+ * always every ADMIN, plus (when `opts.permission` is given) every STAFF who
+ * holds that specific permission — so e.g. a withdrawal request only pings
+ * staff granted MANAGE_WITHDRAWALS, not every staff account. Omit
+ * `opts.permission` for events with no dedicated STAFF permission (e.g. user
+ * identity verification, which is ADMIN-only per src/lib/admin-access.ts).
+ */
+export async function notifyAdmins(
+	title: string,
+	message: string,
+	type: NotificationType,
+	opts?: { permission?: AdminPermission },
+) {
+	try {
+		const recipients = await prisma.user.findMany({
+			where: opts?.permission
+				? {
+						OR: [
+							{ role: "ADMIN" },
+							{ role: "STAFF", permissions: { has: opts.permission } },
+						],
+					}
+				: { role: "ADMIN" },
+			select: { id: true },
+		});
+
+		if (recipients.length === 0) return { success: true, count: 0 };
+
+		await prisma.notification.createMany({
+			data: recipients.map((r) => ({
+				userId: r.id,
+				title,
+				message,
+				type,
+				isBroadcast: false,
+			})),
+		});
+
+		return { success: true, count: recipients.length };
+	} catch (error) {
+		console.error("Error notifying admins:", error);
+		return { success: false, error: "Failed to notify admins" };
 	}
 }
 
@@ -93,10 +148,18 @@ export async function markAsRead(id: string) {
 	}
 }
 
-export async function markAllAsRead(userId: string) {
+export async function markAllAsRead(
+	userId: string,
+	type?: NotificationType | NotificationType[],
+) {
 	try {
+		const typeFilter = type
+			? Array.isArray(type)
+				? { in: type }
+				: type
+			: undefined;
 		await prisma.notification.updateMany({
-			where: { userId, isRead: false },
+			where: { userId, isRead: false, ...(typeFilter ? { type: typeFilter } : {}) },
 			data: { isRead: true },
 		});
 		return { success: true };

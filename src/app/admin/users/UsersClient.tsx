@@ -49,6 +49,10 @@ import BadgeRoundedIcon from "@mui/icons-material/BadgeRounded";
 import VerifiedUserRoundedIcon from "@mui/icons-material/VerifiedUserRounded";
 import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
 import CancelRoundedIcon from "@mui/icons-material/CancelRounded";
+import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
+import BusinessRoundedIcon from "@mui/icons-material/BusinessRounded";
+import DescriptionRoundedIcon from "@mui/icons-material/DescriptionRounded";
+import BadgeOutlinedIcon from "@mui/icons-material/BadgeOutlined";
 import {
 	ChangeEvent,
 	FormEvent,
@@ -57,7 +61,7 @@ import {
 	useState,
 	useTransition,
 } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import type { UserStats } from "@/actions/user";
 import {
 	getUsers,
@@ -186,6 +190,60 @@ interface UsersClientProps {
 	initialPendingVerificationCount: number;
 }
 
+/** A "view document" action styled as a small card instead of a bare outlined button. */
+function DocButton({
+	icon,
+	label,
+	onClick,
+}: {
+	icon: ReactNode;
+	label: string;
+	onClick: () => void;
+}) {
+	return (
+		<Button
+			onClick={onClick}
+			variant="outlined"
+			size="small"
+			sx={{
+				textTransform: "none",
+				borderRadius: 3,
+				borderColor: "divider",
+				color: "text.primary",
+				fontWeight: 600,
+				pl: 1,
+				pr: 1.5,
+				py: 0.6,
+				"& .MuiButton-startIcon": { mr: 1 },
+				"&:hover": {
+					borderColor: "#0ba976",
+					bgcolor: "rgba(11,169,118,0.06)",
+				},
+			}}
+			startIcon={
+				<Box
+					sx={{
+						width: 26,
+						height: 26,
+						borderRadius: "50%",
+						bgcolor: "rgba(11,169,118,0.12)",
+						color: "#0ba976",
+						display: "grid",
+						placeItems: "center",
+						flexShrink: 0,
+						"& svg": { fontSize: 15 },
+					}}
+				>
+					{icon}
+				</Box>
+			}
+			endIcon={<OpenInNew sx={{ fontSize: 14, color: "text.secondary" }} />}
+		>
+			{label}
+		</Button>
+	);
+}
+
 export default function UsersClient({
 	initialUsers,
 	initialTotal,
@@ -202,6 +260,13 @@ export default function UsersClient({
 	// verifikasi — default "donor" supaya pengguna biasa (mayoritas) yang
 	// muncul duluan, bukan admin/staff.
 	const [scope, setScope] = useState<"donor" | "administrator" | "verification">("donor");
+	const searchParams = useSearchParams();
+	// Deep-link from the admin bell (AdminHeader) — clicking a "Pengajuan
+	// Verifikasi Akun" notification lands here with ?tab=verification.
+	useEffect(() => {
+		if (searchParams?.get("tab") === "verification") setScope("verification");
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
 	const [pendingVerificationCount, setPendingVerificationCount] = useState(
 		initialPendingVerificationCount,
 	);
@@ -984,100 +1049,166 @@ export default function UsersClient({
 					(() => {
 						const request = reviewUser.verificationRequests?.[0];
 						const isOrg = request?.type === "organization";
+						const infoRows = [
+							request?.ktpNumber && {
+								label: isOrg ? "Nomor SK Kemenkumham" : "Nomor NIK",
+								value: request.ktpNumber,
+							},
+							isOrg && request?.ktpName && { label: "Penanggung Jawab", value: request.ktpName },
+							isOrg && request?.picPhone && {
+								label: "No. HP Penanggung Jawab",
+								value: request.picPhone,
+							},
+						].filter(Boolean) as { label: string; value: string }[];
+
 						return (
 							<>
-								<DialogTitle>Tinjau Verifikasi</DialogTitle>
-								<DialogContent className="flex flex-col gap-3 pt-2">
-									<Stack spacing={0.5}>
-										<Typography sx={{ fontWeight: 700 }}>{reviewUser.name || "-"}</Typography>
-										<Typography variant="body2" color="text.secondary">
-											{reviewUser.email}
-										</Typography>
-									</Stack>
-									<Chip
+								<DialogTitle
+									sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}
+								>
+									Tinjau Verifikasi
+									<IconButton
 										size="small"
-										label={isOrg ? "Organisasi" : "Individu"}
-										color={isOrg ? "secondary" : "default"}
-										variant="outlined"
-										sx={{ alignSelf: "flex-start", fontWeight: 700 }}
-									/>
-									{request?.ktpNumber && (
-										<Typography variant="body2">
-											{isOrg ? "Nomor SK Kemenkumham" : "Nomor NIK"}:{" "}
-											<strong>{request.ktpNumber}</strong>
-										</Typography>
-									)}
-									{isOrg && request?.ktpName && (
-										<Typography variant="body2">
-											Penanggung Jawab: <strong>{request.ktpName}</strong>
-										</Typography>
-									)}
-									{isOrg && request?.picPhone && (
-										<Typography variant="body2">
-											No. HP Penanggung Jawab: <strong>{request.picPhone}</strong>
-										</Typography>
-									)}
-									<Stack direction="row" spacing={1} flexWrap="wrap">
-										{isOrg ? (
-											<>
-												{request?.organizationDocUrl && (
-													<Button
-														variant="outlined"
-														size="small"
-														startIcon={<OpenInNew />}
-														onClick={() =>
-															setPreviewDoc({ url: request.organizationDocUrl!, title: "Dokumen SK Kemenkumham" })
-														}
-														sx={{ textTransform: "none", borderRadius: 2 }}
-													>
-														Lihat Dokumen SK
-													</Button>
-												)}
-												{request?.ktpPhotoUrl && (
-													<Button
-														variant="outlined"
-														size="small"
-														startIcon={<OpenInNew />}
-														onClick={() =>
-															setPreviewDoc({ url: request.ktpPhotoUrl!, title: "KTP Penanggung Jawab" })
-														}
-														sx={{ textTransform: "none", borderRadius: 2 }}
-													>
-														Lihat KTP Penanggung Jawab
-													</Button>
-												)}
-											</>
-										) : (
-											<>
-												{request?.ktpPhotoUrl && (
-													<Button
-														variant="outlined"
-														size="small"
-														startIcon={<OpenInNew />}
-														onClick={() =>
-															setPreviewDoc({ url: request.ktpPhotoUrl!, title: "Foto KTP" })
-														}
-														sx={{ textTransform: "none", borderRadius: 2 }}
-													>
-														Lihat KTP
-													</Button>
-												)}
-												{request?.selfieUrl && (
-													<Button
-														variant="outlined"
-														size="small"
-														startIcon={<OpenInNew />}
-														onClick={() =>
-															setPreviewDoc({ url: request.selfieUrl!, title: "Foto Selfie" })
-														}
-														sx={{ textTransform: "none", borderRadius: 2 }}
-													>
-														Lihat Selfie
-													</Button>
-												)}
-											</>
-										)}
+										onClick={closeReview}
+										disabled={reviewSubmitting}
+										sx={{ color: "text.secondary" }}
+									>
+										<CloseRoundedIcon fontSize="small" />
+									</IconButton>
+								</DialogTitle>
+								<DialogContent className="flex flex-col gap-4 pt-1">
+									<Stack direction="row" spacing={1.5} alignItems="center">
+										<Avatar
+											sx={{
+												width: 44,
+												height: 44,
+												bgcolor: isOrg ? "#ede9fe" : "rgba(11,169,118,0.12)",
+												color: isOrg ? "#7c3aed" : "#0ba976",
+											}}
+										>
+											{isOrg ? <BusinessRoundedIcon /> : <PersonOutlineRoundedIcon />}
+										</Avatar>
+										<Box sx={{ minWidth: 0 }}>
+											<Typography sx={{ fontWeight: 800, fontSize: 15 }} noWrap>
+												{reviewUser.name || "-"}
+											</Typography>
+											<Typography variant="body2" color="text.secondary" noWrap>
+												{reviewUser.email}
+											</Typography>
+										</Box>
+										<Chip
+											size="small"
+											label={isOrg ? "Organisasi" : "Individu"}
+											sx={{
+												ml: "auto",
+												fontWeight: 700,
+												bgcolor: isOrg ? "#ede9fe" : "rgba(11,169,118,0.12)",
+												color: isOrg ? "#7c3aed" : "#0ba976",
+											}}
+										/>
 									</Stack>
+
+									{infoRows.length > 0 && (
+										<Box
+											sx={{
+												borderRadius: 3,
+												border: "1px solid",
+												borderColor: "divider",
+												bgcolor: "#f8fafc",
+												overflow: "hidden",
+											}}
+										>
+											{infoRows.map((row, i) => (
+												<Box
+													key={row.label}
+													sx={{
+														display: "flex",
+														justifyContent: "space-between",
+														gap: 2,
+														px: 2,
+														py: 1.25,
+														borderBottom: i < infoRows.length - 1 ? "1px solid" : "none",
+														borderColor: "divider",
+													}}
+												>
+													<Typography variant="body2" color="text.secondary">
+														{row.label}
+													</Typography>
+													<Typography variant="body2" sx={{ fontWeight: 700, textAlign: "right" }}>
+														{row.value}
+													</Typography>
+												</Box>
+											))}
+										</Box>
+									)}
+
+									{(request?.organizationDocUrl || request?.ktpPhotoUrl || request?.selfieUrl) && (
+										<Box>
+											<Typography
+												variant="caption"
+												sx={{
+													fontWeight: 700,
+													color: "text.secondary",
+													textTransform: "uppercase",
+													letterSpacing: 0.4,
+												}}
+											>
+												Dokumen
+											</Typography>
+											<Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap sx={{ mt: 0.75 }}>
+												{isOrg ? (
+													<>
+														{request?.organizationDocUrl && (
+															<DocButton
+																icon={<DescriptionRoundedIcon />}
+																label="Dokumen SK"
+																onClick={() =>
+																	setPreviewDoc({
+																		url: request.organizationDocUrl!,
+																		title: "Dokumen SK Kemenkumham",
+																	})
+																}
+															/>
+														)}
+														{request?.ktpPhotoUrl && (
+															<DocButton
+																icon={<BadgeOutlinedIcon />}
+																label="KTP Penanggung Jawab"
+																onClick={() =>
+																	setPreviewDoc({
+																		url: request.ktpPhotoUrl!,
+																		title: "KTP Penanggung Jawab",
+																	})
+																}
+															/>
+														)}
+													</>
+												) : (
+													<>
+														{request?.ktpPhotoUrl && (
+															<DocButton
+																icon={<BadgeOutlinedIcon />}
+																label="Foto KTP"
+																onClick={() =>
+																	setPreviewDoc({ url: request.ktpPhotoUrl!, title: "Foto KTP" })
+																}
+															/>
+														)}
+														{request?.selfieUrl && (
+															<DocButton
+																icon={<PersonOutlineRoundedIcon />}
+																label="Foto Selfie"
+																onClick={() =>
+																	setPreviewDoc({ url: request.selfieUrl!, title: "Foto Selfie" })
+																}
+															/>
+														)}
+													</>
+												)}
+											</Stack>
+										</Box>
+									)}
+
 									{!request?.ktpPhotoUrl && !request?.organizationDocUrl && (
 										<Alert severity="warning" sx={{ borderRadius: 2 }}>
 											Tidak ada dokumen yang diupload untuk pengajuan ini.
@@ -1095,7 +1226,7 @@ export default function UsersClient({
 										/>
 									)}
 								</DialogContent>
-								<DialogActions sx={{ p: 2.5 }}>
+								<DialogActions>
 									{rejectMode ? (
 										<>
 											<Button onClick={() => setRejectMode(false)} disabled={reviewSubmitting}>

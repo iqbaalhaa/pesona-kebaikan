@@ -74,6 +74,7 @@ export default async function BlogPage({
 				day: "2-digit",
 				month: "short",
 				year: "numeric",
+				timeZone: "Asia/Jakarta",
 			}),
 			tag: blog.category?.name || "Uncategorized",
 		};

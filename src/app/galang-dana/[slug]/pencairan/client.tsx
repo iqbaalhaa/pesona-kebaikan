@@ -294,6 +294,7 @@ export default function WithdrawalList({
 													day: "numeric",
 													month: "long",
 													year: "numeric",
+													timeZone: "Asia/Jakarta",
 												})}{" "}
 												• {getBankName(w.bankName)} - {w.bankAccount} ({w.accountHolder})
 											</Typography>

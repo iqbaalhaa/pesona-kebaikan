@@ -95,7 +95,7 @@ export async function getInfoUsersStats() {
 				? paid
 						.map((d) => d.createdAt)
 						.sort((a, b) => b.getTime() - a.getTime())[0]
-						.toLocaleString("id-ID")
+						.toLocaleString("id-ID", { timeZone: "Asia/Jakarta" })
 				: null;
 		return {
 			id: u.id,

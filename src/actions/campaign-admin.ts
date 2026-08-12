@@ -6,7 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { uploadFile, uploadCoverFile } from "@/actions/upload";
 import { CampaignStatus, Prisma, NotificationType, VerificationStatus } from "@prisma/client";
 import { revalidatePath } from "next/cache";
-import { createNotification } from "@/actions/notification";
+import { createNotification, notifyAdmins } from "@/actions/notification";
 
 const QUICK_DONATION_SLUG = "donasi-cepat";
 
@@ -322,39 +322,33 @@ export async function requestCampaignChange(
 			},
 		});
 
-		const admins = await prisma.user.findMany({
-			where: { role: "ADMIN" },
-			select: { id: true },
-		});
+		let changeSummary = "";
 
-		if (admins.length > 0) {
-			let changeSummary = "";
-
-			if (safeExtraDays && safeExtraTarget) {
-				changeSummary = `Perpanjangan ${safeExtraDays} hari dan penambahan target Rp${safeExtraTarget.toLocaleString(
-					"id-ID",
-				)}`;
-			} else if (safeExtraDays) {
-				changeSummary = `Perpanjangan ${safeExtraDays} hari`;
-			} else if (safeExtraTarget) {
-				changeSummary = `Penambahan target Rp${safeExtraTarget.toLocaleString(
-					"id-ID",
-				)}`;
-			} else {
-				changeSummary = "Perubahan campaign";
-			}
-
-			const message = `Pengajuan perubahan campaign "${campaign.title}" oleh fundraiser. ${changeSummary}. CAMPAIGN_CHANGE_REQUEST:${campaign.id}`;
-
-			await prisma.notification.createMany({
-				data: admins.map((admin) => ({
-					userId: admin.id,
-					title: "Pengajuan Perubahan Campaign",
-					message,
-					type: NotificationType.KABAR,
-				})),
-			});
+		if (safeExtraDays && safeExtraTarget) {
+			changeSummary = `Perpanjangan ${safeExtraDays} hari dan penambahan target Rp${safeExtraTarget.toLocaleString(
+				"id-ID",
+			)}`;
+		} else if (safeExtraDays) {
+			changeSummary = `Perpanjangan ${safeExtraDays} hari`;
+		} else if (safeExtraTarget) {
+			changeSummary = `Penambahan target Rp${safeExtraTarget.toLocaleString(
+				"id-ID",
+			)}`;
+		} else {
+			changeSummary = "Perubahan campaign";
 		}
+
+		const message = `Pengajuan perubahan campaign "${campaign.title}" oleh fundraiser. ${changeSummary}. CAMPAIGN_CHANGE_REQUEST:${campaign.id}`;
+
+		// ADMIN always, plus any STAFF granted APPROVE_CAMPAIGNS (previously
+		// this only ever reached role:"ADMIN", so approval-permissioned staff
+		// never saw campaign change requests at all).
+		await notifyAdmins(
+			"Pengajuan Perubahan Campaign",
+			message,
+			NotificationType.CAMPAIGN_CHANGE_REQUEST,
+			{ permission: "APPROVE_CAMPAIGNS" },
+		);
 
 		return { success: true };
 	} catch (error) {
@@ -878,6 +872,13 @@ export async function requestWithdrawal(data: {
 
 		revalidatePath(`/galang-dana/${campaign.slug || campaign.id}`);
 		revalidatePath("/admin/pencairan");
+
+		await notifyAdmins(
+			"Pengajuan Pencairan Dana",
+			`Pengajuan pencairan dana Rp${data.amount.toLocaleString("id-ID")} untuk campaign "${campaign.title}".`,
+			NotificationType.WITHDRAWAL_REQUEST,
+			{ permission: "MANAGE_WITHDRAWALS" },
+		);
 
 		return { success: true };
 	} catch (error) {

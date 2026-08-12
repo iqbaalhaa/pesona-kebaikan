@@ -56,6 +56,7 @@ export async function getMyDonations() {
 				day: "2-digit",
 				month: "short",
 				year: "numeric",
+				timeZone: "Asia/Jakarta",
 			}),
 			rawDate: d.createdAt.toISOString().split("T")[0],
 			status:

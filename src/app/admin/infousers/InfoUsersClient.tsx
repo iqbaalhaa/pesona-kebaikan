@@ -392,7 +392,7 @@ export default function InfoUsersClient({
 
 		const finalY = (doc as any).lastAutoTable?.finalY || 40;
 		doc.setFontSize(10);
-		doc.text(`Dicetak: ${new Date().toLocaleString("id-ID")}`, 15, finalY + 10);
+		doc.text(`Dicetak: ${new Date().toLocaleString("id-ID", { timeZone: "Asia/Jakarta" })}`, 15, finalY + 10);
 
 		doc.save("informasi_users.pdf");
 		handleExportClose();

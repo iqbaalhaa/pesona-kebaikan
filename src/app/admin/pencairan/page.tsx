@@ -403,7 +403,7 @@ export default function PencairanPage() {
 										</TableCell>
 										<TableCell>
 											<Typography sx={{ fontSize: 12 }}>
-												{new Date(row.createdAt).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}
+												{new Date(row.createdAt).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric", timeZone: "Asia/Jakarta" })}
 											</Typography>
 											{isUrgent && (
 												<Typography sx={{ fontSize: 10, color: "#92400e", fontWeight: 700 }}>
@@ -649,13 +649,13 @@ export default function PencairanPage() {
 								{detailRow.status !== "PENDING" && detailRow.processedByName && (
 									<Typography sx={{ fontSize: 12, color: "text.secondary" }}>
 										Diproses oleh: {detailRow.processedByName}
-										{detailRow.processedAt && ` pada ${new Date(detailRow.processedAt).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" })}`}
+										{detailRow.processedAt && ` pada ${new Date(detailRow.processedAt).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jakarta" })}`}
 									</Typography>
 								)}
 
 								{/* Tanggal */}
 								<Typography sx={{ fontSize: 12, color: "text.secondary" }}>
-									Diajukan: {new Date(detailRow.createdAt).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+									Diajukan: {new Date(detailRow.createdAt).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jakarta" })}
 									{detailRow.status === "PENDING" && (() => { const d = daysAgo(detailRow.createdAt); return d >= 1 ? ` (${d} hari yang lalu)` : ""; })()}
 								</Typography>
 

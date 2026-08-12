@@ -185,6 +185,7 @@ export default async function BlogDetailPage({ params }: Props) {
 							day: "2-digit",
 							month: "short",
 							year: "numeric",
+							timeZone: "Asia/Jakarta",
 						})}
 					</span>
 				</div>
@@ -300,6 +301,7 @@ export default async function BlogDetailPage({ params }: Props) {
 												day: "2-digit",
 												month: "short",
 												year: "numeric",
+												timeZone: "Asia/Jakarta",
 											})}
 										</p>
 									</div>

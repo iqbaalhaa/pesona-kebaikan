@@ -137,7 +137,7 @@ export default function WithdrawalCard({ row, onUpdateStatus, onApproveClick }: 
 						</Typography>
 					)}
 					<Typography sx={{ fontSize: 11, color: "text.secondary", mt: 0.5 }}>
-						{new Date(row.createdAt).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+						{new Date(row.createdAt).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jakarta" })}
 					</Typography>
 				</Box>
 

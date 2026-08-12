@@ -57,7 +57,7 @@ export async function exportDonorsToPDF(rows: TxRow[], campaignTitle: string) {
 	const finalY = (doc as any).lastAutoTable?.finalY || 40;
 	doc.setFontSize(9);
 	doc.text(
-		`Dicetak: ${new Date().toLocaleString("id-ID")} • Total: ${rows.length} donasi`,
+		`Dicetak: ${new Date().toLocaleString("id-ID", { timeZone: "Asia/Jakarta" })} • Total: ${rows.length} donasi`,
 		15,
 		finalY + 10,
 	);

@@ -2,9 +2,10 @@
 
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { VerifiedAs, VerificationStatus } from "@prisma/client";
+import { NotificationType, VerifiedAs, VerificationStatus } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { canonicalPhone } from "@/lib/phone";
+import { notifyAdmins } from "@/actions/notification";
 
 function normalizePhone(phone: string): string | null {
 	const digits = phone.replace(/\D/g, "");
@@ -166,6 +167,17 @@ export async function submitVerificationRequest(
 			picPhone: input.type === "organisasi" ? normalizePhone(input.picPhone || "") : null,
 		},
 	});
+
+	// No dedicated STAFF permission covers user verification (it's ADMIN-only,
+	// same as /admin/users access — see src/lib/admin-access.ts), so this
+	// intentionally omits `opts.permission` and only reaches role:"ADMIN".
+	const requesterLabel = session.user.name || session.user.email;
+	await notifyAdmins(
+		"Pengajuan Verifikasi Akun",
+		`${requesterLabel} mengajukan verifikasi akun ${input.type === "organisasi" ? "organisasi" : "pribadi"}.`,
+		NotificationType.VERIFICATION_REQUEST,
+	);
+
 	// No page to revalidate specifically; keep it simple
 	return { success: true };
 }

@@ -75,7 +75,7 @@ export default function PrayersModal({ open, onClose, prayers }: PrayersModalPro
 												{prayer.name}
 											</Typography>
 											<Typography variant="caption" color="text.secondary">
-												{new Date(prayer.date).toLocaleDateString("id-ID")}
+												{new Date(prayer.date).toLocaleDateString("id-ID", { timeZone: "Asia/Jakarta" })}
 											</Typography>
 										</Box>
 									}

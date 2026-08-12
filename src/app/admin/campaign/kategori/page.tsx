@@ -298,6 +298,7 @@ export default function AdminCampaignKategoriPage() {
 					day: "2-digit",
 					month: "short",
 					year: "numeric",
+					timeZone: "Asia/Jakarta",
 				}),
 			}));
 			setRows(mapped);
@@ -369,6 +370,7 @@ export default function AdminCampaignKategoriPage() {
 					day: "2-digit",
 					month: "short",
 					year: "numeric",
+					timeZone: "Asia/Jakarta",
 				}),
 			};
 
@@ -420,6 +422,7 @@ export default function AdminCampaignKategoriPage() {
 					day: "2-digit",
 					month: "short",
 					year: "numeric",
+					timeZone: "Asia/Jakarta",
 				}),
 			};
 

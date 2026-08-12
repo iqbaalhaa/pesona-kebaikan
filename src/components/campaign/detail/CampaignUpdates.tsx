@@ -108,6 +108,7 @@ function UpdateItem({ update, isLast }: { update: any; isLast: boolean }) {
 								day: "numeric",
 								month: "long",
 								year: "numeric",
+								timeZone: "Asia/Jakarta",
 							})}
 						</Typography>
 						<Box

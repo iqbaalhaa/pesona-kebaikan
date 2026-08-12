@@ -308,6 +308,7 @@ export default function NotificationClient({
 											month: "short",
 											hour: "2-digit",
 											minute: "2-digit",
+											timeZone: "Asia/Jakarta",
 										})}
 									</TableCell>
 									<TableCell>

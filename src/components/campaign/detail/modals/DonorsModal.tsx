@@ -127,7 +127,7 @@ export default function DonorsModal({
 												{donation.name}
 											</Typography>
 											<Typography variant="caption" color="text.secondary">
-												{new Date(donation.date).toLocaleDateString("id-ID")}
+												{new Date(donation.date).toLocaleDateString("id-ID", { timeZone: "Asia/Jakarta" })}
 											</Typography>
 										</Box>
 									}

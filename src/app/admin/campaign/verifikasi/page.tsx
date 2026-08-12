@@ -90,7 +90,7 @@ function pct(collected: number, target: number) {
 }
 function fmtDate(s: string) {
 	try {
-		return new Date(s).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
+		return new Date(s).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jakarta" });
 	} catch { return s; }
 }
 function matchQuery(q: string, row: CampaignVerifyRow) {
