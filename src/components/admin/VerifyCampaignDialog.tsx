@@ -11,6 +11,7 @@ import Grid from "@mui/material/Grid";
 import Chip from "@mui/material/Chip";
 import Image from "next/image";
 import type { Campaign } from "./CampaignFormDialog";
+import ImagePlaceholder from "@/components/ui/ImagePlaceholder";
 
 export default function VerifyCampaignDialog({
 	open,
@@ -23,12 +24,11 @@ export default function VerifyCampaignDialog({
 	onCancel: () => void;
 	onConfirm: () => void;
 }) {
-	const [imgSrc, setImgSrc] = React.useState("/defaultimg.webp");
+	const [errored, setErrored] = React.useState(false);
+	const imgSrc = data?.images && data.images[0];
 
 	React.useEffect(() => {
-		if (data) {
-			setImgSrc((data.images && data.images[0]) || "/defaultimg.webp");
-		}
+		setErrored(false);
 	}, [data]);
 
 	return (
@@ -39,15 +39,19 @@ export default function VerifyCampaignDialog({
 					<div className="space-y-4">
 						<div className="grid grid-cols-1 md:grid-cols-[260px_1fr] gap-4">
 							<div className="relative h-48 w-full rounded-lg overflow-hidden">
-								<Image
-									src={imgSrc}
-									alt={data.title}
-									fill
-									unoptimized
-									className="object-cover"
-									sizes="400px"
-									onError={() => setImgSrc("/defaultimg.webp")}
-								/>
+								{imgSrc && !errored ? (
+									<Image
+										src={imgSrc}
+										alt={data.title}
+										fill
+										unoptimized
+										className="object-cover"
+										sizes="400px"
+										onError={() => setErrored(true)}
+									/>
+								) : (
+									<ImagePlaceholder className="absolute inset-0" />
+								)}
 							</div>
 							<div>
 								<div className="flex items-start justify-between">

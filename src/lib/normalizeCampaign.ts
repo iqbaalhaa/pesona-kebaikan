@@ -35,7 +35,7 @@ export function normalizeCampaignToCard(input: RawCampaign): CardData {
 		target: Math.max(0, Number(input.target || 0)),
 		collected: Math.max(0, Number(input.collected || 0)),
 		daysLeft: Math.max(0, Number(input.daysLeft || 0)),
-		thumbnail: input.thumbnail || "/defaultimg.webp",
+		thumbnail: input.thumbnail || undefined,
 		verifiedAt: input.verifiedAt ?? null,
 	};
 }

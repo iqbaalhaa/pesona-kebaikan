@@ -3,6 +3,7 @@
 import * as React from "react";
 import Image from "next/image";
 import { Box } from "@mui/material";
+import ImagePlaceholder from "@/components/ui/ImagePlaceholder";
 
 interface CampaignHeroProps {
 	images: string[];
@@ -18,16 +19,19 @@ const HeroImage = ({
 	alt: string;
 	priority: boolean;
 }) => {
-	const [imgSrc, setImgSrc] = React.useState(src);
+	const [errored, setErrored] = React.useState(false);
+	if (!src || errored) {
+		return <ImagePlaceholder className="absolute inset-0" iconClassName="h-10 w-10" />;
+	}
 	return (
 		<Image
-			src={imgSrc}
+			src={src}
 			alt={alt}
 			fill
 			unoptimized
 			style={{ objectFit: "cover" }}
 			priority={priority}
-			onError={() => setImgSrc("/defaultimg.webp")}
+			onError={() => setErrored(true)}
 		/>
 	);
 };
@@ -35,6 +39,8 @@ const HeroImage = ({
 export default function CampaignHero({ images, title }: CampaignHeroProps) {
 	const [currentImageIndex, setCurrentImageIndex] = React.useState(0);
 	const carouselRef = React.useRef<HTMLDivElement>(null);
+	// No cover image at all — one static placeholder slide, no carousel chrome.
+	const slides = images.length > 0 ? images : [""];
 
 	const handleScroll = () => {
 		if (carouselRef.current) {
@@ -76,7 +82,7 @@ export default function CampaignHero({ images, title }: CampaignHeroProps) {
 					"&::-webkit-scrollbar": { display: "none" },
 				}}
 			>
-				{images.map((img: string, index: number) => (
+				{slides.map((img: string, index: number) => (
 					<Box
 						key={index}
 						sx={{
@@ -95,7 +101,7 @@ export default function CampaignHero({ images, title }: CampaignHeroProps) {
 				))}
 			</Box>
 			{/* Indicators */}
-			{images.length > 1 && (
+			{slides.length > 1 && (
 				<Box
 					sx={{
 						position: "absolute",
@@ -108,7 +114,7 @@ export default function CampaignHero({ images, title }: CampaignHeroProps) {
 						zIndex: 10,
 					}}
 				>
-					{images.map((_: any, index: number) => (
+					{slides.map((_: any, index: number) => (
 						<Box
 							key={index}
 							onClick={() => scrollToImage(index)}

@@ -11,6 +11,7 @@ import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import VerifiedIcon from "@mui/icons-material/Verified";
 import Image from "next/image";
+import ImagePlaceholder from "@/components/ui/ImagePlaceholder";
 
 type Status = "Verified" | "Pending" | "Ended";
 
@@ -36,22 +37,26 @@ export default function CampaignCard({
 	onDelete: (c: Campaign) => void;
 	onVerify?: (c: Campaign) => void;
 }) {
-	const [imgSrc, setImgSrc] = React.useState(data.image || "/defaultimg.webp");
+	const [errored, setErrored] = React.useState(false);
 
 	return (
 		<Card className="h-full border border-gray-200">
 			<CardContent className="p-3">
 				<div className="relative mb-3">
 					<div className="relative h-28 w-full rounded-lg overflow-hidden">
-						<Image
-							src={imgSrc}
-							alt={data.title}
-							fill
-							unoptimized
-							className="object-cover"
-							sizes="400px"
-							onError={() => setImgSrc("/defaultimg.webp")}
-						/>
+						{data.image && !errored ? (
+							<Image
+								src={data.image}
+								alt={data.title}
+								fill
+								unoptimized
+								className="object-cover"
+								sizes="400px"
+								onError={() => setErrored(true)}
+							/>
+						) : (
+							<ImagePlaceholder className="absolute inset-0" />
+						)}
 					</div>
 				</div>
 				<div className="flex items-start justify-between">

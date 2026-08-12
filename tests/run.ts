@@ -32,7 +32,7 @@ async function unitTests() {
 		card.target === 0 && card.collected === 0 && card.daysLeft === 0,
 		"non-negative numbers",
 	);
-	assert(card.thumbnail === "/defaultimg.webp", "thumbnail fallback");
+	assert(card.thumbnail === undefined, "thumbnail fallback");
 	log("normalizeCampaignToCard handles fallbacks and clamps values");
 }
 
@@ -46,7 +46,7 @@ async function integrationTests() {
 		target: 1000000,
 		collected: 250000,
 		daysLeft: 12,
-		thumbnail: "/defaultimg.webp",
+		thumbnail: "/uploads/example-cover.webp",
 	});
 	const html = ReactDOMServer.renderToString(
 		React.createElement(CampaignCard, { ...data }),

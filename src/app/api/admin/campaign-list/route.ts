@@ -21,7 +21,7 @@ export async function GET() {
 			id: c.id,
 			title: c.title,
 			slug: c.slug,
-			cover: c.media[0]?.url || "/defaultimg.webp",
+			cover: c.media[0]?.url || "",
 		}));
 
 		return NextResponse.json(formatted);

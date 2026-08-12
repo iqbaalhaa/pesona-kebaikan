@@ -48,7 +48,7 @@ export async function GET() {
         title: c.title,
         organizer: c.createdBy.name || "Anonymous",
         category: c.category.name,
-        cover: c.media.find((m) => m.isThumbnail)?.url || c.media[0]?.url || "/defaultimg.webp",
+        cover: c.media.find((m) => m.isThumbnail)?.url || c.media[0]?.url || "",
         target: Number(c.target),
         collected: collected,
         donors: c.donations.length,

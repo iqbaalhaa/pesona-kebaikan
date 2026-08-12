@@ -50,20 +50,24 @@ export async function GET() {
 			}),
 		]);
 
-		const heroItems = carousel.map((c) => {
-			let image = c.image;
-			let link = c.link;
-			if (c.campaign) {
-				if (!image) image = c.campaign.media[0]?.url;
-				if (!link) link = `/donasi/${c.campaign.slug || c.campaign.id}`;
-			}
-			return {
-				id: c.id,
-				image: image || "/defaultimg.webp",
-				link: link || undefined,
-				title: c.title || c.campaign?.title || undefined,
-			};
-		});
+		const heroItems = carousel
+			.map((c) => {
+				let image = c.image;
+				let link = c.link;
+				if (c.campaign) {
+					if (!image) image = c.campaign.media[0]?.url;
+					if (!link) link = `/donasi/${c.campaign.slug || c.campaign.id}`;
+				}
+				return {
+					id: c.id,
+					image,
+					link: link || undefined,
+					title: c.title || c.campaign?.title || undefined,
+				};
+			})
+			// A carousel slide with no image is a misconfigured admin entry —
+			// skip it rather than papering over it with a generic stock photo.
+			.filter((c): c is typeof c & { image: string } => Boolean(c.image));
 
 		const bannerItems = banners.map((b) => ({
 			id: b.id,

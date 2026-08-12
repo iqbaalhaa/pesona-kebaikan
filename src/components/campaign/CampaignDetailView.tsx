@@ -285,10 +285,14 @@ export default function CampaignDetailView({
 		data.thumbnail ||
 		(Array.isArray((data as any).media)
 			? (data as any).media.find((m: any) => m?.isThumbnail)?.url
-			: undefined) ||
-		"/defaultimg.webp";
+			: undefined);
 
-	const images = imagesFromField.length > 0 ? imagesFromField : [fallbackImage];
+	const images =
+		imagesFromField.length > 0
+			? imagesFromField
+			: fallbackImage
+				? [fallbackImage]
+				: [];
 
 	const baseUrl =
 		process.env.NEXT_PUBLIC_APP_URL || "https://pesonakebaikan.com";

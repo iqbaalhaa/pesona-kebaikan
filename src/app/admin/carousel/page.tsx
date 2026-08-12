@@ -290,7 +290,7 @@ export default function AdminCarouselPage() {
 					</TableHead>
 					<TableBody>
 						{carousels.map((item, index) => {
-							const displayImage = item.image || item.campaign?.media[0]?.url || "/defaultimg.webp";
+							const displayImage = item.image || item.campaign?.media[0]?.url || undefined;
 							const displayLabel = item.campaign?.title || item.link || "—";
 
 							return (

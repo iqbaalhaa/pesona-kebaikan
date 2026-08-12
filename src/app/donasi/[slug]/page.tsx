@@ -146,7 +146,9 @@ export default async function CampaignDetailPage({ params }: Props) {
 	const fallbackImage =
 		res.data.thumbnail ||
 		(imagesFromField.length > 0 ? imagesFromField[0] : undefined) ||
-		"/defaultimg.webp";
+		// JSON-LD needs a resolvable image URL — fall back to the brand logo
+		// rather than a generic stock photo when the campaign has no cover.
+		"/brand/logo.png";
 
 	const ogImages = imagesFromField.length > 0 ? imagesFromField : [fallbackImage];
 	const safeTarget = Number(res.data.target) || 0;

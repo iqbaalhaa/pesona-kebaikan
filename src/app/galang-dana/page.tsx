@@ -676,8 +676,7 @@ export default function GalangDanaSayaPage() {
 													maximumFractionDigits: 0,
 												}).format(x.collected || 0)} terkumpul`;
 
-									const imgSrc =
-										x.thumbnail || (isDraft ? "/defaultimg.webp" : "");
+									const imgSrc = x.thumbnail || "";
 
 									return (
 										<Paper

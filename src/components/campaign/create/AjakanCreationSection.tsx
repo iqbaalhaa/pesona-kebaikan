@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import ImagePlaceholder from "@/components/ui/ImagePlaceholder";
 
 interface AjakanCreationSectionProps {
 	value: string;
@@ -22,7 +23,7 @@ export default function AjakanCreationSection({
 	const maxLength = 160;
 	const remaining = maxLength - value.length;
 	const displayTitle = campaignTitle || "Judul galang dana kamu";
-	const displayCover = coverUrl || "/defaultimg.webp";
+	const [coverErrored, setCoverErrored] = React.useState(false);
 	const displayCta = value || "Ajakan singkat kamu akan muncul di sini...";
 
 	return (
@@ -70,12 +71,16 @@ export default function AjakanCreationSection({
 							<div className="max-w-full rounded-lg rounded-tl-none bg-white p-2 shadow-sm">
 								{/* Link preview card */}
 								<div className="mb-1.5 overflow-hidden rounded-lg border border-foreground/8">
-									<img
-										src={displayCover}
-										alt="Preview"
-										className="h-[100px] w-full object-cover"
-										onError={(e) => { (e.target as HTMLImageElement).src = "/defaultimg.webp"; }}
-									/>
+									{coverUrl && !coverErrored ? (
+										<img
+											src={coverUrl}
+											alt="Preview"
+											className="h-[100px] w-full object-cover"
+											onError={() => setCoverErrored(true)}
+										/>
+									) : (
+										<ImagePlaceholder className="h-[100px] w-full" />
+									)}
 									<div className="bg-[#f0f0f0] px-2 py-1.5">
 										<p className="text-[10px] font-bold leading-tight text-foreground line-clamp-2">
 											{displayTitle}

@@ -4,6 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { ShieldCheck } from "lucide-react";
 import CategoryPill from "./CategoryPill";
+import ImagePlaceholder from "@/components/ui/ImagePlaceholder";
 
 export type CampaignCardProps = {
 	id: string;
@@ -51,7 +52,7 @@ export default function CampaignCard(props: CampaignCardProps) {
 			? Math.min(100, Math.round((x.collected / x.target) * 100))
 			: 0;
 
-	const [img, setImg] = React.useState(x.thumbnail || "/defaultimg.webp");
+	const [errored, setErrored] = React.useState(false);
 
 	return (
 		<Link
@@ -60,12 +61,16 @@ export default function CampaignCard(props: CampaignCardProps) {
 			className="block h-full no-underline"
 		>
 			<div className="flex h-full flex-col overflow-hidden rounded-lg border border-divider bg-surface transition-all duration-200 hover:-translate-y-1 hover:border-transparent hover:shadow-[0_12px_32px_rgba(0,0,0,0.08)]">
-				<img
-					src={img}
-					alt={x.title}
-					onError={() => setImg("/defaultimg.webp")}
-					className="h-[110px] w-full bg-slate-100 object-cover"
-				/>
+				{x.thumbnail && !errored ? (
+					<img
+						src={x.thumbnail}
+						alt={x.title}
+						onError={() => setErrored(true)}
+						className="h-[110px] w-full bg-slate-100 object-cover"
+					/>
+				) : (
+					<ImagePlaceholder className="h-[110px] w-full" />
+				)}
 				<div className="flex flex-1 flex-col p-[5px]">
 					<div className="mb-[3px] flex flex-wrap items-center gap-0.5">
 						<CategoryPill label={x.category} />

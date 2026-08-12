@@ -5,6 +5,7 @@ import ProfileHeader from "@/components/profile/ProfileHeader";
 import { ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
+import ImagePlaceholder from "@/components/ui/ImagePlaceholder";
 
 export const dynamic = "force-dynamic";
 
@@ -98,14 +99,18 @@ export default async function InitiatorPage({
 							>
 								<div className="flex h-full flex-col overflow-hidden rounded-xl border border-slate-200 bg-white transition-all duration-200 hover:-translate-y-1 hover:shadow-lg">
 									<div className="relative bg-slate-200 pt-[56.25%]">
-										<Image
-											src={campaign.thumbnail || "/defaultimg.webp"}
-											alt={campaign.title}
-											fill
-											sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-											style={{ objectFit: "cover" }}
-											unoptimized
-										/>
+										{campaign.thumbnail ? (
+											<Image
+												src={campaign.thumbnail}
+												alt={campaign.title}
+												fill
+												sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+												style={{ objectFit: "cover" }}
+												unoptimized
+											/>
+										) : (
+											<ImagePlaceholder className="absolute inset-0" />
+										)}
 									</div>
 									<div className="flex-1 p-2">
 										<p className="line-clamp-2 min-h-[2.8em] text-base font-bold leading-snug text-foreground">

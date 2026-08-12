@@ -14,7 +14,7 @@ interface SimpleAppBarProps {
 
 export default function SimpleAppBar({ variant = "solid" }: SimpleAppBarProps) {
 	const router = useRouter();
-	const [logoSrc, setLogoSrc] = React.useState("/brand/logo.png");
+	const [logoErrored, setLogoErrored] = React.useState(false);
 	const [scrolled, setScrolled] = React.useState(false);
 	const isOverlay = variant === "overlay";
 
@@ -58,18 +58,20 @@ export default function SimpleAppBar({ variant = "solid" }: SimpleAppBarProps) {
 					href="/"
 					className={`shrink-0 transition-all duration-300 overflow-hidden ${showCompact ? "w-0 opacity-0" : "w-auto opacity-100"}`}
 				>
-					<Image
-						src={logoSrc}
-						alt="Pesona Kebaikan"
-						width={0}
-						height={0}
-						sizes="100vw"
-						priority
-						className={isOverlay && !showCompact ? "[filter:brightness(0)_invert(1)]" : ""}
-						style={{ width: "auto", height: "32px", objectFit: "contain", display: "block" }}
-						onError={() => setLogoSrc("/defaultimg.webp")}
-						unoptimized
-					/>
+					{!logoErrored && (
+						<Image
+							src="/brand/logo.png"
+							alt="Pesona Kebaikan"
+							width={0}
+							height={0}
+							sizes="100vw"
+							priority
+							className={isOverlay && !showCompact ? "[filter:brightness(0)_invert(1)]" : ""}
+							style={{ width: "auto", height: "32px", objectFit: "contain", display: "block" }}
+							onError={() => setLogoErrored(true)}
+							unoptimized
+						/>
+					)}
 				</Link>
 
 				<SearchDropdown

@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Campaign } from "@/types";
+import ImagePlaceholder from "@/components/ui/ImagePlaceholder";
 
 function rupiah(n: number) {
 	return new Intl.NumberFormat("id-ID").format(n);
@@ -26,7 +27,7 @@ function ArrowButton({ dir, onClick }: { dir: "left" | "right"; onClick: () => v
 
 function ScrollCard({ item, priority = false }: { item: Campaign; priority?: boolean }) {
 	const router = useRouter();
-	const [imgSrc, setImgSrc] = React.useState(item.cover || "/defaultimg.webp");
+	const [errored, setErrored] = React.useState(false);
 	const isQuickDonate = item.slug === "donasi-cepat";
 	const isUnlimited = isQuickDonate || item.isUnlimited;
 	const pct = item.target ? Math.max(0, Math.min(100, Math.round((item.collected / item.target) * 100))) : 0;
@@ -41,16 +42,20 @@ function ScrollCard({ item, priority = false }: { item: Campaign; priority?: boo
 			className="w-[240px] min-w-[240px] shrink-0 cursor-pointer snap-start overflow-hidden rounded-xl border border-divider bg-white transition-transform duration-200 hover:-translate-y-1"
 		>
 			<div className="relative h-35 overflow-hidden rounded-t-xl bg-slate-100">
-				<Image
-					src={imgSrc}
-					alt={item.title}
-					fill
-					priority={priority}
-					unoptimized
-					sizes="200px"
-					style={{ objectFit: "cover" }}
-					onError={() => setImgSrc("/defaultimg.webp")}
-				/>
+				{item.cover && !errored ? (
+					<Image
+						src={item.cover}
+						alt={item.title}
+						fill
+						priority={priority}
+						unoptimized
+						sizes="200px"
+						style={{ objectFit: "cover" }}
+						onError={() => setErrored(true)}
+					/>
+				) : (
+					<ImagePlaceholder className="absolute inset-0" />
+				)}
 				{item.organizerVerifiedAt && (
 					<span
 						className="absolute left-2 top-2 rounded bg-white/95 px-1.5 py-0.5 text-[9px] font-bold backdrop-blur-sm"

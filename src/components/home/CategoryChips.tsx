@@ -8,6 +8,7 @@ import { LayoutGrid } from "lucide-react";
 import { Category, Campaign } from "@/types";
 import { CATEGORY_TITLE } from "@/lib/constants";
 import { getCategoryIcon } from "@/lib/categoryIcons";
+import ImagePlaceholder from "@/components/ui/ImagePlaceholder";
 
 function buildDefaultCategories(): Category[] {
 	const pick = ["medis", "pendidikan", "bencana"];
@@ -63,7 +64,7 @@ function CategoryButton({
 
 function CampaignRowCard({ item }: { item: Campaign }) {
 	const router = useRouter();
-	const [imgSrc, setImgSrc] = React.useState(item.cover || "/defaultimg.webp");
+	const [errored, setErrored] = React.useState(false);
 	const pct = item.target ? Math.round((item.collected / item.target) * 100) : 0;
 
 	return (
@@ -72,15 +73,19 @@ function CampaignRowCard({ item }: { item: Campaign }) {
 			className="flex cursor-pointer select-none gap-3 overflow-hidden rounded-xl bg-white active:scale-[0.99] transition-transform"
 		>
 			<div className="relative h-[100px] w-[140px] min-w-[140px] overflow-hidden bg-slate-100">
-				<Image
-					src={imgSrc}
-					alt={item.title}
-					fill
-					unoptimized
-					sizes="140px"
-					style={{ objectFit: "cover" }}
-					onError={() => setImgSrc("/defaultimg.webp")}
-				/>
+				{item.cover && !errored ? (
+					<Image
+						src={item.cover}
+						alt={item.title}
+						fill
+						unoptimized
+						sizes="140px"
+						style={{ objectFit: "cover" }}
+						onError={() => setErrored(true)}
+					/>
+				) : (
+					<ImagePlaceholder className="absolute inset-0" />
+				)}
 			</div>
 
 			<div className="flex min-w-0 flex-1 flex-col justify-center py-2 pr-3">

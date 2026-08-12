@@ -3,6 +3,7 @@
 import * as React from "react";
 import Image from "next/image";
 import Link from "next/link";
+import ImagePlaceholder from "@/components/ui/ImagePlaceholder";
 
 export interface CarouselItem {
 	id: string;
@@ -13,17 +14,20 @@ export interface CarouselItem {
 }
 
 function SlideImage({ src, alt, priority }: { src: string; alt: string; priority: boolean }) {
-	const [imgSrc, setImgSrc] = React.useState(src);
+	const [errored, setErrored] = React.useState(false);
+	if (errored) {
+		return <ImagePlaceholder className="absolute inset-0" iconClassName="h-10 w-10" />;
+	}
 	return (
 		<Image
-			src={imgSrc}
+			src={src}
 			alt={alt}
 			fill
 			priority={priority}
 			unoptimized
 			sizes="420px"
 			style={{ objectFit: "cover" }}
-			onError={() => setImgSrc("/defaultimg.webp")}
+			onError={() => setErrored(true)}
 		/>
 	);
 }
