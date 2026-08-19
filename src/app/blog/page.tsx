@@ -67,6 +67,7 @@ export default async function BlogPage({
 
 		return {
 			id: blog.id,
+			slug: blog.slug,
 			title: blog.title,
 			excerpt,
 			cover,

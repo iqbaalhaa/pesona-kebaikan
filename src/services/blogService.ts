@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { JSDOM } from "jsdom";
 import { BlogMediaType } from "@prisma/client";
+import { makeUniqueSlug } from "@/lib/slugify";
 
 // Helper to extract media from HTML content
 function extractMediaFromContent(content: string) {
@@ -132,6 +133,28 @@ export async function getBlogById(id: string) {
   });
 }
 
+/**
+ * Public-facing lookup for /blog/[slug] — resolves by slug first, falling
+ * back to raw id so any already-shared/indexed `/blog/{id}` link (from
+ * before slugs existed, or a post that predates backfill) keeps working.
+ */
+export async function getBlogBySlug(slugOrId: string) {
+  return prisma.blog.findFirst({
+    where: { OR: [{ slug: slugOrId }, { id: slugOrId }] },
+    include: {
+      category: true,
+      createdBy: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+        },
+      },
+      gallery: true,
+    },
+  });
+}
+
 export async function createBlog(data: CreateBlogData) {
   const { title, content, categoryId, createdById, heroImage } = data;
 
@@ -142,6 +165,7 @@ export async function createBlog(data: CreateBlogData) {
     const blog = await tx.blog.create({
       data: {
         title,
+        slug: makeUniqueSlug(title),
         content,
         categoryId,
         createdById,
@@ -222,6 +246,7 @@ export async function getBlogCategories() {
 export const blogService = {
   getBlogs,
   getBlogById,
+  getBlogBySlug,
   createBlog,
   updateBlog,
   deleteBlog,

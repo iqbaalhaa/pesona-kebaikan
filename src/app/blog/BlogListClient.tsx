@@ -9,6 +9,7 @@ import CategoryPill from "@/components/common/CategoryPill";
 
 type BlogPost = {
 	id: string;
+	slug: string | null;
 	title: string;
 	excerpt: string;
 	cover: string | null;
@@ -44,7 +45,7 @@ export default function BlogListClient({
 		const post = posts.find((p) => p.id === sharePostId);
 		if (!post) return;
 
-		const url = `${window.location.origin}/blog/${post.id}`;
+		const url = `${window.location.origin}/blog/${post.slug || post.id}`;
 		const text = post.title;
 
 		let shareUrl = "";
@@ -111,7 +112,7 @@ export default function BlogListClient({
 					</p>
 				) : (
 					posts.map((post) => (
-						<Link key={post.id} href={`/blog/${post.id}`} className="block h-full">
+						<Link key={post.id} href={`/blog/${post.slug || post.id}`} className="block h-full">
 							<div className="flex h-full flex-col gap-2 rounded-xl border border-foreground/8 bg-white p-2 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary hover:shadow-md sm:flex-row lg:flex-col">
 								{post.cover ? (
 									<img

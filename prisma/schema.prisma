@@ -272,6 +272,7 @@ model BlogCategory {
 model Blog {
   id        String   @id @default(cuid())
   title     String
+  slug      String?  @unique // auto-generated from title at creation, never regenerated on edit (keeps shared/indexed URLs stable)
   content   String
   heroImage String?
   createdAt DateTime @default(now())
