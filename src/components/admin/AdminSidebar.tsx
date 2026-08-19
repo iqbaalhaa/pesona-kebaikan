@@ -29,6 +29,7 @@ import PersonPinIcon from "@mui/icons-material/PersonPin";
 import StarOutlineIcon from "@mui/icons-material/StarOutline";
 import TrendingUpRoundedIcon from "@mui/icons-material/TrendingUpRounded";
 import ViewCarouselIcon from "@mui/icons-material/ViewCarousel";
+import QuizRoundedIcon from "@mui/icons-material/QuizRounded";
 
 type MenuItem = {
 	label: string;
@@ -85,6 +86,7 @@ const menus: { title: string; items: MenuItem[] }[] = [
 			{ label: "Syarat & Ketentuan", href: "/admin/syarat-ketentuan", icon: <DescriptionIcon fontSize="small" /> },
 			{ label: "Akuntabilitas", href: "/admin/akuntabilitas", icon: <VerifiedUserIcon fontSize="small" /> },
 			{ label: "Panduan Galang Dana", href: "/admin/panduan-galang-dana", icon: <HelpOutlineIcon fontSize="small" /> },
+			{ label: "FAQ Penggunaan Dana", href: "/admin/faq-donasi", icon: <QuizRoundedIcon fontSize="small" /> },
 		],
 	},
 	{

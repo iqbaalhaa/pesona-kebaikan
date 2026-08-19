@@ -18,6 +18,8 @@ import {
 } from "@mui/material";
 import { Transition, formatIDR } from "../utils";
 import { formatDateTime } from "@/lib/date";
+import { getPageContent } from "@/actions/cms";
+import { DEFAULT_DONATION_FAQ, type DonationFaqData } from "@/lib/constants";
 import AccountBalanceWalletRoundedIcon from "@mui/icons-material/AccountBalanceWalletRounded";
 import AccessTimeRoundedIcon from "@mui/icons-material/AccessTimeRounded";
 import ReceiptLongRoundedIcon from "@mui/icons-material/ReceiptLongRounded";
@@ -63,7 +65,40 @@ export default function FundDetailsModal({
 	allocations = [],
 }: FundDetailsModalProps) {
 	const [expandFoundation, setExpandFoundation] = React.useState(true);
-	const [expandFAQ, setExpandFAQ] = React.useState(true);
+	// Admin-editable via /admin/faq-donasi — falls back to the default copy
+	// below until an admin saves content for the "donation_faq" PageContent key.
+	const [faqData, setFaqData] = React.useState<DonationFaqData>(
+		DEFAULT_DONATION_FAQ,
+	);
+	// Which FAQ questions are expanded — a Set (not one shared boolean) since
+	// there can now be any number of questions, each toggled independently.
+	// The first question starts open to match the old single-FAQ behavior.
+	const [expandedFaqs, setExpandedFaqs] = React.useState<Set<number>>(
+		new Set([0]),
+	);
+	const toggleFaq = (index: number) => {
+		setExpandedFaqs((prev) => {
+			const next = new Set(prev);
+			if (next.has(index)) next.delete(index);
+			else next.add(index);
+			return next;
+		});
+	};
+
+	React.useEffect(() => {
+		if (!open) return;
+		let alive = true;
+		getPageContent("donation_faq")
+			.then((page) => {
+				if (alive && page?.data) setFaqData(page.data as any);
+			})
+			.catch(() => {
+				// Keep the default copy on failure — never leave the FAQ blank.
+			});
+		return () => {
+			alive = false;
+		};
+	}, [open]);
 
 	// Format Duration
 	const years = Math.floor(campaignDuration / 365);
@@ -305,7 +340,12 @@ export default function FundDetailsModal({
 									semakin aman, mudah & transparan. Maksimal{" "}
 									{formatPercentage(safeFoundationFeePercentage)}% dari donasi
 									terkumpul,{" "}
-									<Link href="#" underline="hover">
+									<Link
+										href="/blog/cmszkj004000m2xzvhon90snv"
+										target="_blank"
+										rel="noopener noreferrer"
+										underline="hover"
+									>
 										selengkapnya
 									</Link>
 									.
@@ -330,14 +370,24 @@ export default function FundDetailsModal({
 							transaksi digital dan Virtual Account, dompet digital dan QRIS
 							serta layanan notifikasi (SMS, WA & email) dan server. Pesona
 							Kebaikan tidak mengambil keuntungan dari layanan ini.{" "}
-							<Link href="#" sx={{ color: "#0ba976", textDecoration: "none" }}>
+							<Link
+								href="/blog/cmszktxn9000o2xzvu2a7c8fw"
+								target="_blank"
+								rel="noopener noreferrer"
+								sx={{ color: "#0ba976", textDecoration: "none" }}
+							>
 								Baca lebih lengkap.
 							</Link>
 						</Typography>
 						<Typography sx={{ fontSize: 12, lineHeight: 1.5 }}>
 							** Dana dapat dicairkan dan dikelola oleh penggalang dana. Jika
 							terdapat donasi yang belum disalurkan/dicairkan{" "}
-							<Link href="#" sx={{ color: "#0ba976", textDecoration: "none" }}>
+							<Link
+								href="/blog/cmszktxn9000o2xzvu2a7c8fw"
+								target="_blank"
+								rel="noopener noreferrer"
+								sx={{ color: "#0ba976", textDecoration: "none" }}
+							>
 								baca selengkapnya di sini.
 							</Link>
 						</Typography>
@@ -463,55 +513,72 @@ export default function FundDetailsModal({
 							</Typography>
 						</Box>
 
-						<Box
-							sx={{
-								display: "flex",
-								justifyContent: "space-between",
-								cursor: "pointer",
-							}}
-							onClick={() => setExpandFAQ(!expandFAQ)}
-						>
-							<Typography sx={{ fontWeight: 700, fontSize: 14, pr: 2 }}>
-								Bagaimana jika donasi terkumpul melebihi target Rencana
-								Penggunaan Dana
-							</Typography>
-							<ExpandMoreIcon
-								sx={{
-									transform: expandFAQ ? "rotate(180deg)" : "rotate(0deg)",
-									transition: "0.2s",
-									color: "#64748b",
-								}}
-							/>
-						</Box>
-						<Collapse in={expandFAQ}>
-							<Box sx={{ mt: 2 }}>
-								<ul style={{ paddingLeft: 20, margin: 0 }}>
-									<li style={{ marginBottom: 12 }}>
-										<Typography sx={{ fontSize: 14, fontWeight: 700 }}>
-											Galang Dana Pesona Kebaikan/mitra Pesona Kebaikan
-										</Typography>
-										<Typography
-											sx={{ fontSize: 13, color: "#475569", mt: 0.5 }}
+						<Stack spacing={2}>
+							{faqData.faqs.map((faq, faqIndex) => {
+								const isExpanded = expandedFaqs.has(faqIndex);
+								return (
+									<Box key={faqIndex}>
+										<Box
+											sx={{
+												display: "flex",
+												justifyContent: "space-between",
+												cursor: "pointer",
+											}}
+											onClick={() => toggleFaq(faqIndex)}
 										>
-											Kelebihan donasi dari target Rencana Penggunaan Dana akan
-											disalurkan ke banyak penerima manfaat, dengan persetujuan
-											penerima manfaat utama.
-										</Typography>
-									</li>
-									<li>
-										<Typography sx={{ fontSize: 14, fontWeight: 700 }}>
-											Galang dana individu
-										</Typography>
-										<Typography
-											sx={{ fontSize: 13, color: "#475569", mt: 0.5 }}
-										>
-											Berapa pun donasi terkumpul akan disalurkan seluruhnya ke
-											penerima manfaat.
-										</Typography>
-									</li>
-								</ul>
-							</Box>
-						</Collapse>
+											<Typography sx={{ fontWeight: 700, fontSize: 14, pr: 2 }}>
+												{faq.question}
+											</Typography>
+											<ExpandMoreIcon
+												sx={{
+													transform: isExpanded
+														? "rotate(180deg)"
+														: "rotate(0deg)",
+													transition: "0.2s",
+													color: "#64748b",
+													flexShrink: 0,
+												}}
+											/>
+										</Box>
+										<Collapse in={isExpanded}>
+											<Box sx={{ mt: 2 }}>
+												{faq.items.length === 1 && !faq.items[0].label ? (
+													// Single, plain answer — no need for a one-item bullet list.
+													<Typography
+														sx={{ fontSize: 13, color: "#475569", lineHeight: 1.6 }}
+													>
+														{faq.items[0].text}
+													</Typography>
+												) : (
+													<ul style={{ paddingLeft: 20, margin: 0 }}>
+														{faq.items.map((item, itemIndex) => (
+															<li
+																key={itemIndex}
+																style={{
+																	marginBottom:
+																		itemIndex < faq.items.length - 1 ? 12 : 0,
+																}}
+															>
+																{item.label && (
+																	<Typography sx={{ fontSize: 14, fontWeight: 700 }}>
+																		{item.label}
+																	</Typography>
+																)}
+																<Typography
+																	sx={{ fontSize: 13, color: "#475569", mt: 0.5 }}
+																>
+																	{item.text}
+																</Typography>
+															</li>
+														))}
+													</ul>
+												)}
+											</Box>
+										</Collapse>
+									</Box>
+								);
+							})}
+						</Stack>
 					</Box>
 				</Box>
 			</DialogContent>

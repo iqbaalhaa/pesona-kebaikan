@@ -98,6 +98,9 @@ export async function updatePageContent(
 			: key === "fundraise_guide"
 			? "/galang-dana/panduan"
 			: "";
+	// donation_faq has no dedicated public path — it's rendered inside
+	// FundDetailsModal (fetched live via getPageContent) on every campaign
+	// detail page, not a single static route, so there's nothing to revalidate.
 
 	if (publicPath) revalidatePath(publicPath);
 
@@ -111,6 +114,8 @@ export async function updatePageContent(
 			? "/admin/akuntabilitas"
 			: key === "fundraise_guide"
 			? "/admin/panduan-galang-dana"
+			: key === "donation_faq"
+			? "/admin/faq-donasi"
 			: "";
 
 	if (adminPath) revalidatePath(adminPath);
