@@ -4,7 +4,14 @@ import { prisma } from "@/lib/prisma";
 export async function GET() {
 	try {
 		const campaigns = await prisma.campaign.findMany({
-			where: { isEmergency: true, status: "ACTIVE" },
+			// Same as campaign-list/featured-campaigns: status alone doesn't
+			// guarantee not-expired, so a pinned-but-ended campaign would
+			// otherwise keep showing here forever.
+			where: {
+				isEmergency: true,
+				status: "ACTIVE",
+				OR: [{ end: null }, { end: { gte: new Date() } }],
+			},
 			select: {
 				id: true,
 				title: true,

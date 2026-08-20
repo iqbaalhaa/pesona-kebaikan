@@ -7,6 +7,7 @@ import { uploadFile, uploadCoverFile } from "@/actions/upload";
 import { CampaignStatus, Prisma, NotificationType, VerificationStatus } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { createNotification, notifyAdmins } from "@/actions/notification";
+import { toUrlArray } from "@/lib/medicalDocs";
 
 const QUICK_DONATION_SLUG = "donasi-cepat";
 
@@ -712,10 +713,14 @@ export async function uploadCampaignDocument(
 		docs[docKey] = url;
 		metadata.docs = docs;
 
-		// Backward compat: juga update medicalDocs untuk kunci lama
+		// Backward compat: juga update medicalDocs untuk kunci lama. Nilainya
+		// sekarang array (wizard mendukung lebih dari 1 file per kunci) — jadi
+		// upload tambahan dari admin di-APPEND, bukan menimpa file yang sudah
+		// diunggah pemilik campaign lewat wizard.
 		if (docKey === "resume_medis" || docKey === "surat_rs") {
 			const medicalDocs: any = { ...(typeof metadata.medicalDocs === "object" && metadata.medicalDocs !== null ? metadata.medicalDocs : {}) };
-			medicalDocs[docKey] = url;
+			const existing = toUrlArray(medicalDocs[docKey]);
+			medicalDocs[docKey] = [...existing, url];
 			metadata.medicalDocs = medicalDocs;
 		}
 

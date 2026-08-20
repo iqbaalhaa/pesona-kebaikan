@@ -4,7 +4,13 @@ import { prisma } from "@/lib/prisma";
 export async function GET() {
 	try {
 		const campaigns = await prisma.campaign.findMany({
-			where: { status: "ACTIVE" },
+			// `status` doesn't auto-flip when `end` passes (no cron job for that),
+			// so an ended campaign can still read status:"ACTIVE" — always pair
+			// the two, same convention as the public-facing campaign queries.
+			where: {
+				status: "ACTIVE",
+				OR: [{ end: null }, { end: { gte: new Date() } }],
+			},
 			select: {
 				id: true,
 				title: true,

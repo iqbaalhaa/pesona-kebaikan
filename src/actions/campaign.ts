@@ -12,6 +12,39 @@ import { notifyAdmins } from "@/actions/notification";
 
 const QUICK_DONATION_SLUG = "donasi-cepat";
 
+/**
+ * Campaign.metadata can carry private documents (medicalDocs.resume_medis/
+ * surat_rs, docs.ktp/pendukung) uploaded for verification — these must never
+ * reach a public donor. getCampaignById/getCampaignBySlug/getCampaigns feed
+ * BOTH public pages (donasi/*, /api/campaigns/*) and owner/admin views
+ * (galang-dana/buat draft loading, admin campaign detail/verifikasi) from
+ * the same query, so the safe default is to strip metadata down to this
+ * allowlist unless the caller is confirmed to be the campaign's own owner or
+ * an admin/staff reviewer. Add new *public-safe* metadata sub-fields here
+ * explicitly — never switch this to a denylist.
+ */
+function publicSafeMetadata(metadata: unknown): any {
+	if (!metadata || typeof metadata !== "object") return metadata;
+	const m = metadata as any;
+	return {
+		allocations: m.allocations,
+		cta: m.cta,
+		ctaOther: m.ctaOther,
+		featured: m.featured,
+		featuredOrder: m.featuredOrder,
+	};
+}
+
+function isPrivilegedCampaignViewer(session: any, ownerId: string): boolean {
+	if (session?.user?.id === ownerId) return true;
+	const role = session?.user?.role;
+	if (role === "ADMIN") return true;
+	if (role === "STAFF" && (session?.user?.permissions || []).includes("APPROVE_CAMPAIGNS")) {
+		return true;
+	}
+	return false;
+}
+
 export async function createCampaign(formData: FormData) {
 	const session = await auth();
 	if (!session?.user?.id) {
@@ -278,6 +311,7 @@ export async function getCampaigns(
 	provinceId?: string,
 ) {
 	const skip = (page - 1) * limit;
+	const session = await auth();
 
 	const where: Prisma.CampaignWhereInput = {};
 
@@ -478,7 +512,9 @@ export async function getCampaigns(
 				isEmergency: c.isEmergency,
 				isUnlimited: !c.end,
 				thumbnail,
-				metadata: c.metadata,
+				metadata: isPrivilegedCampaignViewer(session, c.createdById)
+					? c.metadata
+					: publicSafeMetadata(c.metadata),
 				description: c.story,
 			};
 		});
@@ -580,6 +616,7 @@ export async function getCampaignBySlug(slug: string) {
 
 export async function getCampaignById(id: string) {
 	try {
+		const session = await auth();
 		const campaign = await prisma.campaign.findUnique({
 			where: { id },
 			include: {
@@ -752,7 +789,9 @@ export async function getCampaignById(id: string) {
 			rejectedAt: campaign.rejectedAt
 				? new Date(campaign.rejectedAt).toISOString()
 				: null,
-			metadata: campaign.metadata,
+			metadata: isPrivilegedCampaignViewer(session, campaign.createdById)
+				? campaign.metadata
+				: publicSafeMetadata(campaign.metadata),
 			description: campaign.story,
 			createdAt: new Date(campaign.createdAt).toISOString(),
 			updatedAt: new Date(campaign.updatedAt).toISOString(),

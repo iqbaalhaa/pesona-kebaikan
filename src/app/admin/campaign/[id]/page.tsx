@@ -69,6 +69,7 @@ import {
 } from "@/actions/campaign-admin";
 import { getCampaignTransactions, getCampaignDonorsExport } from "@/actions/admin";
 import { exportDonorsToPDF, exportDonorsToCSV } from "@/lib/export/donationExport";
+import { toUrlArray } from "@/lib/medicalDocs";
 import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
 import HourglassBottomRoundedIcon from "@mui/icons-material/HourglassBottomRounded";
 import ErrorRoundedIcon from "@mui/icons-material/ErrorRounded";
@@ -430,27 +431,48 @@ export default function AdminCampaignDetailPage(props: {
 				];
 
 				if (mappedData.type === "sakit") {
-					// Baca dari docs (baru) atau medicalDocs (lama) untuk backward compat
-					const resumeUrl: string = privateDocs.resume_medis || medicalDocs.resume_medis || "";
-					const suratUrl: string = privateDocs.surat_rs || medicalDocs.surat_rs || "";
+					// medicalDocs.{resume_medis,surat_rs} bisa berisi banyak file
+					// (array) dari wizard, atau string tunggal dari data lama /
+					// upload admin — gabungkan dari docs (baru) & medicalDocs
+					// (lama), dedup, lewat toUrlArray biar aman kedua bentuknya.
+					const resumeUrls = Array.from(
+						new Set([
+							...toUrlArray(privateDocs.resume_medis),
+							...toUrlArray(medicalDocs.resume_medis),
+						]),
+					);
+					const suratUrls = Array.from(
+						new Set([
+							...toUrlArray(privateDocs.surat_rs),
+							...toUrlArray(medicalDocs.surat_rs),
+						]),
+					);
 					base.push(
 						{
 							key: "resume_medis",
 							title: "Surat / Resume Medis",
 							required: false,
 							help: "Dokumen diagnosis/riwayat medis.",
-							uploaded: !!resumeUrl,
-							filename: resumeUrl ? resumeUrl.split("/").pop() : undefined,
-							previewUrl: resumeUrl || undefined,
+							uploaded: resumeUrls.length > 0,
+							filename:
+								resumeUrls.length === 1
+									? resumeUrls[0].split("/").pop()
+									: undefined,
+							previewUrl: resumeUrls[0] || undefined,
+							previewUrls: resumeUrls,
 						},
 						{
 							key: "surat_rs",
 							title: "Dokumen Rumah Sakit",
 							required: false,
 							help: "Surat rujukan, rincian biaya, dll (opsional).",
-							uploaded: !!suratUrl,
-							filename: suratUrl ? suratUrl.split("/").pop() : undefined,
-							previewUrl: suratUrl || undefined,
+							uploaded: suratUrls.length > 0,
+							filename:
+								suratUrls.length === 1
+									? suratUrls[0].split("/").pop()
+									: undefined,
+							previewUrl: suratUrls[0] || undefined,
+							previewUrls: suratUrls,
 						},
 					);
 				} else {
@@ -1196,6 +1218,89 @@ export default function AdminCampaignDetailPage(props: {
 			{isReviewMode ? (
 				/* ===== REVIEW MODE: single column, top-to-bottom checklist ===== */
 				<Stack spacing={2}>
+					{/* Fee Yayasan — must come first: the verification checklist below
+					    literally says "simpan fee terlebih dahulu di bagian atas", so
+					    this has to render up here, not just in monitor mode. */}
+					<Paper
+						elevation={0}
+						sx={{
+							...shellSx,
+							p: 2,
+							border: "2px solid",
+							borderColor: theme.palette.warning.main,
+							position: "relative",
+							overflow: "hidden",
+						}}
+					>
+						<Box
+							sx={{
+								position: "absolute",
+								top: 0,
+								right: 0,
+								px: 1.5,
+								py: 0.5,
+								bgcolor: theme.palette.warning.main,
+								borderBottomLeftRadius: 12,
+								color: theme.palette.warning.contrastText,
+								fontWeight: "bold",
+								fontSize: 12,
+							}}
+						>
+							Wajib Diisi
+						</Box>
+
+						<Stack spacing={2}>
+							<Box sx={{ pr: 10 }}>
+								<Typography sx={{ fontWeight: 1000, fontSize: 15 }}>
+									Fee Yayasan
+								</Typography>
+								<Typography sx={{ fontSize: 13, color: "text.secondary" }}>
+									Tentukan persentase potongan donasi untuk operasional yayasan.
+								</Typography>
+							</Box>
+
+							<Stack direction="row" spacing={2} alignItems="center">
+								<TextField
+									label="Persentase Fee (%)"
+									type="number"
+									value={feeValue}
+									onChange={(e) => {
+										const val = e.target.value;
+										const num = Number(val);
+										if (Number.isNaN(num)) {
+											setFeeValue(val);
+											return;
+										}
+										if (num > 100 || num < 0) return;
+										setFeeValue(val);
+									}}
+									inputProps={{ step: 0.1 }}
+									InputProps={{
+										endAdornment: (
+											<InputAdornment position="end">%</InputAdornment>
+										),
+									}}
+									sx={{ flex: 1, ...fieldSx(theme) }}
+									error={!feeValue}
+								/>
+								<Button
+									variant="contained"
+									onClick={onSaveFee}
+									disabled={feeLoading}
+									sx={{
+										height: 40,
+										borderRadius: 999,
+										fontWeight: 900,
+										boxShadow: "none",
+										whiteSpace: "nowrap",
+									}}
+								>
+									{feeLoading ? "..." : "Simpan"}
+								</Button>
+							</Stack>
+						</Stack>
+					</Paper>
+
 					{/* Owner info inline */}
 					<Paper elevation={0} sx={{ ...shellSx, p: 1.5 }}>
 						<Stack direction="row" spacing={1.5} alignItems="center">
@@ -1353,7 +1458,7 @@ export default function AdminCampaignDetailPage(props: {
 										key={d.key}
 										doc={d}
 										onUpload={(file) => handleUpload(d.key, file)}
-										onPreview={() => setPreview({ open: true, title: d.title, url: d.previewUrl })}
+										onPreview={(url) => setPreview({ open: true, title: d.title, url: url ?? d.previewUrl })}
 										onRemove={() => handleRemoveDoc(d.key)}
 									/>
 								))}
@@ -1866,11 +1971,11 @@ export default function AdminCampaignDetailPage(props: {
 										key={d.key}
 										doc={d}
 										onUpload={(file) => handleUpload(d.key, file)}
-										onPreview={() =>
+										onPreview={(url) =>
 											setPreview({
 												open: true,
 												title: d.title,
-												url: d.previewUrl,
+												url: url ?? d.previewUrl,
 											})
 										}
 										onRemove={() => handleRemoveDoc(d.key)}

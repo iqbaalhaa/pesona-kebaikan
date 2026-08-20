@@ -38,6 +38,8 @@ import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import PhotoCameraRoundedIcon from "@mui/icons-material/PhotoCameraRounded";
 import StepProgress from "@/components/ui/StepProgress";
 import FileUploadField from "@/components/ui/FileUploadField";
+import MultiFileUploadField from "@/components/ui/MultiFileUploadField";
+import { toUrlArray } from "@/lib/medicalDocs";
 import FormField from "@/components/ui/FormField";
 
 import {
@@ -269,8 +271,8 @@ function BuatGalangDanaPageContent() {
 					setUsage(m.usage || "");
 					setCta(m.cta || "");
 					if (m.medicalDocs) {
-						setMedicalResumeUrl(m.medicalDocs.resume_medis || "");
-						setMedicalExamUrl(m.medicalDocs.surat_rs || "");
+						setMedicalResumeUrls(toUrlArray(m.medicalDocs.resume_medis));
+						setMedicalExamUrls(toUrlArray(m.medicalDocs.surat_rs));
 					}
 
 					if (m.storyStructure) {
@@ -504,14 +506,12 @@ function BuatGalangDanaPageContent() {
 	const [prevCost, setPrevCost] = React.useState<"mandiri" | "asuransi" | "">(
 		"",
 	);
-	const [medicalResumeFile, setMedicalResumeFile] = React.useState<File | null>(
-		null,
+	// Surat keterangan medis wajib diisi minimal 1 file; hasil pemeriksaan
+	// opsional. Keduanya mendukung lebih dari 1 file (gambar atau PDF).
+	const [medicalResumeUrls, setMedicalResumeUrls] = React.useState<string[]>(
+		[],
 	);
-	const [medicalResumeUrl, setMedicalResumeUrl] = React.useState("");
-	const [medicalExamFile, setMedicalExamFile] = React.useState<File | null>(
-		null,
-	);
-	const [medicalExamUrl, setMedicalExamUrl] = React.useState("");
+	const [medicalExamUrls, setMedicalExamUrls] = React.useState<string[]>([]);
 
 	const [target, setTarget] = React.useState("");
 	const [duration, setDuration] = React.useState<
@@ -874,7 +874,8 @@ function BuatGalangDanaPageContent() {
 					!!inpatient &&
 					(inpatient === "ya" ? !!hospital : true) &&
 					treatment.trim().length >= 55 &&
-					!!prevCost
+					!!prevCost &&
+					medicalResumeUrls.length > 0
 				);
 			if (stepKey === "target")
 				return (
@@ -936,6 +937,7 @@ function BuatGalangDanaPageContent() {
 		hospital,
 		treatment,
 		prevCost,
+		medicalResumeUrls,
 		target,
 		duration,
 		customStart,
@@ -1041,8 +1043,8 @@ function BuatGalangDanaPageContent() {
 							cta,
 							terms: { t1, t2, t3, t4 },
 							medicalDocs: {
-								resume_medis: medicalResumeUrl,
-								surat_rs: medicalExamUrl,
+								resume_medis: medicalResumeUrls,
+								surat_rs: medicalExamUrls,
 							},
 							storyStructure,
 						}
@@ -1172,8 +1174,8 @@ function BuatGalangDanaPageContent() {
 						cta,
 						terms: { t1, t2, t3, t4 },
 						medicalDocs: {
-							resume_medis: medicalResumeUrl,
-							surat_rs: medicalExamUrl,
+							resume_medis: medicalResumeUrls,
+							surat_rs: medicalExamUrls,
 						},
 					}
 				: {
@@ -1585,44 +1587,35 @@ function BuatGalangDanaPageContent() {
 
 								<Box sx={{ mt: 2 }}>
 									<Typography sx={{ fontWeight: 600, fontSize: 14, mb: 0.75 }}>
-										Unggah dokumen medis pendukung{" "}
-										<span style={{ fontWeight: 400, color: "#94a3b8" }}>(Opsional)</span>
+										Unggah dokumen medis pendukung
 									</Typography>
 									<Typography
 										sx={{ fontSize: 12.5, color: "text.secondary", mb: 1 }}
 									>
-										Surat keterangan medis dengan diagnosis/penyakit dan hasil
-										pemeriksaan (lab, rontgen, dsb.) sangat membantu proses
-										verifikasi. Jika belum ada hasil pemeriksaan, boleh dilewati
-										dulu. (Maksimal ukuran file 3MB)
+										Surat keterangan medis dengan diagnosis/penyakit wajib
+										dilampirkan untuk proses verifikasi. Hasil pemeriksaan (lab,
+										rontgen, dsb.) boleh dilewati dulu jika belum ada. Bisa foto
+										(JPG/PNG) atau PDF, boleh lebih dari 1 file. (Maksimal
+										ukuran per file 3MB)
 									</Typography>
 
-									<div className="flex flex-col gap-2">
-										<FileUploadField
-											label="Surat keterangan medis / diagnosis"
+									<div className="flex flex-col gap-3">
+										<MultiFileUploadField
+											label={
+												<>
+													Surat keterangan medis / diagnosis{" "}
+													<span style={{ color: "#ef4444" }}>*</span>
+												</>
+											}
 											accept="image/*,.pdf"
-											value={medicalResumeUrl}
-											onUploaded={(url) => {
-												setMedicalResumeUrl(url);
-												setMedicalResumeFile(null);
-											}}
-											onClear={() => {
-												setMedicalResumeUrl("");
-												setMedicalResumeFile(null);
-											}}
+											values={medicalResumeUrls}
+											onChange={setMedicalResumeUrls}
 										/>
-										<FileUploadField
-											label="Hasil pemeriksaan (lab, rontgen, dsb.)"
+										<MultiFileUploadField
+											label="Hasil pemeriksaan (lab, rontgen, dsb.) — opsional"
 											accept="image/*,.pdf"
-											value={medicalExamUrl}
-											onUploaded={(url) => {
-												setMedicalExamUrl(url);
-												setMedicalExamFile(null);
-											}}
-											onClear={() => {
-												setMedicalExamUrl("");
-												setMedicalExamFile(null);
-											}}
+											values={medicalExamUrls}
+											onChange={setMedicalExamUrls}
 										/>
 									</div>
 								</Box>

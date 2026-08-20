@@ -6,8 +6,17 @@ import { revalidatePath } from "next/cache";
 export async function GET() {
 	try {
 		const campaigns = await prisma.campaign.findMany({
+			// Only ACTIVE + not-yet-ended campaigns can appear here — same
+			// convention as the public getFeaturedCampaigns() query. This is
+			// what makes an ended campaign automatically drop out of the
+			// admin's "Urutan Tampil" list too (previously it stayed listed
+			// here forever even after it silently disappeared from the public
+			// homepage, which is what looked like a mismatch — 3 selected in
+			// admin, only 1 actually showing publicly).
 			where: {
 				NOT: { slug: "donasi-cepat" },
+				status: "ACTIVE",
+				OR: [{ end: null }, { end: { gte: new Date() } }],
 			},
 			select: {
 				id: true,

@@ -45,6 +45,10 @@ export type DocItem = {
 	uploaded: boolean;
 	filename?: string;
 	previewUrl?: string;
+	// Set (length > 1) for doc keys that can carry more than one file
+	// (resume_medis, surat_rs) — previewUrl/filename above still point at the
+	// first one for backward compat with single-file doc keys.
+	previewUrls?: string[];
 	updatedAt?: string;
 };
 
@@ -202,10 +206,11 @@ export function FormBlock({ label, children }: { label: string; children: React.
 	);
 }
 
-export function DocRow({ doc, onUpload, onPreview, onRemove }: { doc: DocItem; onUpload: (file?: File | null) => void; onPreview: () => void; onRemove: () => void }) {
+export function DocRow({ doc, onUpload, onPreview, onRemove }: { doc: DocItem; onUpload: (file?: File | null) => void; onPreview: (url?: string) => void; onRemove: () => void }) {
 	const theme = useTheme();
 	const id = `file-${doc.key}`;
 	const badgeColor = doc.uploaded ? theme.palette.success.main : theme.palette.warning.main;
+	const multi = (doc.previewUrls?.length ?? 0) > 1;
 
 	return (
 		<Paper variant="outlined" sx={{ borderRadius: 2.5, p: 1, border: "none", bgcolor: alpha(theme.palette.background.default, theme.palette.mode === "dark" ? 0.2 : 1) }}>
@@ -217,21 +222,47 @@ export function DocRow({ doc, onUpload, onPreview, onRemove }: { doc: DocItem; o
 						{doc.required && (
 							<Chip size="small" label="Required" variant="outlined" sx={{ borderRadius: 999, fontWeight: 900, height: 22, borderColor: alpha(theme.palette.divider, 1), color: "text.secondary" }} />
 						)}
-						<Chip size="small" label={doc.uploaded ? "Uploaded" : "Belum"} variant="outlined" sx={{ borderRadius: 999, fontWeight: 900, height: 22, borderColor: alpha(badgeColor, 0.28), bgcolor: alpha(badgeColor, theme.palette.mode === "dark" ? 0.16 : 0.08), color: badgeColor }} />
+						<Chip size="small" label={doc.uploaded ? (multi ? `${doc.previewUrls!.length} file` : "Uploaded") : "Belum"} variant="outlined" sx={{ borderRadius: 999, fontWeight: 900, height: 22, borderColor: alpha(badgeColor, 0.28), bgcolor: alpha(badgeColor, theme.palette.mode === "dark" ? 0.16 : 0.08), color: badgeColor }} />
 					</Stack>
-					<Typography sx={{ fontSize: 12.5, color: "text.secondary" }} className="line-clamp-1">
-						{doc.uploaded ? <>{doc.filename} {doc.updatedAt ? `• ${doc.updatedAt}` : ""}</> : doc.help || "—"}
-					</Typography>
+					{!multi && (
+						<Typography sx={{ fontSize: 12.5, color: "text.secondary" }} className="line-clamp-1">
+							{doc.uploaded ? <>{doc.filename} {doc.updatedAt ? `• ${doc.updatedAt}` : ""}</> : doc.help || "—"}
+						</Typography>
+					)}
 				</Box>
-				{doc.uploaded ? (
+				{doc.uploaded && !multi ? (
 					<Stack direction="row" spacing={1}>
-						<Button variant="outlined" startIcon={<VisibilityRoundedIcon />} onClick={onPreview} disabled={!doc.previewUrl} sx={{ borderRadius: 999, fontWeight: 900 }}>Preview</Button>
-						<Tooltip title="Hapus dokumen"><IconButton onClick={onRemove} sx={{ borderRadius: 2 }}><DeleteOutlineRoundedIcon fontSize="small" /></IconButton></Tooltip>
+						<Button variant="outlined" startIcon={<VisibilityRoundedIcon />} onClick={() => onPreview(doc.previewUrl)} disabled={!doc.previewUrl} sx={{ borderRadius: 999, fontWeight: 900 }}>Preview</Button>
+						<Tooltip title="Hapus semua dokumen ini"><IconButton onClick={onRemove} sx={{ borderRadius: 2 }}><DeleteOutlineRoundedIcon fontSize="small" /></IconButton></Tooltip>
 					</Stack>
-				) : (
+				) : !doc.uploaded ? (
 					<Button component="label" htmlFor={id} variant="outlined" startIcon={<UploadFileRoundedIcon />} sx={{ borderRadius: 999, fontWeight: 900 }}>Upload</Button>
-				)}
+				) : null}
 			</Stack>
+
+			{/* Multi-file list — resume_medis/surat_rs can carry more than one file */}
+			{multi && (
+				<Stack spacing={0.5} sx={{ mt: 1 }}>
+					{doc.previewUrls!.map((url, i) => (
+						<Stack
+							key={url}
+							direction="row"
+							spacing={1}
+							alignItems="center"
+							sx={{ pl: 1, py: 0.5, borderRadius: 1.5, bgcolor: alpha(theme.palette.text.primary, theme.palette.mode === "dark" ? 0.06 : 0.03) }}
+						>
+							<Typography sx={{ fontSize: 12, flex: 1, minWidth: 0 }} className="line-clamp-1">
+								{i + 1}. {decodeURIComponent(url.split("/").pop() || url)}
+							</Typography>
+							<Button size="small" startIcon={<VisibilityRoundedIcon fontSize="small" />} onClick={() => onPreview(url)} sx={{ borderRadius: 999, fontWeight: 800, fontSize: 11.5 }}>Lihat</Button>
+						</Stack>
+					))}
+					<Box>
+						<Button component="label" htmlFor={id} size="small" startIcon={<UploadFileRoundedIcon fontSize="small" />} sx={{ borderRadius: 999, fontWeight: 800, fontSize: 11.5 }}>Tambah file</Button>
+						<Button size="small" color="error" startIcon={<DeleteOutlineRoundedIcon fontSize="small" />} onClick={onRemove} sx={{ borderRadius: 999, fontWeight: 800, fontSize: 11.5, ml: 1 }}>Hapus semua</Button>
+					</Box>
+				</Stack>
+			)}
 		</Paper>
 	);
 }

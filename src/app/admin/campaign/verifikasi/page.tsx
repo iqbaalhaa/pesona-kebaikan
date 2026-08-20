@@ -3,6 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import { toUrlArray } from "@/lib/medicalDocs";
 
 import {
 	Box,
@@ -233,6 +234,16 @@ export default function AdminCampaignVerifikasiPage() {
 			const mapped: CampaignVerifyRow[] = res.data.map((c: any) => {
 				const meta = (c as any).metadata || {};
 				const medicalDocs = (meta as any).medicalDocs || {};
+				const privateDocs = (meta as any).docs || {};
+				// resume_medis/surat_rs can be an array (multi-file, from the
+				// wizard) or a legacy single string — and can live under either
+				// docs (admin uploads) or medicalDocs (wizard) — check both.
+				const hasResumeMedis =
+					toUrlArray(medicalDocs.resume_medis).length > 0 ||
+					toUrlArray(privateDocs.resume_medis).length > 0;
+				const hasSuratRs =
+					toUrlArray(medicalDocs.surat_rs).length > 0 ||
+					toUrlArray(privateDocs.surat_rs).length > 0;
 				return {
 					id: c.id,
 					title: c.title,
@@ -248,8 +259,8 @@ export default function AdminCampaignVerifikasiPage() {
 					docs: {
 						cover: !!c.thumbnail,
 						ktp: false,
-						resume_medis: !!medicalDocs.resume_medis,
-						surat_rs: !!medicalDocs.surat_rs,
+						resume_medis: hasResumeMedis,
+						surat_rs: hasSuratRs,
 						pendukung: false,
 					},
 					notes: "",
