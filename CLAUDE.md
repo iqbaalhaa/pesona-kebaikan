@@ -47,6 +47,19 @@ Key variables needed in `.env.local`:
 | `EMAIL_SERVER_HOST/PORT/USER/PASSWORD` | SMTP for transactional email |
 | `NEXT_PUBLIC_APP_URL` | Public-facing origin |
 | `NEXT_PUBLIC_BYPASS_OTP` | Set `true` in dev to skip SMS OTP |
+| `CRON_SECRET` | Bearer token guarding `/api/cron/*` routes (see Cron Jobs below) |
+
+## Cron Jobs
+
+No in-app scheduler — `/api/cron/*` routes are triggered by the VPS's own crontab calling `curl`. Currently just one job:
+
+```cron
+# Campaign-ending-soon reminders — once a day is enough (see
+# src/actions/campaign-reminders.ts for what it does and why).
+0 3 * * * curl -s -H "Authorization: Bearer <CRON_SECRET value>" https://pesonakebaikan.com/api/cron/campaign-reminders >> /var/log/pesonakebaikan-cron.log 2>&1
+```
+
+Add it with `crontab -e` on the server. Use the same value as the app's `CRON_SECRET` env var. When adding a new `/api/cron/*` route later, add its crontab line here too so this list stays the source of truth for what's actually scheduled.
 
 ## Architecture Overview
 

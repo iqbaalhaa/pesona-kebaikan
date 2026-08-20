@@ -378,6 +378,11 @@ model Campaign {
   rejectedBy   User?   @relation("CampaignRejectedBy", fields: [rejectedById], references: [id])
   metadata      Json?
 
+  // Set once the "campaign ending soon" reminder notification has been sent
+  // to the owner (src/actions/campaign-reminders.ts) — prevents re-notifying
+  // on every cron run while the campaign sits inside the reminder window.
+  endReminderSentAt DateTime?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
