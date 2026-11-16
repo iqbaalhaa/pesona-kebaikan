@@ -305,7 +305,8 @@ export async function getFundraiserCampaign(slug: string) {
 				collected: fundraiserCollected, // Use fundraiser specific collected amount
 				donors: fundraiserDonors, // Use fundraiser specific donor count
 				thumbnail,
-				images: campaign.media.map((m) => m.url),
+				// Media rows are covers only; older replaced covers must not show as slides.
+				images: thumbnail ? [thumbnail] : [],
 				daysLeft: daysLeft > 0 ? daysLeft : 0,
 				status:
 					campaign.status === "COMPLETED"

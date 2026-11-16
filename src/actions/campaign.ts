@@ -8,6 +8,7 @@ import { revalidatePath } from "next/cache";
 import { CATEGORY_TITLE } from "@/lib/constants";
 import { validateCampaignType } from "@/lib/campaignValidation";
 import { notifyAdmins } from "@/actions/notification";
+import { replaceCampaignCover } from "@/lib/campaign-cover";
 
 
 const QUICK_DONATION_SLUG = "donasi-cepat";
@@ -796,7 +797,8 @@ export async function getCampaignById(id: string) {
 			createdAt: new Date(campaign.createdAt).toISOString(),
 			updatedAt: new Date(campaign.updatedAt).toISOString(),
 			thumbnail,
-			images: campaign.media.map((m) => m.url),
+			// Media rows are covers only; older replaced covers must not show as slides.
+			images: thumbnail ? [thumbnail] : [],
 			donations: recentDonations.map((d) => ({
 				id: d.id,
 				name: d.donorName || "#OrangBaik",
@@ -881,13 +883,30 @@ export async function updateCampaign(id: string, formData: FormData) {
 			return { success: false, error: "Unauthorized" };
 		}
 
+		const owner = await prisma.campaign.findUnique({
+			where: { id },
+			select: { createdById: true },
+		});
+		if (!owner) {
+			return { success: false, error: "Campaign not found" };
+		}
+		if (!isPrivilegedCampaignViewer(session, owner.createdById)) {
+			return { success: false, error: "Forbidden" };
+		}
+		const isAdminEditor = isPrivilegedCampaignViewer(session, ""); // role check only
+
 		const title = formData.get("title") as string;
 		const slug = formData.get("slug") as string;
 		const categoryKey = formData.get("category") as string;
 		const targetStr = formData.get("target") as string;
 		const story = formData.get("story") as string;
 		const phone = formData.get("phone") as string;
-		const status = formData.get("status") as CampaignStatus | null;
+		const requestedStatus = formData.get("status") as CampaignStatus | null;
+		// Owners may only save a draft or (re)submit for review — never self-approve.
+		const status =
+			isAdminEditor || requestedStatus === "DRAFT" || requestedStatus === "PENDING"
+				? requestedStatus
+				: null;
 		const startStr = formData.get("start") as string;
 		const endStr = formData.get("end") as string;
 
@@ -979,34 +998,19 @@ export async function updateCampaign(id: string, formData: FormData) {
 			return { success: false, error: "Invalid category" };
 		}
 
-		const coverUrlDirect = formData.get("coverUrl") as string;
-		if (coverUrlDirect) {
-			await prisma.campaignMedia.updateMany({
-				where: { campaignId: id },
-				data: { isThumbnail: false },
+		// Replacing the cover swaps the thumbnail row instead of piling up a new
+		// one per save (every row used to show up as an extra slide publicly).
+		const newCoverUrl =
+			(formData.get("coverUrl") as string) ||
+			(coverUploadRes?.success ? coverUploadRes.url : undefined);
+		if (newCoverUrl) {
+			const currentCover = await prisma.campaignMedia.findFirst({
+				where: { campaignId: id, isThumbnail: true },
+				select: { url: true },
 			});
-			await prisma.campaignMedia.create({
-				data: {
-					campaignId: id,
-					type: "IMAGE",
-					url: coverUrlDirect,
-					isThumbnail: true,
-				},
-			});
-		} else if (coverUploadRes && coverUploadRes.success && coverUploadRes.url) {
-			await prisma.campaignMedia.updateMany({
-				where: { campaignId: id },
-				data: { isThumbnail: false },
-			});
-
-			await prisma.campaignMedia.create({
-				data: {
-					campaignId: id,
-					type: "IMAGE",
-					url: coverUploadRes.url,
-					isThumbnail: true,
-				},
-			});
+			if (currentCover?.url !== newCoverUrl) {
+				await replaceCampaignCover(id, newCoverUrl);
+			}
 		}
 
 		let mergedMetadata = metadata;

@@ -9,6 +9,7 @@ import { revalidatePath } from "next/cache";
 import { createNotification, notifyAdmins } from "@/actions/notification";
 import { toUrlArray } from "@/lib/medicalDocs";
 import { extensionUpdate } from "@/lib/campaign-extension";
+import { replaceCampaignCover } from "@/lib/campaign-cover";
 
 const QUICK_DONATION_SLUG = "donasi-cepat";
 
@@ -634,7 +635,8 @@ export async function resolveCampaignChangeRequest(
 
 export async function addCampaignMedia(campaignId: string, formData: FormData) {
 	const session = await auth();
-	if (!session?.user?.id) {
+	// Only the admin campaign page calls this; it used to accept any logged-in user.
+	if (!session?.user?.id || !hasCampaignApprovalAccess(session)) {
 		return { success: false, error: "Unauthorized" };
 	}
 
@@ -656,24 +658,14 @@ export async function addCampaignMedia(campaignId: string, formData: FormData) {
 			return { success: false, error: "Failed to upload file" };
 		}
 
-		if (isThumbnail) {
-			await prisma.campaignMedia.updateMany({
-				where: { campaignId, isThumbnail: true },
-				data: { isThumbnail: false },
-			});
-		}
-
-		const media = await prisma.campaignMedia.create({
-			data: {
-				campaignId,
-				type: "IMAGE",
-				url: uploadRes.url,
-				isThumbnail,
-			},
-		});
+		const media = isThumbnail
+			? await replaceCampaignCover(campaignId, uploadRes.url)
+			: await prisma.campaignMedia.create({
+					data: { campaignId, type: "IMAGE", url: uploadRes.url, isThumbnail: false },
+				});
 
 		revalidatePath(`/admin/campaign/${campaignId}`);
-		revalidatePath(`/donasi/${campaignId}`);
+		revalidatePath("/donasi/[slug]", "page");
 
 		return { success: true, data: media, url: uploadRes.url };
 	} catch (error) {
