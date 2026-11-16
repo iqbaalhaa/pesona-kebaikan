@@ -33,6 +33,7 @@ export default function DurationPanel(props: {
 	const [requests, setRequests] = React.useState<ChangeRequest[]>([]);
 	const [days, setDays] = React.useState("30");
 	const [busy, setBusy] = React.useState<string | null>(null);
+	const [rejecting, setRejecting] = React.useState<{ id: string; reason: string } | null>(null);
 
 	const loadRequests = React.useCallback(
 		() =>
@@ -52,10 +53,14 @@ export default function DurationPanel(props: {
 		setBusy(key);
 		try {
 			const res = await fn();
-			if (!res.success) return notify(res.error || "Gagal memproses", "error");
+			if (!res.success) {
+				notify(res.error || "Gagal memproses", "error");
+				return false;
+			}
 			notify(okMsg, "success");
 			await loadRequests();
 			onChanged();
+			return true;
 		} finally {
 			setBusy(null);
 		}
@@ -97,6 +102,41 @@ export default function DurationPanel(props: {
 								.join(" · ") || "Perubahan campaign"}
 						</Typography>
 						{r.note && <Typography sx={{ fontSize: 13, color: "text.secondary", mt: 0.5 }}>{r.note}</Typography>}
+						{rejecting?.id === r.id ? (
+							<Stack spacing={1} sx={{ mt: 1 }}>
+								<TextField
+									label="Alasan penolakan"
+									placeholder="Dikirim ke fundraiser"
+									multiline
+									minRows={2}
+									autoFocus
+									value={rejecting.reason}
+									onChange={(e) => setRejecting({ id: r.id, reason: e.target.value })}
+									sx={fieldSx(theme)}
+								/>
+								<Stack direction="row" spacing={1}>
+									<Button
+										size="small"
+										color="error"
+										variant="contained"
+										disabled={!!busy || !rejecting.reason.trim()}
+										onClick={() =>
+											run(
+												r.id,
+												() => resolveCampaignChangeRequest(r.id, "REJECT", { note: rejecting.reason }),
+												"Pengajuan ditolak",
+											).then((ok) => ok && setRejecting(null))
+										}
+										sx={{ borderRadius: 999, fontWeight: 900, boxShadow: "none" }}
+									>
+										Kirim Penolakan
+									</Button>
+									<Button size="small" disabled={!!busy} onClick={() => setRejecting(null)}>
+										Batal
+									</Button>
+								</Stack>
+							</Stack>
+						) : (
 						<Stack direction="row" spacing={1} sx={{ mt: 1 }}>
 							<Button
 								size="small"
@@ -114,14 +154,13 @@ export default function DurationPanel(props: {
 								color="error"
 								variant="outlined"
 								disabled={!!busy}
-								onClick={() =>
-									run(r.id, () => resolveCampaignChangeRequest(r.id, "REJECT"), "Pengajuan ditolak")
-								}
+								onClick={() => setRejecting({ id: r.id, reason: "" })}
 								sx={{ borderRadius: 999, fontWeight: 900 }}
 							>
 								Tolak
 							</Button>
 						</Stack>
+						)}
 					</Box>
 				))}
 

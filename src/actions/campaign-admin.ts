@@ -503,11 +503,16 @@ export async function resolveCampaignChangeRequest(
 		}
 
 		if (decision === "REJECT") {
+			const reason = options?.note?.trim();
+			if (!reason) {
+				return { success: false, error: "Alasan penolakan wajib diisi" };
+			}
+
 			await prisma.campaignChangeRequest.update({
 				where: { id: requestId },
 				data: {
 					status: "REJECTED",
-					note: options?.note || null,
+					note: reason,
 					processedAt: new Date(),
 					processedById: session.user.id,
 				},
@@ -517,7 +522,7 @@ export async function resolveCampaignChangeRequest(
 				await createNotification(
 					req.campaign.createdById,
 					"Pengajuan Perubahan Ditolak",
-					`Pengajuan perubahan untuk campaign "${req.campaign.title}" ditolak admin.`,
+					`Pengajuan perubahan untuk campaign "${req.campaign.title}" ditolak admin. Alasan: ${reason}`,
 					NotificationType.KABAR,
 				);
 			}
