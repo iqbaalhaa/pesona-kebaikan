@@ -83,6 +83,7 @@ import {
 	type DocItem, type AuditEvent, type TxRow, type TxStatus, type PayMethod,
 	type CampaignStatus as CampaignStatusType, type CampaignType, type DocKey,
 } from "./_components/shared";
+import DurationPanel from "./_components/DurationPanel";
 
 type CampaignStatus = CampaignStatusType;
 
@@ -1214,6 +1215,18 @@ export default function AdminCampaignDetailPage(props: {
 					</Stack>
 				</Stack>
 			</Paper>
+
+			{["active", "ended", "paused"].includes(data.status) && (
+				<DurationPanel
+					campaignId={data.id}
+					isUnlimited={data.isUnlimited}
+					daysLeft={data.daysLeft}
+					theme={theme}
+					shellSx={shellSx}
+					onChanged={fetchData}
+					notify={(msg, type) => setSnack({ open: true, msg, type })}
+				/>
+			)}
 
 			{isReviewMode ? (
 				/* ===== REVIEW MODE: single column, top-to-bottom checklist ===== */

@@ -8,6 +8,7 @@ import { CampaignStatus, Prisma, NotificationType, VerificationStatus } from "@p
 import { revalidatePath } from "next/cache";
 import { createNotification, notifyAdmins } from "@/actions/notification";
 import { toUrlArray } from "@/lib/medicalDocs";
+import { extensionUpdate } from "@/lib/campaign-extension";
 
 const QUICK_DONATION_SLUG = "donasi-cepat";
 
@@ -283,6 +284,57 @@ export async function updateCampaignTarget(campaignId: string, target: number) {
 	}
 }
 
+export async function extendCampaignDuration(campaignId: string, days: number) {
+	try {
+		const session = await auth();
+		if (!session?.user || !hasCampaignApprovalAccess(session)) {
+			return { success: false, error: "Unauthorized" };
+		}
+		if (!Number.isInteger(days) || days < 1 || days > 365) {
+			return { success: false, error: "Jumlah hari harus 1–365" };
+		}
+
+		const campaign = await prisma.campaign.findUnique({
+			where: { id: campaignId },
+			select: { id: true, title: true, slug: true, end: true, status: true, createdById: true },
+		});
+		if (!campaign) return { success: false, error: "Campaign not found" };
+		if (!campaign.end || campaign.slug === QUICK_DONATION_SLUG) {
+			return { success: false, error: "Campaign ini tidak punya batas waktu" };
+		}
+		if (!["ACTIVE", "COMPLETED", "PAUSED"].includes(campaign.status)) {
+			return { success: false, error: "Campaign belum aktif" };
+		}
+
+		await prisma.campaign.update({
+			where: { id: campaign.id },
+			data: extensionUpdate(campaign, days),
+		});
+
+		if (campaign.createdById) {
+			await createNotification(
+				campaign.createdById,
+				"Masa Aktif Campaign Diperpanjang",
+				`Masa aktif campaign "${campaign.title}" diperpanjang ${days} hari oleh admin.`,
+				NotificationType.KABAR,
+			);
+		}
+
+		revalidatePath("/admin/campaign");
+		revalidatePath(`/admin/campaign/${campaign.id}`);
+		if (campaign.slug) {
+			revalidatePath(`/galang-dana/${campaign.slug}`);
+			revalidatePath(`/donasi/${campaign.slug}`);
+		}
+		revalidatePath("/");
+
+		return { success: true };
+	} catch (error) {
+		console.error("Extend campaign duration error:", error);
+		return { success: false, error: "Gagal memperpanjang campaign" };
+	}
+}
+
 export async function requestCampaignChange(
 	campaignId: string,
 	extraDays: number | null,
@@ -362,6 +414,7 @@ export async function getCampaignChangeRequests(
 	page = 1,
 	limit = 20,
 	status: "all" | "PENDING" | "APPROVED" | "REJECTED" = "all",
+	campaignId?: string,
 ) {
 	const session = await auth();
 	if (!hasCampaignApprovalAccess(session)) {
@@ -372,6 +425,9 @@ export async function getCampaignChangeRequests(
 		const where: any = {};
 		if (status !== "all") {
 			where.status = status;
+		}
+		if (campaignId) {
+			where.campaignId = campaignId;
 		}
 
 		const [requests, total] = await Promise.all([
@@ -431,6 +487,7 @@ export async function resolveCampaignChangeRequest(
 						slug: true,
 						target: true,
 						end: true,
+						status: true,
 						createdById: true,
 					},
 				},
@@ -504,10 +561,9 @@ export async function resolveCampaignChangeRequest(
 					? Number(req.extraTarget)
 					: 0;
 
-		if (useDays && daysValue && daysValue > 0) {
-			const baseEnd = campaign.end ? new Date(campaign.end) : new Date();
-			baseEnd.setDate(baseEnd.getDate() + daysValue);
-			updates.end = baseEnd;
+		// Unlimited campaigns (end === null) have nothing to extend.
+		if (useDays && daysValue && daysValue > 0 && campaign.end) {
+			Object.assign(updates, extensionUpdate(campaign, daysValue));
 		}
 
 		if (useTarget && targetValueRaw && targetValueRaw > 0) {

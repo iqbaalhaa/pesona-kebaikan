@@ -3,6 +3,7 @@ import ReactDOMServer from "react-dom/server";
 import CampaignCard from "@/components/common/CampaignCard";
 import { normalizeCampaignToCard } from "@/lib/normalizeCampaign";
 import { dashboardTests } from "./dashboard.test";
+import { extensionUpdate } from "@/lib/campaign-extension";
 
 function assert(condition: any, message: string) {
 	if (!condition) {
@@ -34,6 +35,16 @@ async function unitTests() {
 	);
 	assert(card.thumbnail === undefined, "thumbnail fallback");
 	log("normalizeCampaignToCard handles fallbacks and clamps values");
+
+	const now = Date.UTC(2026, 10, 16);
+	const day = 24 * 60 * 60 * 1000;
+	const expired = extensionUpdate({ end: new Date(now - 10 * day), status: "COMPLETED" }, 30, now);
+	assert(expired.end.getTime() === now + 30 * day, "expired campaign extends from today");
+	assert(expired.status === "ACTIVE", "completed campaign is reactivated");
+	const running = extensionUpdate({ end: new Date(now + 5 * day), status: "ACTIVE" }, 30, now);
+	assert(running.end.getTime() === now + 35 * day, "running campaign extends from its end");
+	assert(running.status === undefined, "active campaign status untouched");
+	log("extensionUpdate extends from max(end, today) and reactivates ended campaigns");
 }
 
 async function integrationTests() {
