@@ -387,22 +387,6 @@ export async function getCampaigns(
 	}
 
 	try {
-		let totalFundraisers = 0;
-
-		if (!userId) {
-			const frWhere: any = {};
-			if (search) {
-				frWhere.title = { contains: search, mode: "insensitive" };
-			}
-			if (provinceId) {
-				frWhere.createdBy = { provinceId };
-			}
-
-			// ponytail: fundraiser rows are not part of this list (only their count
-			// feeds totalPages), so only count them.
-			totalFundraisers = await prisma.fundraiser.count({ where: frWhere });
-		}
-
 		const [campaigns, total] = await Promise.all([
 			prisma.campaign.findMany({
 				where,
@@ -516,7 +500,7 @@ export async function getCampaigns(
 			total,
 			page,
 			limit,
-			totalPages: Math.ceil((total + totalFundraisers) / limit),
+			totalPages: Math.ceil(total / limit),
 		};
 	} catch (error) {
 		console.error("Get campaigns error:", error);
