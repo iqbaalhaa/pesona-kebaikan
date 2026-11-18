@@ -658,7 +658,7 @@ export async function getCampaignById(id: string) {
 
 		const validStatuses = ["PAID", "paid", "SETTLED", "COMPLETED"];
 
-		const [donationStats, recentDonations] = await Promise.all([
+		const [donationStats, recentDonations, fundraisers] = await Promise.all([
 			prisma.donation.aggregate({
 				where: {
 					campaignId: id,
@@ -677,6 +677,16 @@ export async function getCampaignById(id: string) {
 				},
 				orderBy: { createdAt: "desc" },
 				take: 50,
+			}),
+			prisma.fundraiser.findMany({
+				where: { campaignId: id },
+				select: {
+					id: true,
+					title: true,
+					slug: true,
+					target: true,
+					createdBy: { select: { name: true, image: true } },
+				},
 			}),
 		]);
 
@@ -739,20 +749,6 @@ export async function getCampaignById(id: string) {
 				images: [],
 			})),
 		].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-
-		let fundraisers: any[] = [];
-		if ((prisma as any).fundraiser) {
-			fundraisers = await (prisma as any).fundraiser.findMany({
-				where: { campaignId: campaign.id },
-				select: {
-					id: true,
-					title: true,
-					slug: true,
-					target: true,
-					createdBy: { select: { name: true, image: true } },
-				},
-			});
-		}
 
 		const data = {
 			id: campaign.id,

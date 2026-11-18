@@ -1,7 +1,11 @@
-import { getCampaignBySlug } from "@/actions/campaign";
+import { cache } from "react";
+import { getCampaignBySlug as fetchCampaignBySlug } from "@/actions/campaign";
 import DonationForm from "@/components/donation/DonationForm";
 import { notFound } from "next/navigation";
 import { Metadata } from "next";
+
+// generateMetadata and the page both need it — dedupe per request.
+const getCampaignBySlug = cache(fetchCampaignBySlug);
 
 type Props = {
 	params: Promise<{ slug: string }>;
