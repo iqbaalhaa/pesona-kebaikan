@@ -1,6 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
+import { paidDonationsByProvince } from "@/lib/donation-stats";
 import { auth } from "@/auth";
 import { startOfDay, subDays, format, startOfMonth } from "date-fns";
 import { id } from "date-fns/locale";
@@ -27,7 +28,7 @@ export async function getDashboardStats() {
 			payoutMonthAgg,
 			provinces,
 			usersByProv,
-			donationsWithUser,
+			donationByProv,
  		] = await Promise.all([
  			prisma.campaign.count({ where: { status: "ACTIVE" } }),
  			prisma.user.count({ where: { role: "USER" } }),
@@ -60,34 +61,15 @@ export async function getDashboardStats() {
  				_count: { id: true },
  				where: { role: "USER", provinceId: { not: null } },
  			}),
- 			prisma.donation.findMany({
- 				where: {
- 					status: { in: ["PAID", "paid", "SETTLED", "COMPLETED"] },
- 					user: { provinceId: { not: null } },
- 				},
- 				select: {
- 					amount: true,
- 					user: {
- 						select: { provinceId: true },
- 					},
- 				},
- 			}),
+ 			paidDonationsByProvince(),
  		]);
 
 		const donationToday = Number(donationTodayAgg._sum.amount || 0);
 		const donationMonth = Number(donationMonthAgg._sum.amount || 0);
 		const payoutMonth = Number(payoutMonthAgg._sum.amount || 0);
 
- 		// Aggregate donations by provinceId
- 		const donationByProvMap: Record<string, number> = {};
- 		const donationCountByProvMap: Record<string, number> = {};
- 		donationsWithUser.forEach((d) => {
- 			const pid = d.user?.provinceId;
- 			if (pid) {
- 				donationByProvMap[pid] = (donationByProvMap[pid] || 0) + Number(d.amount);
- 				donationCountByProvMap[pid] = (donationCountByProvMap[pid] || 0) + 1;
- 			}
- 		});
+ 		const donationByProvMap = donationByProv.amount;
+ 		const donationCountByProvMap = donationByProv.count;
  
  		// Create Map for User Counts
  		const userByProvMap: Record<string, number> = {};
