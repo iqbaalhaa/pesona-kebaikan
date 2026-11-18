@@ -105,27 +105,28 @@ export async function getDashboardStats() {
  		}));
 
 		// 2. Donation Last 7 Days
-		const donation7dData = [];
-		for (let i = 6; i >= 0; i--) {
-			const date = subDays(today, i);
-			const nextDate = subDays(today, i - 1);
+		const donation7dData = await Promise.all(
+			[6, 5, 4, 3, 2, 1, 0].map(async (i) => {
+				const date = subDays(today, i);
+				const nextDate = subDays(today, i - 1);
 
-			const agg = await prisma.donation.aggregate({
-				_sum: { amount: true },
-				where: {
-					status: { in: ["PAID", "paid", "SETTLED", "COMPLETED"] },
-					createdAt: {
-						gte: date,
-						lt: nextDate,
+				const agg = await prisma.donation.aggregate({
+					_sum: { amount: true },
+					where: {
+						status: { in: ["PAID", "paid", "SETTLED", "COMPLETED"] },
+						createdAt: {
+							gte: date,
+							lt: nextDate,
+						},
 					},
-				},
-			});
+				});
 
-			donation7dData.push({
-				name: format(date, "EEE", { locale: id }),
-				value: Number(agg._sum.amount || 0),
-			});
-		}
+				return {
+					name: format(date, "EEE", { locale: id }),
+					value: Number(agg._sum.amount || 0),
+				};
+			}),
+		);
 
 		// 3. Category Distribution
 		const categories = await prisma.campaignCategory.findMany({
@@ -169,25 +170,26 @@ export async function getDashboardStats() {
 		});
 
 		// 5. Campaign Created Last 14 Days
-		const campaignCreated14d = [];
-		for (let i = 13; i >= 0; i--) {
-			const date = subDays(today, i);
-			const nextDate = subDays(today, i - 1);
+		const campaignCreated14d = await Promise.all(
+			Array.from({ length: 14 }, (_, k) => 13 - k).map(async (i) => {
+				const date = subDays(today, i);
+				const nextDate = subDays(today, i - 1);
 
-			const count = await prisma.campaign.count({
-				where: {
-					createdAt: {
-						gte: date,
-						lt: nextDate,
+				const count = await prisma.campaign.count({
+					where: {
+						createdAt: {
+							gte: date,
+							lt: nextDate,
+						},
 					},
-				},
-			});
+				});
 
-			campaignCreated14d.push({
-				day: i === 0 ? "Hari ini" : `D-${i}`,
-				value: count,
-			});
-		}
+				return {
+					day: i === 0 ? "Hari ini" : `D-${i}`,
+					value: count,
+				};
+			}),
+		);
 
 		// 6. Recent Queue (Pending Campaigns)
 		const recentQueueRaw = await prisma.campaign.findMany({
