@@ -387,7 +387,6 @@ export async function getCampaigns(
 	}
 
 	try {
-		let fundraisers: any[] = [];
 		let totalFundraisers = 0;
 
 		if (!userId) {
@@ -399,26 +398,9 @@ export async function getCampaigns(
 				frWhere.createdBy = { provinceId };
 			}
 
-			[fundraisers, totalFundraisers] = await Promise.all([
-				prisma.fundraiser.findMany({
-					where: frWhere,
-					take: limit,
-					orderBy: { createdAt: "desc" },
-					include: {
-						campaign: {
-							include: {
-								category: true,
-								createdBy: true,
-								media: true,
-								donations: true
-							}
-						},
-						createdBy: true,
-						donations: true
-					}
-				}),
-				prisma.fundraiser.count({ where: frWhere })
-			]);
+			// ponytail: fundraiser rows are not part of this list (only their count
+			// feeds totalPages), so only count them.
+			totalFundraisers = await prisma.fundraiser.count({ where: frWhere });
 		}
 
 		const [campaigns, total] = await Promise.all([
@@ -429,13 +411,7 @@ export async function getCampaigns(
 				orderBy,
 				include: {
 					category: true,
-					createdBy: true,
-					donations: {
-						select: {
-							amount: true,
-							status: true,
-						},
-					},
+					createdBy: { select: { name: true, verifiedAs: true } },
 					media: {
 						select: {
 							url: true,
@@ -446,6 +422,19 @@ export async function getCampaigns(
 			}),
 			prisma.campaign.count({ where }),
 		]);
+
+		const stats = campaigns.length
+			? await prisma.donation.groupBy({
+					by: ["campaignId"],
+					where: {
+						campaignId: { in: campaigns.map((c) => c.id) },
+						status: { in: ["PAID", "paid", "SETTLED", "COMPLETED"] },
+					},
+					_sum: { amount: true },
+					_count: { _all: true },
+				})
+			: [];
+		const statsById = new Map(stats.map((st) => [st.campaignId, st]));
 
 		const now = new Date();
 		const expiredIds = campaigns
@@ -460,13 +449,8 @@ export async function getCampaigns(
 		}
 
 		const campaignRows = campaigns.map((c) => {
-			const validDonations = c.donations.filter((d) =>
-				["PAID", "paid", "SETTLED", "COMPLETED"].includes(d.status),
-			);
-			const collected = validDonations.reduce(
-				(acc, d) => acc + Number(d.amount),
-				0,
-			);
+			const st = statsById.get(c.id);
+			const collected = Number(st?._sum.amount ?? 0);
 			let daysLeft = 0;
 			if (c.end) {
 				if (c.status === "PENDING" && c.start) {
@@ -501,7 +485,7 @@ export async function getCampaigns(
 				ownerName: c.createdBy.name || "Unknown",
 				target: Number(c.target),
 				collected,
-				donors: validDonations.length,
+				donors: st?._count._all ?? 0,
 				status: c.status.toLowerCase(),
 				updatedAt: new Date(c.updatedAt).toISOString(),
 				createdAt: new Date(c.createdAt).toISOString(),
@@ -519,63 +503,6 @@ export async function getCampaigns(
 				description: c.story,
 			};
 		});
-
-		const fundraiserRows = fundraisers.map((fr) => {
-			const c = fr.campaign;
-			if (!c) return null;
-
-			const validDonations = fr.donations.filter((d: any) =>
-				["PAID", "paid", "SETTLED", "COMPLETED"].includes(d.status),
-			);
-			const collected = validDonations.reduce(
-				(acc: number, d: any) => acc + Number(d.amount),
-				0,
-			);
-
-			let daysLeft = 0;
-			if (c.end) {
-				daysLeft = Math.ceil(
-					(new Date(c.end).getTime() - new Date().getTime()) /
-						(1000 * 60 * 60 * 24),
-				);
-			}
-
-			const thumbnail =
-				c.media.find((m: any) => m.isThumbnail)?.url || "";
-
-			const slugKey =
-				c.category.slug ||
-				Object.entries(CATEGORY_TITLE).find(
-					([, name]) => name === c.category.name,
-				)?.[0];
-
-			return {
-				id: fr.id,
-				slug: `fundraiser/${fr.slug}`,
-				title: fr.title,
-				category: c.category.name,
-				type:
-					c.category.name === "Bantuan Medis & Kesehatan" ? "sakit" : "lainnya",
-				ownerName: fr.createdBy.name || "Fundraiser",
-				target: Number(fr.target),
-				collected,
-				donors: validDonations.length,
-				status: c.status.toLowerCase(),
-				updatedAt: new Date(fr.updatedAt).toISOString(),
-				createdAt: new Date(fr.createdAt).toISOString(),
-				categorySlug: slugKey || "lainnya",
-				daysLeft: daysLeft > 0 ? daysLeft : 0,
-				isVerified: false,
-				verifiedAt: null as string | null,
-				verifiedAs: null as string | null,
-				isEmergency: false,
-				thumbnail,
-				metadata: null as any,
-				description: `Fundraiser untuk: ${c.title}`,
-				isFundraiser: true,
-				fundraiserSlug: fr.slug
-			};
-		}).filter(Boolean);
 
 		let mixedRows = [...campaignRows];
 
