@@ -25,6 +25,15 @@ export function mapDokuStatus(status: string): DonationStatus | null {
   }
 }
 
+/**
+ * DOKU rejects names outside a-z A-Z 0-9 . - / + , = _ : ' @ % ( ) and space
+ * ("Invalid character" 400) — campaign titles like "Sembuh!!!" broke checkout.
+ */
+export function dokuSafeText(text: string, fallback: string): string {
+  const clean = text.replace(/[^a-zA-Z0-9.\-/+,=_:'@%() ]/g, ' ').replace(/\s+/g, ' ').trim()
+  return clean || fallback
+}
+
 export class DokuProvider implements PaymentProvider {
   readonly name: PaymentProviderName = 'doku'
 
@@ -59,7 +68,7 @@ export class DokuProvider implements PaymentProvider {
         invoice_number: req.orderId,
         language: 'ID',
         line_items: req.items.map((i) => ({
-          name: i.name,
+          name: dokuSafeText(i.name, 'Donasi'),
           price: i.price,
           quantity: i.quantity,
         })),
@@ -73,7 +82,7 @@ export class DokuProvider implements PaymentProvider {
         ...(this.paymentMethodTypes.length ? { payment_method_types: this.paymentMethodTypes } : {}),
       },
       customer: {
-        name: req.donorName,
+        name: dokuSafeText(req.donorName, 'Donatur'),
         ...(/^\d{5,16}$/.test(req.donorPhone?.replace(/\D/g, '') || '') ? { phone: req.donorPhone!.replace(/\D/g, '') } : {}),
       },
       additional_info: {

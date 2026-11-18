@@ -4,6 +4,7 @@ import CampaignCard from "@/components/common/CampaignCard";
 import { normalizeCampaignToCard } from "@/lib/normalizeCampaign";
 import { dashboardTests } from "./dashboard.test";
 import { extensionUpdate } from "@/lib/campaign-extension";
+import { dokuSafeText } from "@/lib/payment/providers/doku-provider";
 
 function assert(condition: any, message: string) {
 	if (!condition) {
@@ -45,6 +46,15 @@ async function unitTests() {
 	assert(running.end.getTime() === now + 35 * day, "running campaign extends from its end");
 	assert(running.status === undefined, "active campaign status untouched");
 	log("extensionUpdate extends from max(end, today) and reactivates ended campaigns");
+
+	assert(
+		dokuSafeText("Donasi - Harus Segera Operasi, Bantu Afif Sembuh!!!", "Donasi") ===
+			"Donasi - Harus Segera Operasi, Bantu Afif Sembuh",
+		"doku strips disallowed chars",
+	);
+	assert(dokuSafeText("Rifki 🙏 & Keluarga", "Donatur") === "Rifki Keluarga", "doku strips emoji/&");
+	assert(dokuSafeText("!!!", "Donatur") === "Donatur", "doku falls back when empty");
+	log("dokuSafeText keeps only DOKU-allowed characters");
 }
 
 async function integrationTests() {
