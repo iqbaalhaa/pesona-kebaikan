@@ -14,9 +14,8 @@ import PrayerSection from "./PrayerSection";
 import BannerSection, { BannerItem } from "./BannerSection";
 import type { Campaign } from "@/types";
 
-// Client-side feed for the home page. Replaces the 8 render-blocking awaits in
-// the old server component with a single /api/home fetch, so the page shell can
-// be served statically and the data hydrates after mount.
+// Home feed. Normally receives the data prerendered into "/" (ISR); falls back
+// to fetching /api/home when the prerender couldn't reach the DB.
 type HomeData = {
 	urgent: Campaign[];
 	popular: Campaign[];
@@ -57,11 +56,12 @@ function SectionSkeleton() {
 	);
 }
 
-export default function HomeFeed() {
-	const [data, setData] = useState<HomeData>(EMPTY);
-	const [loading, setLoading] = useState(true);
+export default function HomeFeed({ initialData }: { initialData?: HomeData }) {
+	const [data, setData] = useState<HomeData>(initialData ?? EMPTY);
+	const [loading, setLoading] = useState(!initialData);
 
 	useEffect(() => {
+		if (initialData) return;
 		let alive = true;
 		fetch("/api/home")
 			.then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
@@ -75,7 +75,7 @@ export default function HomeFeed() {
 		return () => {
 			alive = false;
 		};
-	}, []);
+	}, [initialData]);
 
 	return (
 		<>
