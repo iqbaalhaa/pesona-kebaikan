@@ -21,11 +21,7 @@ export default function NotificationPage() {
 		if (!session?.user?.id) return;
 		try {
 			setLoading(true);
-			const { notifications } = await getNotifications(
-				session.user.id,
-				undefined,
-				50,
-			);
+			const { notifications } = await getNotifications(undefined, 50);
 			setNotifications(notifications);
 		} catch (error) {
 			console.error("Failed to fetch notifications", error);
@@ -52,7 +48,7 @@ export default function NotificationPage() {
 
 	const handleMarkAllAsRead = async () => {
 		if (!session?.user?.id) return;
-		await markAllAsRead(session.user.id);
+		await markAllAsRead();
 		setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
 	};
 

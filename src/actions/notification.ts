@@ -1,15 +1,29 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
+import { auth } from "@/auth";
 import { revalidatePath } from "next/cache";
 import { AdminPermission, NotificationType } from "@prisma/client";
 
+// Server actions are callable directly from the browser, so the user is
+// always taken from the session — never from an argument.
+async function sessionUserId() {
+	const session = await auth();
+	return session?.user?.id ?? null;
+}
+
+async function isAdmin() {
+	const session = await auth();
+	return session?.user?.role === "ADMIN";
+}
+
 export async function getNotifications(
-	userId: string,
 	type?: NotificationType | NotificationType[],
 	limit = 20,
 ) {
 	try {
+		const userId = await sessionUserId();
+		if (!userId) return { notifications: [], unreadCount: 0 };
 		const typeFilter = type
 			? Array.isArray(type)
 				? { in: type }
@@ -18,18 +32,19 @@ export async function getNotifications(
 		const where: any = { userId };
 		if (typeFilter) where.type = typeFilter;
 
-		const notifications = await prisma.notification.findMany({
-			where,
-			orderBy: { createdAt: "desc" },
-			take: limit,
-		});
-
-		// Scoped to the same type filter — otherwise a caller asking only for
-		// admin-alert types would get back an unread count polluted by the
-		// user's regular KABAR/PESAN notifications (and vice versa).
-		const unreadCount = await prisma.notification.count({
-			where: { userId, isRead: false, ...(typeFilter ? { type: typeFilter } : {}) },
-		});
+		// Unread count is scoped to the same type filter — otherwise a caller
+		// asking only for admin-alert types would get back an unread count
+		// polluted by the user's regular KABAR/PESAN notifications (and vice versa).
+		const [notifications, unreadCount] = await Promise.all([
+			prisma.notification.findMany({
+				where,
+				orderBy: { createdAt: "desc" },
+				take: limit,
+			}),
+			prisma.notification.count({
+				where: { userId, isRead: false, ...(typeFilter ? { type: typeFilter } : {}) },
+			}),
+		]);
 
 		return { notifications, unreadCount };
 	} catch (error) {
@@ -108,11 +123,25 @@ export async function createNotification(
 	}
 }
 
+// Admin panel (/admin/notifikasi) entry point for sending to one user.
+// createNotification itself stays unguarded for server-side callers (cron,
+// other actions) and must not be imported by client components.
+export async function sendNotificationToUser(
+	userId: string,
+	title: string,
+	message: string,
+	type: NotificationType,
+) {
+	if (!(await isAdmin())) return { success: false, error: "Unauthorized" };
+	return createNotification(userId, title, message, type);
+}
+
 export async function broadcastNotification(
 	title: string,
 	message: string,
 	type: NotificationType,
 ) {
+	if (!(await isAdmin())) return { success: false, error: "Unauthorized" };
 	try {
 		const users = await prisma.user.findMany({ select: { id: true } });
 
@@ -137,8 +166,10 @@ export async function broadcastNotification(
 
 export async function markAsRead(id: string) {
 	try {
-		await prisma.notification.update({
-			where: { id },
+		const userId = await sessionUserId();
+		if (!userId) return { success: false };
+		await prisma.notification.updateMany({
+			where: { id, userId },
 			data: { isRead: true },
 		});
 		return { success: true };
@@ -149,10 +180,11 @@ export async function markAsRead(id: string) {
 }
 
 export async function markAllAsRead(
-	userId: string,
 	type?: NotificationType | NotificationType[],
 ) {
 	try {
+		const userId = await sessionUserId();
+		if (!userId) return { success: false };
 		const typeFilter = type
 			? Array.isArray(type)
 				? { in: type }
@@ -170,6 +202,7 @@ export async function markAllAsRead(
 }
 
 export async function deleteNotification(id: string) {
+	if (!(await isAdmin())) return { success: false };
 	try {
 		await prisma.notification.delete({
 			where: { id },
@@ -182,6 +215,7 @@ export async function deleteNotification(id: string) {
 }
 
 export async function getAllNotifications(page = 1, limit = 10) {
+	if (!(await isAdmin())) return { notifications: [], total: 0, totalPages: 0 };
 	try {
 		const [notifications, total] = await Promise.all([
 			prisma.notification.findMany({

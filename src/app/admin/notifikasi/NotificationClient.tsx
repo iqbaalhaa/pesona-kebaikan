@@ -39,7 +39,7 @@ import {
 } from "@mui/icons-material";
 import { useRouter } from "next/navigation";
 import {
-	createNotification,
+	sendNotificationToUser,
 	deleteNotification,
 	broadcastNotification,
 } from "@/actions/notification";
@@ -132,7 +132,7 @@ export default function NotificationClient({
 			if (targetMode === "BROADCAST") {
 				result = await broadcastNotification(title, message, type);
 			} else {
-				result = await createNotification(
+				result = await sendNotificationToUser(
 					selectedUser.id,
 					title,
 					message,

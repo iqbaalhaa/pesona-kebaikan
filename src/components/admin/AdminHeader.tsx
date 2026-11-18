@@ -136,7 +136,6 @@ export default function AdminHeader({
 		if (!session?.user?.id) return;
 		try {
 			const { notifications, unreadCount } = await getNotifications(
-				session.user.id,
 				ADMIN_NOTIFICATION_TYPES,
 			);
 			setNotifications(notifications);
@@ -172,7 +171,7 @@ export default function AdminHeader({
 		if (!session?.user?.id || unreadCount === 0) return;
 		setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
 		setUnreadCount(0);
-		await markAllAsRead(session.user.id, ADMIN_NOTIFICATION_TYPES);
+		await markAllAsRead(ADMIN_NOTIFICATION_TYPES);
 	};
 
 	return (

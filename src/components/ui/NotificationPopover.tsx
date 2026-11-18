@@ -22,7 +22,7 @@ export default function NotificationPopover({ overlay = false, desktopSolid = fa
 
 	const fetchNotifications = React.useCallback(async () => {
 		if (!session?.user?.id) return;
-		const res = await getNotifications(session.user.id);
+		const res = await getNotifications();
 		setNotifications(res.notifications);
 		setUnreadCount(res.unreadCount);
 	}, [session?.user?.id]);
