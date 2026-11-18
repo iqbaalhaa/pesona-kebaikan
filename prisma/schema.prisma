@@ -509,6 +509,10 @@ model Donation {
   @@index([campaignId])
   @@index([userId])
   @@index([fundraiserId])
+  // Card/detail totals filter by campaign + paid status; feeds and
+  // dashboard charts filter by status + createdAt.
+  @@index([campaignId, status])
+  @@index([status, createdAt])
 
   amiins Amiin[] @relation("DonationAmiins")
 }
