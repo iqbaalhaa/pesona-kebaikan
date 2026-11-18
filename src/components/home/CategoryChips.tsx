@@ -78,7 +78,6 @@ function CampaignRowCard({ item }: { item: Campaign }) {
 						src={item.cover}
 						alt={item.title}
 						fill
-						unoptimized
 						sizes="140px"
 						style={{ objectFit: "cover" }}
 						onError={() => setErrored(true)}

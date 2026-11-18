@@ -48,8 +48,7 @@ function ScrollCard({ item, priority = false }: { item: Campaign; priority?: boo
 						alt={item.title}
 						fill
 						priority={priority}
-						unoptimized
-						sizes="200px"
+						sizes="240px"
 						style={{ objectFit: "cover" }}
 						onError={() => setErrored(true)}
 					/>

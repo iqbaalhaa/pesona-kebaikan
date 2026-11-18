@@ -24,8 +24,7 @@ function SlideImage({ src, alt, priority }: { src: string; alt: string; priority
 			alt={alt}
 			fill
 			priority={priority}
-			unoptimized
-			sizes="420px"
+			sizes="(max-width: 480px) 100vw, 480px"
 			style={{ objectFit: "cover" }}
 			onError={() => setErrored(true)}
 		/>

@@ -106,7 +106,6 @@ export default async function InitiatorPage({
 												fill
 												sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
 												style={{ objectFit: "cover" }}
-												unoptimized
 											/>
 										) : (
 											<ImagePlaceholder className="absolute inset-0" />
