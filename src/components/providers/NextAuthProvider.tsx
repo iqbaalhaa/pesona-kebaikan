@@ -9,5 +9,10 @@ export default function NextAuthProvider({
 	children: React.ReactNode;
 	session: any;
 }) {
-	return <SessionProvider session={session}>{children}</SessionProvider>;
+	// Static pages (e.g. "/") are prerendered without cookies, so the layout's
+	// auth() yields null there. SessionProvider treats null as "known logged
+	// out" and never fetches, so pass undefined to make it load the session.
+	return (
+		<SessionProvider session={session ?? undefined}>{children}</SessionProvider>
+	);
 }
