@@ -103,7 +103,8 @@ export default function DonationForm({
 		} else if (Number(amount) > MAX_DONATION) {
 			errs.amount = `Maksimal donasi Rp ${MAX_DONATION.toLocaleString("id-ID")}`;
 		}
-		if (!donorName.trim()) {
+		// Anonymous donors are shown as #OrangBaik, so a name isn't required.
+		if (!isAnonymous && !donorName.trim()) {
 			errs.name = "Nama donatur wajib diisi";
 		}
 		const phoneErr = validatePhone(donorPhone);
@@ -124,7 +125,7 @@ export default function DonationForm({
 				campaignId,
 				fundraiserId,
 				amount: Number(amount),
-				donorName,
+				donorName: donorName.trim() || "#OrangBaik",
 				donorPhone,
 				message,
 				isAnonymous,
@@ -295,7 +296,10 @@ export default function DonationForm({
 						<Switch
 							size="small"
 							checked={isAnonymous}
-							onChange={(e) => setIsAnonymous(e.target.checked)}
+							onChange={(e) => {
+								setIsAnonymous(e.target.checked);
+								if (e.target.checked) setFieldErrors((p) => ({ ...p, name: undefined }));
+							}}
 						/>
 					}
 					label={<Typography sx={{ fontSize: 13 }}>Sembunyikan nama saya (#OrangBaik)</Typography>}

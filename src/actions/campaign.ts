@@ -801,7 +801,7 @@ export async function getCampaignById(id: string) {
 			images: thumbnail ? [thumbnail] : [],
 			donations: recentDonations.map((d) => ({
 				id: d.id,
-				name: d.donorName || "#OrangBaik",
+				name: d.isAnonymous ? "#OrangBaik" : d.donorName || "#OrangBaik",
 				amount: Number(d.amount),
 				date: new Date(d.createdAt).toISOString(),
 				comment: d.message,
