@@ -71,18 +71,6 @@ function idr(n: number) {
 	return "Rp" + s.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 }
 
-function matchQuery(q: string, row: TxRow) {
-	if (!q) return true;
-	const s = q.toLowerCase();
-	return (
-		row.id.toLowerCase().includes(s) ||
-		row.campaignTitle.toLowerCase().includes(s) ||
-		row.campaignId.toLowerCase().includes(s) ||
-		row.donorName.toLowerCase().includes(s) ||
-		row.refCode.toLowerCase().includes(s)
-	);
-}
-
 function statusMeta(status: TxStatus) {
 	switch (status) {
 		case "paid":
@@ -150,7 +138,6 @@ function Surface({ children, sx }: { children: React.ReactNode; sx?: any }) {
 
 export default function AdminTransaksiPage() {
 	const [rows, setRows] = React.useState<TxRow[]>([]);
-	const [loading, setLoading] = React.useState(true);
 	const [selected, setSelected] = React.useState<TxRow | null>(null);
 
 	const [q, setQ] = React.useState("");
@@ -158,63 +145,44 @@ export default function AdminTransaksiPage() {
 	const [method, setMethod] = React.useState<"all" | PayMethod>("all");
 
 	const [page, setPage] = React.useState(1);
-
-	const onRefresh = React.useCallback(async () => {
-		setLoading(true);
-		try {
-			const res = await getAdminTransactions();
-			if (res.success && res.data) {
-				// @ts-ignore
-				setRows(res.data);
-			}
-		} catch (e) {
-			console.error(e);
-		} finally {
-			setLoading(false);
-		}
-	}, []);
+	const [total, setTotal] = React.useState(0);
+	const [paidTotal, setPaidTotal] = React.useState(0);
+	const [debouncedQ, setDebouncedQ] = React.useState("");
+	const [reloadKey, setReloadKey] = React.useState(0);
 
 	React.useEffect(() => {
-		onRefresh();
-	}, [onRefresh]);
+		const t = setTimeout(() => {
+			setDebouncedQ(q);
+			setPage(1);
+		}, 300);
+		return () => clearTimeout(t);
+	}, [q]);
 
-	const filtered = React.useMemo(() => {
-		let base = rows.filter((r) => matchQuery(q, r));
-		if (status !== "all") base = base.filter((r) => r.status === status);
-		if (method !== "all") base = base.filter((r) => r.method === method);
-		return base;
-	}, [rows, q, status, method]);
+	// Loading = the shown rows belong to a different request than the current one.
+	const requestKey = JSON.stringify([page, debouncedQ, status, method, reloadKey]);
+	const [loadedKey, setLoadedKey] = React.useState("");
+	const loading = loadedKey !== requestKey;
 
-	React.useEffect(() => setPage(1), [q, status, method]);
-
-	const paginated = React.useMemo(() => {
-		const start = (page - 1) * 10;
-		return filtered.slice(start, start + 10);
-	}, [filtered, page]);
-
-	// ===== Summary (dummy dari filtered/rows) =====
-	const sum = React.useMemo(() => {
-		const allPaid = rows.filter((r) => r.status === "paid");
-		const todayPaid = allPaid
-			.slice(0, 8)
-			.reduce((a, b) => a + (b.amount || 0), 0); // dummy
-		const monthPaid = allPaid.reduce((a, b) => a + (b.amount || 0), 0);
-
-		const pendingRows = rows.filter((r) => r.status === "pending");
-		const pending = pendingRows.reduce((a, b) => a + (b.amount || 0), 0);
-		const pendingCount = pendingRows.length;
-
-		const refundedCount = rows.filter((r) => r.status === "refunded").length;
-
-		return {
-			todayPaid,
-			monthPaid,
-			pendingCount,
-			refundedCount,
-			paid: monthPaid,
-			pending,
+	// Filtering and paging run in the database; this page only shows one page.
+	React.useEffect(() => {
+		let alive = true;
+		getAdminTransactions({ page, pageSize: PAGE_SIZE, q: debouncedQ, status, method })
+			.then((res) => {
+				if (!alive || !res.success || !res.data) return;
+				setRows(res.data as TxRow[]);
+				setTotal(res.total ?? 0);
+				setPaidTotal(res.paidTotal ?? 0);
+			})
+			.catch((e) => console.error(e))
+			.finally(() => {
+				if (alive) setLoadedKey(requestKey);
+			});
+		return () => {
+			alive = false;
 		};
-	}, [rows]);
+	}, [page, debouncedQ, status, method, requestKey]);
+
+	const onRefresh = React.useCallback(() => setReloadKey((k) => k + 1), []);
 
 	return (
 		<Box sx={{ py: 2 }}>
@@ -292,7 +260,7 @@ export default function AdminTransaksiPage() {
 									Total Terbayar
 								</Typography>
 								<Typography sx={{ mt: 0.2, fontSize: 16, fontWeight: 1000 }}>
-									{idr(sum.paid)}
+									{idr(paidTotal)}
 								</Typography>
 							</Box>
 						</Stack>
@@ -323,7 +291,7 @@ export default function AdminTransaksiPage() {
 									Bulan Ini
 								</Typography>
 								<Typography sx={{ mt: 0.2, fontSize: 16, fontWeight: 1000 }}>
-									{idr(sum.monthPaid)}
+									{idr(paidTotal)}
 								</Typography>
 							</Box>
 						</Stack>
@@ -363,7 +331,10 @@ export default function AdminTransaksiPage() {
 					<FormControl size="small" sx={{ minWidth: 160 }}>
 						<Select
 							value={status}
-							onChange={(e) => setStatus(e.target.value as any)}
+							onChange={(e) => {
+								setStatus(e.target.value as any);
+								setPage(1);
+							}}
 							displayEmpty
 							sx={{
 								borderRadius: 2.25,
@@ -381,7 +352,10 @@ export default function AdminTransaksiPage() {
 					<FormControl size="small" sx={{ minWidth: 160 }}>
 						<Select
 							value={method}
-							onChange={(e) => setMethod(e.target.value as any)}
+							onChange={(e) => {
+								setMethod(e.target.value as any);
+								setPage(1);
+							}}
 							displayEmpty
 							sx={{
 								borderRadius: 2.25,
@@ -413,7 +387,7 @@ export default function AdminTransaksiPage() {
 									sx={{ borderRadius: 1 }}
 								/>
 							))
-						: paginated.map((row) => (
+						: rows.map((row) => (
 								<TxRowCard
 									key={row.id}
 									row={row}
@@ -426,7 +400,7 @@ export default function AdminTransaksiPage() {
 			{/* Pagination */}
 			<Box sx={{ mt: 2, display: "flex", justifyContent: "center" }}>
 				<Pagination
-					count={Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))}
+					count={Math.max(1, Math.ceil(total / PAGE_SIZE))}
 					page={page}
 					onChange={(_, p) => setPage(p)}
 					color="primary"
