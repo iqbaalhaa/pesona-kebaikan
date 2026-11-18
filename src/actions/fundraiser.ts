@@ -161,14 +161,12 @@ export async function getActiveFundraisers(limit = 50) {
 						end: true,
 						category: { select: { name: true } },
 						media: { where: { isThumbnail: true }, take: 1 },
-						donations: {
-							where: { status: { in: ["PAID", "paid", "SETTLED", "COMPLETED"] } },
-						},
 					},
 				},
 				createdBy: { select: { name: true, image: true, verifiedAt: true } },
 				donations: {
 					where: { status: { in: ["PAID", "paid", "SETTLED", "COMPLETED"] } },
+					select: { amount: true },
 				},
 			},
 		});

@@ -10,7 +10,7 @@ export async function GET() {
       },
       include: {
         category: true,
-        createdBy: true,
+        createdBy: { select: { name: true } },
         media: true,
         donations: {
           where: {
