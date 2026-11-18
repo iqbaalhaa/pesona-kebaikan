@@ -143,7 +143,13 @@ export async function getAdminTransactions(
 		}
 		const where = and.length ? { AND: and } : {};
 
-		const [donations, total, paidAgg] = await Promise.all([
+		// Start of the current month in WIB (UTC+7, no DST), as a UTC instant.
+		const wibNow = new Date(Date.now() + 7 * 3600_000);
+		const monthStart = new Date(
+			Date.UTC(wibNow.getUTCFullYear(), wibNow.getUTCMonth(), 1) - 7 * 3600_000,
+		);
+
+		const [donations, total, paidAgg, monthAgg] = await Promise.all([
 			prisma.donation.findMany({
 				where,
 				include: {
@@ -159,6 +165,10 @@ export async function getAdminTransactions(
 				where: txStatusWhere("paid"),
 				_sum: { amount: true },
 			}),
+			prisma.donation.aggregate({
+				where: { ...txStatusWhere("paid"), createdAt: { gte: monthStart } },
+				_sum: { amount: true },
+			}),
 		]);
 
 		return {
@@ -166,6 +176,7 @@ export async function getAdminTransactions(
 			data: donations.map(mapDonationRow),
 			total,
 			paidTotal: Number(paidAgg._sum.amount || 0),
+			monthPaidTotal: Number(monthAgg._sum.amount || 0),
 		};
 	} catch (error) {
 		console.error("Error fetching admin transactions:", error);

@@ -147,6 +147,7 @@ export default function AdminTransaksiPage() {
 	const [page, setPage] = React.useState(1);
 	const [total, setTotal] = React.useState(0);
 	const [paidTotal, setPaidTotal] = React.useState(0);
+	const [monthPaidTotal, setMonthPaidTotal] = React.useState(0);
 	const [debouncedQ, setDebouncedQ] = React.useState("");
 	const [reloadKey, setReloadKey] = React.useState(0);
 
@@ -172,6 +173,7 @@ export default function AdminTransaksiPage() {
 				setRows(res.data as TxRow[]);
 				setTotal(res.total ?? 0);
 				setPaidTotal(res.paidTotal ?? 0);
+				setMonthPaidTotal(res.monthPaidTotal ?? 0);
 			})
 			.catch((e) => console.error(e))
 			.finally(() => {
@@ -291,7 +293,7 @@ export default function AdminTransaksiPage() {
 									Bulan Ini
 								</Typography>
 								<Typography sx={{ mt: 0.2, fontSize: 16, fontWeight: 1000 }}>
-									{idr(paidTotal)}
+									{idr(monthPaidTotal)}
 								</Typography>
 							</Box>
 						</Stack>
