@@ -6,24 +6,54 @@ import { CATEGORY_TITLE } from "@/lib/constants";
 
 const QUICK_DONATION_SLUG = "donasi-cepat";
 
-type CampaignWithRelations = Prisma.CampaignGetPayload<{
-	include: {
-		category: true;
-		createdBy: true;
-		donations: true;
-		media: true;
-	};
-}>;
+const PAID_STATUSES = ["PAID", "paid", "SETTLED", "COMPLETED"];
 
-function mapCampaignsToTypes(campaigns: CampaignWithRelations[]) {
+// Only the columns the campaign cards need — no story HTML, no full owner row,
+// no donation rows (totals come from one groupBy in withDonationStats).
+const CARD_SELECT = {
+	id: true,
+	title: true,
+	slug: true,
+	status: true,
+	start: true,
+	end: true,
+	target: true,
+	isEmergency: true,
+	metadata: true,
+	category: { select: { name: true, slug: true } },
+	createdBy: { select: { name: true, verifiedAt: true, verifiedAs: true } },
+	media: { where: { isThumbnail: true }, take: 1, select: { url: true } },
+} satisfies Prisma.CampaignSelect;
+
+type CardCampaign = Prisma.CampaignGetPayload<{ select: typeof CARD_SELECT }>;
+type CardWithStats = CardCampaign & { collected: number; donors: number };
+
+async function withDonationStats(
+	campaigns: CardCampaign[],
+): Promise<CardWithStats[]> {
+	if (campaigns.length === 0) return [];
+	const stats = await prisma.donation.groupBy({
+		by: ["campaignId"],
+		where: {
+			campaignId: { in: campaigns.map((c) => c.id) },
+			status: { in: PAID_STATUSES },
+		},
+		_sum: { amount: true },
+		_count: { _all: true },
+	});
+	const byId = new Map(stats.map((s) => [s.campaignId, s]));
 	return campaigns.map((c) => {
-		const validDonations = c.donations.filter((d) =>
-			["PAID", "paid", "SETTLED", "COMPLETED"].includes(d.status),
-		);
-		const collected = validDonations.reduce(
-			(acc, d) => acc + Number(d.amount),
-			0,
-		);
+		const s = byId.get(c.id);
+		return {
+			...c,
+			collected: Number(s?._sum.amount ?? 0),
+			donors: s?._count._all ?? 0,
+		};
+	});
+}
+
+function mapCampaignsToTypes(campaigns: CardWithStats[]) {
+	return campaigns.map((c) => {
 		let daysLeft = 0;
 		if (c.end) {
 			if (c.status === "PENDING" && c.start) {
@@ -49,16 +79,16 @@ function mapCampaignsToTypes(campaigns: CampaignWithRelations[]) {
 			title: c.title,
 			organizer: c.createdBy.name || "Unknown",
 			organizerVerifiedAt: c.createdBy.verifiedAt || null,
-			organizerVerifiedAs: (c.createdBy as any).verifiedAs || null,
+			organizerVerifiedAs: c.createdBy.verifiedAs || null,
 			categorySlug: slugKey || undefined,
 			category: c.category.name,
-			cover: c.media.find((m) => m.isThumbnail)?.url || "",
+			cover: c.media[0]?.url || "",
 			target: Number(c.target),
-			collected,
-			donors: validDonations.length,
+			collected: c.collected,
+			donors: c.donors,
 			daysLeft: daysLeft > 0 ? daysLeft : 0,
 			tag: c.createdBy.verifiedAt
-				? (c.createdBy as any).verifiedAs === "organization"
+				? c.createdBy.verifiedAs === "organization"
 					? "ORG"
 					: "PER"
 				: undefined,
@@ -129,17 +159,12 @@ export async function getUrgentCampaigns(limit: number = 10) {
 			},
 			orderBy: [{ isEmergency: "desc" }, { end: "asc" }],
 			take: limit,
-			include: {
-				category: true,
-				createdBy: true,
-				donations: true,
-				media: true,
-			},
+			select: CARD_SELECT,
 		});
 
 		return {
 			success: true,
-			data: mapCampaignsToTypes(campaigns),
+			data: mapCampaignsToTypes(await withDonationStats(campaigns)),
 		};
 	} catch (error) {
 		console.error("Get urgent campaigns error:", error);
@@ -157,24 +182,11 @@ export async function getPopularCampaigns(limit: number = 10) {
 			},
 			orderBy: { createdAt: "desc" },
 			take: limit * 2,
-			include: {
-				category: true,
-				createdBy: true,
-				donations: true,
-				media: true,
-			},
+			select: CARD_SELECT,
 		});
 
-		const sorted = campaigns
-			.sort((a, b) => {
-				const validA = a.donations.filter((d) =>
-					["PAID", "paid", "SETTLED", "COMPLETED"].includes(d.status),
-				).length;
-				const validB = b.donations.filter((d) =>
-					["PAID", "paid", "SETTLED", "COMPLETED"].includes(d.status),
-				).length;
-				return validB - validA;
-			})
+		const sorted = (await withDonationStats(campaigns))
+			.sort((a, b) => b.donors - a.donors)
 			.slice(0, limit);
 
 		return {
@@ -197,23 +209,18 @@ export async function getFeaturedCampaigns(limit: number = 10) {
 			},
 			orderBy: { createdAt: "desc" },
 			take: limit * 5,
-			include: {
-				category: true,
-				createdBy: true,
-				donations: true,
-				media: true,
-			},
+			select: CARD_SELECT,
 		});
 
 		let picks = campaigns.filter((c) => {
-			const m: any = (c as any).metadata || {};
+			const m: any = c.metadata || {};
 			return m?.featured === true || m?.featured === "true";
 		});
 
 		if (picks.length > 0) {
 			picks = picks
 				.map((c) => {
-					const m: any = (c as any).metadata || {};
+					const m: any = c.metadata || {};
 					const order =
 						typeof m?.featuredOrder === "number"
 							? m.featuredOrder
@@ -223,23 +230,19 @@ export async function getFeaturedCampaigns(limit: number = 10) {
 				.sort((a, b) => a.order - b.order)
 				.map((x) => x.c)
 				.slice(0, limit);
-		} else {
-			picks = campaigns
-				.sort((a, b) => {
-					const validA = a.donations.filter((d) =>
-						["PAID", "paid", "SETTLED", "COMPLETED"].includes(d.status),
-					).length;
-					const validB = b.donations.filter((d) =>
-						["PAID", "paid", "SETTLED", "COMPLETED"].includes(d.status),
-					).length;
-					return validB - validA;
-				})
-				.slice(0, limit);
+			return {
+				success: true,
+				data: mapCampaignsToTypes(await withDonationStats(picks)),
+			};
 		}
+
+		const byDonors = (await withDonationStats(campaigns))
+			.sort((a, b) => b.donors - a.donors)
+			.slice(0, limit);
 
 		return {
 			success: true,
-			data: mapCampaignsToTypes(picks),
+			data: mapCampaignsToTypes(byDonors),
 		};
 	} catch (error) {
 		console.error("Get featured campaigns error:", error);
@@ -257,17 +260,12 @@ export async function getAllActiveCampaigns(limit: number = 50) {
 			},
 			orderBy: { createdAt: "desc" },
 			take: limit,
-			include: {
-				category: true,
-				createdBy: true,
-				donations: true,
-				media: true,
-			},
+			select: CARD_SELECT,
 		});
 
 		return {
 			success: true,
-			data: mapCampaignsToTypes(campaigns),
+			data: mapCampaignsToTypes(await withDonationStats(campaigns)),
 		};
 	} catch (error) {
 		console.error("Get all active campaigns error:", error);
@@ -279,12 +277,7 @@ export async function getQuickDonationCampaign() {
 	try {
 		let campaign = await prisma.campaign.findUnique({
 			where: { slug: QUICK_DONATION_SLUG },
-			include: {
-				category: true,
-				createdBy: true,
-				donations: true,
-				media: true,
-			},
+			select: { id: true },
 		});
 
 		if (!campaign) {
@@ -321,12 +314,7 @@ export async function getQuickDonationCampaign() {
 					categoryId: category.id,
 					createdById: admin.id,
 				},
-				include: {
-					category: true,
-					createdBy: true,
-					donations: true,
-					media: true,
-				},
+				select: { id: true },
 			});
 		}
 
