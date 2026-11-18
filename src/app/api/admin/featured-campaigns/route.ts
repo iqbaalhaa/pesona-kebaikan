@@ -84,29 +84,27 @@ export async function POST(req: Request) {
 
 		const toRemove = previouslyFeatured.filter((id) => !wanted.has(id));
 
-		// Apply updates for selected items
-		for (const it of items) {
-			const curr = campaigns.find((c) => c.id === it.id);
-			const m = (curr as any)?.metadata || {};
-			await prisma.campaign.update({
-				where: { id: it.id },
-				data: {
-					metadata: { ...m, featured: true, featuredOrder: it.order },
-				},
-			});
-		}
-
-		// Unset removed items
-		for (const id of toRemove) {
-			const curr = campaigns.find((c) => c.id === id);
-			const m = (curr as any)?.metadata || {};
-			await prisma.campaign.update({
-				where: { id },
-				data: {
-					metadata: { ...m, featured: false, featuredOrder: null },
-				},
-			});
-		}
+		// One transaction so a failure can't leave the featured list half-saved.
+		const metaOf = (id: string) =>
+			(campaigns.find((c) => c.id === id) as any)?.metadata || {};
+		await prisma.$transaction([
+			...items.map((it) =>
+				prisma.campaign.update({
+					where: { id: it.id },
+					data: {
+						metadata: { ...metaOf(it.id), featured: true, featuredOrder: it.order },
+					},
+				}),
+			),
+			...toRemove.map((id) =>
+				prisma.campaign.update({
+					where: { id },
+					data: {
+						metadata: { ...metaOf(id), featured: false, featuredOrder: null },
+					},
+				}),
+			),
+		]);
 
 		revalidatePath("/");
 		revalidatePath("/admin/campaign-pilihan");
