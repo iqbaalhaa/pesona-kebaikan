@@ -118,6 +118,8 @@ export default function BlogListClient({
 									<img
 										src={post.cover}
 										alt={post.title}
+										loading="lazy"
+										decoding="async"
 										className="h-[200px] w-full shrink-0 rounded-lg bg-foreground/4 object-cover sm:h-[160px] sm:w-[200px] lg:h-[180px] lg:w-full"
 									/>
 								) : (

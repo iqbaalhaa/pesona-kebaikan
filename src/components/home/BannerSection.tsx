@@ -57,6 +57,8 @@ export default function BannerSection({ items }: { items: BannerItem[] }) {
 									<img
 										src={item.image}
 										alt={item.title || "Banner"}
+										loading="lazy"
+										decoding="async"
 										className="aspect-[2/1] w-full rounded-2xl object-cover"
 									/>
 								</Inner>

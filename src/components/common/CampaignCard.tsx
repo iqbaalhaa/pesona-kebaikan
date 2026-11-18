@@ -65,6 +65,8 @@ export default function CampaignCard(props: CampaignCardProps) {
 					<img
 						src={x.thumbnail}
 						alt={x.title}
+						loading="lazy"
+						decoding="async"
 						onError={() => setErrored(true)}
 						className="h-[110px] w-full bg-slate-100 object-cover"
 					/>
