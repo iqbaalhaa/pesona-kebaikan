@@ -533,7 +533,16 @@ export async function getCampaignById(id: string) {
 			where: { id },
 			include: {
 				category: true,
-				createdBy: true,
+				createdBy: {
+					select: {
+						name: true,
+						email: true,
+						phone: true,
+						image: true,
+						verifiedAt: true,
+						verifiedAs: true,
+					},
+				},
 				media: {
 					select: {
 						url: true,
@@ -661,6 +670,7 @@ export async function getCampaignById(id: string) {
 			})),
 		].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
+		const privileged = isPrivilegedCampaignViewer(session, campaign.createdById);
 		const data = {
 			id: campaign.id,
 			slug: campaign.slug,
@@ -673,8 +683,10 @@ export async function getCampaignById(id: string) {
 					: "lainnya",
 			ownerId: campaign.createdById,
 			ownerName: campaign.createdBy.name || "Unknown",
-			ownerEmail: campaign.createdBy.email || "-",
-			ownerPhone: campaign.createdBy.phone || "-",
+			// Owner contact details only for the owner and admins — this object is
+			// passed to the public campaign page's client component.
+			ownerEmail: privileged ? campaign.createdBy.email || "-" : "-",
+			ownerPhone: privileged ? campaign.createdBy.phone || "-" : "-",
 			ownerAvatar: campaign.createdBy.image || "",
 			ownerVerifiedAt: campaign.createdBy.verifiedAt
 				? new Date(campaign.createdBy.verifiedAt).toISOString()
@@ -697,7 +709,7 @@ export async function getCampaignById(id: string) {
 			rejectedAt: campaign.rejectedAt
 				? new Date(campaign.rejectedAt).toISOString()
 				: null,
-			metadata: isPrivilegedCampaignViewer(session, campaign.createdById)
+			metadata: privileged
 				? campaign.metadata
 				: publicSafeMetadata(campaign.metadata),
 			description: campaign.story,

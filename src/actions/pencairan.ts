@@ -199,7 +199,7 @@ export async function updateWithdrawalStatus(
         processedById,
         processedAt,
       },
-      include: { campaign: { include: { createdBy: true } } },
+      include: { campaign: { include: { createdBy: { select: { id: true, email: true } } } } },
     });
   } else if (status === "COMPLETED") {
     // Manual disbursement: admin has already transferred the funds from
@@ -215,7 +215,7 @@ export async function updateWithdrawalStatus(
         processedById,
         processedAt,
       },
-      include: { campaign: { include: { createdBy: true } } },
+      include: { campaign: { include: { createdBy: { select: { id: true, email: true } } } } },
     });
   } else {
     // APPROVED
@@ -227,7 +227,7 @@ export async function updateWithdrawalStatus(
         processedById,
         processedAt,
       },
-      include: { campaign: { include: { createdBy: true } } },
+      include: { campaign: { include: { createdBy: { select: { id: true, email: true } } } } },
     });
   }
 

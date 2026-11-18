@@ -211,7 +211,7 @@ export async function getFundraiserCampaign(slug: string) {
 			include: {
 				createdBy: { select: { id: true, name: true, image: true } },
 				amiins: {
-					include: { user: true },
+					include: { user: { select: { name: true } } },
 					orderBy: { createdAt: "desc" },
 				},
 			},
@@ -223,7 +223,9 @@ export async function getFundraiserCampaign(slug: string) {
 			where: { id: fr.campaignId },
 			include: {
 				category: true,
-				createdBy: true,
+				createdBy: {
+					select: { id: true, name: true, image: true, verifiedAt: true, verifiedAs: true },
+				},
 				donations: { orderBy: { createdAt: "desc" } },
 				media: true,
 				updates: { include: { media: true }, orderBy: { createdAt: "desc" } },
