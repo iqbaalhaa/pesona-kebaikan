@@ -27,10 +27,11 @@ type Initial = {
 	statsEnabled: boolean;
 	viewDedupMinutes: number;
 	ownerSourcesEnabled: boolean;
+	lastCapiResult: { at: string; event: string; eventId: string; ok: boolean; error?: string; test: boolean } | null;
 };
 
 type BoolKey = {
-	[K in keyof Initial]: Initial[K] extends boolean ? K : never;
+	[K in keyof Initial]-?: Initial[K] extends boolean ? K : never;
 }[keyof Initial];
 
 export default function TrackingSettingsForm({ initial }: { initial: Initial }) {
@@ -76,9 +77,20 @@ export default function TrackingSettingsForm({ initial }: { initial: Initial }) 
 		setTesting(true);
 		setMsg(null);
 		const res = await sendMetaTestEvent();
+		setS((p) => ({
+			...p,
+			lastCapiResult: {
+				at: new Date().toISOString(),
+				event: "Purchase (uji)",
+				eventId: "",
+				ok: res.success,
+				error: res.success ? undefined : res.error,
+				test: true,
+			},
+		}));
 		setMsg(
 			res.success
-				? { type: "success", text: "Event uji terkirim. Cek Events Manager → Test events." }
+				? { type: "success", text: "Event uji Purchase diterima Meta. Cek Events Manager → Test events." }
 				: { type: "error", text: res.error || "Gagal mengirim event uji" },
 		);
 		setTesting(false);
@@ -151,6 +163,14 @@ export default function TrackingSettingsForm({ initial }: { initial: Initial }) 
 					disabled={loading}
 					fullWidth
 				/>
+				{s.lastCapiResult && (
+					<Alert severity={s.lastCapiResult.ok ? "success" : "error"} variant="outlined">
+						<b>Kiriman CAPI terakhir</b> ({s.lastCapiResult.event}
+						{s.lastCapiResult.test ? ", mode uji" : ""},{" "}
+						{new Date(s.lastCapiResult.at).toLocaleString("id-ID", { timeZone: "Asia/Jakarta" })} WIB):{" "}
+						{s.lastCapiResult.ok ? "diterima Meta" : s.lastCapiResult.error}
+					</Alert>
+				)}
 				<Box>
 					<Button
 						variant="outlined"

@@ -3,13 +3,16 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
-import { sendMetaEvents } from "@/lib/meta-capi";
+import { buildPurchaseEvent, sendMetaEvents } from "@/lib/meta-capi";
+import { readRequestTracking } from "@/lib/tracking-server";
 import {
 	PIXEL_ID_RE,
 	TRACKING_KEYS,
 	clearTrackingSettingsCache,
+	getCapiResult,
 	getTrackingSettings,
 	maskSecret,
+	saveCapiResult,
 } from "@/lib/tracking-settings";
 
 async function isAdmin() {
@@ -31,6 +34,7 @@ export async function getTrackingSettingsForAdmin() {
 		statsEnabled: s.statsEnabled,
 		viewDedupMinutes: s.viewDedupMinutes,
 		ownerSourcesEnabled: s.ownerSourcesEnabled,
+		lastCapiResult: await getCapiResult(),
 	};
 }
 
@@ -97,9 +101,15 @@ export async function saveTrackingSettings(input: TrackingSettingsInput) {
 	return { success: true };
 }
 
-/** Sends a test PageView via CAPI so the admin sees it under Events Manager → Test events. */
+/**
+ * Sends a test Purchase through the same builder as real donations
+ * (buildPurchaseEvent), with the admin's own IP/UA/_fbp/email as match keys —
+ * a UA-only payload is rejected by Meta as insufficient customer information.
+ * Shows up under Events Manager → Test events; never counted as a conversion.
+ */
 export async function sendMetaTestEvent() {
-	if (!(await isAdmin())) return { success: false, error: "Unauthorized" };
+	const session = await auth();
+	if (session?.user?.role !== "ADMIN") return { success: false, error: "Unauthorized" };
 	const s = await getTrackingSettings(true);
 	if (!PIXEL_ID_RE.test(s.pixelId) || !s.capiToken) {
 		return { success: false, error: "Simpan Pixel ID dan access token dulu" };
@@ -108,22 +118,19 @@ export async function sendMetaTestEvent() {
 		return { success: false, error: "Isi Test Event Code (dari Events Manager → Test events) lalu simpan" };
 	}
 	const origin = (process.env.NEXT_PUBLIC_APP_URL || "https://pesonakebaikan.com").replace(/\/$/, "");
-	const r = await sendMetaEvents(
-		s.pixelId,
-		s.capiToken,
-		[
-			{
-				event_name: "PageView",
-				event_time: Math.floor(Date.now() / 1000),
-				event_id: `test-${Date.now()}`,
-				action_source: "website",
-				event_source_url: `${origin}/`,
-				user_data: { client_user_agent: "pesona-admin-test" },
-			},
-		],
-		s.testEventCode,
-	);
-	return r.ok
-		? { success: true }
-		: { success: false, error: `Meta menolak: ${r.error}` };
+	const tracking = await readRequestTracking();
+	const eventId = `test-${Date.now()}`;
+	const event = buildPurchaseEvent({
+		donationId: eventId,
+		amount: 10000,
+		campaignId: "test",
+		campaignTitle: "Event uji Pesona Kebaikan",
+		sourceUrl: `${origin}/`,
+		email: session.user.email,
+		externalId: session.user.id,
+		tracking: { ip: tracking.ip, ua: tracking.ua, fbp: tracking.fbp, fbc: tracking.fbc },
+	});
+	const r = await sendMetaEvents(s.pixelId, s.capiToken, [event], s.testEventCode);
+	await saveCapiResult({ event: "Purchase (uji)", eventId, ok: r.ok, error: r.error, test: true });
+	return r.ok ? { success: true } : { success: false, error: `Meta menolak: ${r.error}` };
 }

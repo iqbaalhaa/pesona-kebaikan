@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { trackInitiateCheckout } from "@/lib/meta-pixel-client";
 import { Paper, Container, Button } from "@mui/material";
 import ShareIcon from "@mui/icons-material/Share";
 import { useRouter } from "next/navigation";
@@ -58,6 +59,8 @@ export default function CampaignBottomNav({
 					fullWidth
 					disabled={data.status === "ended" || data.status === "rejected"}
 					onClick={() => {
+						// Fire before navigating so the event isn't lost.
+						trackInitiateCheckout(data.id, data.title);
 						if (data.fundraiserSlug) {
 							router.push(`/donasi/fundraiser/${data.fundraiserSlug}/payment`);
 						} else {

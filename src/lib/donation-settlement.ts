@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { NotificationType } from "@prisma/client";
 import { createNotification } from "@/actions/notification";
 import { buildPurchaseEvent, sendMetaEvents } from "@/lib/meta-capi";
-import { PIXEL_ID_RE, activeCampaignPixelId, getTrackingSettings } from "@/lib/tracking-settings";
+import { PIXEL_ID_RE, activeCampaignPixelId, getTrackingSettings, saveCapiResult } from "@/lib/tracking-settings";
 import type { DonationTracking } from "@/lib/tracking-server";
 
 export const PAID_STATUSES = ["PAID", "SETTLED"];
@@ -120,7 +120,12 @@ async function sendPurchase(d: SettledDonation) {
 	const results = await Promise.all(
 		targets.map((t) => sendMetaEvents(t.pixelId, t.token, [event], t.testCode)),
 	);
-	results.forEach((r, i) => {
-		if (!r.ok) console.error(`[Meta CAPI] pixel ${targets[i].pixelId} failed: ${r.error}`);
-	});
+	await Promise.all(
+		results.map((r, i) => {
+			if (!r.ok) console.error(`[Meta CAPI] pixel ${targets[i].pixelId} failed: ${r.error}`);
+			// Only Pesona's own pixel is reported in /admin/settings.
+			if (targets[i].pixelId !== s.pixelId) return;
+			return saveCapiResult({ event: "Purchase", eventId: d.id, ok: r.ok, error: r.error, test: !!targets[i].testCode });
+		}),
+	);
 }

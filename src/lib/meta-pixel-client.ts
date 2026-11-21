@@ -119,3 +119,32 @@ export function trackPixel(
 		window.fbq("trackSingle", id, event, params || {}, eventId ? { eventID: eventId } : undefined);
 	}
 }
+
+/**
+ * InitiateCheckout, sent at most once per pixel+campaign per minute: fired on
+ * the "Donasi Sekarang" click (so it isn't lost to the navigation) and again by
+ * the donation form page for direct visits / the owner's pixel.
+ */
+export async function trackInitiateCheckout(campaignId: string, campaignTitle?: string, extraPixelIds: (string | null | undefined)[] = []) {
+	const globalId = await getGlobalPixelId();
+	const ids = [globalId, ...extraPixelIds].filter((x): x is string => !!x);
+	const due = ids.filter((id) => {
+		const key = `pk_ic:${id}:${campaignId}`;
+		try {
+			const last = Number(sessionStorage.getItem(key) || 0);
+			if (Date.now() - last < 60_000) return false;
+			sessionStorage.setItem(key, String(Date.now()));
+		} catch {
+			// storage blocked: just send
+		}
+		return true;
+	});
+	if (due.length === 0) return;
+	due.forEach((id) => ensurePixel(id, { autoConfig: id === globalId }));
+	trackPixel(due, "InitiateCheckout", {
+		content_ids: [campaignId],
+		content_name: campaignTitle,
+		content_type: "product",
+		currency: "IDR",
+	});
+}

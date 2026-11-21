@@ -96,3 +96,25 @@ export async function getCampaignPagePixelId(campaignId: string): Promise<string
 	]);
 	return activeCampaignPixelId(c, s);
 }
+
+// Last CAPI response for Pesona's pixel, shown in /admin/settings so a rejected
+// event can be diagnosed without server logs.
+const CAPI_LAST_RESULT_KEY = "meta_capi_last_result";
+
+export type CapiResult = { at: string; event: string; eventId: string; ok: boolean; error?: string; test: boolean };
+
+export async function saveCapiResult(r: Omit<CapiResult, "at">) {
+	const value = JSON.stringify({ ...r, at: new Date().toISOString() });
+	await prisma.notifyKey
+		.upsert({ where: { key: CAPI_LAST_RESULT_KEY }, update: { value }, create: { key: CAPI_LAST_RESULT_KEY, value } })
+		.catch((e) => console.error("saveCapiResult failed:", e));
+}
+
+export async function getCapiResult(): Promise<CapiResult | null> {
+	const row = await prisma.notifyKey.findUnique({ where: { key: CAPI_LAST_RESULT_KEY } }).catch(() => null);
+	try {
+		return row ? (JSON.parse(row.value) as CapiResult) : null;
+	} catch {
+		return null;
+	}
+}

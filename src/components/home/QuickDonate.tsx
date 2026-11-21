@@ -196,9 +196,9 @@ export default function QuickDonate() {
 		const donationId = searchParams.get("donation_id");
 		if (donationId) {
 			// Real status from the server + Purchase pixel event when paid.
-			checkDonationReturn(donationId)
-				.then((r) => setReturnStatus(r?.status ?? "pending"))
-				.catch(() => setReturnStatus("pending"));
+			checkDonationReturn(donationId, (r) => setReturnStatus(r.status))
+				.catch(() => {})
+				.finally(() => setReturnStatus((cur) => cur ?? "pending"));
 		}
 
 		// The payment gateway page is the previous history entry (cross-origin);

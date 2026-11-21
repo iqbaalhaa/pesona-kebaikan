@@ -1,5 +1,5 @@
 import { attributionFromLanding, classifySource, isBotUserAgent, parseAttributionCookie, withShareUtm } from "../src/lib/tracking-source";
-import { buildPurchaseEvent, normalizePhone, sha256 } from "../src/lib/meta-capi";
+import { buildPurchaseEvent, describeMetaError, normalizePhone, sha256 } from "../src/lib/meta-capi";
 import { activeCampaignPixelId, parseTrackingSettings } from "../src/lib/tracking-settings";
 
 function assert(condition: unknown, message: string) {
@@ -70,6 +70,21 @@ export async function trackingTests() {
 	assert(ev.custom_data.value === 50000 && ev.custom_data.currency === "IDR", "value/currency");
 	assert(!JSON.stringify(ev).includes("081234567890"), "no raw phone in payload");
 	log("buildPurchaseEvent hashes PII and dedups by donation id");
+
+	assert(Number.isInteger(ev.event_time) && ev.event_time < 1e11, "event_time in seconds");
+	const live = buildPurchaseEvent({ donationId: "d", amount: 1, campaignId: "c", sourceUrl: "https://x" }) as any;
+	assert(Math.abs(live.event_time - Date.now() / 1000) < 5, "default event_time is now, seconds");
+	assert(typeof live.custom_data.value === "number" && live.action_source === "website", "value number, website source");
+	const msg = describeMetaError({
+		message: "Invalid parameter",
+		code: 100,
+		error_subcode: 2804050,
+		error_user_title: "Insufficient customer information",
+		error_user_msg: "You haven't added sufficient customer information parameter data for this event.",
+		fbtrace_id: "AbC123",
+	});
+	assert(msg.includes("2804050") && msg.includes("AbC123") && msg.includes("Insufficient customer information"), "meta error detail kept");
+	log("Meta error keeps user message, subcode and fbtrace_id");
 
 	const s = parseTrackingSettings({});
 	assert(!s.pixelEnabled && s.statsEnabled && s.ownerPixelEnabled && s.viewDedupMinutes === 30, "defaults");

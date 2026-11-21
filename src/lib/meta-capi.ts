@@ -60,6 +60,30 @@ export function buildPurchaseEvent(input: {
 	};
 }
 
+type MetaError = {
+	message?: string;
+	code?: number;
+	error_subcode?: number;
+	error_user_title?: string;
+	error_user_msg?: string;
+	fbtrace_id?: string;
+};
+
+/** "Invalid parameter" alone says nothing — keep Meta's user message, subcode and trace id. */
+export function describeMetaError(e: MetaError): string {
+	const parts = [e.message || "Error"];
+	if (e.error_user_title || e.error_user_msg) {
+		parts.push(`— ${[e.error_user_title, e.error_user_msg].filter(Boolean).join(": ")}`);
+	}
+	const meta = [
+		e.code !== undefined && `code ${e.code}`,
+		e.error_subcode !== undefined && `subcode ${e.error_subcode}`,
+		e.fbtrace_id && `fbtrace_id ${e.fbtrace_id}`,
+	].filter(Boolean);
+	if (meta.length) parts.push(`(${meta.join(", ")})`);
+	return parts.join(" ");
+}
+
 /** POSTs events to one pixel. Never throws; 5s timeout so webhooks stay fast. */
 export async function sendMetaEvents(
 	pixelId: string,
@@ -79,8 +103,8 @@ export async function sendMetaEvents(
 			signal: AbortSignal.timeout(5000),
 		});
 		if (res.ok) return { ok: true };
-		const j = (await res.json().catch(() => null)) as { error?: { message?: string } } | null;
-		return { ok: false, error: j?.error?.message || `HTTP ${res.status}` };
+		const j = (await res.json().catch(() => null)) as { error?: MetaError } | null;
+		return { ok: false, error: j?.error ? describeMetaError(j.error) : `HTTP ${res.status}` };
 	} catch (e) {
 		return { ok: false, error: e instanceof Error ? e.message : String(e) };
 	}

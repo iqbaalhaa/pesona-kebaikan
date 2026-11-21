@@ -166,14 +166,14 @@ export default function CampaignDetailView({
 		setDonationSuccessOpen(true);
 		// Real status from the server (the URL proves nothing: the donor may have
 		// cancelled at DOKU); also fires the Purchase pixel event when paid.
-		checkDonationReturn(donationIdParam)
-			.then((r) => {
-				if (!r) return;
-				setDonationStatus(r.status);
-				setDonationSummary({ amount: r.amount });
-				if (r.status === "paid") router.refresh();
-			})
-			.catch((e) => console.error("Failed to check donation status", e));
+		checkDonationReturn(donationIdParam, (r) => {
+			setDonationStatus(r.status);
+			setDonationSummary({ amount: r.amount });
+			if (r.status === "paid") router.refresh();
+		})
+			.catch((e) => console.error("Failed to check donation status", e))
+			// Unknown donation / network down: don't stay on "Memeriksa…" forever.
+			.finally(() => setDonationStatus((cur) => cur ?? "pending"));
 	}, [
 		donationSuccessParam,
 		donationIdParam,

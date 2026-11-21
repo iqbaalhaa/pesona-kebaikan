@@ -1,7 +1,13 @@
 "use client";
 
 import { useEffect } from "react";
-import { ensurePixel, getGlobalPixelId, trackCampaignEvent, trackPixel } from "@/lib/meta-pixel-client";
+import {
+	ensurePixel,
+	getGlobalPixelId,
+	trackCampaignEvent,
+	trackInitiateCheckout,
+	trackPixel,
+} from "@/lib/meta-pixel-client";
 
 type Props = {
 	campaignId: string;
@@ -29,8 +35,13 @@ export default function CampaignTracker({ campaignId, fundraiserId, campaignTitl
 				// TrackingInit only sends PageView to Pesona's pixel.
 				trackPixel([ownerPixelId], "PageView");
 			}
+			if (step === "DONATE_CLICK") {
+				// Usually already sent on the "Donasi Sekarang" click; deduped per pixel.
+				trackInitiateCheckout(campaignId, campaignTitle, [ownerPixelId]);
+				return;
+			}
 			const params = { content_ids: [campaignId], content_name: campaignTitle, content_type: "product", currency: "IDR" };
-			trackPixel([globalId, ownerPixelId], step === "VIEW" ? "ViewContent" : "InitiateCheckout", params);
+			trackPixel([globalId, ownerPixelId], "ViewContent", params);
 		});
 		return () => {
 			cancelled = true;
