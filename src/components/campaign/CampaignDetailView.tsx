@@ -27,6 +27,7 @@ import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 
 import { createReport } from "@/actions/report";
 import { checkDonationReturn } from "@/lib/donation-return-client";
+import { withShareUtm } from "@/lib/tracking-source";
 import { ReportReason } from "@prisma/client";
 
 // Components
@@ -299,26 +300,26 @@ export default function CampaignDetailView({
 		switch (platform) {
 			case "whatsapp":
 				url = `https://wa.me/?text=${encodeURIComponent(
-					shareText + " " + shareUrl,
+					shareText + " " + withShareUtm(shareUrl, "whatsapp"),
 				)}`;
 				break;
 			case "facebook":
 				url = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(
-					shareUrl,
+					withShareUtm(shareUrl, "facebook"),
 				)}`;
 				break;
 			case "twitter":
 				url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(
 					shareText,
-				)}&url=${encodeURIComponent(shareUrl)}`;
+				)}&url=${encodeURIComponent(withShareUtm(shareUrl, "twitter"))}`;
 				break;
 			case "instagram":
-				copyToClipboard(shareUrl);
+				copyToClipboard(withShareUtm(shareUrl, "instagram"));
 				window.open("https://www.instagram.com/", "_blank");
 				setOpenShareModal(false);
 				return;
 			case "copy":
-				copyToClipboard(shareUrl);
+				copyToClipboard(withShareUtm(shareUrl, "copy"));
 				setOpenShareModal(false);
 				return;
 			default:
@@ -679,7 +680,10 @@ export default function CampaignDetailView({
 				open={openShareModal}
 				onClose={() => setOpenShareModal(false)}
 				handleShareAction={handleShareAction}
-				shareUrl={typeof window !== "undefined" ? window.location.href : ""}
+				shareUrl={withShareUtm(
+					typeof window !== "undefined" ? window.location.origin + window.location.pathname : shareUrl,
+					"share",
+				)}
 				shareTitle={data.title}
 			/>
 

@@ -23,9 +23,27 @@ export const SOURCE_LABELS: Record<string, string> = {
 	tiktok: "TikTok",
 	twitter: "X / Twitter",
 	youtube: "YouTube",
+	share: "Bagikan (menu HP)",
+	copy: "Link disalin",
 	referral: "Situs lain",
 	direct: "Langsung",
 };
+
+/**
+ * Adds utm_source (+ utm_medium=share) to a link the user shares, so a visit
+ * from e.g. a WhatsApp share counts as "whatsapp" instead of "direct"
+ * (WhatsApp sends no referrer). Keeps existing query params.
+ */
+export function withShareUtm(url: string, source: "whatsapp" | "facebook" | "twitter" | "instagram" | "share" | "copy") {
+	try {
+		const u = new URL(url);
+		u.searchParams.set("utm_source", source);
+		u.searchParams.set("utm_medium", "share");
+		return u.toString();
+	} catch {
+		return url;
+	}
+}
 
 export function sourceLabel(source: string | null | undefined) {
 	if (!source) return "Tidak diketahui";

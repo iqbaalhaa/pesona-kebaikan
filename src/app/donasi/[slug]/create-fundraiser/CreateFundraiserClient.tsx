@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { withShareUtm } from "@/lib/tracking-source";
 import { useRouter } from "next/navigation";
 import {
 	Box,
@@ -415,7 +416,7 @@ export default function CreateFundraiserClient({
 							<p className="text-[11px] text-slate-400 mb-1">Link fundraising kamu:</p>
 							<p className="text-[13px] text-slate-700 font-medium break-all mb-2">{previewUrl}</p>
 							<button
-								onClick={() => copyToClipboard(previewUrl)}
+								onClick={() => copyToClipboard(withShareUtm(previewUrl, "copy"))}
 								className="flex items-center gap-1.5 text-[13px] font-bold text-primary hover:underline"
 							>
 								<ContentCopyIcon sx={{ fontSize: 16 }} />
@@ -432,7 +433,7 @@ export default function CreateFundraiserClient({
 										await navigator.share({
 											title: "Bantu donasi",
 											text: `Yuk bantu donasi! Setiap kontribusi sangat berarti.`,
-											url: previewUrl,
+											url: withShareUtm(previewUrl, "share"),
 										});
 									} catch {}
 								}}

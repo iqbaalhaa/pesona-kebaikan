@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { withShareUtm } from "@/lib/tracking-source";
 import {
 	Box,
 	Typography,
@@ -237,7 +238,7 @@ export default function CreateFundraiserDialog({
 					await navigator.share({
 						title: `Bantu donasi: ${campaignTitle}`,
 						text: `Yuk bantu donasi untuk "${campaignTitle}"! Setiap kontribusi sangat berarti.`,
-						url: previewUrl,
+						url: withShareUtm(previewUrl, "share"),
 					});
 				} catch {}
 			}
@@ -264,7 +265,7 @@ export default function CreateFundraiserDialog({
 							<p className="text-[13px] text-slate-700 font-medium break-all mb-2">{previewUrl}</p>
 							<div className="flex gap-2">
 								<button
-									onClick={() => copyToClipboard(previewUrl)}
+									onClick={() => copyToClipboard(withShareUtm(previewUrl, "copy"))}
 									className="flex items-center gap-1.5 text-[13px] font-bold text-primary hover:underline"
 								>
 									<ContentCopyIcon sx={{ fontSize: 16 }} />

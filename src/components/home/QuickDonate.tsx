@@ -14,6 +14,7 @@ import Alert from "@mui/material/Alert";
 import type { Campaign } from "@/types";
 import { createDonation, cancelPendingDonation } from "@/actions/donation";
 import { checkDonationReturn, type ReturnStatus } from "@/lib/donation-return-client";
+import { trackCampaignEvent } from "@/lib/meta-pixel-client";
 import { getQuickDonationCampaignId } from "@/actions/campaign-public";
 
 const PRIMARY = "#0ba976";
@@ -167,6 +168,15 @@ export default function QuickDonate() {
 			if (timeoutId) clearTimeout(timeoutId);
 		};
 	}, [success]);
+
+	// Funnel stats for the "donasi-cepat" campaign: widget shown = VIEW,
+	// sheet opened = DONATE_CLICK (both deduped per visitor server-side).
+	React.useEffect(() => {
+		if (campaignId) trackCampaignEvent(campaignId, "VIEW");
+	}, [campaignId]);
+	React.useEffect(() => {
+		if (campaignId && open) trackCampaignEvent(campaignId, "DONATE_CLICK");
+	}, [campaignId, open]);
 
 	// Auto open bottom sheet when redirected from login
 	React.useEffect(() => {

@@ -5,6 +5,7 @@ import { Gavel, Loader2 } from "lucide-react";
 import { getPageContent } from "@/actions/cms";
 import ProfileHeader from "@/components/profile/ProfileHeader";
 import PageContainer from "@/components/profile/PageContainer";
+import TrackingPrivacySection from "./TrackingPrivacySection";
 
 export default function TermsPage() {
 	const [content, setContent] = React.useState<string>("");
@@ -52,6 +53,8 @@ export default function TermsPage() {
 					Belum ada konten syarat & ketentuan.
 				</p>
 			)}
+
+			{!loading && <TrackingPrivacySection />}
 
 			<div className="mt-4 border-t border-foreground/10 pt-3">
 				<p className="text-xs text-foreground/50">

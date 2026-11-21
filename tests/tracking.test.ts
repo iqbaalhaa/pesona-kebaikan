@@ -1,4 +1,4 @@
-import { attributionFromLanding, classifySource, isBotUserAgent, parseAttributionCookie } from "../src/lib/tracking-source";
+import { attributionFromLanding, classifySource, isBotUserAgent, parseAttributionCookie, withShareUtm } from "../src/lib/tracking-source";
 import { buildPurchaseEvent, normalizePhone, sha256 } from "../src/lib/meta-capi";
 import { activeCampaignPixelId, parseTrackingSettings } from "../src/lib/tracking-settings";
 
@@ -36,6 +36,13 @@ export async function trackingTests() {
 	assert(round.utmCampaign === "ramadhan" && round.fbclid === "XYZ", "cookie round trip");
 	assert(parseAttributionCookie("%%bad").source === "direct", "bad cookie → direct");
 	log("attribution cookie parse/write");
+
+	const shared = withShareUtm("https://pesonakebaikan.com/donasi/a?x=1", "whatsapp");
+	assert(shared === "https://pesonakebaikan.com/donasi/a?x=1&utm_source=whatsapp&utm_medium=share", "share utm appended");
+	assert(withShareUtm("/donasi/a", "copy") === "/donasi/a", "relative url left as is");
+	assert(attributionFromLanding(new URL(shared), "")?.source === "whatsapp", "shared link → whatsapp source");
+	assert(classifySource({ utmSource: "share" }) === "share", "native share source kept");
+	log("share links carry utm_source");
 
 	assert(isBotUserAgent("facebookexternalhit/1.1"), "fb crawler is bot");
 	assert(isBotUserAgent(""), "empty UA is bot");

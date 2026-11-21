@@ -408,6 +408,13 @@ export default function DonationForm({
 							Pembayaran aman & terenkripsi.
 						</Typography>
 					</Box>
+					<Typography sx={{ fontSize: 11, color: "text.secondary", textAlign: "center", mt: 0.5 }}>
+						Dengan berdonasi Anda menyetujui{" "}
+						<a href="/profil/syarat-ketentuan#privasi-iklan" style={{ textDecoration: "underline" }}>
+							penggunaan cookie & data untuk statistik dan iklan
+						</a>
+						.
+					</Typography>
 				</Paper>
 			</Box>
 
