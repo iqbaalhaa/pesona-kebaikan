@@ -8,6 +8,7 @@ import Stack from "@mui/material/Stack";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import { getPageContent } from "@/actions/cms";
 import BackButton from "./BackButton";
+import AdsGuideSection from "./AdsGuideSection";
 
 export default async function FundraiseGuidePage() {
 	const content = await getPageContent("fundraise_guide");
@@ -141,6 +142,8 @@ export default async function FundraiseGuidePage() {
 						</Box>
 					</Box>
 				))}
+
+				<AdsGuideSection />
 
 				{/* CMS Content */}
 				<Box

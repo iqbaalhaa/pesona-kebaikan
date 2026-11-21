@@ -2,6 +2,7 @@
 
 import { Accordion, AccordionDetails, AccordionSummary, Typography } from "@mui/material";
 import ExpandMoreRoundedIcon from "@mui/icons-material/ExpandMoreRounded";
+import Link from "next/link";
 
 const STEPS = [
 	<>
@@ -43,6 +44,11 @@ export default function PixelGuide() {
 					{STEPS.map((s, i) => (
 						<li key={i}>{s}</li>
 					))}
+				</Typography>
+				<Typography variant="body2" sx={{ mt: 1 }}>
+					<Link href="/galang-dana/panduan#iklan" style={{ color: "#0ba976", fontWeight: 700 }}>
+						Panduan lengkap beriklan di Facebook & Instagram →
+					</Link>
 				</Typography>
 			</AccordionDetails>
 		</Accordion>
