@@ -13,6 +13,7 @@ import Alert from "@mui/material/Alert";
 
 import type { Campaign } from "@/types";
 import { createDonation, cancelPendingDonation } from "@/actions/donation";
+import { checkDonationReturn, type ReturnStatus } from "@/lib/donation-return-client";
 import { getQuickDonationCampaignId } from "@/actions/campaign-public";
 
 const PRIMARY = "#0ba976";
@@ -106,6 +107,7 @@ export default function QuickDonate() {
 	const [loading, setLoading] = React.useState(false);
 	const [error, setError] = React.useState("");
 	const [success, setSuccess] = React.useState(false);
+	const [returnStatus, setReturnStatus] = React.useState<ReturnStatus | null>(null);
 
 	React.useEffect(() => {
 		if (session?.user) {
@@ -179,7 +181,15 @@ export default function QuickDonate() {
 		if (searchParams?.get("donation_success") !== "true") return;
 
 		setSuccess(true);
+		setReturnStatus(null);
 		setOpen(false);
+		const donationId = searchParams.get("donation_id");
+		if (donationId) {
+			// Real status from the server + Purchase pixel event when paid.
+			checkDonationReturn(donationId)
+				.then((r) => setReturnStatus(r?.status ?? "pending"))
+				.catch(() => setReturnStatus("pending"));
+		}
 
 		// The payment gateway page is the previous history entry (cross-origin);
 		// pressing Back should skip it rather than return to a dead session. Replace
@@ -313,11 +323,16 @@ export default function QuickDonate() {
 					</Box>
 					<Box>
 						<Typography sx={{ fontSize: 16, fontWeight: 900, mb: 0.5 }}>
-							Terima Kasih!
+							{returnStatus === "failed" ? "Pembayaran Belum Berhasil" : "Terima Kasih!"}
 						</Typography>
 						<Typography sx={{ fontSize: 13, color: "text.secondary" }}>
-							Donasi Anda telah kami terima. Semoga menjadi amal jariyah yang
-							tak terputus pahalanya.
+							{returnStatus === "paid"
+								? "Donasi Anda telah kami terima. Semoga menjadi amal jariyah yang tak terputus pahalanya."
+								: returnStatus === "failed"
+									? "Pembayaran dibatalkan atau gagal. Silakan coba donasi lagi."
+									: returnStatus === "pending"
+										? "Donasi Anda tercatat. Selesaikan pembayaran agar donasi diterima."
+										: "Memeriksa status pembayaran…"}
 						</Typography>
 					</Box>
 					<Button

@@ -3,6 +3,7 @@ import ReactDOMServer from "react-dom/server";
 import CampaignCard from "@/components/common/CampaignCard";
 import { normalizeCampaignToCard } from "@/lib/normalizeCampaign";
 import { dashboardTests } from "./dashboard.test";
+import { trackingTests } from "./tracking.test";
 import { extensionUpdate } from "@/lib/campaign-extension";
 import { dokuSafeText } from "@/lib/payment/providers/doku-provider";
 
@@ -83,6 +84,8 @@ async function run() {
 		await unitTests();
 		console.log("Running dashboard tests...");
 		await dashboardTests();
+		console.log("Running tracking tests...");
+		await trackingTests();
 		console.log("Running integration tests...");
 		await integrationTests();
 		console.log("All tests passed.");

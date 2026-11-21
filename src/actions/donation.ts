@@ -5,8 +5,9 @@ import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import { DokuProvider, mapDokuStatus } from "@/lib/payment/providers/doku-provider";
 import { calculatePaymentFee } from "@/lib/fee-calculator";
-import { createNotification } from "@/actions/notification";
-import { NotificationType } from "@prisma/client";
+import { applyDonationStatus } from "@/lib/donation-settlement";
+import { donationTrackingData, readRequestTracking } from "@/lib/tracking-server";
+import { activeCampaignPixelId, getTrackingSettings } from "@/lib/tracking-settings";
 
 export type CreateDonationInput = {
 	campaignId: string;
@@ -93,8 +94,15 @@ export async function createDonation(
 			}
 		}
 
+		// Attribution (source/UTM + Meta ids) for stats and CAPI; absent outside a
+		// request (tests) — the donation itself must not fail on it.
+		const trackingData = await readRequestTracking()
+			.then(donationTrackingData)
+			.catch(() => ({}));
+
 		const donation = await prisma.donation.create({
 			data: {
+				...trackingData,
 				campaignId: input.campaignId,
 				fundraiserId: input.fundraiserId,
 				amount: input.amount,
@@ -194,27 +202,8 @@ export async function checkPendingDonations(campaignId?: string) {
 				const newStatus = dokuData?.status ? mapDokuStatus(dokuData.status) : null;
 
 				if (newStatus && newStatus !== "PENDING" && newStatus !== d.status) {
-					await prisma.donation.update({
-						where: { id: d.id },
-						data: { status: newStatus },
-					});
-					updatedCount++;
-					if (newStatus === "PAID" && d.userId) {
-						const amountNum = Number(d.amount);
-						const amountStr = isFinite(amountNum)
-							? amountNum.toLocaleString("id-ID")
-							: `${d.amount}`;
-						const campaign = await prisma.campaign.findUnique({
-							where: { id: d.campaignId },
-							select: { title: true },
-						});
-						await createNotification(
-							d.userId,
-							"Donasi Berhasil",
-							`Terima kasih. Donasi Rp ${amountStr} ke ${campaign?.title || "Campaign"} telah berhasil.`,
-							NotificationType.KABAR,
-						);
-					}
+					const { changed } = await applyDonationStatus(d.id, newStatus);
+					if (changed) updatedCount++;
 				}
 			}),
 		);
@@ -240,5 +229,68 @@ export async function checkPendingDonations(campaignId?: string) {
 	} catch (error) {
 		console.error("Error checking pending donations:", error);
 		return { success: false, error: "Gagal memverifikasi status donasi" };
+	}
+}
+
+/**
+ * Status for the "back from DOKU" screen. Asks DOKU directly while still
+ * PENDING (webhook may lag). Public: the donation id is an unguessable cuid and
+ * only status/amount are returned — no donor data. Also returns the pixel ids
+ * the browser should send the Purchase event to.
+ */
+export async function getDonationStatus(donationId: string) {
+	if (typeof donationId !== "string" || !/^[a-z0-9]{10,40}$/i.test(donationId)) {
+		return { success: false as const, error: "Donasi tidak ditemukan" };
+	}
+	try {
+		const d = await prisma.donation.findUnique({
+			where: { id: donationId },
+			select: {
+				id: true,
+				status: true,
+				amount: true,
+				campaignId: true,
+				campaign: { select: { slug: true, metaPixelId: true, metaPixelDisabled: true } },
+			},
+		});
+		if (!d) return { success: false as const, error: "Donasi tidak ditemukan" };
+
+		let status = d.status;
+		if (status === "PENDING") {
+			try {
+				const dokuData = await new DokuProvider().checkStatus(d.id);
+				const newStatus = dokuData?.status ? mapDokuStatus(dokuData.status) : null;
+				if (newStatus && newStatus !== "PENDING") {
+					await applyDonationStatus(d.id, newStatus);
+					status = newStatus;
+					try {
+						revalidatePath(`/donasi/${d.campaign.slug || d.campaignId}`);
+						revalidatePath("/donasi-saya");
+					} catch {
+						// Ignore revalidation errors
+					}
+				}
+			} catch (e) {
+				console.error("DOKU status check failed:", e);
+			}
+		}
+
+		const settings = await getTrackingSettings();
+		return {
+			success: true as const,
+			data: {
+				id: d.id,
+				status,
+				amount: Number(d.amount),
+				campaignId: d.campaignId,
+				pixelIds: [
+					settings.pixelEnabled ? settings.pixelId : null,
+					activeCampaignPixelId(d.campaign, settings),
+				].filter((x): x is string => !!x),
+			},
+		};
+	} catch (error) {
+		console.error("Error getting donation status:", error);
+		return { success: false as const, error: "Gagal memuat status donasi" };
 	}
 }

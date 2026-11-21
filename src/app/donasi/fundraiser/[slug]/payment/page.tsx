@@ -3,6 +3,8 @@ import { getFundraiserCampaign as fetchFundraiserCampaign } from "@/actions/fund
 import DonationForm from "@/components/donation/DonationForm";
 import { notFound } from "next/navigation";
 import { Metadata } from "next";
+import CampaignTracker from "@/components/tracking/CampaignTracker";
+import { getCampaignPagePixelId } from "@/lib/tracking-settings";
 
 // generateMetadata and the page both need it — dedupe per request.
 const getFundraiserCampaign = cache(fetchFundraiserCampaign);
@@ -49,6 +51,14 @@ export default async function FundraiserDonationPaymentPage({ params }: Props) {
   }
 
   return (
+    <>
+    <CampaignTracker
+				campaignId={res.data.id}
+				fundraiserId={(res.data as any).fundraiserId}
+				campaignTitle={res.data.title}
+				ownerPixelId={await getCampaignPagePixelId(res.data.id)}
+				step="DONATE_CLICK"
+			/>
     <DonationForm
       campaignId={res.data.id}
       campaignTitle={res.data.title}
@@ -56,5 +66,6 @@ export default async function FundraiserDonationPaymentPage({ params }: Props) {
       fundraiserId={(res.data as any).fundraiserId}
       fundraiserSlug={(res.data as any).fundraiserSlug}
     />
+    </>
   );
 }

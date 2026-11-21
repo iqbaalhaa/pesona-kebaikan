@@ -4,6 +4,8 @@ import CampaignDetailView from "@/components/campaign/CampaignDetailView";
 import { notFound, redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { auth } from "@/auth";
+import CampaignTracker from "@/components/tracking/CampaignTracker";
+import { getCampaignPagePixelId } from "@/lib/tracking-settings";
 
 // generateMetadata and the page both need the campaign — dedupe per request.
 const getCampaignBySlug = cache(fetchCampaignBySlug);
@@ -194,6 +196,13 @@ export default async function CampaignDetailPage({ params }: Props) {
 				dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
 			/>
 			<CampaignDetailView data={res.data} />
+			<CampaignTracker
+				campaignId={res.data.id}
+				fundraiserId={null}
+				campaignTitle={res.data.title}
+				ownerPixelId={await getCampaignPagePixelId(res.data.id)}
+				step="VIEW"
+			/>
 		</>
 	);
 }

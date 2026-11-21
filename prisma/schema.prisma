@@ -383,6 +383,12 @@ model Campaign {
   // on every cron run while the campaign sits inside the reminder window.
   endReminderSentAt DateTime?
 
+  // Owner's own Meta Pixel (src/lib/tracking-settings.ts). The CAPI token is
+  // server-only — never select it into client props. Admin can switch it off.
+  metaPixelId       String?
+  metaCapiToken     String?
+  metaPixelDisabled Boolean @default(false)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -400,6 +406,7 @@ model Campaign {
   carousels   Carousel[]
   fundraisers Fundraiser[] @relation("CampaignFundraisers")
   changeRequests CampaignChangeRequest[]
+  events         CampaignEvent[]
 
   @@index([categoryId])
   @@index([createdById])
@@ -497,6 +504,13 @@ model Donation {
   updatedAt     DateTime      @updatedAt
   amiinCount    Int           @default(0)
 
+  // Attribution captured at creation (src/lib/tracking-server.ts): where the
+  // donor came from, plus Meta ids (fbp/fbc), IP and UA for the CAPI event.
+  source      String?
+  utmCampaign String?
+  utmContent  String?
+  tracking    Json?
+
   campaignId String
   campaign   Campaign @relation(fields: [campaignId], references: [id])
 
@@ -513,8 +527,28 @@ model Donation {
   // dashboard charts filter by status + createdAt.
   @@index([campaignId, status])
   @@index([status, createdAt])
+  @@index([campaignId, createdAt])
 
   amiins Amiin[] @relation("DonationAmiins")
+}
+
+// Funnel events per campaign (views, donate clicks, checkouts). Donations
+// created/paid come from Donation itself. Written by src/lib/campaign-events.ts.
+model CampaignEvent {
+  id           String   @id @default(cuid())
+  campaignId   String
+  campaign     Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  fundraiserId String?
+  type         String // VIEW | DONATE_CLICK | CHECKOUT
+  visitorId    String
+  source       String
+  utmCampaign  String?
+  utmContent   String?
+  createdAt    DateTime @default(now())
+
+  @@index([campaignId, type, createdAt])
+  @@index([type, createdAt])
+  @@index([visitorId, campaignId, type, createdAt])
 }
 
 model Amiin {

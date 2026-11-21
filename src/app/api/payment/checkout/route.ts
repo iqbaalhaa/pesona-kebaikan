@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getPaymentProvider } from '@/lib/payment'
+import { recordCampaignEvent } from '@/lib/campaign-events'
+import { readRequestTracking } from '@/lib/tracking-server'
 
 export async function POST(req: Request) {
   try {
@@ -26,9 +28,12 @@ export async function POST(req: Request) {
     const itemName = `Donasi - ${donation.campaign?.title || 'Campaign'}`.slice(0, 50)
     const campaignSlug = donation.campaign?.slug || donation.campaignId
     const isQuickDonation = campaignSlug === 'donasi-cepat'
+    // Only the donation id: the return page asks the server for the real status
+    // (the donor may have cancelled, or pays a VA later).
+    const finishQuery = `donation_success=true&donation_id=${donation.id}`
     const finishUrl = isQuickDonation
-      ? `${origin}/?donation_success=true&donation_status=paid&donation_amount=${amount}`
-      : `${origin}/donasi/${campaignSlug}?donation_success=true&donation_status=paid&donation_amount=${amount}`
+      ? `${origin}/?${finishQuery}`
+      : `${origin}/donasi/${campaignSlug}?${finishQuery}`
 
     const result = await provider.createCheckout({
       orderId: donation.id,
@@ -38,6 +43,13 @@ export async function POST(req: Request) {
       items: [{ id: donation.campaignId, name: itemName, price: amount, quantity: 1 }],
       notificationUrl: `${origin}/api/${provider.name}/notification`,
       finishUrl,
+    })
+
+    await recordCampaignEvent({
+      campaignId: donation.campaignId,
+      fundraiserId: donation.fundraiserId,
+      type: 'CHECKOUT',
+      tracking: await readRequestTracking(),
     })
 
     return NextResponse.json({

@@ -26,7 +26,7 @@ import FlagOutlinedIcon from "@mui/icons-material/FlagOutlined";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 
 import { createReport } from "@/actions/report";
-import { checkPendingDonations } from "@/actions/donation";
+import { checkDonationReturn } from "@/lib/donation-return-client";
 import { ReportReason } from "@prisma/client";
 
 // Components
@@ -120,7 +120,7 @@ export default function CampaignDetailView({
 	const [snackbarOpen, setSnackbarOpen] = React.useState(false);
 	const [donationSuccessOpen, setDonationSuccessOpen] = React.useState(false);
 	const [donationStatus, setDonationStatus] = React.useState<
-		"paid" | "pending" | null
+		"paid" | "pending" | "failed" | null
 	>(null);
 	const [donationSummary, setDonationSummary] = React.useState<{
 		amount?: number;
@@ -141,9 +141,7 @@ export default function CampaignDetailView({
 
 	// Donation success check (stable deps)
 	const donationSuccessParam = searchParams.get("donation_success");
-	const donationStatusParam = searchParams.get("donation_status");
-	const donationAmountParam = searchParams.get("donation_amount");
-	const donationMethodParam = searchParams.get("donation_method");
+	const donationIdParam = searchParams.get("donation_id");
 	React.useEffect(() => {
 		if (donationSuccessParam !== "true") return;
 
@@ -162,34 +160,22 @@ export default function CampaignDetailView({
 		router.replace("/galang-dana", { scroll: false });
 		router.push(cleanUrl, { scroll: false });
 
-		const checkStatus = async () => {
-			setDonationSuccessOpen(true);
-			setDonationStatus(donationStatusParam === "paid" ? "paid" : "pending");
-
-			const amountNum = donationAmountParam
-				? Number(donationAmountParam)
-				: NaN;
-			setDonationSummary({
-				amount: isFinite(amountNum) ? amountNum : undefined,
-				method: donationMethodParam || undefined,
-			});
-
-			// Check payment status actively (useful for localhost/when webhook is delayed)
-			try {
-				const res = await checkPendingDonations(data.id);
-				if (res.success && res.updated && res.updated > 0) {
-					router.refresh();
-				}
-			} catch (e) {
-				console.error("Failed to check donation status", e);
-			}
-		};
-		checkStatus();
+		if (!donationIdParam) return;
+		setDonationStatus(null);
+		setDonationSuccessOpen(true);
+		// Real status from the server (the URL proves nothing: the donor may have
+		// cancelled at DOKU); also fires the Purchase pixel event when paid.
+		checkDonationReturn(donationIdParam)
+			.then((r) => {
+				if (!r) return;
+				setDonationStatus(r.status);
+				setDonationSummary({ amount: r.amount });
+				if (r.status === "paid") router.refresh();
+			})
+			.catch((e) => console.error("Failed to check donation status", e));
 	}, [
 		donationSuccessParam,
-		donationStatusParam,
-		donationAmountParam,
-		donationMethodParam,
+		donationIdParam,
 		data.slug,
 		data.id,
 		router,
@@ -881,14 +867,20 @@ export default function CampaignDetailView({
 			>
 				<Alert
 					onClose={() => setDonationSuccessOpen(false)}
-					severity="success"
+					severity={
+						donationStatus === "failed" ? "warning" : donationStatus ? "success" : "info"
+					}
 					sx={{ width: "100%", borderRadius: "12px", boxShadow: 3 }}
 				>
-					{donationStatus === "paid"
+					{!donationStatus
+						? "Memeriksa status pembayaran…"
+						: donationStatus === "failed"
+						? "Pembayaran donasi belum berhasil atau dibatalkan. Silakan coba lagi."
+						: donationStatus === "paid"
 						? `Terima kasih! Pembayaran donasi${donationSummary?.amount ? ` Rp ${donationSummary.amount.toLocaleString("id-ID")}` : ""}${
 								donationSummary?.method ? ` via ${donationSummary.method}` : ""
 							} telah kami terima.`
-						: "Terima kasih! Donasi Anda berhasil dibuat. Silakan lakukan pembayaran."}
+						: "Terima kasih! Donasi Anda tercatat. Selesaikan pembayaran agar donasi diterima."}
 				</Alert>
 			</Snackbar>
 

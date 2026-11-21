@@ -6,6 +6,7 @@ import AppShell from "@/components/layout/AppShell";
 import ThemeWrapper from "@/components/layout/ThemeWrapper";
 import { auth } from "@/auth";
 import NextAuthProvider from "@/components/providers/NextAuthProvider";
+import TrackingInit from "@/components/tracking/TrackingInit";
 
 const plusJakartaSans = Plus_Jakarta_Sans({
 	subsets: ["latin"],
@@ -71,6 +72,7 @@ export default async function RootLayout({
 				<a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:left-2 focus:top-2 focus:z-[9999] focus:rounded-lg focus:bg-primary focus:px-4 focus:py-2 focus:text-white focus:outline-none">
 					Langsung ke konten utama
 				</a>
+				<TrackingInit />
 				<NextAuthProvider session={session}>
 					<AppRouterCacheProvider options={{ enableCssLayer: true }}>
 						<ThemeWrapper>

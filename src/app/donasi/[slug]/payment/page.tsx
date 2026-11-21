@@ -3,6 +3,8 @@ import { getCampaignBySlug as fetchCampaignBySlug } from "@/actions/campaign";
 import DonationForm from "@/components/donation/DonationForm";
 import { notFound } from "next/navigation";
 import { Metadata } from "next";
+import CampaignTracker from "@/components/tracking/CampaignTracker";
+import { getCampaignPagePixelId } from "@/lib/tracking-settings";
 
 // generateMetadata and the page both need it — dedupe per request.
 const getCampaignBySlug = cache(fetchCampaignBySlug);
@@ -49,10 +51,19 @@ export default async function DonationPaymentPage({ params }: Props) {
 	}
 
 	return (
-		<DonationForm
+		<>
+			<CampaignTracker
+				campaignId={res.data.id}
+				fundraiserId={null}
+				campaignTitle={res.data.title}
+				ownerPixelId={await getCampaignPagePixelId(res.data.id)}
+				step="DONATE_CLICK"
+			/>
+			<DonationForm
 			campaignId={res.data.id}
 			campaignTitle={res.data.title}
 			campaignSlug={res.data.slug || slug}
-		/>
+			/>
+		</>
 	);
 }

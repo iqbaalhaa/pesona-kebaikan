@@ -4,6 +4,8 @@ import CampaignDetailView from "@/components/campaign/CampaignDetailView";
 import { notFound, redirect } from "next/navigation";
 import { Metadata } from "next";
 import { auth } from "@/auth";
+import CampaignTracker from "@/components/tracking/CampaignTracker";
+import { getCampaignPagePixelId } from "@/lib/tracking-settings";
 
 // generateMetadata and the page both need it — dedupe per request.
 const getFundraiserCampaign = cache(fetchFundraiserCampaign);
@@ -61,5 +63,16 @@ export default async function FundraiserCampaignDetailPage({ params }: Props) {
     notFound();
   }
 
-  return <CampaignDetailView data={res.data} showFundraiser={false} />;
+  return (
+    <>
+      <CampaignDetailView data={res.data} showFundraiser={false} />
+      <CampaignTracker
+				campaignId={res.data.id}
+				fundraiserId={(res.data as any).fundraiserId}
+				campaignTitle={res.data.title}
+				ownerPixelId={await getCampaignPagePixelId(res.data.id)}
+				step="VIEW"
+			/>
+    </>
+  );
 }
