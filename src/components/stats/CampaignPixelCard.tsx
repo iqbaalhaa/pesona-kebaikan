@@ -3,6 +3,7 @@
 import * as React from "react";
 import { Alert, Box, Button, CircularProgress, FormControlLabel, Stack, Switch, TextField, Typography } from "@mui/material";
 import { getCampaignPixel, updateCampaignPixel } from "@/actions/campaign-pixel";
+import PixelGuide from "./PixelGuide";
 
 type Data = Extract<Awaited<ReturnType<typeof getCampaignPixel>>, { success: true }>["data"];
 
@@ -58,6 +59,7 @@ export default function CampaignPixelCard({ campaignId }: { campaignId: string }
 				Pasang Meta Pixel Anda sendiri untuk mengukur iklan campaign ini. Pixel hanya aktif di halaman campaign ini dan
 				halaman donasinya. Data donatur dikirim ke Meta dalam bentuk ter-hash.
 			</Typography>
+			<PixelGuide />
 			{!data.featureEnabled && <Alert severity="info">Fitur pixel pemilik campaign sedang dimatikan di pengaturan.</Alert>}
 			{data.disabled && !data.isAdmin && <Alert severity="warning">Pixel campaign ini dinonaktifkan oleh admin.</Alert>}
 			{msg && (

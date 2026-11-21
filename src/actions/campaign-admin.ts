@@ -173,6 +173,17 @@ export async function updateCampaignStatus(
 				NotificationType.KABAR,
 			);
 
+			// Only on first approval (not resume from PAUSED): point the owner at
+			// their funnel stats and own Meta Pixel.
+			if (prev.status === "PENDING" && prev.slug !== QUICK_DONATION_SLUG) {
+				await createNotification(
+					prev.createdById,
+					"Pantau & Promosikan Campaign Anda",
+					`Lihat berapa orang yang melihat, klik donasi, dan membayar di campaign "${prev.title}", buat link iklan, dan pasang Meta Pixel untuk iklan Facebook/Instagram Anda. Buka Galang Dana → pilih campaign → Statistik & Meta Pixel.`,
+					NotificationType.KABAR,
+				);
+			}
+
 			if (verifyRes.count > 0) {
 				await createNotification(
 					prev.createdById,

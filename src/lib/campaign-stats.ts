@@ -207,7 +207,8 @@ export async function getCampaignRanking(input: { from: Date; to: Date; source?:
 
 	const campaigns = await prisma.campaign.findMany({
 		where: { id: { in: [...rows.keys()] } },
-		select: { id: true, title: true, slug: true, status: true },
+		// Never the CAPI token here (goes to the browser).
+		select: { id: true, title: true, slug: true, status: true, metaPixelId: true, metaPixelDisabled: true },
 	});
 	const byId = new Map(campaigns.map((c) => [c.id, c]));
 	return [...rows.values()]

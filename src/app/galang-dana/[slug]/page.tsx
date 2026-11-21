@@ -390,6 +390,29 @@ export default async function CampaignDetailPage({
 					</Paper>
 				</Stack>
 
+				{campaign.status === "ACTIVE" && !isQuickDonate && !campaign.metaPixelId && (
+					<Paper
+						elevation={0}
+						sx={{ p: 2, mb: 3, borderRadius: 3, bgcolor: "rgba(11,169,118,0.08)", border: "1px solid rgba(11,169,118,0.25)" }}
+					>
+						<Typography variant="body2" fontWeight={700} gutterBottom>
+							Tips: promosikan campaign Anda
+						</Typography>
+						<Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 1 }}>
+							Beriklan di Facebook/Instagram? Pasang Meta Pixel Anda dan pakai link iklan dari menu Statistik supaya
+							terlihat iklan mana yang menghasilkan donasi.
+						</Typography>
+						<LinkButton
+							href={`/galang-dana/${campaign.slug || campaign.id}/statistik`}
+							size="small"
+							variant="contained"
+							sx={{ borderRadius: 2, textTransform: "none", fontWeight: 700 }}
+						>
+							Buka Statistik & Meta Pixel
+						</LinkButton>
+					</Paper>
+				)}
+
 				{/* Action Menu */}
 				<Typography
 					variant="subtitle2"
@@ -485,7 +508,14 @@ export default async function CampaignDetailPage({
 							fontWeight: 600,
 						}}
 					>
-						Statistik & Meta Pixel
+						<Box sx={{ textAlign: "left" }}>
+							<Typography variant="body2" fontWeight={700}>
+								Statistik & Meta Pixel
+							</Typography>
+							<Typography variant="caption" color="text.secondary">
+								Lihat pengunjung, buat link iklan & pasang Pixel untuk iklan Anda
+							</Typography>
+						</Box>
 					</LinkButton>
 					<OwnerExtendTargetButton
 						campaignId={campaign.id}

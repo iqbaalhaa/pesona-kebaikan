@@ -152,6 +152,15 @@ export default function CampaignRankingClient() {
 										{lowConversion(r) && (
 											<Chip size="small" color="warning" label="Konversi rendah" sx={{ ml: 1 }} />
 										)}
+										{r.campaign.metaPixelId && (
+											<Chip
+												size="small"
+												variant="outlined"
+												color={r.campaign.metaPixelDisabled ? "default" : "info"}
+												label={r.campaign.metaPixelDisabled ? "Pixel pemilik nonaktif" : "Pixel pemilik"}
+												sx={{ ml: 1 }}
+											/>
+										)}
 									</TableCell>
 									<TableCell align="right">{r.views}</TableCell>
 									<TableCell align="right">{r.clicks}</TableCell>

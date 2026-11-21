@@ -6,6 +6,7 @@ import ArrowBackRoundedIcon from "@mui/icons-material/ArrowBackRounded";
 import { LinkIconButton } from "@/components/ui/LinkButton";
 import CampaignStatsPanel from "@/components/stats/CampaignStatsPanel";
 import CampaignPixelCard from "@/components/stats/CampaignPixelCard";
+import AdLinkBuilder from "@/components/stats/AdLinkBuilder";
 
 export default async function OwnerCampaignStatsPage({ params }: { params: Promise<{ slug: string }> }) {
 	const session = await auth();
@@ -41,6 +42,12 @@ export default async function OwnerCampaignStatsPage({ params }: { params: Promi
 			<Container maxWidth="md" sx={{ px: 2, mt: 2 }}>
 				<Stack spacing={2}>
 					<CampaignStatsPanel campaignId={campaign.id} />
+					<Paper variant="outlined" sx={{ p: 2, borderRadius: 3 }}>
+						<Typography variant="subtitle1" fontWeight={700} sx={{ mb: 1 }}>
+							Buat Link Iklan
+						</Typography>
+						<AdLinkBuilder campaignSlug={campaign.slug || campaign.id} />
+					</Paper>
 					<Paper variant="outlined" sx={{ p: 2, borderRadius: 3 }}>
 						<Typography variant="subtitle1" fontWeight={700} sx={{ mb: 1 }}>
 							Meta Pixel Anda
