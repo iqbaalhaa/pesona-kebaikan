@@ -25,6 +25,8 @@ export default async function SettingsPage() {
 		(await getNotifyKey("whatsapp_application_secret")) ||
 		(await getNotifyKey("whatsapp_secret_key"));
 
+	const metaDomainKey = await getNotifyKey("meta_domain_verification");
+
 	// Fetch Email Settings
 	const emailKeys = await getNotifyKeys([
 		"email_sender",
@@ -139,6 +141,23 @@ export default async function SettingsPage() {
 				</p>
 
 				<OgSettingsForm initialSettings={ogSettings} />
+			</div>
+
+			<div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
+				<h2 className="text-lg font-semibold mb-4">Verifikasi Domain Meta</h2>
+				<p className="text-sm text-gray-500 mb-6">
+					Business Settings → Brand Safety → Domains → pilih &quot;Meta-tag&quot;.
+					Tempel kodenya (atau seluruh tag &lt;meta&gt;) di sini, simpan, tunggu
+					±1 menit, lalu klik Verify di Meta.
+				</p>
+
+				<SettingsForm
+					initialKey="meta_domain_verification"
+					initialValue={metaDomainKey?.value || ""}
+					initialName={metaDomainKey?.name || "Meta Domain Verification"}
+					label="Kode verifikasi domain Meta"
+					placeholder="mis. abc123xyz456..."
+				/>
 			</div>
 		</div>
 	);
