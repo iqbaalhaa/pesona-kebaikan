@@ -28,6 +28,7 @@ import VrpanoIcon from "@mui/icons-material/Vrpano";
 import PersonPinIcon from "@mui/icons-material/PersonPin";
 import StarOutlineIcon from "@mui/icons-material/StarOutline";
 import TrendingUpRoundedIcon from "@mui/icons-material/TrendingUpRounded";
+import InsightsRoundedIcon from "@mui/icons-material/InsightsRounded";
 import ViewCarouselIcon from "@mui/icons-material/ViewCarousel";
 import QuizRoundedIcon from "@mui/icons-material/QuizRounded";
 
@@ -54,6 +55,7 @@ const menus: { title: string; items: MenuItem[] }[] = [
 			{ label: "Verifikasi Campaign", href: "/admin/campaign/verifikasi", icon: <VerifiedRoundedIcon fontSize="small" /> },
 			{ label: "Kategori Campaign", href: "/admin/campaign/kategori", icon: <CategoryRoundedIcon fontSize="small" /> },
 			{ label: "Pengajuan Campaign", href: "/admin/pengajuan-campaign", icon: <TrendingUpRoundedIcon fontSize="small" /> },
+			{ label: "Statistik Campaign", href: "/admin/statistik", icon: <InsightsRoundedIcon fontSize="small" /> },
 		],
 	},
 	{

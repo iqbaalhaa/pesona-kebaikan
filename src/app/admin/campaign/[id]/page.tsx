@@ -41,6 +41,7 @@ import {
 import ArrowBackIosNewRoundedIcon from "@mui/icons-material/ArrowBackIosNewRounded";
 import VerifiedRoundedIcon from "@mui/icons-material/VerifiedRounded";
 import EditRoundedIcon from "@mui/icons-material/EditRounded";
+import InsightsRoundedIcon from "@mui/icons-material/InsightsRounded";
 import StopCircleRoundedIcon from "@mui/icons-material/StopCircleRounded";
 import LocalHospitalRoundedIcon from "@mui/icons-material/LocalHospitalRounded";
 import CategoryRoundedIcon from "@mui/icons-material/CategoryRounded";
@@ -1117,6 +1118,15 @@ export default function AdminCampaignDetailPage(props: {
 							sx={{ borderRadius: 999, fontWeight: 900 }}
 						>
 							Edit
+						</Button>
+
+						<Button
+							onClick={() => router.push(`/admin/campaign/${data.id}/statistik`)}
+							variant="outlined"
+							startIcon={<InsightsRoundedIcon />}
+							sx={{ borderRadius: 999, fontWeight: 900 }}
+						>
+							Statistik & Pixel
 						</Button>
 
 						<Button

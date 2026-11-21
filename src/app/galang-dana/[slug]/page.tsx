@@ -31,6 +31,7 @@ import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded";
 import ShareRoundedIcon from "@mui/icons-material/ShareRounded";
 import AddPhotoAlternateRoundedIcon from "@mui/icons-material/AddPhotoAlternateRounded";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
+import InsightsRoundedIcon from "@mui/icons-material/InsightsRounded";
 
 export default async function CampaignDetailPage({
 	params,
@@ -468,6 +469,24 @@ export default async function CampaignDetailPage({
 							Bagikan
 						</LinkButton>
 					</Stack>
+					<LinkButton
+						href={`/galang-dana/${campaign.slug || campaign.id}/statistik`}
+						fullWidth
+						variant="outlined"
+						startIcon={<InsightsRoundedIcon />}
+						endIcon={<ChevronRightRoundedIcon />}
+						sx={{
+							justifyContent: "space-between",
+							borderRadius: 3,
+							py: 1.2,
+							borderColor: "divider",
+							color: "text.primary",
+							textTransform: "none",
+							fontWeight: 600,
+						}}
+					>
+						Statistik & Meta Pixel
+					</LinkButton>
 					<OwnerExtendTargetButton
 						campaignId={campaign.id}
 						campaignTitle={campaign.title}

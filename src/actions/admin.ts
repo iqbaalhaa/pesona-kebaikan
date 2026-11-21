@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { revalidatePath } from "next/cache";
 import { DokuProvider, mapDokuStatus } from "@/lib/payment/providers/doku-provider";
+import { applyDonationStatus } from "@/lib/donation-settlement";
 
 const dokuProvider = new DokuProvider();
 
@@ -46,6 +47,9 @@ function mapDonationRow(d: any) {
 		method,
 		status: mapTxStatus(d.status),
 		refCode: d.id.substring(0, 8).toUpperCase(),
+		source: (d.source as string | null) || null,
+		utmCampaign: (d.utmCampaign as string | null) || null,
+		utmContent: (d.utmContent as string | null) || null,
 		account: d.user
 			? {
 					name: d.user.name || "No Name",
@@ -92,10 +96,8 @@ async function refreshPendingDonations() {
 			const dokuData = await dokuProvider.checkStatus(d.id);
 			const newStatus = dokuData?.status ? mapDokuStatus(dokuData.status) : null;
 			if (newStatus && newStatus !== "PENDING" && newStatus !== d.status) {
-				await prisma.donation.update({
-					where: { id: d.id },
-					data: { status: newStatus },
-				});
+				// Shared path: donor notification + Meta CAPI run once on PAID.
+				await applyDonationStatus(d.id, newStatus);
 			}
 		}),
 	);
@@ -108,6 +110,10 @@ export async function getAdminTransactions(
 		q?: string;
 		status?: string;
 		method?: string;
+		/** Donation.source ("facebook", "direct", …) or "all". */
+		source?: string;
+		/** Exact utm_campaign. */
+		utmCampaign?: string;
 	} = {},
 ) {
 	try {
@@ -131,6 +137,10 @@ export async function getAdminTransactions(
 			// A UI method with no stored equivalent (e.g. va_bri) matches nothing.
 			and.push(pm ? { paymentMethod: pm } : { id: { in: [] } });
 		}
+		const source = (opts.source || "all").slice(0, 30);
+		if (source !== "all") and.push(source === "unknown" ? { source: null } : { source });
+		const utmCampaign = (opts.utmCampaign || "").trim().slice(0, 100);
+		if (utmCampaign) and.push({ utmCampaign });
 		if (q) {
 			and.push({
 				OR: [

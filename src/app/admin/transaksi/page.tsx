@@ -37,6 +37,7 @@ import PaidRoundedIcon from "@mui/icons-material/PaidRounded";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 
 import { getAdminTransactions } from "@/actions/admin";
+import { SOURCE_LABELS, sourceLabel } from "@/lib/tracking-source";
 
 const PAGE_SIZE = 10;
 
@@ -58,6 +59,9 @@ type TxRow = {
 	method: PayMethod;
 	status: TxStatus;
 	refCode: string;
+	source: string | null;
+	utmCampaign: string | null;
+	utmContent: string | null;
 	account: {
 		name: string;
 		email: string;
@@ -143,6 +147,7 @@ export default function AdminTransaksiPage() {
 	const [q, setQ] = React.useState("");
 	const [status, setStatus] = React.useState<"all" | TxStatus>("all");
 	const [method, setMethod] = React.useState<"all" | PayMethod>("all");
+	const [source, setSource] = React.useState("all");
 
 	const [page, setPage] = React.useState(1);
 	const [total, setTotal] = React.useState(0);
@@ -160,14 +165,14 @@ export default function AdminTransaksiPage() {
 	}, [q]);
 
 	// Loading = the shown rows belong to a different request than the current one.
-	const requestKey = JSON.stringify([page, debouncedQ, status, method, reloadKey]);
+	const requestKey = JSON.stringify([page, debouncedQ, status, method, source, reloadKey]);
 	const [loadedKey, setLoadedKey] = React.useState("");
 	const loading = loadedKey !== requestKey;
 
 	// Filtering and paging run in the database; this page only shows one page.
 	React.useEffect(() => {
 		let alive = true;
-		getAdminTransactions({ page, pageSize: PAGE_SIZE, q: debouncedQ, status, method })
+		getAdminTransactions({ page, pageSize: PAGE_SIZE, q: debouncedQ, status, method, source })
 			.then((res) => {
 				if (!alive || !res.success || !res.data) return;
 				setRows(res.data as TxRow[]);
@@ -182,7 +187,7 @@ export default function AdminTransaksiPage() {
 		return () => {
 			alive = false;
 		};
-	}, [page, debouncedQ, status, method, requestKey]);
+	}, [page, debouncedQ, status, method, source, requestKey]);
 
 	const onRefresh = React.useCallback(() => setReloadKey((k) => k + 1), []);
 
@@ -373,6 +378,30 @@ export default function AdminTransaksiPage() {
 							<MenuItem value="manual">Manual</MenuItem>
 						</Select>
 					</FormControl>
+
+					<FormControl size="small" sx={{ minWidth: 160 }}>
+						<Select
+							value={source}
+							onChange={(e) => {
+								setSource(e.target.value);
+								setPage(1);
+							}}
+							displayEmpty
+							sx={{
+								borderRadius: 2.25,
+								bgcolor: alpha("#ffffff", 0.08),
+								"& fieldset": { borderColor: "transparent" },
+							}}
+						>
+							<MenuItem value="all">Semua Sumber</MenuItem>
+							{Object.entries(SOURCE_LABELS).map(([k, v]) => (
+								<MenuItem key={k} value={k}>
+									{v}
+								</MenuItem>
+							))}
+							<MenuItem value="unknown">Tidak diketahui (data lama)</MenuItem>
+						</Select>
+					</FormControl>
 				</Stack>
 			</Surface>
 
@@ -471,6 +500,12 @@ export default function AdminTransaksiPage() {
 										/>
 										<Chip
 											label={methodLabel(selected.method)}
+											size="small"
+											variant="outlined"
+											sx={{ fontWeight: 900 }}
+										/>
+										<Chip
+											label={`Sumber: ${sourceLabel(selected.source)}${selected.utmCampaign ? ` · ${selected.utmCampaign}` : ""}${selected.utmContent ? ` / ${selected.utmContent}` : ""}`}
 											size="small"
 											variant="outlined"
 											sx={{ fontWeight: 900 }}
@@ -621,7 +656,8 @@ function TxRowCard({ row, onClick }: { row: TxRow; onClick?: () => void }) {
 						{row.id} • {idr(row.amount)}
 					</Typography>
 					<Typography sx={{ fontSize: 12, color: "text.secondary" }}>
-						{row.createdAt} • {methodLabel(row.method)} • {row.refCode}
+						{row.createdAt} • {methodLabel(row.method)} • {row.refCode} • {sourceLabel(row.source)}
+						{row.utmCampaign ? ` (${row.utmCampaign}${row.utmContent ? ` / ${row.utmContent}` : ""})` : ""}
 					</Typography>
 				</Box>
 

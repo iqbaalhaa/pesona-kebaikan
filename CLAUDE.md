@@ -121,6 +121,14 @@ Two coarse roles (`USER`, `ADMIN`) plus a flexible `STAFF` role for "admin, but 
 
 Withdrawal disbursement (`src/actions/pencairan.ts`) is a separate concern from checkout, and is **manual only** — there is no automated payout provider. An admin transfers funds from Pesona's bank account to the beneficiary's account outside the system, then marks the withdrawal `COMPLETED` and records the transfer details (amount, sender bank/account, optional proof upload) via `updateWithdrawalStatus()`. An earlier DOKU Payout ("Kirim DOKU") automated-disbursement integration was built and then descoped by the client — do not reintroduce it without an explicit new request.
 
+### Donation Status, Meta Pixel/CAPI & Funnel Stats
+
+- **Every payment status change goes through `applyDonationStatus()`** (`src/lib/donation-settlement.ts`) — DOKU webhook, `checkPendingDonations`, admin refresh, `getDonationStatus`. It's a compare-and-set on the previous status, so the donor notification and the Meta CAPI `Purchase` run exactly once, on the first move into PAID/SETTLED. Don't `prisma.donation.update({ status })` directly.
+- DOKU `finishUrl` carries only `donation_id`; the return screen asks `getDonationStatus()` for the real status (never trust URL params).
+- Tracking settings (Pixel ID, CAPI token, test code, owner-pixel switch, stats switch, dedup minutes) live in `NotifyKey`, edited at `/admin/settings`, read via `getTrackingSettings()` (`src/lib/tracking-settings.ts`, 60s cache) — **not env vars**. CAPI tokens (global and `Campaign.metaCapiToken`) are server-only; only masks reach the client.
+- Funnel: `CampaignEvent` rows (VIEW from the campaign page, DONATE_CLICK from the donation form page, CHECKOUT from `/api/payment/checkout`), dedup per visitor (`pk_vid` cookie). Attribution cookie `pk_src` (utm/fbclid/referrer, 30 days) is copied onto `Donation.source/utmCampaign/utmContent/tracking` in `createDonation`. Stats: `src/lib/campaign-stats.ts`; UI at `/galang-dana/[slug]/statistik`, `/admin/campaign/[id]/statistik`, `/admin/statistik`.
+- Browser pixel events use `fbq('trackSingle', …)` so an owner's pixel only receives events from its own campaign pages.
+
 ### Image Uploads
 
 All file uploads go through `src/actions/upload.ts`:

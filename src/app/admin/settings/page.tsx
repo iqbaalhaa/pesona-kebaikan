@@ -6,6 +6,8 @@ import EmailSettingsForm from "./EmailSettingsForm";
 import TestWhatsappForm from "./TestWhatsappForm";
 import OgSettingsForm from "./OgSettingsForm";
 import HomeVisibilityForm from "./HomeVisibilityForm";
+import TrackingSettingsForm from "./TrackingSettingsForm";
+import { getTrackingSettingsForAdmin } from "@/actions/tracking-settings";
 
 export default async function SettingsPage() {
 	const session = await auth();
@@ -26,6 +28,7 @@ export default async function SettingsPage() {
 		(await getNotifyKey("whatsapp_secret_key"));
 
 	const metaDomainKey = await getNotifyKey("meta_domain_verification");
+	const trackingSettings = await getTrackingSettingsForAdmin();
 
 	// Fetch Email Settings
 	const emailKeys = await getNotifyKeys([
@@ -142,6 +145,19 @@ export default async function SettingsPage() {
 
 				<OgSettingsForm initialSettings={ogSettings} />
 			</div>
+
+			{trackingSettings && (
+				<div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
+					<h2 className="text-lg font-semibold mb-1">
+						Meta Pixel, Conversions API & Statistik
+					</h2>
+					<p className="text-sm text-gray-500 mb-6">
+						Pelacakan iklan Meta dan statistik funnel campaign (dilihat → klik
+						donasi → checkout → dibayar).
+					</p>
+					<TrackingSettingsForm initial={trackingSettings} />
+				</div>
+			)}
 
 			<div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
 				<h2 className="text-lg font-semibold mb-4">Verifikasi Domain Meta</h2>
